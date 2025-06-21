@@ -1,0 +1,1 @@
+2025-06-20 20:24:08,847 - ERROR - Error al conectar: could not open port 'COM3': OSError(22, 'Se agotó el tiempo de espera del semáforo.', None, 121)

@@ -12,11 +12,6 @@ void system_init(void) {
 	cli();
 	
 	// TODO: Inicializar cada módulo
-	// timer_init();
-	// stepper_init();
-	// servo_init();
-	// encoder_init();
-	// uart_init(UART_BAUD_RATE);
 	
 	// Habilitar interrupciones globales
 	sei();
