@@ -1,0 +1,22 @@
+2025-06-21 12:50:16,595 - INFO - Conectado a COM9 @ 115200 bps
+2025-06-21 12:50:20,085 - INFO - TX >> M:30.00,30.00
+2025-06-21 12:50:21,117 - ERROR - Error en lectura: 'utf-8' codec can't decode byte 0xa3 in position 0: invalid start byte
+2025-06-21 12:50:33,862 - INFO - TX >> M:20.00,20.00
+2025-06-21 12:54:02,696 - INFO - TX >> M:30.00,30.00
+2025-06-21 12:54:03,731 - ERROR - Error en lectura: 'utf-8' codec can't decode byte 0xa3 in position 0: invalid start byte
+2025-06-21 12:54:15,060 - INFO - TX >> M:30.00,30.00
+2025-06-21 12:54:16,085 - ERROR - Error en lectura: 'utf-8' codec can't decode byte 0xa3 in position 0: invalid start byte
+2025-06-21 12:54:19,315 - INFO - TX >> M:30.00,30.00
+2025-06-21 12:54:20,330 - ERROR - Error en lectura: 'utf-8' codec can't decode byte 0xa3 in position 0: invalid start byte
+2025-06-21 12:54:23,600 - INFO - TX >> H
+2025-06-21 12:54:26,731 - INFO - TX >> S
+2025-06-21 12:54:28,760 - INFO - TX >> ?
+2025-06-21 12:54:34,275 - INFO - TX >> M:30.00,30.00
+2025-06-21 12:58:27,861 - INFO - TX >> M:30.00,30.00
+2025-06-21 12:58:28,895 - ERROR - Error en lectura: 'utf-8' codec can't decode byte 0xa3 in position 0: invalid start byte
+2025-06-21 12:58:46,787 - INFO - TX >> M:30.00,30.00
+2025-06-21 12:58:47,800 - ERROR - Error en lectura: 'utf-8' codec can't decode byte 0xa3 in position 0: invalid start byte
+2025-06-21 12:58:50,355 - INFO - TX >> H
+2025-06-21 12:58:51,839 - INFO - TX >> S
+2025-06-21 12:58:52,913 - INFO - TX >> ?
+2025-06-21 12:58:53,930 - ERROR - Error en lectura: 'utf-8' codec can't decode byte 0xa3 in position 0: invalid start byte
