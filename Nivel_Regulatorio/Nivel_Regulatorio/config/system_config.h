@@ -10,7 +10,7 @@
 // ========== PARÁMETROS MOTORES ==========
 // Pasos por revolución de los motores
 #define STEPS_PER_REV_NEMA  200     // Motor NEMA típico
-#define MICROSTEPS          16      // Configuración TB6600
+#define MICROSTEPS          8      // Configuración TB6600
 #define STEPS_PER_REV_TOTAL (STEPS_PER_REV_NEMA * MICROSTEPS)
 
 // Motor gripper
@@ -23,7 +23,7 @@
 #define STEPS_PER_MM_V      (STEPS_PER_REV_TOTAL / MM_PER_REV_SCREW)
 
 // Velocidades máximas (pasos/segundo)
-#define MAX_SPEED_H         10000
+#define MAX_SPEED_H         2000
 #define MAX_SPEED_V         12000
 #define MIN_SPEED           100
 

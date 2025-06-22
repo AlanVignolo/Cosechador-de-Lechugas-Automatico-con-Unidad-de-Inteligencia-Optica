@@ -2,6 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "../config/system_config.h"
+#include <util/delay.h>
 
 // Variables globales para los ejes
 static stepper_axis_t horizontal_axis = {0};
@@ -11,9 +12,7 @@ static volatile bool timer3_active = false;
 
 // Función para calcular TOP value del timer basado en velocidad deseada
 static uint16_t calculate_timer_top(uint16_t steps_per_second) {
-	// Para Timer con prescaler 8: TOP = (F_CPU / (8 * 2 * freq)) - 1
-	// Factor 2 porque necesitamos toggle (HIGH y LOW)
-	return (F_CPU / (8UL * 2UL * steps_per_second)) - 1;
+	return (F_CPU / (8UL * steps_per_second)) - 1;
 }
 
 // Función para iniciar Timer1 (motores horizontales)
@@ -22,9 +21,9 @@ static void start_horizontal_movement(uint16_t speed) {
 	
 	uint16_t top_value = calculate_timer_top(speed);
 	
-	// Configurar Timer1 en modo CTC con toggle en OC1A y OC1B
-	TCCR1A = (1 << COM1A0) | (1 << COM1B0);
-	TCCR1B = (1 << WGM12) | (1 << CS11);
+	// Configurar Timer1 en modo CTC SIN toggle - generamos pulsos manualmente
+	TCCR1A = 0; // No usar toggle automático
+	TCCR1B = (1 << WGM12) | (1 << CS11); // Modo CTC, prescaler 8
 	
 	OCR1A = top_value;
 	OCR1B = top_value;
@@ -38,16 +37,28 @@ static void start_vertical_movement(uint16_t speed) {
 	
 	uint16_t top_value = calculate_timer_top(speed);
 	
-	TCCR3A = (1 << COM3A0);
-	TCCR3B = (1 << WGM32) | (1 << CS31);
+	// Configurar Timer3 en modo CTC SIN toggle
+	TCCR3A = 0; // No usar toggle automático
+	TCCR3B = (1 << WGM32) | (1 << CS31); // Modo CTC, prescaler 8
 	
 	OCR3A = top_value;
 	TIMSK3 |= (1 << OCIE3A);
 	timer3_active = true;
 }
+
 // ISR Timer1 - motores horizontales
 ISR(TIMER1_COMPA_vect) {
-	// Actualizar posición en cada step
+	// Generar pulso manualmente
+	PORTB |= (1 << 5); // Pin 11 HIGH
+	PORTB |= (1 << 6); // Pin 12 HIGH
+	
+	// Delay muy corto para el pulso (ajustar según TB6600)
+	_delay_us(2);
+	
+	PORTB &= ~(1 << 5); // Pin 11 LOW
+	PORTB &= ~(1 << 6); // Pin 12 LOW
+	
+	// Actualizar posición - ahora cada interrupción ES un paso
 	if (horizontal_axis.direction) {
 		horizontal_axis.current_position++;
 		} else {
@@ -66,7 +77,15 @@ ISR(TIMER1_COMPA_vect) {
 
 // ISR Timer3 - motor vertical
 ISR(TIMER3_COMPA_vect) {
-	// Actualizar posición en cada step
+	// Generar pulso manualmente
+	PORTE |= (1 << 3); // Pin 5 HIGH
+	
+	// Delay muy corto para el pulso
+	_delay_us(2);
+	
+	PORTE &= ~(1 << 3); // Pin 5 LOW
+	
+	// Actualizar posición
 	if (vertical_axis.direction) {
 		vertical_axis.current_position++;
 		} else {
@@ -169,10 +188,12 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 	// Configurar direcciones (INVERTIDAS)
 	if (h_pos > horizontal_axis.current_position) {
 		horizontal_axis.direction = true;
-		PORTA &= ~((1 << 0) | (1 << 2));  // DIR pins LOW (era HIGH)
+		PORTA &= ~(1 << 0);  // DIR1 LOW
+		PORTA |= (1 << 2);   // DIR2 HIGH (opuesto a H1)
 		} else if (h_pos < horizontal_axis.current_position) {
 		horizontal_axis.direction = false;
-		PORTA |= (1 << 0) | (1 << 2);     // DIR pins HIGH (era LOW)
+		PORTA |= (1 << 0);   // DIR1 HIGH
+		PORTA &= ~(1 << 2);  // DIR2 LOW (opuesto a H1)
 	}
 
 	if (v_pos > vertical_axis.current_position) {
