@@ -53,40 +53,12 @@ void uart_parse_command(const char* cmd) {
 			snprintf(response, sizeof(response), "ERR:INVALID_PARAMS_MOVE_XY:<%s>", cmd + 2);
 		}
 	}
-	else if (cmd[0] == 'D') {  // Comando debug
-		stepper_debug_info();  // Solo llamar la función
-		snprintf(response, sizeof(response), "OK:DEBUG");
-	}
-	else if (cmd[0] == 'E') {  // Debug extendido
-		stepper_debug_motor_state();
-		snprintf(response, sizeof(response), "OK:DEBUG_STATE");
-	}
     else if (cmd[0] == CMD_STOP) {
 	    stepper_stop_all();
 	    snprintf(response, sizeof(response), "OK:STOP");
     }
-	else if (cmd[0] == CMD_HOME) {
-		snprintf(response, sizeof(response), "OK:HOME");
-	}
-	else if (cmd[0] == CMD_STATUS) {
-		snprintf(response, sizeof(response), "OK:STATUS:IDLE:0,0");
-	}
-	else if (cmd[0] == CMD_ARM_POSITION && cmd[1] == ':') {
-		snprintf(response, sizeof(response), "OK:ARM_POSITION:%s", cmd + 2);
-	}
-	else if (cmd[0] == CMD_GRIPPER && cmd[1] == ':') {
-		snprintf(response, sizeof(response), "OK:GRIPPER:%s", cmd + 2);
-	}
-	else if (cmd[0] == CMD_SET_SPEED && cmd[1] == ':') {
-		int speed = atoi(cmd + 2);
-		snprintf(response, sizeof(response), "OK:SET_SPEED:%d", speed);
-	}
-	else if (cmd[0] == CMD_ARM_TRAJECTORY && cmd[1] == ':') {
-		snprintf(response, sizeof(response), "OK:ARM_TRAJECTORY:%s", cmd + 2);
-	}
 	else {
 		snprintf(response, sizeof(response), "ERR:UNKNOWN_CMD:%s", cmd);
 	}
-	
 	uart_send_response(response);
 }

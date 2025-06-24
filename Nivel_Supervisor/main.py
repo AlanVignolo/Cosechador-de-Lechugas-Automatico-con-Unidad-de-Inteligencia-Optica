@@ -42,16 +42,7 @@ def menu():
         print("CONTROL DE ROBOT - MENÚ PRINCIPAL")
         print("="*50)
         print("1. Mover a posición X,Y")
-        print("2. Hacer HOME")
-        print("3. PARADA DE EMERGENCIA")
-        print("4. Estado actual")
-        print("5. Posición de brazo predefinida")
-        print("6. Control de gripper")
-        print("7. Establecer velocidad")
-        print("8. Enviar trayectoria")
-        print("9. Comando manual")
-        print("10. Debug")
-        print("11. Debug extendido")
+        print("2. PARADA DE EMERGENCIA")
         print("0. Salir")
         print("-"*50)
         opcion = input("Selecciona opción: ")
@@ -61,30 +52,7 @@ def menu():
             y = input("Posición Y (mm): ")
             enviar_comando(f"M:{x},{y}")
         elif opcion == '2':
-            enviar_comando("H")
-        elif opcion == '3':
             enviar_comando("S")
-        elif opcion == '4':
-            enviar_comando("?")
-        elif opcion == '5':
-            pos = input("Nombre de la posición: ")
-            enviar_comando(f"A:{pos}")
-        elif opcion == '6':
-            estado = input("Abrir o Cerrar (open/close): ")
-            enviar_comando(f"G:{estado}")
-        elif opcion == '7':
-            vel = input("Velocidad (0-100): ")
-            enviar_comando(f"V:{vel}")
-        elif opcion == '8':
-            tray = input("Trayectoria (ej: P1,P2,P3): ")
-            enviar_comando(f"T:{tray}")
-        elif opcion == '9':
-            raw = input("Ingresa comando manual (sin <>): ")
-            enviar_comando(raw)
-        elif opcion == '10':
-            enviar_comando("D")
-        elif opcion == '11':
-            enviar_comando("E")
         elif opcion == '0':
             print("Saliendo...")
             break

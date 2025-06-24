@@ -11,15 +11,25 @@ static void on_uart_command_ready(void) {
 	}
 }
 
-int main(void)
-{
+int main(void) {
+	// Inicializar UART
 	uart_init(UART_BAUD_RATE);
+	
+	// Inicializar steppers (incluye motion profile)
 	stepper_init();
+	
+	// Configurar callback de comandos
 	uart_set_command_callback(on_uart_command_ready);
+	
+	// Habilitar interrupciones globales
 	sei();
 	
+	// Notificar que el sistema está listo
 	uart_send_response("SYSTEM_READY");
 	
-	while (1)
-	{	}
+	// Loop principal
+	while (1) {
+		// Actualizar perfiles de velocidad
+		stepper_update_profiles();
+	}
 }

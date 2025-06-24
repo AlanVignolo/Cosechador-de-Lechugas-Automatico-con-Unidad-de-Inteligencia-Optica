@@ -23,18 +23,13 @@
 #define STEPS_PER_MM_V      (STEPS_PER_REV_TOTAL / MM_PER_REV_SCREW)
 
 // Velocidades máximas (pasos/segundo)
-#define MAX_SPEED_H         2000
-#define MAX_SPEED_V         12000
-#define MIN_SPEED           100
+#define MAX_SPEED_H         10000
+#define MAX_SPEED_V         16000
+#define MIN_SPEED           500
 
 // Aceleraciones (pasos/segundo²)
-#define ACCEL_H             2000
-#define ACCEL_V             1000
-
-// ========== LÍMITES DE MOVIMIENTO ==========
-#define MAX_X_MM            300.0   // Ajustar según tu máquina
-#define MAX_Y_MM            200.0   // Vertical
-#define HOME_SPEED_MM_S     10.0    // Velocidad para buscar home
+#define ACCEL_H             4000
+#define ACCEL_V             4800
 
 // ========== CONFIGURACIÓN SERVOS ==========
 #define SERVO_MIN_US        1000    // Microsegundos
