@@ -7,13 +7,8 @@
 
 // Comandos de entrada
 #define CMD_MOVE_XY         'M'     // M:100.5,50.2 (x,y en mm)
-#define CMD_HOME            'H'     // H (sin parámetros)
-#define CMD_ARM_POSITION    'A'     // A:RETRACTED
-#define CMD_ARM_TRAJECTORY  'T'     // T:90,45,0;95,50,0;... (servo1,servo2,gripper)
 #define CMD_STOP            'S'     // S (parada de emergencia)
-#define CMD_STATUS          '?'     // ? (solicitar estado)
-#define CMD_GRIPPER         'G'     // G:OPEN o G:CLOSE
-#define CMD_SET_SPEED       'V'     // V:50 (% de velocidad máxima)
+
 
 // Respuestas al Raspberry
 #define RSP_OK              "OK"
