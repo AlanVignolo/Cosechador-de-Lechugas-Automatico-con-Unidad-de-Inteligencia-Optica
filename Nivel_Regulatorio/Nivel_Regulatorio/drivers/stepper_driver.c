@@ -2,24 +2,34 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "../config/system_config.h"
-#include <util/delay.h>
 #include <stdlib.h>
 
-// Variables globales para los ejes
-static stepper_axis_t horizontal_axis = {0};
-static stepper_axis_t vertical_axis = {0};
+// Variables globales para los ejes (accesibles para debugging)
+stepper_axis_t horizontal_axis = {0};
+stepper_axis_t vertical_axis = {0};
 static volatile bool update_speeds_flag = false;
 
-// Timer4 para actualización periódica de velocidades (100Hz)
+// Variables para alternar HIGH/LOW en interrupciones
+static volatile bool h_step_state = false;  // false=LOW, true=HIGH
+static volatile bool v_step_state = false;  // false=LOW, true=HIGH
+
+// Timer4 para actualización periódica de velocidades (50Hz - reducido de 100Hz)
 ISR(TIMER4_COMPA_vect) {
 	update_speeds_flag = true;
 	motion_profile_tick();  // Incrementar contador para motion profile
 }
 
 // Función para calcular TOP value del timer basado en velocidad deseada
+// IMPORTANTE: Calculamos para DOBLE frecuencia (para alternar HIGH/LOW)
 static uint16_t calculate_timer_top(uint16_t steps_per_second) {
 	if (steps_per_second == 0) return 0xFFFF;
-	return (F_CPU / (8UL * steps_per_second)) - 1;
+	// Multiplicar por 2 porque cada paso necesita 2 interrupciones (HIGH + LOW)
+	uint32_t top_value = (F_CPU / (8UL * steps_per_second * 2)) - 1;
+	
+	// Limitar a rango de 16 bits
+	if (top_value > 0xFFFF) top_value = 0xFFFF;
+	
+	return (uint16_t)top_value;
 }
 
 // Función para actualizar velocidad del Timer1 (motores horizontales)
@@ -28,8 +38,14 @@ static void update_horizontal_speed(uint16_t speed) {
 		// Parar Timer1
 		TCCR1B = 0;
 		TIMSK1 &= ~(1 << OCIE1A);
+		// Asegurar que los pines queden en LOW
+		PORTB &= ~((1 << 5) | (1 << 6));  // Pins 11, 12 LOW
+		h_step_state = false;
 		return;
 	}
+	
+	// Verificar velocidad mínima
+	if (speed < MIN_SPEED) speed = MIN_SPEED;
 	
 	uint16_t top_value = calculate_timer_top(speed);
 	
@@ -42,6 +58,7 @@ static void update_horizontal_speed(uint16_t speed) {
 		TCCR1A = 0;
 		TCCR1B = (1 << WGM12) | (1 << CS11); // Modo CTC, prescaler 8
 		TIMSK1 |= (1 << OCIE1A);
+		h_step_state = false;  // Empezar con LOW
 	}
 }
 
@@ -51,8 +68,14 @@ static void update_vertical_speed(uint16_t speed) {
 		// Parar Timer3
 		TCCR3B = 0;
 		TIMSK3 &= ~(1 << OCIE3A);
+		// Asegurar que el pin quede en LOW
+		PORTE &= ~(1 << 3);  // Pin 5 LOW
+		v_step_state = false;
 		return;
 	}
+	
+	// Verificar velocidad mínima
+	if (speed < MIN_SPEED) speed = MIN_SPEED;
 	
 	uint16_t top_value = calculate_timer_top(speed);
 	
@@ -64,56 +87,65 @@ static void update_vertical_speed(uint16_t speed) {
 		TCCR3A = 0;
 		TCCR3B = (1 << WGM32) | (1 << CS31); // Modo CTC, prescaler 8
 		TIMSK3 |= (1 << OCIE3A);
+		v_step_state = false;  // Empezar con LOW
 	}
 }
 
-// ISR Timer1 - motores horizontales
+// ISR Timer1 - motores horizontales (SIN DELAYS)
 ISR(TIMER1_COMPA_vect) {
-	// Generar pulso manualmente
-	PORTB |= (1 << 5);  // Pin 11 HIGH
-	PORTB |= (1 << 6);  // Pin 12 HIGH
-	
-	_delay_us(2);
-	
-	PORTB &= ~(1 << 5); // Pin 11 LOW
-	PORTB &= ~(1 << 6); // Pin 12 LOW
-	
-	// Actualizar posición
-	if (horizontal_axis.direction) {
-		horizontal_axis.current_position++;
+	// Alternar estado HIGH/LOW
+	if (h_step_state) {
+		// Era HIGH, ahora poner LOW
+		PORTB &= ~((1 << 5) | (1 << 6));  // Pins 11, 12 LOW
+		h_step_state = false;
+		
+		// Solo contar pasos cuando terminamos el pulso (flanco descendente)
+		// Actualizar posición
+		if (horizontal_axis.direction) {
+			horizontal_axis.current_position++;
+			} else {
+			horizontal_axis.current_position--;
+		}
+		
+		// Verificar si llegamos al objetivo
+		if (horizontal_axis.current_position == horizontal_axis.target_position) {
+			update_horizontal_speed(0);
+			horizontal_axis.state = STEPPER_IDLE;
+			motion_profile_reset(&horizontal_axis.profile);
+		}
 		} else {
-		horizontal_axis.current_position--;
-	}
-	
-	// Verificar si llegamos al objetivo
-	if (horizontal_axis.current_position == horizontal_axis.target_position) {
-		update_horizontal_speed(0);
-		horizontal_axis.state = STEPPER_IDLE;
-		motion_profile_reset(&horizontal_axis.profile);
+		// Era LOW, ahora poner HIGH
+		PORTB |= (1 << 5) | (1 << 6);     // Pins 11, 12 HIGH
+		h_step_state = true;
 	}
 }
 
-// ISR Timer3 - motor vertical
+// ISR Timer3 - motor vertical (SIN DELAYS)
 ISR(TIMER3_COMPA_vect) {
-	// Generar pulso manualmente
-	PORTE |= (1 << 3); // Pin 5 HIGH
-	
-	_delay_us(2);
-	
-	PORTE &= ~(1 << 3); // Pin 5 LOW
-	
-	// Actualizar posición
-	if (vertical_axis.direction) {
-		vertical_axis.current_position++;
+	// Alternar estado HIGH/LOW
+	if (v_step_state) {
+		// Era HIGH, ahora poner LOW
+		PORTE &= ~(1 << 3);  // Pin 5 LOW
+		v_step_state = false;
+		
+		// Solo contar pasos cuando terminamos el pulso (flanco descendente)
+		// Actualizar posición
+		if (vertical_axis.direction) {
+			vertical_axis.current_position++;
+			} else {
+			vertical_axis.current_position--;
+		}
+		
+		// Verificar si llegamos al objetivo
+		if (vertical_axis.current_position == vertical_axis.target_position) {
+			update_vertical_speed(0);
+			vertical_axis.state = STEPPER_IDLE;
+			motion_profile_reset(&vertical_axis.profile);
+		}
 		} else {
-		vertical_axis.current_position--;
-	}
-	
-	// Verificar si llegamos al objetivo
-	if (vertical_axis.current_position == vertical_axis.target_position) {
-		update_vertical_speed(0);
-		vertical_axis.state = STEPPER_IDLE;
-		motion_profile_reset(&vertical_axis.profile);
+		// Era LOW, ahora poner HIGH
+		PORTE |= (1 << 3);   // Pin 5 HIGH
+		v_step_state = true;
 	}
 }
 
@@ -134,6 +166,14 @@ void stepper_init(void) {
 	DDRA |= (1 << 4);  // Pin 26 (PA4)
 	DDRA |= (1 << 5);  // Pin 27 (PA5)
 	
+	// Asegurar que todos los pines STEP empiecen en LOW
+	PORTB &= ~((1 << 5) | (1 << 6));  // Pins 11, 12 LOW
+	PORTE &= ~(1 << 3);               // Pin 5 LOW
+	
+	// Inicializar estados de alternancia
+	h_step_state = false;
+	v_step_state = false;
+	
 	// Inicializar módulo de motion profile
 	motion_profile_init();
 	
@@ -151,11 +191,11 @@ void stepper_init(void) {
 	// Deshabilitar motores por defecto
 	stepper_enable_motors(false, false);
 	
-	// Configurar Timer4 para actualización de velocidades (100Hz)
+	// Configurar Timer4 para actualización de velocidades (50Hz - REDUCIDO)
 	// Timer4 es de 16 bits en ATmega2560
 	TCCR4A = 0;
 	TCCR4B = (1 << WGM42) | (1 << CS42); // CTC mode, prescaler 256
-	OCR4A = 624; // 16MHz / 256 / 625 = 100Hz
+	OCR4A = 1249; // 16MHz / 256 / 1250 = 50Hz (era 624 para 100Hz)
 	TIMSK4 = (1 << OCIE4A);
 }
 
@@ -175,15 +215,6 @@ void stepper_enable_motors(bool h_enable, bool v_enable) {
 		} else {
 		PORTA |= (1 << 5);                // Pin 27 HIGH = disabled
 		vertical_axis.enabled = false;
-	}
-}
-
-void stepper_set_speed(uint16_t h_speed, uint16_t v_speed) {
-	if (h_speed > 0 && h_speed <= MAX_SPEED_H) {
-		horizontal_axis.max_speed = h_speed;
-	}
-	if (v_speed > 0 && v_speed <= MAX_SPEED_V) {
-		vertical_axis.max_speed = v_speed;
 	}
 }
 
@@ -274,7 +305,7 @@ void stepper_set_position(int32_t h_pos, int32_t v_pos) {
 	vertical_axis.current_position = v_pos;
 }
 
-// Función para actualizar perfiles de velocidad
+// Función para actualizar perfiles de velocidad (MENOS FRECUENTE)
 void stepper_update_profiles(void) {
 	if (!update_speeds_flag) return;
 	update_speeds_flag = false;
@@ -283,7 +314,9 @@ void stepper_update_profiles(void) {
 	if (motion_profile_is_active(&horizontal_axis.profile)) {
 		uint16_t new_speed = motion_profile_update(&horizontal_axis.profile,
 		horizontal_axis.current_position);
-		if (new_speed != horizontal_axis.current_speed) {
+		
+		// Solo cambiar velocidad si hay diferencia significativa (filtro adicional)
+		if (abs((int16_t)new_speed - (int16_t)horizontal_axis.current_speed) > 10) {
 			horizontal_axis.current_speed = new_speed;
 			update_horizontal_speed(new_speed);
 		}
@@ -293,9 +326,14 @@ void stepper_update_profiles(void) {
 	if (motion_profile_is_active(&vertical_axis.profile)) {
 		uint16_t new_speed = motion_profile_update(&vertical_axis.profile,
 		vertical_axis.current_position);
-		if (new_speed != vertical_axis.current_speed) {
+		
+		// Solo cambiar velocidad si hay diferencia significativa (filtro adicional)
+		if (abs((int16_t)new_speed - (int16_t)vertical_axis.current_speed) > 10) {
 			vertical_axis.current_speed = new_speed;
 			update_vertical_speed(new_speed);
 		}
 	}
+	
+	// Llamar función de debugging
+	extern void debug_motion_profiles(void);
 }

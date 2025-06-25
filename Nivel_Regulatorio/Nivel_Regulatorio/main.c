@@ -1,6 +1,7 @@
 #include "drivers/uart_driver.h"
 #include "command/command_parser.h"
 #include "config/system_config.h"
+#include "config/command_protocol.h"
 #include "drivers/stepper_driver.h"
 #include <avr/interrupt.h>
 

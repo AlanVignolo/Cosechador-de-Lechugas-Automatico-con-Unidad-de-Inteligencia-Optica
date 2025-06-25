@@ -2,6 +2,8 @@
 #include "../drivers/uart_driver.h"
 #include "../drivers/stepper_driver.h"
 #include "../config/system_config.h"
+#include "../config/command_protocol.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -53,12 +55,13 @@ void uart_parse_command(const char* cmd) {
 			snprintf(response, sizeof(response), "ERR:INVALID_PARAMS_MOVE_XY:<%s>", cmd + 2);
 		}
 	}
-    else if (cmd[0] == CMD_STOP) {
-	    stepper_stop_all();
-	    snprintf(response, sizeof(response), "OK:STOP");
-    }
+	else if (cmd[0] == 'S') {  // CMD_STOP
+		stepper_stop_all();
+		snprintf(response, sizeof(response), "OK:STOP");
+	}
 	else {
 		snprintf(response, sizeof(response), "ERR:UNKNOWN_CMD:%s", cmd);
 	}
+	
 	uart_send_response(response);
 }

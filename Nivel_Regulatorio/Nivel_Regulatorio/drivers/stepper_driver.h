@@ -5,34 +5,30 @@
 #include <stdbool.h>
 #include "../moves/motion_profile.h"
 
-// Estados del motor
+// Estados del stepper
 typedef enum {
-	STEPPER_IDLE,
+	STEPPER_IDLE = 0,
 	STEPPER_MOVING,
 	STEPPER_HOMING,
 	STEPPER_ERROR
 } stepper_state_t;
 
-// Estructura para cada eje
+// Estructura para cada eje del stepper
 typedef struct {
-	// Posiciones
-	volatile int32_t current_position;
+	int32_t current_position;
 	int32_t target_position;
-	
-	// Velocidades y aceleración
+	uint16_t current_speed;
 	uint16_t max_speed;
 	uint16_t acceleration;
-	volatile uint16_t current_speed;
-	
-	// Estado y control
-	stepper_state_t state;
+	bool direction;           // true = positivo, false = negativo
 	bool enabled;
-	bool direction;
-	
-	// Perfil de movimiento
+	stepper_state_t state;
 	motion_profile_t profile;
-	
 } stepper_axis_t;
+
+// Variables globales accesibles (para debugging)
+extern stepper_axis_t horizontal_axis;
+extern stepper_axis_t vertical_axis;
 
 // Funciones públicas
 void stepper_init(void);
@@ -44,8 +40,6 @@ void stepper_stop_all(void);
 bool stepper_is_moving(void);
 void stepper_get_position(int32_t* h_pos, int32_t* v_pos);
 void stepper_set_position(int32_t h_pos, int32_t v_pos);
-
-// Función para actualizar perfiles de velocidad (llamada periódicamente)
 void stepper_update_profiles(void);
 
-#endif // STEPPER_DRIVER_H
+#endif
