@@ -13,7 +13,7 @@ static volatile bool update_speeds_flag = false;
 static volatile bool h_step_state = false;  // false=LOW, true=HIGH
 static volatile bool v_step_state = false;  // false=LOW, true=HIGH
 
-// Timer4 para actualización periódica de velocidades (50Hz - reducido de 100Hz)
+// Timer4 para actualización periódica de velocidades (200Hz)
 ISR(TIMER4_COMPA_vect) {
 	update_speeds_flag = true;
 	motion_profile_tick();  // Incrementar contador para motion profile
@@ -32,7 +32,6 @@ static uint16_t calculate_timer_top(uint16_t steps_per_second) {
 	return (uint16_t)top_value;
 }
 
-// Función para actualizar velocidad del Timer1 (motores horizontales)
 static void update_horizontal_speed(uint16_t speed) {
 	if (speed == 0) {
 		// Parar Timer1
@@ -44,8 +43,8 @@ static void update_horizontal_speed(uint16_t speed) {
 		return;
 	}
 	
-	// Verificar velocidad mínima
-	if (speed < MIN_SPEED) speed = MIN_SPEED;
+	// CAMBIO: No forzar velocidad mínima
+	// if (speed < MIN_SPEED) speed = MIN_SPEED;
 	
 	uint16_t top_value = calculate_timer_top(speed);
 	
@@ -74,8 +73,8 @@ static void update_vertical_speed(uint16_t speed) {
 		return;
 	}
 	
-	// Verificar velocidad mínima
-	if (speed < MIN_SPEED) speed = MIN_SPEED;
+	// CAMBIO: No forzar velocidad mínima
+	// if (speed < MIN_SPEED) speed = MIN_SPEED;
 	
 	uint16_t top_value = calculate_timer_top(speed);
 	
@@ -191,11 +190,11 @@ void stepper_init(void) {
 	// Deshabilitar motores por defecto
 	stepper_enable_motors(false, false);
 	
-	// Configurar Timer4 para actualización de velocidades (50Hz - REDUCIDO)
+	// Configurar Timer4 para actualización de velocidades (200Hz)
 	// Timer4 es de 16 bits en ATmega2560
 	TCCR4A = 0;
 	TCCR4B = (1 << WGM42) | (1 << CS42); // CTC mode, prescaler 256
-	OCR4A = 1249; // 16MHz / 256 / 1250 = 50Hz (era 624 para 100Hz)
+	OCR4A = 311; // 16MHz / 256 / 312 = 200Hz
 	TIMSK4 = (1 << OCIE4A);
 }
 
@@ -260,9 +259,8 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 		horizontal_axis.max_speed,
 		horizontal_axis.acceleration);
 		horizontal_axis.state = STEPPER_MOVING;
-		horizontal_axis.current_speed = MIN_SPEED;
-		// Iniciar movimiento con velocidad mínima
-		update_horizontal_speed(MIN_SPEED);
+		horizontal_axis.current_speed = 0;  // Empezar desde 0
+		// No iniciar el timer todavía - dejar que el perfil lo haga
 	}
 	
 	if (v_pos != vertical_axis.current_position && vertical_axis.enabled) {
@@ -272,9 +270,8 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 		vertical_axis.max_speed,
 		vertical_axis.acceleration);
 		vertical_axis.state = STEPPER_MOVING;
-		vertical_axis.current_speed = MIN_SPEED;
-		// Iniciar movimiento con velocidad mínima
-		update_vertical_speed(MIN_SPEED);
+		vertical_axis.current_speed = 0;  // Empezar desde 0
+		// No iniciar el timer todavía - dejar que el perfil lo haga
 	}
 }
 
@@ -305,7 +302,7 @@ void stepper_set_position(int32_t h_pos, int32_t v_pos) {
 	vertical_axis.current_position = v_pos;
 }
 
-// Función para actualizar perfiles de velocidad (MENOS FRECUENTE)
+// Función para actualizar perfiles de velocidad
 void stepper_update_profiles(void) {
 	if (!update_speeds_flag) return;
 	update_speeds_flag = false;
@@ -315,8 +312,8 @@ void stepper_update_profiles(void) {
 		uint16_t new_speed = motion_profile_update(&horizontal_axis.profile,
 		horizontal_axis.current_position);
 		
-		// Solo cambiar velocidad si hay diferencia significativa (filtro adicional)
-		if (abs((int16_t)new_speed - (int16_t)horizontal_axis.current_speed) > 10) {
+		// CAMBIO: Solo actualizar si hay cambio significativo o si estamos arrancando
+		if (new_speed != horizontal_axis.current_speed || horizontal_axis.current_speed == 0) {
 			horizontal_axis.current_speed = new_speed;
 			update_horizontal_speed(new_speed);
 		}
@@ -327,13 +324,10 @@ void stepper_update_profiles(void) {
 		uint16_t new_speed = motion_profile_update(&vertical_axis.profile,
 		vertical_axis.current_position);
 		
-		// Solo cambiar velocidad si hay diferencia significativa (filtro adicional)
-		if (abs((int16_t)new_speed - (int16_t)vertical_axis.current_speed) > 10) {
+		// CAMBIO: Solo actualizar si hay cambio significativo o si estamos arrancando
+		if (new_speed != vertical_axis.current_speed || vertical_axis.current_speed == 0) {
 			vertical_axis.current_speed = new_speed;
 			update_vertical_speed(new_speed);
 		}
 	}
-	
-	// Llamar función de debugging
-	extern void debug_motion_profiles(void);
 }
