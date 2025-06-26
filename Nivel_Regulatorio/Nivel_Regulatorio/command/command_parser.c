@@ -41,12 +41,6 @@ void uart_parse_command(const char* cmd) {
 			int32_t h_steps_relative = (int32_t)(x * STEPS_PER_MM_H);
 			int32_t v_steps_relative = (int32_t)(y * STEPS_PER_MM_V);
 			
-			// Habilitar motores solo si hay movimiento que hacer
-			bool need_h_move = (h_steps_relative != 0);
-			bool need_v_move = (v_steps_relative != 0);
-			
-			stepper_enable_motors(need_h_move, need_v_move);
-			
 			// Usar movimiento RELATIVO
 			stepper_move_relative(h_steps_relative, v_steps_relative);
 			

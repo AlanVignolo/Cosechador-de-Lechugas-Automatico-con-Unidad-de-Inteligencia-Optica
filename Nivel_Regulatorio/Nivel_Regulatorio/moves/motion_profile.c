@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include "../config/system_config.h"
 
+// CAMBIO: Función para abs de int32_t
+static int32_t abs32(int32_t x) {
+	return (x < 0) ? -x : x;
+}
+
 static volatile uint32_t tick_counter = 0;
 
 void motion_profile_tick(void) {
@@ -15,7 +20,7 @@ void motion_profile_init(void) {
 }
 
 uint32_t motion_profile_get_millis(void) {
-	return tick_counter * 5;  // 200Hz = 5ms por tick
+	return tick_counter * 2;  // 500Hz = 2ms por tick
 }
 
 void motion_profile_setup(motion_profile_t* profile,
@@ -26,7 +31,7 @@ uint16_t acceleration) {
 	
 	profile->start_position = current_pos;
 	profile->target_position = target_pos;
-	profile->total_steps = abs(target_pos - current_pos);
+	profile->total_steps = abs32(target_pos - current_pos);  // CAMBIO: usar abs32
 	
 	profile->max_speed = max_speed;
 	profile->acceleration = acceleration;
@@ -42,9 +47,6 @@ uint16_t acceleration) {
 	uint32_t accel = (uint32_t)acceleration;
 	uint32_t steps_to_max = (v_max * v_max) / (2 * accel);
 	
-	// Limitar para evitar overflow
-	if (steps_to_max > 100000L) steps_to_max = 100000L;
-	
 	// Decidir tipo de perfil
 	if (profile->total_steps < (2 * steps_to_max)) {
 		// Perfil triangular
@@ -53,10 +55,20 @@ uint16_t acceleration) {
 		profile->constant_steps = 0;
 		
 		// Calcular velocidad máxima que alcanzaremos
-		uint32_t v_peak_sq = 2 * accel * profile->accel_steps;
-		uint32_t v_peak = 1;
-		while (v_peak * v_peak < v_peak_sq && v_peak < max_speed) v_peak++;
-		profile->target_speed = v_peak;
+		uint64_t temp = (uint64_t)2 * accel * profile->accel_steps;
+		uint32_t v_peak = 0;
+		
+		// Calcular raíz cuadrada
+		uint32_t bit = 1UL << 15;
+		while (bit > 0) {
+			uint32_t test = v_peak + bit;
+			if ((uint64_t)test * test <= temp) {
+				v_peak = test;
+			}
+			bit >>= 1;
+		}
+		
+		profile->target_speed = (v_peak < max_speed) ? v_peak : max_speed;
 		} else {
 		// Perfil trapezoidal
 		profile->accel_steps = steps_to_max;
@@ -74,50 +86,40 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 		return 0;
 	}
 	
-	int32_t steps_remaining = abs(profile->target_position - current_pos);
+	int32_t steps_remaining = abs32(profile->target_position - current_pos);  // CAMBIO
 	
-	// Si llegamos EXACTAMENTE al objetivo
 	if (steps_remaining == 0) {
 		profile->current_speed = 0;
 		profile->state = PROFILE_COMPLETED;
 		return 0;
 	}
 	
-	// Calcular velocidad objetivo basada en la posición
 	uint16_t target_speed;
-	int32_t steps_done = abs(current_pos - profile->start_position);
+	int32_t steps_done = abs32(current_pos - profile->start_position);  // CAMBIO
 	
+	// Resto del código igual...
 	// Determinar fase del movimiento
 	if (steps_remaining <= profile->decel_steps) {
 		// FASE DE DECELERACIÓN
 		profile->state = PROFILE_DECELERATING;
 		
-		// CAMBIO: Cálculo más preciso para desaceleración
 		if (steps_remaining > 2) {
 			// v = sqrt(2 * a * d)
-			uint32_t v_sq = 2UL * profile->acceleration * steps_remaining;
-			uint32_t v = 0;
+			uint64_t temp = (uint64_t)2 * profile->acceleration * steps_remaining;
+			target_speed = 0;
 			
-			// Calcular raíz cuadrada con más precisión
-			uint32_t bit = 1UL << 30;
-			while (bit > v_sq) bit >>= 2;
-			
-			while (bit != 0) {
-				if (v_sq >= v + bit) {
-					v_sq -= v + bit;
-					v = (v >> 1) + bit;
-					} else {
-					v >>= 1;
+			// Raíz cuadrada eficiente
+			uint32_t bit = 1UL << 15;
+			while (bit > 0) {
+				uint32_t test = target_speed + bit;
+				if ((uint64_t)test * test <= temp) {
+					target_speed = test;
 				}
-				bit >>= 2;
+				bit >>= 1;
 			}
 			
-			target_speed = v;
-			
-			// CAMBIO: Permitir velocidades muy bajas para desaceleración correcta
 			if (target_speed < 50) target_speed = 50;
 			} else {
-			// Últimos 2 pasos - velocidad mínima
 			target_speed = 50;
 		}
 	}
@@ -125,15 +127,25 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 		// FASE DE ACELERACIÓN
 		profile->state = PROFILE_ACCELERATING;
 		
-		// CAMBIO: Arranque desde velocidad muy baja
 		if (steps_done < 5) {
-			target_speed = 100;  // Arranque suave
+			target_speed = 100;
 			} else {
 			// v = sqrt(2 * a * d)
-			uint32_t v_sq = 2UL * profile->acceleration * steps_done;
-			target_speed = 1;
-			while (target_speed * target_speed < v_sq && target_speed < profile->target_speed) {
-				target_speed++;
+			uint64_t temp = (uint64_t)2 * profile->acceleration * steps_done;
+			target_speed = 0;
+			
+			// Raíz cuadrada eficiente
+			uint32_t bit = 1UL << 15;
+			while (bit > 0) {
+				uint32_t test = target_speed + bit;
+				if ((uint64_t)test * test <= temp) {
+					target_speed = test;
+				}
+				bit >>= 1;
+			}
+			
+			if (target_speed > profile->target_speed) {
+				target_speed = profile->target_speed;
 			}
 		}
 	}
@@ -143,39 +155,27 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 		target_speed = profile->target_speed;
 	}
 	
-	// CAMBIO: Aplicar cambio más gradual
+	// Aplicar cambio gradual
 	int16_t diff = (int16_t)target_speed - (int16_t)profile->current_speed;
 	
-	if (diff > 0) {
-		// Acelerando
-		uint16_t max_inc = profile->acceleration / 100;  // Más suave
-		if (max_inc < 5) max_inc = 5;
-		if (max_inc > 100) max_inc = 100;
+	if (diff != 0) {
+		uint16_t max_change = profile->acceleration / 500;
 		
-		if (diff > max_inc) {
-			profile->current_speed += max_inc;
-			} else {
-			profile->current_speed = target_speed;
-		}
-		} else if (diff < 0) {
-		// Decelerando - más agresivo
-		uint16_t max_dec = profile->acceleration / 50;
-		if (max_dec < 10) max_dec = 10;
-		if (max_dec > 200) max_dec = 200;
+		if (max_change < 10) max_change = 10;
 		
-		if (-diff > max_dec) {
-			profile->current_speed -= max_dec;
+		if (diff > 0 && diff > max_change) {
+			profile->current_speed += max_change;
+			} else if (diff < 0 && -diff > max_change) {
+			profile->current_speed -= max_change;
 			} else {
 			profile->current_speed = target_speed;
 		}
 	}
 	
-	// Límites
 	if (profile->current_speed > profile->max_speed) {
 		profile->current_speed = profile->max_speed;
 	}
 	
-	// CAMBIO: Asegurar velocidad mínima para que el timer funcione
 	if (profile->current_speed < 50 && steps_remaining > 0) {
 		profile->current_speed = 50;
 	}
