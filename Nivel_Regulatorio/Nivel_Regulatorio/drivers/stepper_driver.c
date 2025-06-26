@@ -187,15 +187,15 @@ void stepper_init(void) {
 	vertical_axis.current_speed = 0;
 	vertical_axis.state = STEPPER_IDLE;
 	
-	// Deshabilitar motores por defecto
-	stepper_enable_motors(false, false);
-	
 	// Configurar Timer4 para actualización de velocidades (200Hz)
 	// Timer4 es de 16 bits en ATmega2560
-	TCCR4A = 0;
-	TCCR4B = (1 << WGM42) | (1 << CS42); // CTC mode, prescaler 256
-	OCR4A = 311; // 16MHz / 256 / 312 = 200Hz
-	TIMSK4 = (1 << OCIE4A);
+    TCCR4A = 0;
+    TCCR4B = (1 << WGM42) | (1 << CS42); // CTC mode, prescaler 256
+    OCR4A = 124; // 16MHz / 256 / 125 = 500Hz (era 311 para 200Hz)
+    TIMSK4 = (1 << OCIE4A);
+
+	// Habilitar motores por defecto
+	stepper_enable_motors(true, true);
 }
 
 void stepper_enable_motors(bool h_enable, bool v_enable) {
