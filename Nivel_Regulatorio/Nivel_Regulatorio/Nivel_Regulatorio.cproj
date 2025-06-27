@@ -159,6 +159,12 @@
     <Compile Include="drivers\uart_driver.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="limits\limit_switch.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="limits\limit_switch.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -174,6 +180,7 @@
     <Folder Include="config" />
     <Folder Include="command" />
     <Folder Include="moves" />
+    <Folder Include="limits" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

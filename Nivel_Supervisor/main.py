@@ -9,7 +9,7 @@ logging.basicConfig(
 )
 
 # Parámetros de la conexión serial
-SERIAL_PORT = 'COM7'  # Cambiar según tu sistema (COMx en Windows)
+SERIAL_PORT = 'COM15'  # Cambiar según tu sistema (COMx en Windows)
 BAUD_RATE = 115200  # Velocidad de baudios
 TIMEOUT = 1.0  # segundos
 
