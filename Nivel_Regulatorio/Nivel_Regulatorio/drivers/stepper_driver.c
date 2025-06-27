@@ -3,6 +3,7 @@
 #include <avr/interrupt.h>
 #include "../config/system_config.h"
 #include <stdlib.h>
+#include "../limits/limit_switch.h"
 
 // Variables globales para los ejes (accesibles para debugging)
 stepper_axis_t horizontal_axis = {0};
@@ -12,6 +13,10 @@ static volatile bool update_speeds_flag = false;
 // Variables para alternar HIGH/LOW en interrupciones
 static volatile bool h_step_state = false;  // false=LOW, true=HIGH
 static volatile bool v_step_state = false;  // false=LOW, true=HIGH
+
+static int32_t abs32(int32_t x) {
+	return (x < 0) ? -x : x;
+}
 
 // Timer4 para actualización periódica de velocidades (200Hz)
 ISR(TIMER4_COMPA_vect) {
@@ -176,6 +181,9 @@ void stepper_init(void) {
 	// Inicializar módulo de motion profile
 	motion_profile_init();
 	
+	// Inicializar módulo de fines de carrera
+	limit_switch_init();
+	
 	// Inicializar estados por defecto
 	horizontal_axis.max_speed = MAX_SPEED_H;
 	horizontal_axis.acceleration = ACCEL_H;
@@ -196,6 +204,20 @@ void stepper_init(void) {
 
 	// Habilitar motores por defecto
 	stepper_enable_motors(true, true);
+}
+
+void stepper_stop_horizontal(void) {
+	update_horizontal_speed(0);
+	horizontal_axis.state = STEPPER_IDLE;
+	horizontal_axis.target_position = horizontal_axis.current_position;
+	motion_profile_reset(&horizontal_axis.profile);
+}
+
+void stepper_stop_vertical(void) {
+	update_vertical_speed(0);
+	vertical_axis.state = STEPPER_IDLE;
+	vertical_axis.target_position = vertical_axis.current_position;
+	motion_profile_reset(&vertical_axis.profile);
 }
 
 void stepper_enable_motors(bool h_enable, bool v_enable) {
@@ -232,6 +254,10 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 	horizontal_axis.target_position = h_pos;
 	vertical_axis.target_position = v_pos;
 	
+	// Calcular distancias
+	int32_t h_distance = abs32(h_pos - horizontal_axis.current_position);
+	int32_t v_distance = abs32(v_pos - vertical_axis.current_position);
+	
 	// Configurar direcciones
 	if (h_pos > horizontal_axis.current_position) {
 		horizontal_axis.direction = true;
@@ -251,27 +277,83 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 		PORTA |= (1 << 4);   // DIR pin HIGH
 	}
 	
-	// Configurar perfiles de movimiento si hay movimiento que hacer
-	if (h_pos != horizontal_axis.current_position && horizontal_axis.enabled) {
-		motion_profile_setup(&horizontal_axis.profile,
-		horizontal_axis.current_position,
-		h_pos,
-		horizontal_axis.max_speed,
-		horizontal_axis.acceleration);
-		horizontal_axis.state = STEPPER_MOVING;
-		horizontal_axis.current_speed = 0;  // Empezar desde 0
-		// No iniciar el timer todavía - dejar que el perfil lo haga
+	uint16_t h_speed_adjusted = horizontal_axis.max_speed;
+	uint16_t v_speed_adjusted = vertical_axis.max_speed;
+	
+	// Solo sincronizar si ambos ejes se mueven
+	if (h_distance > 0 && v_distance > 0 && horizontal_axis.enabled && vertical_axis.enabled) {
+		
+		// MÉTODO SIMPLE: La velocidad es proporcional a la distancia
+		// El que tiene que recorrer más distancia va más rápido
+		
+		// Calcular qué eje tiene que recorrer más
+		if (h_distance > v_distance) {
+			// H tiene más distancia, V debe ir más lento
+			// Proporción: v_speed = h_speed * (v_distance / h_distance)
+			v_speed_adjusted = (uint32_t)horizontal_axis.max_speed * v_distance / h_distance;
+			h_speed_adjusted = horizontal_axis.max_speed;
+			
+			// Límite mínimo para V
+			if (v_speed_adjusted < 1000) v_speed_adjusted = 1000;
+			
+			// Si la velocidad calculada excede el máximo de V, entonces reducir H
+			if (v_speed_adjusted > vertical_axis.max_speed) {
+				// Escalar ambos proporcionalmente
+				h_speed_adjusted = (uint32_t)horizontal_axis.max_speed * vertical_axis.max_speed / v_speed_adjusted;
+				v_speed_adjusted = vertical_axis.max_speed;
+			}
+			
+			} else if (v_distance > h_distance) {
+			// V tiene más distancia, H debe ir más lento
+			h_speed_adjusted = (uint32_t)vertical_axis.max_speed * h_distance / v_distance;
+			v_speed_adjusted = vertical_axis.max_speed;
+			
+			// Límite mínimo para H
+			if (h_speed_adjusted < 1000) h_speed_adjusted = 1000;
+			
+			// Si la velocidad calculada excede el máximo de H, entonces reducir V
+			if (h_speed_adjusted > horizontal_axis.max_speed) {
+				// Escalar ambos proporcionalmente
+				v_speed_adjusted = (uint32_t)vertical_axis.max_speed * horizontal_axis.max_speed / h_speed_adjusted;
+				h_speed_adjusted = horizontal_axis.max_speed;
+			}
+		}
+		// Si las distancias son iguales, mantener velocidades originales
 	}
 	
-	if (v_pos != vertical_axis.current_position && vertical_axis.enabled) {
-		motion_profile_setup(&vertical_axis.profile,
-		vertical_axis.current_position,
-		v_pos,
-		vertical_axis.max_speed,
-		vertical_axis.acceleration);
-		vertical_axis.state = STEPPER_MOVING;
-		vertical_axis.current_speed = 0;  // Empezar desde 0
-		// No iniciar el timer todavía - dejar que el perfil lo haga
+	// Configurar perfiles de movimiento con velocidades ajustadas
+	if (h_distance > 0 && horizontal_axis.enabled) {
+		bool h_dir = (h_pos > horizontal_axis.current_position);
+		if (!limit_switch_check_h_movement(h_dir)) {
+			horizontal_axis.target_position = horizontal_axis.current_position;
+			h_distance = 0;
+			} 
+		else {
+			motion_profile_setup(&horizontal_axis.profile,
+			horizontal_axis.current_position,
+			h_pos,
+			h_speed_adjusted,  // Velocidad ajustada
+			horizontal_axis.acceleration);
+			horizontal_axis.state = STEPPER_MOVING;
+			horizontal_axis.current_speed = 0;
+		}
+	}
+	
+	if (v_distance > 0 && vertical_axis.enabled) {
+		bool v_dir = (v_pos > vertical_axis.current_position);
+		if (!limit_switch_check_v_movement(v_dir)) {
+			vertical_axis.target_position = vertical_axis.current_position;
+			v_distance = 0;
+			} 
+		else {
+			motion_profile_setup(&vertical_axis.profile,
+			vertical_axis.current_position,
+			v_pos,
+			v_speed_adjusted,  // Velocidad ajustada
+			vertical_axis.acceleration);
+			vertical_axis.state = STEPPER_MOVING;
+			vertical_axis.current_speed = 0;
+		}
 	}
 }
 
@@ -306,6 +388,8 @@ void stepper_set_position(int32_t h_pos, int32_t v_pos) {
 void stepper_update_profiles(void) {
 	if (!update_speeds_flag) return;
 	update_speeds_flag = false;
+	
+	limit_switch_update();
 	
 	// Actualizar perfil horizontal si está en movimiento
 	if (motion_profile_is_active(&horizontal_axis.profile)) {
