@@ -147,6 +147,18 @@
     <Compile Include="config\system_config.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="drivers\gripper_driver.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\gripper_driver.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\servo_driver.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\servo_driver.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="drivers\stepper_driver.c">
       <SubType>compile</SubType>
     </Compile>
