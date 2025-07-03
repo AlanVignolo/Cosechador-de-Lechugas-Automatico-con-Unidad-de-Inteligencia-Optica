@@ -64,4 +64,6 @@ void motion_profile_reset(motion_profile_t* profile);
 // Obtener el tiempo actual en ms (para sincronización)
 uint32_t motion_profile_get_millis(void);
 
+void motion_profile_tick(void);
+
 #endif // MOTION_PROFILE_H

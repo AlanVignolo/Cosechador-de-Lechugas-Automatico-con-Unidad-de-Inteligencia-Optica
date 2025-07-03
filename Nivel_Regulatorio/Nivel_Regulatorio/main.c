@@ -3,6 +3,9 @@
 #include "config/system_config.h"
 #include "config/command_protocol.h"
 #include "drivers/stepper_driver.h"
+#include "drivers/servo_driver.h"
+#include "drivers/gripper_driver.h"
+
 #include <avr/interrupt.h>
 
 static void on_uart_command_ready(void) {
@@ -19,6 +22,12 @@ int main(void) {
 	// Inicializar steppers (incluye motion profile)
 	stepper_init();
 	
+	// Inicializar servos
+	servo_init();
+	
+	// Inicializar gripper
+	gripper_init();
+	
 	// Configurar callback de comandos
 	uart_set_command_callback(on_uart_command_ready);
 	
@@ -32,5 +41,11 @@ int main(void) {
 	while (1) {
 		// Actualizar perfiles de velocidad
 		stepper_update_profiles();
+	
+		// Actualizar servos
+		servo_update();
+	
+		// Actualizar gripper
+		gripper_update();
 	}
 }
