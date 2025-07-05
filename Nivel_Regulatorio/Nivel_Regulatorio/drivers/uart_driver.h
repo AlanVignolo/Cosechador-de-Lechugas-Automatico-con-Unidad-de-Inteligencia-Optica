@@ -11,5 +11,6 @@ void uart_send_char(char c);
 void uart_send_string(const char* str);
 void uart_send_response(const char* response);
 bool uart_get_command(char* dest, uint8_t max_len);
+void uart_send_system_status(void);
 
 #endif

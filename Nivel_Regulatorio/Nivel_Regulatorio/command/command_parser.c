@@ -4,6 +4,7 @@
 #include "../config/system_config.h"
 #include "../config/command_protocol.h"
 #include "../drivers/servo_driver.h"
+#include "../limits/limit_switch.h"
 #include "../drivers/gripper_driver.h"
 #include <string.h>
 #include <stdlib.h>
@@ -116,18 +117,58 @@ void uart_parse_command(const char* cmd) {
 		}
 	}
 	
-	// Agregar estos comandos en tu command_parser.c dentro de uart_parse_command()
-
-	else if (cmd[0] == 'G' && cmd[1] == ':') {  // G:O o G:C - Gripper normal
-		if (cmd[2] == 'O') {
-			gripper_open();
-			snprintf(response, sizeof(response), "OK:GRIPPER_OPENING");
-			} else if (cmd[2] == 'C') {
-			gripper_close();
-			snprintf(response, sizeof(response), "OK:GRIPPER_CLOSING");
+	else if (cmd[0] == 'G' && cmd[1] == 'T') {  // GT - Toggle Gripper
+		gripper_toggle();
+		snprintf(response, sizeof(response), "OK:GRIPPER_TOGGLE");
+	}
+	
+	else if (cmd[0] == 'V' && cmd[1] == ':') {
+		int h_speed, v_speed;
+		if (parse_two_integers(cmd + 2, &h_speed, &v_speed)) {
+			if (h_speed > 0 && h_speed <= 15000) {
+				horizontal_axis.max_speed = h_speed;
+			}
+			if (v_speed > 0 && v_speed <= 15000) {
+				vertical_axis.max_speed = v_speed;
+			}
+			snprintf(response, sizeof(response), "OK:VELOCIDADES:%d,%d",
+			horizontal_axis.max_speed, vertical_axis.max_speed);
 			} else {
-			snprintf(response, sizeof(response), "ERR:INVALID_GRIPPER_CMD");
+			snprintf(response, sizeof(response), "ERR:INVALID_PARAMS_VELOCIDADES");
 		}
+	}
+	
+	else if (cmd[0] == 'L') {
+		limit_status_t status = limit_switch_get_status();
+		snprintf(response, sizeof(response), "LIMITS:H_L=%d,H_R=%d,V_U=%d,V_D=%d",
+		status.h_left_triggered ? 1 : 0,
+		status.h_right_triggered ? 1 : 0,
+		status.v_up_triggered ? 1 : 0,
+		status.v_down_triggered ? 1 : 0);
+	}
+	
+	else if (cmd[0] == 'Q') {  // Query - consultar estado actual
+		// Obtener posiciones actuales de los servos
+		uint8_t servo1_pos = servo_get_current_position(1);
+		uint8_t servo2_pos = servo_get_current_position(2);
+		
+		snprintf(response, sizeof(response), "SERVO_POS:%d,%d", servo1_pos, servo2_pos);
+	}
+	
+	else if (cmd[0] == 'G' && cmd[1] == '?') {
+		gripper_state_t state = gripper_get_state();
+		int16_t position = gripper_get_position();
+	
+		const char* state_str;
+		switch(state) {
+			case GRIPPER_OPEN: state_str = "OPEN"; break;
+			case GRIPPER_CLOSED: state_str = "CLOSED"; break;
+			case GRIPPER_OPENING: state_str = "OPENING"; break;
+			case GRIPPER_CLOSING: state_str = "CLOSING"; break;
+			default: state_str = "IDLE"; break;
+		}
+	
+		snprintf(response, sizeof(response), "GRIPPER_STATUS:%s,%d", state_str, position);
 	}
 	
 	else {

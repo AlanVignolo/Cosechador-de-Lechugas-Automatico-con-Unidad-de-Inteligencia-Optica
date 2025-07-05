@@ -39,5 +39,9 @@ gripper_state_t gripper_get_state(void);
 void gripper_stop(void);
 void gripper_set_speed(uint16_t delay_ms);  // Nueva función
 int16_t gripper_get_position(void);         // Función para obtener posición
+static void gripper_save_state(void);
+static void gripper_load_state(void);
+void uart_send_gripper_status(void);
+void gripper_toggle(void);
 
 #endif

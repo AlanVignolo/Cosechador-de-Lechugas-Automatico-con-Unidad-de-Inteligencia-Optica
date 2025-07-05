@@ -111,6 +111,10 @@ static void servo_set_position_raw(uint8_t servo_num, uint8_t angle) {
 		} else if (servo_num == 2) {
 		OCR5B = ocr_value;
 	}
+	
+	char msg[64];
+	snprintf(msg, sizeof(msg), "SERVO_CHANGED:%d,%d", servo_num, angle);
+	uart_send_response(msg);
 }
 
 void servo_set_position(uint8_t servo_num, uint8_t angle) {
