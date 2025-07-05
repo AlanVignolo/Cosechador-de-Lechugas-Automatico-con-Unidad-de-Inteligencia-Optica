@@ -32,7 +32,9 @@ void limit_switch_update(void) {
 			debounce_counter[0]++;
 			if (debounce_counter[0] == DEBOUNCE_THRESHOLD) {
 				limits.h_left_triggered = true;
-				// Detener movimiento horizontal si se está moviendo hacia la izquierda
+				// NUEVO: Enviar mensaje al supervisor
+				uart_send_response("LIMIT_H_LEFT_TRIGGERED");
+				
 				if (!horizontal_axis.direction) {  // false = izquierda
 					stepper_stop_horizontal();
 				}
@@ -43,14 +45,15 @@ void limit_switch_update(void) {
 		limits.h_left_triggered = false;
 	}
 	
-	// H Right (Pin 31 - PC6)
+	// H Right
 	if (!(pinc_state & (1 << 6))) {
 		if (debounce_counter[1] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[1]++;
 			if (debounce_counter[1] == DEBOUNCE_THRESHOLD) {
 				limits.h_right_triggered = true;
-				// Detener movimiento horizontal si se está moviendo hacia la derecha
-				if (horizontal_axis.direction) {  // true = derecha
+				uart_send_response("LIMIT_H_RIGHT_TRIGGERED");
+				
+				if (horizontal_axis.direction) {
 					stepper_stop_horizontal();
 				}
 			}
@@ -60,14 +63,15 @@ void limit_switch_update(void) {
 		limits.h_right_triggered = false;
 	}
 	
-	// V Up (Pin 32 - PC5)
+	// V down
 	if (!(pinc_state & (1 << 5))) {
 		if (debounce_counter[2] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[2]++;
 			if (debounce_counter[2] == DEBOUNCE_THRESHOLD) {
 				limits.v_up_triggered = true;
-				// Detener movimiento vertical si se está moviendo hacia arriba
-				if (vertical_axis.direction) {  // true = arriba
+				uart_send_response("LIMIT_V_DOWN_TRIGGERED");
+				
+				if (vertical_axis.direction) {
 					stepper_stop_vertical();
 				}
 			}
@@ -77,14 +81,15 @@ void limit_switch_update(void) {
 		limits.v_up_triggered = false;
 	}
 	
-	// V Down (Pin 33 - PC4)
+	// V up
 	if (!(pinc_state & (1 << 4))) {
 		if (debounce_counter[3] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[3]++;
 			if (debounce_counter[3] == DEBOUNCE_THRESHOLD) {
 				limits.v_down_triggered = true;
-				// Detener movimiento vertical si se está moviendo hacia abajo
-				if (!vertical_axis.direction) {  // false = abajo
+				uart_send_response("LIMIT_V_UP_TRIGGERED");
+				
+				if (!vertical_axis.direction) {
 					stepper_stop_vertical();
 				}
 			}

@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List
 
 from models import get_db, create_tables, EstadoJardin, HistorialAcciones, ComandosPendientes, LecturasSensores
-from schemas import *
+from api.schemas import *
 from jardin_service import jardin_service
 
 # Crear tablas al iniciar
