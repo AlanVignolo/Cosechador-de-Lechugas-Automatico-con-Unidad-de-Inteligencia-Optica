@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include "../limits/limit_switch.h"
 
+// Variables para modo calibración
+static bool calibration_mode = false;
+static int32_t calibration_step_counter = 0;
+
 // Variables globales para los ejes (accesibles para debugging)
 stepper_axis_t horizontal_axis = {0};
 stepper_axis_t vertical_axis = {0};
@@ -111,6 +115,10 @@ ISR(TIMER1_COMPA_vect) {
 			horizontal_axis.current_position--;
 		}
 		
+		if (calibration_mode) {
+			calibration_step_counter++;
+		}
+		
 		// Verificar si llegamos al objetivo
 		if (horizontal_axis.current_position == horizontal_axis.target_position) {
 			update_horizontal_speed(0);
@@ -138,6 +146,10 @@ ISR(TIMER3_COMPA_vect) {
 			vertical_axis.current_position++;
 			} else {
 			vertical_axis.current_position--;
+		}
+		
+		if (calibration_mode) {
+			calibration_step_counter++;
 		}
 		
 		// Verificar si llegamos al objetivo
@@ -414,4 +426,21 @@ void stepper_update_profiles(void) {
 			update_vertical_speed(new_speed);
 		}
 	}
+}
+
+void stepper_start_calibration(void) {
+	calibration_mode = true;
+	calibration_step_counter = 0;
+	uart_send_response("CALIBRATION_MODE_ON");
+}
+
+void stepper_stop_calibration(void) {
+	calibration_mode = false;
+	
+	// Reportar cuántos pasos se movió
+	char report_msg[64];
+	snprintf(report_msg, sizeof(report_msg), "CALIBRATION_STEPS:%ld", calibration_step_counter);
+	uart_send_response(report_msg);
+	
+	calibration_step_counter = 0;
 }

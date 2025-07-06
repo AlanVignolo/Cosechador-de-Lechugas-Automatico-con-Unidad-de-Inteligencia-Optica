@@ -25,6 +25,15 @@ class RobotController:
         self.logger.info("🏠 Iniciando secuencia de homing reactivo...")
         
         try:
+            # 0. Verificar que brazo esté en posición segura
+            print("🤖 Verificando posición del brazo...")
+            if not self.arm.is_in_safe_position():
+                print("   ⚠️  Brazo no está en posición segura. Moviendo...")
+                result = self.arm.ensure_safe_position()
+                if not result["success"]:
+                    return {"success": False, "message": "No se pudo mover brazo a posición segura"}
+                print("   ✅ Brazo en posición segura")
+            
             # Configurar callback para límites
             limit_touched = {"type": None}
             
@@ -154,3 +163,107 @@ class RobotController:
             },
             "gripper": self.gripper_state
         }
+    def calibrate_workspace(self) -> Dict:
+        """Calibración del workspace usando distancias del config"""
+        print("🔧 Iniciando calibración del workspace...")
+        
+        try:
+            # 0. Verificar que brazo esté en posición segura
+            print("🤖 Verificando posición del brazo...")
+            if not self.arm.is_in_safe_position():
+                print("   ⚠️  Brazo no está en posición segura. Moviendo...")
+                result = self.arm.ensure_safe_position()
+                if not result["success"]:
+                    return {"success": False, "message": "No se pudo mover brazo a posición segura"}
+                print("   ✅ Brazo en posición segura")
+            else:
+                print("   ✅ Brazo ya está en posición segura")
+            
+            # 1. Homing inicial
+            print("📍 Paso 1: Homing inicial...")
+            result = self.home_robot()
+            if not result["success"]:
+                return {"success": False, "message": "Error en homing inicial"}
+            time.sleep(2)
+            
+            measurements = {}
+            
+            # 2. Calibrar horizontal (izquierda)
+            print("📏 Paso 2: Calibrando horizontal (izquierda)...")
+            
+            # Configurar velocidades de homing
+            self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
+            time.sleep(0.5)
+            
+            # Activar modo calibración
+            self.cmd.uart.send_command("CS")
+            time.sleep(0.5)
+            
+            # Usar distancia del config
+            distance_mm = RobotConfig.HOMING_DISTANCE_H
+            result = self.cmd.move_xy(-distance_mm, 0)
+            
+            # Esperar límite y capturar pasos
+            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
+            if "LIMIT_H_LEFT" in limit_message:
+                print("   ✅ Límite izquierdo alcanzado")
+                
+                # ⭐ CAPTURAR MENSAJE DE PASOS
+                steps_message = self._wait_for_calibration_steps()
+                if steps_message:
+                    steps = int(steps_message.split("CALIBRATION_STEPS:")[1])
+                    horizontal_mm = steps / RobotConfig.STEPS_PER_MM_H
+                    measurements["horizontal_steps"] = steps
+                    measurements["horizontal_mm"] = round(horizontal_mm, 1)
+                    print(f"      📐 Distancia horizontal: {horizontal_mm:.1f}mm ({steps} pasos)")
+            
+            # 3. Calibrar vertical (abajo)
+            print("📏 Paso 3: Calibrando vertical (abajo)...")
+            
+            # Configurar velocidades de homing
+            self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
+            time.sleep(0.5)
+            
+            # Activar modo calibración
+            self.cmd.uart.send_command("CS")
+            time.sleep(0.5)
+            
+            distance_mm = RobotConfig.HOMING_DISTANCE_V
+            result = self.cmd.move_xy(0, distance_mm)
+            
+            # Esperar límite y capturar pasos
+            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
+            if "LIMIT_V_DOWN" in limit_message:
+                print("   ✅ Límite inferior alcanzado")
+                
+                # ⭐ CAPTURAR MENSAJE DE PASOS
+                steps_message = self._wait_for_calibration_steps()
+                if steps_message:
+                    steps = int(steps_message.split("CALIBRATION_STEPS:")[1])
+                    vertical_mm = steps / RobotConfig.STEPS_PER_MM_V
+                    measurements["vertical_steps"] = steps
+                    measurements["vertical_mm"] = round(vertical_mm, 1)
+                    print(f"      📐 Distancia vertical: {vertical_mm:.1f}mm ({steps} pasos)")
+            
+            # 4. Homing final
+            print("🏠 Paso 4: Homing final...")
+            self.home_robot()
+            
+            return {"success": True, "message": "Calibración completada", "measurements": measurements}
+            
+        except Exception as e:
+            return {"success": False, "message": f"Error: {str(e)}"}
+
+    def _wait_for_calibration_steps(self, timeout: float = 5.0) -> Optional[str]:
+        """Esperar mensaje CALIBRATION_STEPS del micro"""
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            try:
+                message = self.cmd.uart.message_queue.get(timeout=0.5)
+                if "CALIBRATION_STEPS:" in message:
+                    return message
+            except:
+                continue
+        
+        return None

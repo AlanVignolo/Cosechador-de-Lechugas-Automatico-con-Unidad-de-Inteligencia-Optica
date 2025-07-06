@@ -38,5 +38,7 @@ void servo_move_to(uint8_t angle1, uint8_t angle2, uint16_t time_ms);
 void servo_update(void);
 bool servo_is_busy(void);
 uint8_t servo_get_current_position(uint8_t servo_num);
+void stepper_start_calibration(void);
+void stepper_stop_calibration(void);
 
 #endif

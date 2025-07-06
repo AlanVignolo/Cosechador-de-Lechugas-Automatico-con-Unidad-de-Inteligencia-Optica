@@ -1,8 +1,8 @@
 # Estados base del brazo
 ARM_STATES = {
     "movimiento": {
-        "servo1": 0,
-        "servo2": 0,
+        "servo1": 10,
+        "servo2": 10,
         "gripper": "any"
     },
     
@@ -20,8 +20,8 @@ ARM_STATES = {
     
     "depositar_lechuga": {
         "description": "Posición para soltar lechuga",
-        "servo1": 20,
-        "servo2": 100,
+        "servo1": 90,
+        "servo2": 20,
         "gripper": "open"
     }
 }

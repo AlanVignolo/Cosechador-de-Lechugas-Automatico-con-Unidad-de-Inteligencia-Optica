@@ -49,14 +49,14 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": 0,
                     "servo2": 120,
-                    "time_ms": 1000,
+                    "time_ms": 0,
                     "description": "Elevar brazo a posición intermedia"
                 },
                 {
                     "type": "arm_move", 
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 1000,
+                    "time_ms": 1500,
                     "description": "Extender a posición de recolección"
                 },
                 {
@@ -81,7 +81,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 1500,
+                    "time_ms": 0,
                     "description": "Retraer brazo a posición segura"
                 },
                 {
@@ -106,7 +106,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 1500,
+                    "time_ms": 0,
                     "description": "Retraer brazo a posición segura"
                 }
             ]
@@ -122,13 +122,13 @@ class TrajectoryDefinitions:
             "description": "Ir directamente a posición de transporte (con lechuga)",
             "estimated_time": 1.5,
             "steps": [
-                {
-                    "type": "arm_move",
-                    "servo1": initial_state["servo1"] + abs((initial_state["servo1"]-target_state["servo2"])/2),
-                    "servo2": target_state["servo2"],
-                    "time_ms": 1000,
-                    "description": "Mover a posición de transporte seguro - 1er movimiento(gripper cerrado)"
-                },
+                # {
+                #     "type": "arm_move",
+                #     "servo1": initial_state["servo1"] - abs((initial_state["servo1"]-target_state["servo1"])/2),
+                #     "servo2": target_state["servo2"],
+                #     "time_ms": 1000,
+                #     "description": "Mover a posición de transporte seguro - 1er movimiento(gripper cerrado)"
+                # },
                 {
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
@@ -153,7 +153,32 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 1000,
+                    "time_ms": 0,
+                    "description": "Posicionar sobre zona de depósito"
+                },
+                {
+                    "type": "gripper",
+                    "action": "open",
+                    "description": "🔥 ABRIR gripper para soltar lechuga"
+                }
+            ]
+        }
+        
+    @staticmethod
+    def mover_lechuga_to_recoger_lechuga():
+        """Ir a posición para depositar lechuga"""
+        target_state = ARM_STATES["recoger_lechuga"]
+        
+        return {
+            "name": "mover_lechuga_to_recoger_lechuga", 
+            "description": "Posicionar para sembrar lechuga",
+            "estimated_time": 3.0,
+            "steps": [
+                {
+                    "type": "arm_move",
+                    "servo1": target_state["servo1"],
+                    "servo2": target_state["servo2"],
+                    "time_ms": 3000,
                     "description": "Posicionar sobre zona de depósito"
                 },
                 {
@@ -226,22 +251,17 @@ class TrajectoryDefinitions:
                 },
                 {
                     "type": "arm_move",
-                    "servo1": 0,
+                    "servo1": 10,
                     "servo2": 120,
-                    "time_ms": 1000,
+                    "time_ms": 0,
                     "description": "Retraer a posición intermedia segura"
                 },
                 {
                     "type": "arm_move",
-                    "servo1": safe_state["servo1"],  # 0
-                    "servo2": safe_state["servo2"],  # 0
-                    "time_ms": 1000,
+                    "servo1": safe_state["servo1"],  # 10
+                    "servo2": safe_state["servo2"],  # 10
+                    "time_ms": 0,
                     "description": "Bajar a posición segura final"
-                },
-                {
-                    "type": "gripper",
-                    "action": "open",
-                    "description": "🔥 ABRIR gripper al llegar a posición segura"
                 }
             ]
         }
