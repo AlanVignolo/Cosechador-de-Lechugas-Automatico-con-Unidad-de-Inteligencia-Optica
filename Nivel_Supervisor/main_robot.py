@@ -195,21 +195,46 @@ def menu_interactivo(uart_manager):
             print(f"Respuesta: {result['response']}")
             
         elif opcion == '5':
-            print("🏠 INICIANDO SECUENCIA DE HOMING")
-            print("⚠️  ASEGÚRATE DE QUE EL ROBOT TENGA ESPACIO LIBRE")
-            confirmar = input("¿Continuar? (s/N): ")
+            print("🏠 MENÚ DE CALIBRACIÓN")
+            print("1. Homing normal")
+            print("2. 🔧 Calibración completa del workspace")
+            calib_opt = input("Opción: ")
             
-            if confirmar.lower() == 's':
-                result = robot.home_robot()  # ⭐ USAR LA INSTANCIA YA CREADA
+            if calib_opt == '1':
+                # ⭐ HOMING NORMAL EXISTENTE
+                print("🏠 INICIANDO SECUENCIA DE HOMING")
+                print("⚠️  ASEGÚRATE DE QUE EL ROBOT TENGA ESPACIO LIBRE")
+                confirmar = input("¿Continuar? (s/N): ")
                 
-                if result["success"]:
-                    print("✅ HOMING COMPLETADO")
-                    print(f"   Posición actual: {result.get('position', 'N/A')}")
+                if confirmar.lower() == 's':
+                    result = robot.home_robot()
+                    
+                    if result["success"]:
+                        print("✅ HOMING COMPLETADO")
+                        print(f"   Posición actual: {result.get('position', 'N/A')}")
+                    else:
+                        print("❌ ERROR EN HOMING")
+                        print(f"   {result['message']}")
                 else:
-                    print("❌ ERROR EN HOMING")
-                    print(f"   {result['message']}")
+                    print("Homing cancelado")
+                    
+            elif calib_opt == '2':
+                print("🔧 INICIANDO CALIBRACIÓN COMPLETA DEL WORKSPACE")
+                print("⚠️  Esto tomará varios minutos y medirá todo el área de trabajo")
+                confirmar = input("¿Continuar? (s/N): ")
+                
+                if confirmar.lower() == 's':
+                    result = robot.calibrate_workspace()
+                    if result["success"]:
+                        print("✅ CALIBRACIÓN COMPLETADA")
+                        print(f"📊 Medidas: {result['measurements']}")
+                    else:
+                        print("❌ ERROR EN CALIBRACIÓN")
+                        print(f"   {result['message']}")
+                else:
+                    print("Calibración cancelada")
             else:
-                print("Homing cancelado")
+                print("❌ Opción inválida")
             
         elif opcion == '6':
             print("\nControl de Gripper:")

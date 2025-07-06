@@ -32,8 +32,16 @@ void limit_switch_update(void) {
 			debounce_counter[0]++;
 			if (debounce_counter[0] == DEBOUNCE_THRESHOLD) {
 				limits.h_left_triggered = true;
-				// NUEVO: Enviar mensaje al supervisor
+				
+				// Reportar posición cuando toca límite
+				char pos_msg[64];
+				snprintf(pos_msg, sizeof(pos_msg), "POSITION_AT_LIMIT:H=%ld,V=%ld",
+				horizontal_axis.current_position, vertical_axis.current_position);
+				uart_send_response(pos_msg);
 				uart_send_response("LIMIT_H_LEFT_TRIGGERED");
+				
+				// Terminar calibración automáticamente
+				stepper_stop_calibration();
 				
 				if (!horizontal_axis.direction) {  // false = izquierda
 					stepper_stop_horizontal();
@@ -45,13 +53,22 @@ void limit_switch_update(void) {
 		limits.h_left_triggered = false;
 	}
 	
-	// H Right
+	// H Right (Pin 31 - PC6)
 	if (!(pinc_state & (1 << 6))) {
 		if (debounce_counter[1] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[1]++;
 			if (debounce_counter[1] == DEBOUNCE_THRESHOLD) {
 				limits.h_right_triggered = true;
+				
+				// Reportar posición cuando toca límite
+				char pos_msg[64];
+				snprintf(pos_msg, sizeof(pos_msg), "POSITION_AT_LIMIT:H=%ld,V=%ld",
+				horizontal_axis.current_position, vertical_axis.current_position);
+				uart_send_response(pos_msg);
 				uart_send_response("LIMIT_H_RIGHT_TRIGGERED");
+				
+				// Terminar calibración automáticamente
+				stepper_stop_calibration();
 				
 				if (horizontal_axis.direction) {
 					stepper_stop_horizontal();
@@ -63,13 +80,22 @@ void limit_switch_update(void) {
 		limits.h_right_triggered = false;
 	}
 	
-	// V down
+	// V Down (Pin 32 - PC5)
 	if (!(pinc_state & (1 << 5))) {
 		if (debounce_counter[2] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[2]++;
 			if (debounce_counter[2] == DEBOUNCE_THRESHOLD) {
 				limits.v_up_triggered = true;
+				
+				// Reportar posición cuando toca límite
+				char pos_msg[64];
+				snprintf(pos_msg, sizeof(pos_msg), "POSITION_AT_LIMIT:H=%ld,V=%ld",
+				horizontal_axis.current_position, vertical_axis.current_position);
+				uart_send_response(pos_msg);
 				uart_send_response("LIMIT_V_DOWN_TRIGGERED");
+				
+				// Terminar calibración automáticamente
+				stepper_stop_calibration();
 				
 				if (vertical_axis.direction) {
 					stepper_stop_vertical();
@@ -81,13 +107,22 @@ void limit_switch_update(void) {
 		limits.v_up_triggered = false;
 	}
 	
-	// V up
+	// V Up (Pin 33 - PC4)
 	if (!(pinc_state & (1 << 4))) {
 		if (debounce_counter[3] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[3]++;
 			if (debounce_counter[3] == DEBOUNCE_THRESHOLD) {
 				limits.v_down_triggered = true;
+				
+				// Reportar posición cuando toca límite
+				char pos_msg[64];
+				snprintf(pos_msg, sizeof(pos_msg), "POSITION_AT_LIMIT:H=%ld,V=%ld",
+				horizontal_axis.current_position, vertical_axis.current_position);
+				uart_send_response(pos_msg);
 				uart_send_response("LIMIT_V_UP_TRIGGERED");
+				
+				// Terminar calibración automáticamente
+				stepper_stop_calibration();
 				
 				if (!vertical_axis.direction) {
 					stepper_stop_vertical();

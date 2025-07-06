@@ -171,6 +171,16 @@ void uart_parse_command(const char* cmd) {
 		snprintf(response, sizeof(response), "GRIPPER_STATUS:%s,%d", state_str, position);
 	}
 	
+	else if (cmd[0] == 'C' && cmd[1] == 'S') {  // CS - Calibration Start
+		stepper_start_calibration();
+		snprintf(response, sizeof(response), "OK:CALIBRATION_STARTED");
+	}
+
+	else if (cmd[0] == 'C' && cmd[1] == 'E') {  // CE - Calibration End
+		stepper_stop_calibration();
+		snprintf(response, sizeof(response), "OK:CALIBRATION_ENDED");
+	}
+	
 	else {
 		snprintf(response, sizeof(response), "ERR:UNKNOWN_CMD:%s", cmd);
 	}

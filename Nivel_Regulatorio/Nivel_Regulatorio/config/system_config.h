@@ -55,8 +55,8 @@
 // Motor 28BYJ-48 tiene 2048 pasos/revolución con reducción
 #define GRIPPER_STEPS_PER_REV   2048
 // Configuración del gripper
-#define GRIPPER_STEPS_TO_CLOSE  1150    // Pasos para cerrar completamente
-#define GRIPPER_STEP_DELAY      2000    // 2ms entre pasos (en microsegundos)
+#define GRIPPER_STEPS_TO_CLOSE  1700    // Pasos para cerrar completamente
+#define GRIPPER_STEP_DELAY      500    // 2ms entre pasos (en microsegundos)
 // Velocidades del gripper (en microsegundos)
 #define GRIPPER_MIN_DELAY       2000    // 2ms mínimo
 #define GRIPPER_MAX_DELAY       10000   // 10ms máximo
