@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "../drivers/uart_driver.h"
 
 // Configuración de servos - Timer5
 #define SERVO1_PIN          46  // PL3/OC5A

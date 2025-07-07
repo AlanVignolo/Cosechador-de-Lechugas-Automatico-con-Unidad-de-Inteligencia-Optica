@@ -181,6 +181,31 @@ void uart_parse_command(const char* cmd) {
 		snprintf(response, sizeof(response), "OK:CALIBRATION_ENDED");
 	}
 	
+	else if (cmd[0] == 'S' && cmd[1] == '?') {  // S? - Status query completo
+		// Enviar estado completo del sistema
+		int32_t h_pos, v_pos;
+		stepper_get_position(&h_pos, &v_pos);
+		
+		uint8_t servo1_pos = servo_get_current_position(1);
+		uint8_t servo2_pos = servo_get_current_position(2);
+		
+		gripper_state_t gripper_state = gripper_get_state();
+		int16_t gripper_pos = gripper_get_position();
+		
+		const char* gripper_str;
+		switch(gripper_state) {
+			case GRIPPER_OPEN: gripper_str = "OPEN"; break;
+			case GRIPPER_CLOSED: gripper_str = "CLOSED"; break;
+			case GRIPPER_OPENING: gripper_str = "OPENING"; break;
+			case GRIPPER_CLOSING: gripper_str = "CLOSING"; break;
+			default: gripper_str = "IDLE"; break;
+		}
+		
+		snprintf(response, sizeof(response),
+		"SYSTEM_STATE:H=%ld,V=%ld,S1=%d,S2=%d,G=%s,GP=%d",
+		h_pos, v_pos, servo1_pos, servo2_pos, gripper_str, gripper_pos);
+	}
+	
 	else {
 		snprintf(response, sizeof(response), "ERR:UNKNOWN_CMD:%s", cmd);
 	}

@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "../drivers/uart_driver.h"
 
 // Pines del motor 28BYJ-48
 #define GRIPPER_IN1_PIN     34  // PC3

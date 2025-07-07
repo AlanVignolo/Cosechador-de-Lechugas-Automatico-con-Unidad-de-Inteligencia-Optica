@@ -153,10 +153,9 @@ def menu_control_brazo(arm_controller):
 
         input("\n📱 Presiona Enter para continuar...")
 
-def menu_interactivo(uart_manager):
-    """Menú que usa una conexión UART ya establecida"""
-    cmd_manager = CommandManager(uart_manager)
-    robot = RobotController(cmd_manager)  # ⭐ CREAR UNA SOLA VEZ AL PRINCIPIO
+def menu_interactivo(uart_manager, robot):
+
+    cmd_manager = robot.cmd
     
     while True:
         print("\n" + "="*50)
@@ -276,30 +275,36 @@ def menu_interactivo(uart_manager):
     uart.disconnect()
 
 if __name__ == "__main__":
-    print("🚀 CLAUDIO - Control Supervisor del Robot")
+    print("CLAUDIO - Control Supervisor del Robot")
     print("=" * 50)
     
-    # Verificar configuración
     print(f"Puerto: {RobotConfig.SERIAL_PORT}")
     print(f"Baudios: {RobotConfig.BAUD_RATE}")
     
-    print("🔌 Conectando al robot...")
+    print("Conectando al robot...")
     
-    # UNA SOLA conexión para todo
     uart = UARTManager(RobotConfig.SERIAL_PORT, RobotConfig.BAUD_RATE)
     
     if uart.connect():
-        print("✅ Conectado al robot")
+        print("Conectado al robot")
         
-        # Test rápido
+        # Crear command manager y robot controller
         cmd_manager = CommandManager(uart)
+        
+        # Test de comunicación básica
         result = cmd_manager.emergency_stop()
         if result["success"]:
-            print("✅ Comunicación OK")
-        
-        # Ir directo al menú (sin desconectar)
-        menu_interactivo(uart)
+            print("Comunicación OK")
+            
+            # Crear robot controller (esto solicitará estado inicial)
+            robot = RobotController(cmd_manager)
+            print("Sistema inicializado")
+            
+            # Ir al menú interactivo
+            menu_interactivo(uart, robot)
+        else:
+            print("Error en comunicación inicial")
         
         uart.disconnect()
     else:
-        print("❌ No se pudo conectar")
+        print("No se pudo conectar")
