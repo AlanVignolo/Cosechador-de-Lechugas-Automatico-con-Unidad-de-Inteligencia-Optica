@@ -13,38 +13,31 @@ static uint8_t cmd_index = 0;
 static bool cmd_started = false;
 
 void uart_init(uint32_t baud_rate) {
-	// Calcular UBRR con mejor precisión para ATmega2560
 	uint16_t ubrr_value;
 	
-	// Para 115200 baud con 16MHz, usar UBRR = 8 pero con U2X para mejor precisión
 	if (baud_rate == 115200) {
-		// Usar modo de doble velocidad para mejor precisión
 		UCSR0A = (1 << U2X0);
-		ubrr_value = (F_CPU / (8UL * baud_rate)) - 1;  // U2X=1, divisor es 8
+		ubrr_value = (F_CPU / (8UL * baud_rate)) - 1;
 		} else {
 		UCSR0A = 0;
-		ubrr_value = (F_CPU / (16UL * baud_rate)) - 1; // U2X=0, divisor es 16
+		ubrr_value = (F_CPU / (16UL * baud_rate)) - 1;
 	}
 	
-	// Configurar baud rate
 	UBRR0H = (uint8_t)(ubrr_value >> 8);
 	UBRR0L = (uint8_t)ubrr_value;
 	
-	// Habilitar transmisor, receptor e interrupción RX
 	UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
-	
-	// Configurar formato: 8 bits, 1 stop, sin paridad
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 	
-	// Limpiar variables
 	cmd_index = 0;
 	cmd_started = false;
 	
-	// Limpiar cualquier dato pendiente
 	while (UCSR0A & (1 << RXC0)) {
 		volatile uint8_t dummy = UDR0;
-		(void)dummy; // Evitar warning
+		(void)dummy;
 	}
+	
+	uart_send_response("SYSTEM_INITIALIZED");
 	uart_send_system_status();
 }
 

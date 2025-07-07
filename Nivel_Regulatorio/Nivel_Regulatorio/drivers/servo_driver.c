@@ -117,35 +117,22 @@ static void servo_set_position_raw(uint8_t servo_num, uint8_t angle) {
 	uart_send_response(msg);
 }
 
-void servo_set_position(uint8_t servo_num, uint8_t angle) {
-	servo_set_position_raw(servo_num, angle);
-	
-	if (servo_num == 1) {
-		servo_ctrl.current_pos1 = angle;
-		} else if (servo_num == 2) {
-		servo_ctrl.current_pos2 = angle;
-	}
-	
-	servo_save_positions();
-}
-
 void servo_move_to(uint8_t angle1, uint8_t angle2, uint16_t time_ms) {
-	// Aplicar límites
 	if (angle1 < SERVO1_MIN_ANGLE) angle1 = SERVO1_MIN_ANGLE;
 	if (angle1 > SERVO1_MAX_ANGLE) angle1 = SERVO1_MAX_ANGLE;
 	if (angle2 < SERVO2_MIN_ANGLE) angle2 = SERVO2_MIN_ANGLE;
 	if (angle2 > SERVO2_MAX_ANGLE) angle2 = SERVO2_MAX_ANGLE;
 	
 	if (time_ms == 0) {
-		// Movimiento instantáneo
 		servo_ctrl.current_pos1 = angle1;
 		servo_ctrl.current_pos2 = angle2;
 		servo_set_position_raw(1, angle1);
 		servo_set_position_raw(2, angle2);
 		servo_save_positions();
 		servo_ctrl.state = SERVO_IDLE;
+		
+		uart_send_response("SERVO_MOVE_COMPLETED:INSTANT");
 		} else {
-		// CRÍTICO: Asegurar que start_pos use las posiciones ACTUALES
 		servo_ctrl.start_pos1 = servo_ctrl.current_pos1;
 		servo_ctrl.start_pos2 = servo_ctrl.current_pos2;
 		servo_ctrl.target_pos1 = angle1;
@@ -153,6 +140,10 @@ void servo_move_to(uint8_t angle1, uint8_t angle2, uint16_t time_ms) {
 		servo_ctrl.start_time_ms = servo_get_millis();
 		servo_ctrl.duration_ms = time_ms;
 		servo_ctrl.state = SERVO_MOVING;
+		
+		char msg[64];
+		snprintf(msg, sizeof(msg), "SERVO_MOVE_STARTED:%d,%d,%d", angle1, angle2, time_ms);
+		uart_send_response(msg);
 	}
 }
 
@@ -163,18 +154,19 @@ void servo_update(void) {
 	uint32_t elapsed_time = current_time - servo_ctrl.start_time_ms;
 	
 	if (elapsed_time >= servo_ctrl.duration_ms) {
-		// Movimiento completado
 		servo_ctrl.current_pos1 = servo_ctrl.target_pos1;
 		servo_ctrl.current_pos2 = servo_ctrl.target_pos2;
 		servo_set_position_raw(1, servo_ctrl.target_pos1);
 		servo_set_position_raw(2, servo_ctrl.target_pos2);
 		servo_save_positions();
 		servo_ctrl.state = SERVO_IDLE;
+		
+		char msg[64];
+		snprintf(msg, sizeof(msg), "SERVO_MOVE_COMPLETED:%d,%d", servo_ctrl.target_pos1, servo_ctrl.target_pos2);
+		uart_send_response(msg);
 		} else {
-		// Interpolación lineal
 		float progress = (float)elapsed_time / (float)servo_ctrl.duration_ms;
 		
-		// Calcular posiciones actuales
 		uint8_t new_pos1 = servo_ctrl.start_pos1 +
 		(uint8_t)((servo_ctrl.target_pos1 - servo_ctrl.start_pos1) * progress);
 		uint8_t new_pos2 = servo_ctrl.start_pos2 +
@@ -187,6 +179,22 @@ void servo_update(void) {
 			servo_set_position_raw(2, new_pos2);
 		}
 	}
+}
+
+void servo_set_position(uint8_t servo_num, uint8_t angle) {
+	servo_set_position_raw(servo_num, angle);
+	
+	if (servo_num == 1) {
+		servo_ctrl.current_pos1 = angle;
+		} else if (servo_num == 2) {
+		servo_ctrl.current_pos2 = angle;
+	}
+	
+	servo_save_positions();
+	
+	char msg[64];
+	snprintf(msg, sizeof(msg), "SERVO_MOVE_COMPLETED:%d,%d", servo_num, angle);
+	uart_send_response(msg);
 }
 
 bool servo_is_busy(void) {

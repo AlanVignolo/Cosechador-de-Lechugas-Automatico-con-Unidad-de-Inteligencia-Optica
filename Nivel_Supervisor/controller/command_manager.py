@@ -13,6 +13,10 @@ class CommandManager:
         command = f"M:{x_mm},{y_mm}"
         return self.uart.send_command(command)
     
+    def get_system_status(self) -> Dict:
+        """Solicitar estado completo del sistema"""
+        return self.uart.send_command("S?")
+    
     def set_velocities(self, h_speed: int, v_speed: int) -> Dict:
         """Configurar velocidades máximas"""
         command = f"V:{h_speed},{v_speed}"

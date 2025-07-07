@@ -130,8 +130,6 @@ void uart_send_gripper_status(void) {
 }
 
 void gripper_open(void) {
-	uart_send_response("DEBUG:DENTRO_GRIPPER_OPEN");
-	
 	if (gripper.state == GRIPPER_OPEN) {
 		uart_send_response("GRIPPER_ALREADY_OPEN");
 		return;
@@ -140,19 +138,16 @@ void gripper_open(void) {
 	steps_to_do = 0;
 	step_direction = 0;
 	
-	// ? INVERTIDO: Para abrir, ir hacia 1150 pasos
 	steps_to_do = GRIPPER_STEPS_TO_CLOSE - gripper.current_steps;
-	step_direction = 1;  // Forward hacia 1150 (ABIERTO físicamente)
+	step_direction = 1;
 	gripper.state = GRIPPER_OPENING;
 	gripper.target_state = GRIPPER_OPEN;
 	gripper_tick_counter = 0;
 	
-	uart_send_response("GRIPPER_OPENING_STARTED");
+	uart_send_response("GRIPPER_ACTION_STARTED:OPENING");
 }
 
 void gripper_close(void) {
-	uart_send_response("DEBUG:DENTRO_GRIPPER_CLOSE");
-	
 	if (gripper.state == GRIPPER_CLOSED) {
 		uart_send_response("GRIPPER_ALREADY_CLOSED");
 		return;
@@ -161,90 +156,96 @@ void gripper_close(void) {
 	steps_to_do = 0;
 	step_direction = 0;
 	
-	// ? INVERTIDO: Para cerrar, ir hacia 0 pasos
 	steps_to_do = gripper.current_steps;
-	step_direction = -1;  // Backward hacia 0 (CERRADO físicamente)
+	step_direction = -1;
 	gripper.state = GRIPPER_CLOSING;
 	gripper.target_state = GRIPPER_CLOSED;
 	gripper_tick_counter = 0;
 	
-	uart_send_response("GRIPPER_CLOSING_STARTED");
+	uart_send_response("GRIPPER_ACTION_STARTED:CLOSING");
+}
+
+void gripper_toggle(void) {
+	if (gripper.state == GRIPPER_OPENING || gripper.state == GRIPPER_CLOSING) {
+		uart_send_response("GRIPPER_BUSY");
+		return;
+	}
+	
+	if (gripper.state == GRIPPER_CLOSED || gripper.current_steps < GRIPPER_STEPS_TO_CLOSE / 2) {
+		steps_to_do = GRIPPER_STEPS_TO_CLOSE - gripper.current_steps;
+		step_direction = 1;
+		gripper.state = GRIPPER_OPENING;
+		gripper.target_state = GRIPPER_OPEN;
+		uart_send_response("GRIPPER_ACTION_STARTED:OPENING");
+		} else {
+		steps_to_do = gripper.current_steps;
+		step_direction = -1;
+		gripper.state = GRIPPER_CLOSING;
+		gripper.target_state = GRIPPER_CLOSED;
+		uart_send_response("GRIPPER_ACTION_STARTED:CLOSING");
+	}
+	
+	gripper_tick_counter = 0;
 }
 
 void gripper_update(void) {
-	// Si no hay trabajo que hacer, salir
-    if (steps_to_do == 0 || step_direction == 0) {
-	    if (gripper.state == GRIPPER_OPENING || gripper.state == GRIPPER_CLOSING) {
-		    // Movimiento completado
-		    disable_motor();
-		    gripper.state = gripper.target_state;
-		    gripper_save_state();  // ? Guardar estado final
-		    
-		    // Reportar estado final
-		    if (gripper.state == GRIPPER_OPEN) {
-			    uart_send_response("GRIPPER_NOW_OPEN");
-			    } else if (gripper.state == GRIPPER_CLOSED) {
-			    uart_send_response("GRIPPER_NOW_CLOSED");
-		    }
-	    }
-	    return;
-    }
+	if (steps_to_do == 0 || step_direction == 0) {
+		if (gripper.state == GRIPPER_OPENING || gripper.state == GRIPPER_CLOSING) {
+			disable_motor();
+			gripper.state = gripper.target_state;
+			gripper_save_state();
+			
+			if (gripper.state == GRIPPER_OPEN) {
+				uart_send_response("GRIPPER_ACTION_COMPLETED:OPEN");
+				} else if (gripper.state == GRIPPER_CLOSED) {
+				uart_send_response("GRIPPER_ACTION_COMPLETED:CLOSED");
+			}
+		}
+		return;
+	}
 	
-	// Incrementar contador
 	gripper_tick_counter++;
 	
-	// Verificar si es tiempo de dar un paso
 	if (gripper_tick_counter < ticks_per_step) {
-		// Mantener el patrón actual aplicado
 		apply_pattern(gripper.phase_index);
 		return;
 	}
 	
-	// Reset counter
 	gripper_tick_counter = 0;
 	
 	if (step_direction > 0) {
-		// Forward
 		gripper.phase_index = (gripper.phase_index + 1) % 8;
-		gripper.current_steps++;  // ? Actualizar posición
+		gripper.current_steps++;
 		} else {
-		// Backward
 		if (gripper.phase_index == 0) {
 			gripper.phase_index = 7;
 			} else {
 			gripper.phase_index--;
 		}
-		gripper.current_steps--;  // ? Actualizar posición
+		gripper.current_steps--;
 	}
 	
-	// ? ASEGURAR QUE NO SE PASE DE LOS LÍMITES
 	if (gripper.current_steps < 0) gripper.current_steps = 0;
 	if (gripper.current_steps > GRIPPER_STEPS_TO_CLOSE) gripper.current_steps = GRIPPER_STEPS_TO_CLOSE;
-
 	
-	// Aplicar el nuevo patrón
 	apply_pattern(gripper.phase_index);
 	
-	// NUEVO: Pequeño delay para estabilizar el motor
-	// Esto asegura que el patrón se mantenga el tiempo suficiente
 	for(volatile uint16_t i = 0; i < 1000; i++) {
 		__asm__ __volatile__ ("nop");
 	}
 	
-	// Decrementar contador
 	steps_to_do--;
 	
 	if (steps_to_do == 0) {
 		disable_motor();
 		step_direction = 0;
 		gripper.state = gripper.target_state;
-		gripper_save_state();  // Guardar nuevo estado
-	
-		// Reportar estado final
+		gripper_save_state();
+		
 		if (gripper.state == GRIPPER_OPEN) {
-			uart_send_response("GRIPPER_NOW_OPEN");
+			uart_send_response("GRIPPER_ACTION_COMPLETED:OPEN");
 			} else if (gripper.state == GRIPPER_CLOSED) {
-			uart_send_response("GRIPPER_NOW_CLOSED");
+			uart_send_response("GRIPPER_ACTION_COMPLETED:CLOSED");
 		}
 	}
 }
@@ -316,44 +317,4 @@ static void gripper_load_state(void) {
 		
 		uart_send_response("EEPROM_FIRST_TIME:CLOSED");
 	}
-}
-
-void gripper_toggle(void) {
-	uart_send_response("DEBUG:GRIPPER_TOGGLE_CALLED");
-	
-	// Si ya está en movimiento, ignorar
-	if (gripper.state == GRIPPER_OPENING || gripper.state == GRIPPER_CLOSING) {
-		uart_send_response("GRIPPER_BUSY");
-		return;
-	}
-	
-	// Determinar acción basada en estado actual
-	if (gripper.state == GRIPPER_CLOSED || gripper.current_steps < GRIPPER_STEPS_TO_CLOSE / 2) {
-		// Está cerrado -> ABRIR (ir hacia 1150)
-		steps_to_do = GRIPPER_STEPS_TO_CLOSE - gripper.current_steps;
-		step_direction = 1;  // Forward hacia 1150 (abierto)
-		gripper.state = GRIPPER_OPENING;
-		gripper.target_state = GRIPPER_OPEN;
-		
-		uart_send_response("GRIPPER_OPENING_AUTO");
-		
-		} else {
-		// Está abierto -> CERRAR (ir hacia 0)
-		steps_to_do = gripper.current_steps;
-		step_direction = -1;  // Backward hacia 0 (cerrado)
-		gripper.state = GRIPPER_CLOSING;
-		gripper.target_state = GRIPPER_CLOSED;
-		
-		uart_send_response("GRIPPER_CLOSING_AUTO");
-	}
-	
-	gripper_tick_counter = 0;
-	
-	// Debug
-	char debug_msg[80];
-	snprintf(debug_msg, sizeof(debug_msg), "TOGGLE_CONFIG:current=%d,target=%d,steps_todo=%d,dir=%d",
-	gripper.current_steps,
-	(step_direction == 1) ? GRIPPER_STEPS_TO_CLOSE : 0,
-	steps_to_do, step_direction);
-	uart_send_response(debug_msg);
 }

@@ -44,4 +44,6 @@ void stepper_update_profiles(void);
 static int32_t abs32(int32_t x);
 void stepper_stop_horizontal(void);
 void stepper_stop_vertical(void);
+void stepper_start_calibration(void);
+void stepper_stop_calibration(void);
 #endif

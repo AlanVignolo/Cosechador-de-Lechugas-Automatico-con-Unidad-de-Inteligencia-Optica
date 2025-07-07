@@ -101,14 +101,10 @@ static void update_vertical_speed(uint16_t speed) {
 
 // ISR Timer1 - motores horizontales (SIN DELAYS)
 ISR(TIMER1_COMPA_vect) {
-	// Alternar estado HIGH/LOW
 	if (h_step_state) {
-		// Era HIGH, ahora poner LOW
-		PORTB &= ~((1 << 5) | (1 << 6));  // Pins 11, 12 LOW
+		PORTB &= ~((1 << 5) | (1 << 6));
 		h_step_state = false;
 		
-		// Solo contar pasos cuando terminamos el pulso (flanco descendente)
-		// Actualizar posición
 		if (horizontal_axis.direction) {
 			horizontal_axis.current_position++;
 			} else {
@@ -119,29 +115,30 @@ ISR(TIMER1_COMPA_vect) {
 			calibration_step_counter++;
 		}
 		
-		// Verificar si llegamos al objetivo
 		if (horizontal_axis.current_position == horizontal_axis.target_position) {
 			update_horizontal_speed(0);
 			horizontal_axis.state = STEPPER_IDLE;
 			motion_profile_reset(&horizontal_axis.profile);
+			
+			if (vertical_axis.state == STEPPER_IDLE) {
+				char msg[64];
+				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld",
+				horizontal_axis.current_position, vertical_axis.current_position);
+				uart_send_response(msg);
+			}
+			stepper_stop_horizontal();
 		}
 		} else {
-		// Era LOW, ahora poner HIGH
-		PORTB |= (1 << 5) | (1 << 6);     // Pins 11, 12 HIGH
+		PORTB |= (1 << 5) | (1 << 6);
 		h_step_state = true;
 	}
 }
 
-// ISR Timer3 - motor vertical (SIN DELAYS)
 ISR(TIMER3_COMPA_vect) {
-	// Alternar estado HIGH/LOW
 	if (v_step_state) {
-		// Era HIGH, ahora poner LOW
-		PORTE &= ~(1 << 3);  // Pin 5 LOW
+		PORTE &= ~(1 << 3);
 		v_step_state = false;
 		
-		// Solo contar pasos cuando terminamos el pulso (flanco descendente)
-		// Actualizar posición
 		if (vertical_axis.direction) {
 			vertical_axis.current_position++;
 			} else {
@@ -152,15 +149,21 @@ ISR(TIMER3_COMPA_vect) {
 			calibration_step_counter++;
 		}
 		
-		// Verificar si llegamos al objetivo
 		if (vertical_axis.current_position == vertical_axis.target_position) {
 			update_vertical_speed(0);
 			vertical_axis.state = STEPPER_IDLE;
 			motion_profile_reset(&vertical_axis.profile);
+			
+			if (horizontal_axis.state == STEPPER_IDLE) {
+				char msg[64];
+				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld",
+				horizontal_axis.current_position, vertical_axis.current_position);
+				uart_send_response(msg);
+			}
+			stepper_stop_vertical();
 		}
 		} else {
-		// Era LOW, ahora poner HIGH
-		PORTE |= (1 << 3);   // Pin 5 HIGH
+		PORTE |= (1 << 3);
 		v_step_state = true;
 	}
 }
@@ -259,95 +262,75 @@ void stepper_move_relative(int32_t h_steps, int32_t v_steps) {
 }
 
 void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
-	// Parar cualquier movimiento previo
 	stepper_stop_all();
 	
-	// Configurar objetivos
 	horizontal_axis.target_position = h_pos;
 	vertical_axis.target_position = v_pos;
 	
-	// Calcular distancias
 	int32_t h_distance = abs32(h_pos - horizontal_axis.current_position);
 	int32_t v_distance = abs32(v_pos - vertical_axis.current_position);
 	
-	// Configurar direcciones
 	if (h_pos > horizontal_axis.current_position) {
 		horizontal_axis.direction = true;
-		PORTA &= ~(1 << 0);  // DIR1 LOW
-		PORTA |= (1 << 2);   // DIR2 HIGH
+		PORTA &= ~(1 << 0);
+		PORTA |= (1 << 2);
 		} else if (h_pos < horizontal_axis.current_position) {
 		horizontal_axis.direction = false;
-		PORTA |= (1 << 0);   // DIR1 HIGH
-		PORTA &= ~(1 << 2);  // DIR2 LOW
+		PORTA |= (1 << 0);
+		PORTA &= ~(1 << 2);
 	}
 
 	if (v_pos > vertical_axis.current_position) {
 		vertical_axis.direction = true;
-		PORTA &= ~(1 << 4);  // DIR pin LOW
+		PORTA &= ~(1 << 4);
 		} else if (v_pos < vertical_axis.current_position) {
 		vertical_axis.direction = false;
-		PORTA |= (1 << 4);   // DIR pin HIGH
+		PORTA |= (1 << 4);
 	}
 	
 	uint16_t h_speed_adjusted = horizontal_axis.max_speed;
 	uint16_t v_speed_adjusted = vertical_axis.max_speed;
 	
-	// Solo sincronizar si ambos ejes se mueven
 	if (h_distance > 0 && v_distance > 0 && horizontal_axis.enabled && vertical_axis.enabled) {
-		
-		// MÉTODO SIMPLE: La velocidad es proporcional a la distancia
-		// El que tiene que recorrer más distancia va más rápido
-		
-		// Calcular qué eje tiene que recorrer más
 		if (h_distance > v_distance) {
-			// H tiene más distancia, V debe ir más lento
-			// Proporción: v_speed = h_speed * (v_distance / h_distance)
 			v_speed_adjusted = (uint32_t)horizontal_axis.max_speed * v_distance / h_distance;
 			h_speed_adjusted = horizontal_axis.max_speed;
 			
-			// Límite mínimo para V
 			if (v_speed_adjusted < 1000) v_speed_adjusted = 1000;
 			
-			// Si la velocidad calculada excede el máximo de V, entonces reducir H
 			if (v_speed_adjusted > vertical_axis.max_speed) {
-				// Escalar ambos proporcionalmente
 				h_speed_adjusted = (uint32_t)horizontal_axis.max_speed * vertical_axis.max_speed / v_speed_adjusted;
 				v_speed_adjusted = vertical_axis.max_speed;
 			}
-			
 			} else if (v_distance > h_distance) {
-			// V tiene más distancia, H debe ir más lento
 			h_speed_adjusted = (uint32_t)vertical_axis.max_speed * h_distance / v_distance;
 			v_speed_adjusted = vertical_axis.max_speed;
 			
-			// Límite mínimo para H
 			if (h_speed_adjusted < 1000) h_speed_adjusted = 1000;
 			
-			// Si la velocidad calculada excede el máximo de H, entonces reducir V
 			if (h_speed_adjusted > horizontal_axis.max_speed) {
-				// Escalar ambos proporcionalmente
 				v_speed_adjusted = (uint32_t)vertical_axis.max_speed * horizontal_axis.max_speed / h_speed_adjusted;
 				h_speed_adjusted = horizontal_axis.max_speed;
 			}
 		}
-		// Si las distancias son iguales, mantener velocidades originales
 	}
 	
-	// Configurar perfiles de movimiento con velocidades ajustadas
+	bool movement_started = false;
+	
 	if (h_distance > 0 && horizontal_axis.enabled) {
 		bool h_dir = (h_pos > horizontal_axis.current_position);
 		if (!limit_switch_check_h_movement(h_dir)) {
 			horizontal_axis.target_position = horizontal_axis.current_position;
 			h_distance = 0;
-			} 
-		else {
+			} else {
 			motion_profile_setup(&horizontal_axis.profile,
 			horizontal_axis.current_position,
 			h_pos,
-			h_speed_adjusted,  // Velocidad ajustada
+			h_speed_adjusted,
 			horizontal_axis.acceleration);
 			horizontal_axis.state = STEPPER_MOVING;
 			horizontal_axis.current_speed = 0;
+			movement_started = true;
 		}
 	}
 	
@@ -356,16 +339,22 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 		if (!limit_switch_check_v_movement(v_dir)) {
 			vertical_axis.target_position = vertical_axis.current_position;
 			v_distance = 0;
-			} 
-		else {
+			} else {
 			motion_profile_setup(&vertical_axis.profile,
 			vertical_axis.current_position,
 			v_pos,
-			v_speed_adjusted,  // Velocidad ajustada
+			v_speed_adjusted,
 			vertical_axis.acceleration);
 			vertical_axis.state = STEPPER_MOVING;
 			vertical_axis.current_speed = 0;
+			movement_started = true;
 		}
+	}
+	
+	if (movement_started) {
+		char msg[64];
+		snprintf(msg, sizeof(msg), "STEPPER_MOVE_STARTED:%ld,%ld", h_pos, v_pos);
+		uart_send_response(msg);
 	}
 }
 
@@ -431,15 +420,14 @@ void stepper_update_profiles(void) {
 void stepper_start_calibration(void) {
 	calibration_mode = true;
 	calibration_step_counter = 0;
-	uart_send_response("CALIBRATION_MODE_ON");
+	uart_send_response("CALIBRATION_STARTED");
 }
 
 void stepper_stop_calibration(void) {
 	calibration_mode = false;
 	
-	// Reportar cuántos pasos se movió
 	char report_msg[64];
-	snprintf(report_msg, sizeof(report_msg), "CALIBRATION_STEPS:%ld", calibration_step_counter);
+	snprintf(report_msg, sizeof(report_msg), "CALIBRATION_COMPLETED:%ld", calibration_step_counter);
 	uart_send_response(report_msg);
 	
 	calibration_step_counter = 0;
