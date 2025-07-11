@@ -3,7 +3,7 @@ import time
 import threading
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from models import EstadoJardin, HistorialAcciones, ComandosPendientes, LecturasSensores
+from .models import EstadoJardin, HistorialAcciones, ComandosPendientes, LecturasSensores
 from typing import List, Dict, Optional
 import random
 

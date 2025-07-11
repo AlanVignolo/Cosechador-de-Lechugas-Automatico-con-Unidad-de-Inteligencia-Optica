@@ -1,6 +1,6 @@
 from typing import Dict, Tuple, Optional
-from .command_manager import CommandManager
-from .arm_controller import ArmController
+from controller.command_manager import CommandManager
+from controller.arm_controller import ArmController
 from config.robot_config import RobotConfig
 import logging
 import time
