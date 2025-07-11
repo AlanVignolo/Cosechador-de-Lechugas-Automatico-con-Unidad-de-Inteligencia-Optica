@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/manteca"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Título -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MODO DESARROLLADOR"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/verde_oscuro"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="sans-serif-medium" />
+
+        <!-- Estado del Robot -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/blanco"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ESTADO DEL ROBOT"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tv_servo1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Servo 1: --°"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_servo2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Servo 2: --°"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tv_estado_brazo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Estado: --"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_gripper"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Gripper: --"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tv_posicion_x"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="X actual: -- mm"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_posicion_y"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Y actual: -- mm"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tv_max_x"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="X máx: -- mm"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_max_y"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Y máx: -- mm"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_comunicacion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Comunicación: --"
+                android:textColor="@color/rojo_apagar"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_actualizar"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:text="ACTUALIZAR ESTADO"
+                android:textColor="@color/blanco"
+                android:background="@color/verde_oscuro"
+                android:layout_marginTop="8dp"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Mover a posición X,Y -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/blanco"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MOVER A POSICIÓN X,Y"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="X (mm):"
+                        android:textColor="@color/verde_oscuro"
+                        android:textSize="14sp" />
+
+                    <EditText
+                        android:id="@+id/et_mover_x"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:inputType="numberDecimal|numberSigned"
+                        android:hint="0.0"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Y (mm):"
+                        android:textColor="@color/verde_oscuro"
+                        android:textSize="14sp" />
+
+                    <EditText
+                        android:id="@+id/et_mover_y"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:inputType="numberDecimal|numberSigned"
+                        android:hint="0.0"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_mover_xy"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="ENVIAR"
+                android:textColor="@color/blanco"
+                android:background="@color/verde_oscuro"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Referenciación -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/blanco"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="REFERENCIACIÓN"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_homing"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="HOMING"
+                    android:textColor="@color/blanco"
+                    android:background="@color/verde_oscuro"
+                    android:layout_marginEnd="8dp"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btn_referencia_completa"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="REFERENCIA COMPLETA"
+                    android:textColor="@color/blanco"
+                    android:background="@color/verde_oscuro"
+                    android:layout_marginStart="8dp"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Control Gripper -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/blanco"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CONTROL GRIPPER"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_gripper_abrir"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="ABRIR"
+                    android:textColor="@color/blanco"
+                    android:background="@color/verde_oscuro"
+                    android:layout_marginEnd="8dp"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btn_gripper_cerrar"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="CERRAR"
+                    android:textColor="@color/blanco"
+                    android:background="@color/verde_oscuro"
+                    android:layout_marginStart="8dp"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Control del Brazo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/blanco"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CONTROL DEL BRAZO"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Movimiento Suave -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Movimiento Suave:"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Servo1:"
+                        android:textColor="@color/verde_oscuro"
+                        android:textSize="12sp" />
+
+                    <EditText
+                        android:id="@+id/et_servo1"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:inputType="number"
+                        android:hint="0-180"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Servo2:"
+                        android:textColor="@color/verde_oscuro"
+                        android:textSize="12sp" />
+
+                    <EditText
+                        android:id="@+id/et_servo2"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:inputType="number"
+                        android:hint="0-180"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tiempo (ms):"
+                        android:textColor="@color/verde_oscuro"
+                        android:textSize="12sp" />
+
+                    <EditText
+                        android:id="@+id/et_tiempo"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:inputType="number"
+                        android:hint="1000"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_movimiento_suave"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:text="ENVIAR MOVIMIENTO"
+                android:textColor="@color/blanco"
+                android:background="@color/verde_oscuro"
+                android:layout_marginBottom="16dp"
+                android:textSize="14sp" />
+
+            <!-- Ir a Estado -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ir a Estado:"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <Spinner
+                android:id="@+id/spinner_estados"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btn_ir_estado"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:text="IR A ESTADO"
+                android:textColor="@color/blanco"
+                android:background="@color/verde_oscuro"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <!-- Parada de Emergencia -->
+        <Button
+            android:id="@+id/btn_emergencia"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="PARADA DE EMERGENCIA"
+            android:textColor="@color/blanco"
+            android:background="@color/rojo_apagar"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+    </LinearLayout>
+
+</ScrollView>

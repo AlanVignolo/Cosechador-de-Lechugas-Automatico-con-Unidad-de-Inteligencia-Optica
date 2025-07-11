@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CLAUDIO - Jardín Hidropónico</string>
+
+    <!-- Textos principales -->
+    <string name="app_title">CLAUDIO</string>
+    <string name="seccion_1">Sección 1</string>
+    <string name="seccion_2">Sección 2</string>
+
+    <!-- Botones -->
+    <string name="btn_historial">Ver Historial</string>
+    <string name="btn_escanear">Escanear</string>
+    <string name="btn_referenciar">Referenciar</string>
+    <string name="btn_frenar">Frenar</string>
+    <string name="btn_apagar">Apagar</string>
+
+    <!-- Información del jardín -->
+    <string name="lechugas_cosechadas">Lechugas cosechadas: %d</string>
+    <string name="tiempo_medio">Tiempo medio: %s</string>
+
+    <!-- Mensajes de Toast -->
+    <string name="msg_abriendo_historial">Abriendo historial...</string>
+    <string name="msg_escaneando">Escaneando jardín...</string>
+    <string name="msg_referenciando">Referenciando sistema...</string>
+    <string name="msg_frenando">Frenando sistema...</string>
+    <string name="msg_apagando">Apagando sistema...</string>
+
+    <!-- Estados de conexión -->
+    <string name="conectado">Conectado</string>
+    <string name="desconectado">Desconectado</string>
+    <string name="conectando">Conectando...</string>
+
+    <!-- Errores -->
+    <string name="error_conexion">Error de conexión con el sistema</string>
+    <string name="error_comando">Error al enviar comando</string>
+</resources>

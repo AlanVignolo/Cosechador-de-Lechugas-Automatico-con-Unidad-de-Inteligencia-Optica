@@ -1,280 +1,387 @@
-import serial # type: ignore
-import time
-import threading
-import queue
-import logging
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 from datetime import datetime
-import sys
+from pydantic import BaseModel
+import logging
+import json
+from typing import List
+import asyncio
+from threading import Thread
+import queue
 
-# Configuración de logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(f'arduino_log_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
-        logging.StreamHandler()
-    ]
-)
+from controller.uart_manager import UARTManager
+from controller.command_manager import CommandManager
+from controller.robot_controller import RobotController
+from config.robot_config import RobotConfig
 
-class ArduinoController:
-    def __init__(self, port='/dev/ttyACM0', baudrate=115200):
-        self.port = port
-        self.baudrate = baudrate
-        self.serial = None
-        self.running = False
-        self.response_queue = queue.Queue()
-        self.read_thread = None
-        
-    def connect(self):
-        """Conectar al Arduino"""
-        try:
-            self.serial = serial.Serial(
-                port=self.port,
-                baudrate=self.baudrate,
-                timeout=1,
-                write_timeout=1
-            )
-            time.sleep(2)  # Esperar reset del Arduino
-            self.serial.flush()
-            logging.info(f"Conectado a {self.port} @ {self.baudrate} bps")
-            
-            # Iniciar thread de lectura
-            self.running = True
-            self.read_thread = threading.Thread(target=self._read_loop)
-            self.read_thread.start()
-            return True
-            
-        except Exception as e:
-            logging.error(f"Error al conectar: {e}")
-            return False
-    
-    def disconnect(self):
-        """Desconectar del Arduino"""
-        self.running = False
-        if self.read_thread:
-            self.read_thread.join()
-        if self.serial and self.serial.is_open:
-            self.serial.close()
-        logging.info("Desconectado")
-    
-    def _read_loop(self):
-        """Loop de lectura en thread separado"""
-        while self.running:
-            try:
-                if self.serial and self.serial.in_waiting:
-                    response = self.serial.readline().decode('utf-8').strip()
-                    if response:
-                        logging.info(f"RX << {response}")
-                        self.response_queue.put(response)
-                        
-                        # Procesar respuestas especiales
-                        if response.startswith("LIM"):
-                            logging.warning(f"¡Límite alcanzado! {response}")
-                        elif response.startswith("ERR"):
-                            logging.error(f"Error del Arduino: {response}")
-                        elif response == "ARR":
-                            logging.info("✓ Llegó a posición objetivo")
-                        elif response == "HOM":
-                            logging.info("✓ Home completado")
-                            
-            except Exception as e:
-                if self.running:
-                    logging.error(f"Error en lectura: {e}")
-            time.sleep(0.001)
-    
-    def send_command(self, command):
-        """Enviar comando al Arduino"""
-        if not self.serial or not self.serial.is_open:
-            logging.error("No conectado")
-            return False
-        
-        try:
-            cmd_formatted = f"<{command}>\n"
-            self.serial.write(cmd_formatted.encode('utf-8'))
-            logging.info(f"TX >> {command}")
-            return True
-        except Exception as e:
-            logging.error(f"Error al enviar: {e}")
-            return False
-    
-    def get_response(self, timeout=5):
-        """Obtener respuesta con timeout"""
-        try:
-            return self.response_queue.get(timeout=timeout)
-        except queue.Empty:
-            return None
-    
-    # ========== COMANDOS ESPECÍFICOS ==========
-    
-    def move_xy(self, x, y):
-        """Mover a posición X,Y en mm"""
-        return self.send_command(f"M:{x:.2f},{y:.2f}")
-    
-    def home(self):
-        """Ejecutar secuencia de home"""
-        return self.send_command("H")
-    
-    def stop(self):
-        """Parada de emergencia"""
-        return self.send_command("S")
-    
-    def get_status(self):
-        """Solicitar estado actual"""
-        return self.send_command("?")
-    
-    def set_arm_position(self, position):
-        """Mover brazo a posición predefinida"""
-        positions = ["RETRACTED", "EXTENDED", "COLLECTING", "DROPPING", "HANGING"]
-        if position.upper() in positions:
-            return self.send_command(f"A:{position.upper()}")
-        else:
-            logging.error(f"Posición inválida: {position}")
-            return False
-    
-    def control_gripper(self, action):
-        """Control del gripper"""
-        if action.upper() in ["OPEN", "CLOSE"]:
-            return self.send_command(f"G:{action.upper()}")
-        else:
-            logging.error(f"Acción gripper inválida: {action}")
-            return False
-    
-    def set_speed(self, percent):
-        """Establecer velocidad (0-100%)"""
-        if 0 <= percent <= 100:
-            return self.send_command(f"V:{percent}")
-        else:
-            logging.error(f"Velocidad inválida: {percent}%")
-            return False
-    
-    def send_trajectory(self, points):
-        """Enviar trayectoria de brazo
-        points: lista de tuplas (servo1, servo2, gripper)
-        """
-        trajectory = ";".join([f"{s1},{s2},{g}" for s1, s2, g in points])
-        return self.send_command(f"T:{trajectory}")
+update_queue = queue.Queue()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# Instancia global del robot
+robot_controller = None
+robot_connected = False
 
-def print_menu():
-    """Mostrar menú de opciones"""
-    print("\n" + "="*50)
-    print("CONTROL DE ROBOT - MENÚ PRINCIPAL")
-    print("="*50)
-    print("1. Mover a posición X,Y")
-    print("2. Hacer HOME")
-    print("3. PARADA DE EMERGENCIA")
-    print("4. Estado actual")
-    print("5. Posición de brazo predefinida")
-    print("6. Control de gripper")
-    print("7. Establecer velocidad")
-    print("8. Enviar trayectoria")
-    print("9. Comando manual")
-    print("0. Salir")
-    print("-"*50)
+# Lista de conexiones WebSocket activas
+active_websockets: List[WebSocket] = []
 
-
-def main():
-    # Configurar puerto (cambiar según tu sistema)
-    if sys.platform == "linux":
-        port = "/dev/ttyACM0"  # Linux
-    elif sys.platform == "darwin":
-        port = "/dev/tty.usbmodem1421"  # macOS
-    else:
-        port = "COM3"  # Windows
-    
-    # Crear controlador
-    arduino = ArduinoController(port=port)
-    
-    # Conectar
-    print(f"Conectando a {port}...")
-    if not arduino.connect():
-        print("No se pudo conectar. Verifica el puerto.")
+async def broadcast_robot_status():
+    """Enviar estado actual del robot a todas las conexiones WebSocket"""
+    if not robot_controller or not active_websockets:
         return
     
     try:
-        while True:
-            print_menu()
-            opcion = input("Selecciona opción: ")
+        status = robot_controller.get_status()
+        arm_status = robot_controller.arm.get_current_state()
+        
+        message = {
+            "type": "robot_status",
+            "data": {
+                "homed": status["homed"],
+                "position": status["position"],
+                "arm": {
+                    "servo1": arm_status["position"][0],
+                    "servo2": arm_status["position"][1],
+                    "state": arm_status["state"]
+                },
+                "gripper": arm_status["gripper"]
+            }
+        }
+        
+        # Enviar a todas las conexiones activas
+        disconnected = []
+        for websocket in active_websockets:
+            try:
+                await websocket.send_text(json.dumps(message))
+            except:
+                disconnected.append(websocket)
+        
+        # Limpiar conexiones desconectadas
+        for ws in disconnected:
+            active_websockets.remove(ws)
             
-            if opcion == "1":
-                x = float(input("Posición X (mm): "))
-                y = float(input("Posición Y (mm): "))
-                arduino.move_xy(x, y)
-                
-            elif opcion == "2":
-                print("Iniciando HOME...")
-                arduino.home()
-                
-            elif opcion == "3":
-                print("¡PARADA DE EMERGENCIA!")
-                arduino.stop()
-                
-            elif opcion == "4":
-                arduino.get_status()
-                time.sleep(0.5)  # Esperar respuesta
-                
-            elif opcion == "5":
-                print("Posiciones disponibles:")
-                print("1. RETRACTED")
-                print("2. EXTENDED")
-                print("3. COLLECTING")
-                print("4. DROPPING")
-                print("5. HANGING")
-                pos = input("Selecciona posición: ")
-                positions = ["", "RETRACTED", "EXTENDED", "COLLECTING", "DROPPING", "HANGING"]
-                if pos.isdigit() and 1 <= int(pos) <= 5:
-                    arduino.set_arm_position(positions[int(pos)])
-                
-            elif opcion == "6":
-                action = input("OPEN/CLOSE: ")
-                arduino.control_gripper(action)
-                
-            elif opcion == "7":
-                speed = int(input("Velocidad (0-100%): "))
-                arduino.set_speed(speed)
-                
-            elif opcion == "8":
-                print("Ingresa puntos de trayectoria (servo1,servo2,gripper)")
-                print("Ejemplo: 90,45,0")
-                print("Escribe 'fin' para terminar")
-                points = []
-                while True:
-                    point = input(f"Punto {len(points)+1}: ")
-                    if point.lower() == 'fin':
-                        break
-                    try:
-                        values = [int(x) for x in point.split(',')]
-                        if len(values) == 3:
-                            points.append(tuple(values))
-                        else:
-                            print("Formato incorrecto")
-                    except:
-                        print("Error en formato")
-                
-                if points:
-                    arduino.send_trajectory(points)
-                
-            elif opcion == "9":
-                cmd = input("Comando manual: ")
-                arduino.send_command(cmd)
-                
-            elif opcion == "0":
-                print("Saliendo...")
-                break
-            
-            else:
-                print("Opción inválida")
-            
-            # Dar tiempo para ver respuestas
-            time.sleep(0.5)
-            
-    except KeyboardInterrupt:
-        print("\n\nInterrumpido por usuario")
-    
-    finally:
-        arduino.disconnect()
-        print("Programa terminado")
+    except Exception as e:
+        logger.error(f"Error broadcasting status: {e}")
 
+def setup_robot_callbacks():
+    """Configurar callbacks para eventos del robot"""
+    if not robot_controller:
+        return
+    
+    # Callback para cuando servos se mueven
+    def on_servo_completed(message: str):
+        logger.info(f"Servo completado: {message}")
+        update_queue.put("servo_update")
+    
+    # Callback para cuando gripper cambia
+    def on_gripper_completed(message: str):
+        logger.info(f"Gripper completado: {message}")
+        update_queue.put("gripper_update")
+    
+    # Callback para cuando steppers se mueven
+    def on_stepper_completed(message: str):
+        logger.info(f"Stepper completado: {message}")
+        update_queue.put("stepper_update")
+    
+    # Configurar callbacks
+    robot_controller.cmd.uart.set_servo_callbacks(None, on_servo_completed)
+    robot_controller.cmd.uart.set_gripper_callbacks(None, on_gripper_completed)
+    robot_controller.cmd.uart.set_stepper_callbacks(None, on_stepper_completed)
+
+def process_updates():
+    """Procesar actualizaciones en un hilo separado"""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    async def process_loop():
+        while True:
+            try:
+                # Esperar por actualizaciones
+                await asyncio.sleep(0.1)
+                
+                # Procesar todas las actualizaciones pendientes
+                while not update_queue.empty():
+                    try:
+                        update_queue.get_nowait()
+                        await broadcast_robot_status()
+                    except queue.Empty:
+                        break
+                        
+            except Exception as e:
+                logger.error(f"Error en process_loop: {e}")
+    
+    loop.run_until_complete(process_loop())
+
+def initialize_robot():
+    global robot_controller, robot_connected
+    try:
+        uart = UARTManager(RobotConfig.SERIAL_PORT, RobotConfig.BAUD_RATE)
+        if uart.connect():
+            cmd_manager = CommandManager(uart)
+            robot_controller = RobotController(cmd_manager)
+            robot_connected = True
+            
+            # Configurar callbacks para eventos automáticos
+            setup_robot_callbacks()
+            
+            # Iniciar hilo de procesamiento de actualizaciones
+            update_thread = Thread(target=process_updates, daemon=True)
+            update_thread.start()
+            
+            logger.info("✅ Robot conectado exitosamente")
+            return True
+        else:
+            logger.error("❌ No se pudo conectar al robot")
+            return False
+    except Exception as e:
+        logger.error(f"❌ Error conectando robot: {e}")
+        return False
+
+def get_robot_controller():
+    global robot_controller
+    if robot_controller is None:
+        if not initialize_robot():
+            raise HTTPException(status_code=503, detail="Robot no conectado")
+    return robot_controller
+
+# Schemas
+class MoveRequest(BaseModel):
+    x: float
+    y: float
+
+class ArmMoveRequest(BaseModel):
+    servo1: int
+    servo2: int
+    time_ms: int
+
+class RobotStatusResponse(BaseModel):
+    homed: bool
+    position: dict
+    arm: dict
+    gripper: str
+
+class ResponseMessage(BaseModel):
+    message: str
+    success: bool
+    data: dict = None
+
+app = FastAPI(
+    title="CLAUDIO - Robot Controller API",
+    description="API para controlar robot físico con WebSockets",
+    version="2.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("🚀 Iniciando conexión con robot...")
+    initialize_robot()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    active_websockets.append(websocket)
+    logger.info(f"Nueva conexión WebSocket. Total: {len(active_websockets)}")
+    
+    try:
+        # Enviar estado inicial
+        await broadcast_robot_status()
+        
+        # Mantener conexión activa
+        while True:
+            # Recibir mensajes del cliente (opcional)
+            data = await websocket.receive_text()
+            logger.debug(f"Mensaje recibido: {data}")
+            
+    except WebSocketDisconnect:
+        active_websockets.remove(websocket)
+        logger.info(f"Conexión WebSocket cerrada. Total: {len(active_websockets)}")
+
+@app.get("/", response_model=ResponseMessage)
+async def root():
+    return ResponseMessage(
+        message="CLAUDIO - Robot Controller API funcionando",
+        success=True,
+        data={
+            "version": "2.0.0", 
+            "timestamp": datetime.now().isoformat(),
+            "robot_connected": robot_connected,
+            "websocket_connections": len(active_websockets)
+        }
+    )
+
+@app.get("/robot/status", response_model=RobotStatusResponse)
+async def get_robot_status():
+    try:
+        robot = get_robot_controller()
+        status = robot.get_status()
+        arm_status = robot.arm.get_current_state()
+        
+        return RobotStatusResponse(
+            homed=status["homed"],
+            position=status["position"],
+            arm={
+                "servo1": arm_status["position"][0],
+                "servo2": arm_status["position"][1],
+                "state": arm_status["state"]
+            },
+            gripper=arm_status["gripper"]
+        )
+    except Exception as e:
+        logger.error(f"Error obteniendo estado: {e}")
+        raise HTTPException(status_code=503, detail=f"Error obteniendo estado del robot: {str(e)}")
+
+@app.post("/robot/move", response_model=ResponseMessage)
+async def move_robot(request: MoveRequest):
+    try:
+        robot = get_robot_controller()
+        result = robot.move_to_absolute(request.x, request.y)
+        
+        # No necesitamos broadcast aquí, el callback lo hará automáticamente
+        return ResponseMessage(
+            message=result["message"],
+            success=result["success"],
+            data={"x": request.x, "y": request.y}
+        )
+    except Exception as e:
+        logger.error(f"Error moviendo robot: {e}")
+        raise HTTPException(status_code=500, detail=f"Error moviendo robot: {str(e)}")
+
+@app.post("/robot/home", response_model=ResponseMessage)
+async def home_robot():
+    try:
+        robot = get_robot_controller()
+        result = robot.home_robot()
+        
+        return ResponseMessage(
+            message=result["message"],
+            success=result["success"],
+            data=result.get("position")
+        )
+    except Exception as e:
+        logger.error(f"Error en homing: {e}")
+        raise HTTPException(status_code=500, detail=f"Error en homing: {str(e)}")
+
+@app.post("/robot/arm/move", response_model=ResponseMessage)
+async def move_arm(request: ArmMoveRequest):
+    try:
+        robot = get_robot_controller()
+        result = robot.cmd.move_arm(request.servo1, request.servo2, request.time_ms)
+        
+        return ResponseMessage(
+            message=f"Brazo moviéndose a ({request.servo1}°, {request.servo2}°)",
+            success=result["success"],
+            data={
+                "servo1": request.servo1,
+                "servo2": request.servo2,
+                "time_ms": request.time_ms
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error moviendo brazo: {e}")
+        raise HTTPException(status_code=500, detail=f"Error moviendo brazo: {str(e)}")
+
+@app.post("/robot/arm/state/{state}", response_model=ResponseMessage)
+async def change_arm_state(state: str):
+    try:
+        robot = get_robot_controller()
+        result = robot.arm.change_state(state)
+        
+        return ResponseMessage(
+            message=result["message"],
+            success=result["success"],
+            data={"target_state": state}
+        )
+    except Exception as e:
+        logger.error(f"Error cambiando estado del brazo: {e}")
+        raise HTTPException(status_code=500, detail=f"Error cambiando estado del brazo: {str(e)}")
+
+@app.post("/robot/gripper/open", response_model=ResponseMessage)
+async def open_gripper():
+    try:
+        robot = get_robot_controller()
+        
+        # Consultar estado actual
+        gripper_status = robot.cmd.get_gripper_status()
+        if gripper_status["success"] and "GRIPPER_STATUS:" in gripper_status["response"]:
+            current_state = gripper_status["response"].split("GRIPPER_STATUS:")[1].split(",")[0].lower()
+            
+            if current_state == "open":
+                return ResponseMessage(
+                    message="Gripper ya está abierto",
+                    success=True,
+                    data={"action": "no_change", "state": "open"}
+                )
+        
+        # Solo abrir si está cerrado
+        result = robot.cmd.gripper_toggle()
+        
+        return ResponseMessage(
+            message="Gripper abierto",
+            success=result["success"],
+            data={"action": "opened"}
+        )
+    except Exception as e:
+        logger.error(f"Error abriendo gripper: {e}")
+        raise HTTPException(status_code=500, detail=f"Error abriendo gripper: {str(e)}")
+
+@app.post("/robot/gripper/close", response_model=ResponseMessage)
+async def close_gripper():
+    try:
+        robot = get_robot_controller()
+        
+        # Consultar estado actual
+        gripper_status = robot.cmd.get_gripper_status()
+        if gripper_status["success"] and "GRIPPER_STATUS:" in gripper_status["response"]:
+            current_state = gripper_status["response"].split("GRIPPER_STATUS:")[1].split(",")[0].lower()
+            
+            if current_state == "closed":
+                return ResponseMessage(
+                    message="Gripper ya está cerrado",
+                    success=True,
+                    data={"action": "no_change", "state": "closed"}
+                )
+        
+        # Solo cerrar si está abierto
+        result = robot.cmd.gripper_toggle()
+        
+        return ResponseMessage(
+            message="Gripper cerrado",
+            success=result["success"],
+            data={"action": "closed"}
+        )
+    except Exception as e:
+        logger.error(f"Error cerrando gripper: {e}")
+        raise HTTPException(status_code=500, detail=f"Error cerrando gripper: {str(e)}")
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "robot_connected": robot_connected,
+        "websocket_connections": len(active_websockets)
+    }
 
 if __name__ == "__main__":
-    main()
+    print("🚀 CLAUDIO - Robot Controller API con WebSockets")
+    print("📱 La API estará disponible en: http://localhost:8000")
+    print("📖 Documentación automática en: http://localhost:8000/docs")
+    print("🔌 WebSocket endpoint: ws://localhost:8000/ws")
+    print("🤖 Conectando robot físico...")
+    
+    uvicorn.run(
+        "main:app", 
+        host="0.0.0.0", 
+        port=8000, 
+        reload=True,
+        log_level="info"
+    )

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Hojas pequeñas - amarillo claro -->
+    <path
+        android:fillColor="#FFF59D"
+        android:pathData="M12,4C11,4 10,4.5 10,5.5C10,6.5 11,7 12,7C13,7 14,6.5 14,5.5C14,4.5 13,4 12,4Z" />
+
+    <!-- Hojas laterales pequeñas -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M8,8C7,8 6,8.5 6,9.5C6,10.5 7,11 8,11C9,11 10,10.5 10,9.5C10,8.5 9,8 8,8Z" />
+
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M16,8C15,8 14,8.5 14,9.5C14,10.5 15,11 16,11C17,11 18,10.5 18,9.5C18,8.5 17,8 16,8Z" />
+
+    <!-- Centro pequeño -->
+    <path
+        android:fillColor="#FDD835"
+        android:pathData="M12,9C11.5,9 11,9.2 11,9.8C11,10.4 11.5,10.6 12,10.6C12.5,10.6 13,10.4 13,9.8C13,9.2 12.5,9 12,9Z" />
+
+    <!-- Tallo delgado -->
+    <path
+        android:fillColor="#689F38"
+        android:pathData="M11.5,10.6L11.5,22L12.5,22L12.5,10.6Z" />
+</vector>
