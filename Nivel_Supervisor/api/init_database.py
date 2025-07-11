@@ -3,7 +3,7 @@
 Script para inicializar la base de datos y datos de prueba
 """
 
-from models import create_tables, SessionLocal, EstadoJardin, HistorialAcciones, Configuraciones, LecturasSensores
+from .models import create_tables, SessionLocal, EstadoJardin, HistorialAcciones, Configuraciones, LecturasSensores
 from jardin_service import jardin_service
 from datetime import datetime, timedelta
 import random
