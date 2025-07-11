@@ -1,0 +1,17 @@
+# Ignorar archivos de compilación de Atmel Studio
+Nivel_Regulatorio/Nivel_Regulatorio/Debug/
+
+# Ignorar archivos intermedios
+*.o
+*.d
+*.elf
+*.hex
+*.map
+*.lss
+*.srec
+
+# Otros archivos innecesarios
+*.log
+*.bak
+.DS_Store
+Thumbs.db
