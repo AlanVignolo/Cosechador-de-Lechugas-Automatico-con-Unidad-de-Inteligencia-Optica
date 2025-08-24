@@ -53,9 +53,16 @@ class TrajectoryDefinitions:
                     "description": "Elevar brazo a posición intermedia"
                 },
                 {
+                    "type": "arm_move",
+                    "servo1": 30,
+                    "servo2": 110,
+                    "time_ms": 0,
+                    "description": "Posicion intermedia para evitar choque"
+                },
+                {
                     "type": "arm_move", 
-                    "servo1": target_state["servo1"],
-                    "servo2": target_state["servo2"],
+                    "servo1": target_state["servo1"], """100"""
+                    "servo2": target_state["servo2"],"""80"""
                     "time_ms": 1500,
                     "description": "Extender a posición de recolección"
                 },
@@ -130,6 +137,11 @@ class TrajectoryDefinitions:
                 #     "description": "Mover a posición de transporte seguro - 1er movimiento(gripper cerrado)"
                 # },
                 {
+                    "type": "gripper",
+                    "action": "close",
+                    "description": "🔥 Cerrar gripper por las dudas"
+                },
+                {
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
@@ -153,7 +165,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 0,
+                    "time_ms": 2000,
                     "description": "Posicionar sobre zona de depósito"
                 },
                 {
@@ -253,7 +265,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": 10,
                     "servo2": 120,
-                    "time_ms": 0,
+                    "time_ms": 1000,
                     "description": "Retraer a posición intermedia segura"
                 },
                 {
