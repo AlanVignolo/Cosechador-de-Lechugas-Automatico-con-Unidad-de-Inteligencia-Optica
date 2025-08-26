@@ -20,12 +20,12 @@
 #define STEPS_PER_MM_V      (STEPS_PER_REV_TOTAL / MM_PER_REV_SCREW)
 
 // Velocidades máximas (pasos/segundo)
-#define MAX_SPEED_H         9000
+#define MAX_SPEED_H         6000
 #define MAX_SPEED_V         12000
 #define MIN_SPEED           500
 
 // Aceleraciones (pasos/segundo²)
-#define ACCEL_H             4000
+#define ACCEL_H             5000
 #define ACCEL_V             6000
 
 // ========== PARÁMETROS SERVOS ==========

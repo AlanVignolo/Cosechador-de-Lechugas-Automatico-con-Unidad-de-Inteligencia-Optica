@@ -157,17 +157,17 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 	
 	// Aplicar cambio gradual
 	int16_t diff = (int16_t)target_speed - (int16_t)profile->current_speed;
-	
+
 	if (diff != 0) {
 		uint16_t max_change = profile->acceleration / 500;
-		
-		if (max_change < 10) max_change = 10;
-		
+
+		if (max_change < 1) max_change = 1;
+
 		if (diff > 0 && diff > max_change) {
 			profile->current_speed += max_change;
-			} else if (diff < 0 && -diff > max_change) {
+		} else if (diff < 0 && -diff > max_change) {
 			profile->current_speed -= max_change;
-			} else {
+		} else {
 			profile->current_speed = target_speed;
 		}
 	}

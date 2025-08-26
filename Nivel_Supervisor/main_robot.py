@@ -135,10 +135,19 @@ def menu_interactivo(uart_manager, robot):
         opcion = input("Selecciona opción: ")
 
         if opcion == '1':
-            x = input("Posición X (mm): ")
-            y = input("Posición Y (mm): ")
-            result = cmd_manager.move_xy(float(x), float(y))
-            print(f"Respuesta: {result['response']}")
+            x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
+            y = input("Posición Y (mm) [Enter mantiene actual]: ").strip()
+            try:
+                status = robot.get_status()
+                curr_x = status['position']['x']
+                curr_y = status['position']['y']
+                x_val = curr_x if x == "" else float(x)
+                y_val = curr_y if y == "" else float(y)
+                result = cmd_manager.move_xy(x_val, y_val)
+                print(f"Respuesta: {result['response']}")
+            except ValueError:
+                print("Entrada inválida. Usa números (ej. 120 o 120.5).")
+                continue
             
         elif opcion == '2':
             enviar_movimiento_brazo(cmd_manager)
