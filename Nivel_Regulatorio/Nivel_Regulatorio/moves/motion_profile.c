@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "../config/system_config.h"
 
-// CAMBIO: Función para abs de int32_t
+// CAMBIO: FunciÃ³n para abs de int32_t
 static int32_t abs32(int32_t x) {
 	return (x < 0) ? -x : x;
 }
@@ -54,11 +54,11 @@ uint16_t acceleration) {
 		profile->decel_steps = profile->total_steps - profile->accel_steps;
 		profile->constant_steps = 0;
 		
-		// Calcular velocidad máxima que alcanzaremos
+		// Calcular velocidad mÃ¡xima que alcanzaremos
 		uint64_t temp = (uint64_t)2 * accel * profile->accel_steps;
 		uint32_t v_peak = 0;
 		
-		// Calcular raíz cuadrada
+		// Calcular raÃ­z cuadrada
 		uint32_t bit = 1UL << 15;
 		while (bit > 0) {
 			uint32_t test = v_peak + bit;
@@ -88,7 +88,7 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 	
 	int32_t steps_remaining = abs32(profile->target_position - current_pos);  // CAMBIO
 	
-	if (steps_remaining == 0) {
+	if (steps_remaining <= 1) {
 		profile->current_speed = 0;
 		profile->state = PROFILE_COMPLETED;
 		return 0;
@@ -97,10 +97,10 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 	uint16_t target_speed;
 	int32_t steps_done = abs32(current_pos - profile->start_position);  // CAMBIO
 	
-	// Resto del código igual...
+	// Resto del cÃ³digo igual...
 	// Determinar fase del movimiento
 	if (steps_remaining <= profile->decel_steps) {
-		// FASE DE DECELERACIÓN
+		// FASE DE DECELERACIÃ“N
 		profile->state = PROFILE_DECELERATING;
 		
 		if (steps_remaining > 2) {
@@ -108,7 +108,7 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 			uint64_t temp = (uint64_t)2 * profile->acceleration * steps_remaining;
 			target_speed = 0;
 			
-			// Raíz cuadrada eficiente
+			// RaÃ­z cuadrada eficiente
 			uint32_t bit = 1UL << 15;
 			while (bit > 0) {
 				uint32_t test = target_speed + bit;
@@ -124,7 +124,7 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 		}
 	}
 	else if (steps_done < profile->accel_steps) {
-		// FASE DE ACELERACIÓN
+		// FASE DE ACELERACIÃ“N
 		profile->state = PROFILE_ACCELERATING;
 		
 		if (steps_done < 5) {
@@ -134,7 +134,7 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 			uint64_t temp = (uint64_t)2 * profile->acceleration * steps_done;
 			target_speed = 0;
 			
-			// Raíz cuadrada eficiente
+			// RaÃ­z cuadrada eficiente
 			uint32_t bit = 1UL << 15;
 			while (bit > 0) {
 				uint32_t test = target_speed + bit;
@@ -176,11 +176,12 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 		profile->current_speed = profile->max_speed;
 	}
 	
-	if (profile->current_speed < 50 && steps_remaining > 0) {
-		profile->current_speed = 50;
-	}
-	
-	return profile->current_speed;
+    // Evitar imponer velocidad mÃ­nima cuando estamos al final del movimiento
+    if (steps_remaining > 1 && profile->current_speed < 50) {
+        profile->current_speed = 50;
+    }
+    
+    return profile->current_speed;
 }
 
 bool motion_profile_is_active(motion_profile_t* profile) {
