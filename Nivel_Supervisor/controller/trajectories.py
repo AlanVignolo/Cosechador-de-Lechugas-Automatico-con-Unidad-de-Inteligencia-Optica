@@ -49,20 +49,13 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": 0,
                     "servo2": 120,
-                    "time_ms": 0,
+                    "time_ms": 1500,
                     "description": "Elevar brazo a posición intermedia"
                 },
                 {
-                    "type": "arm_move",
-                    "servo1": 30,
-                    "servo2": 110,
-                    "time_ms": 0,
-                    "description": "Posicion intermedia para evitar choque"
-                },
-                {
                     "type": "arm_move", 
-                    "servo1": target_state["servo1"], """100"""
-                    "servo2": target_state["servo2"],"""80"""
+                    "servo1": target_state["servo1"],
+                    "servo2": target_state["servo2"],
                     "time_ms": 1500,
                     "description": "Extender a posición de recolección"
                 },
@@ -88,7 +81,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 0,
+                    "time_ms": 2000,
                     "description": "Retraer brazo a posición segura"
                 },
                 {
@@ -113,7 +106,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 0,
+                    "time_ms": 2000,
                     "description": "Retraer brazo a posición segura"
                 }
             ]
@@ -145,7 +138,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 1000,
+                    "time_ms": 1500,
                     "description": "Mover a posición de transporte seguro - 2do movimiento (gripper cerrado)"
                 }
             ]
@@ -165,7 +158,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 2000,
+                    "time_ms": 5000,
                     "description": "Posicionar sobre zona de depósito"
                 },
                 {
@@ -234,7 +227,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move", 
                     "servo1": target_state["servo1"],  # ⭐ DINÁMICO
                     "servo2": target_state["servo2"],  # ⭐ DINÁMICO
-                    "time_ms": 1000,
+                    "time_ms": 1500,
                     "description": "Extender a posición de recolección"
                 },
                 {
@@ -265,14 +258,14 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": 10,
                     "servo2": 120,
-                    "time_ms": 1000,
+                    "time_ms": 1500,
                     "description": "Retraer a posición intermedia segura"
                 },
                 {
                     "type": "arm_move",
                     "servo1": safe_state["servo1"],  # 10
                     "servo2": safe_state["servo2"],  # 10
-                    "time_ms": 0,
+                    "time_ms": 2000,
                     "description": "Bajar a posición segura final"
                 }
             ]

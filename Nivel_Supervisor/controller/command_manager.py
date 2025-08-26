@@ -24,12 +24,17 @@ class CommandManager:
     
     def move_arm(self, servo1_angle: int, servo2_angle: int, time_ms: int = 0) -> Dict:
         """Mover brazo (servo1=muñeca, servo2=codo)"""
-        command = f"A:{servo1_angle},{servo2_angle},{time_ms}"
+        a1 = max(10, min(160, int(servo1_angle)))
+        a2 = max(10, min(160, int(servo2_angle)))
+        t = max(0, int(time_ms))
+        command = f"A:{a1},{a2},{t}"
         return self.uart.send_command(command)
     
     def move_servo(self, servo_num: int, angle: int) -> Dict:
         """Mover servo individual"""
-        command = f"P:{servo_num},{angle}"
+        sn = 1 if int(servo_num) != 2 else 2
+        a = max(10, min(160, int(angle)))
+        command = f"P:{sn},{a}"
         return self.uart.send_command(command)
     
     def reset_arm(self) -> Dict:
