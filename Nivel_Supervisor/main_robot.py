@@ -43,8 +43,9 @@ def enviar_movimiento_brazo(cmd_manager):
     print("CONTROL DE BRAZO - MOVIMIENTO SUAVE")
     print("="*50)
     
-    angle1 = input("Ángulo Servo 1 (0-180): ")
-    angle2 = input("Ángulo Servo 2 (0-180): ")
+    angle1 = input("Ángulo Servo 1 (10-160): ")
+    angle2 = input("Ángulo Servo 2 (10-160): ")
+    
     tiempo = input("Tiempo en ms (0 para instantáneo): ")
     
     result = cmd_manager.move_arm(int(angle1), int(angle2), int(tiempo))
@@ -134,17 +135,26 @@ def menu_interactivo(uart_manager, robot):
         opcion = input("Selecciona opción: ")
 
         if opcion == '1':
-            x = input("Posición X (mm): ")
-            y = input("Posición Y (mm): ")
-            result = cmd_manager.move_xy(float(x), float(y))
-            print(f"Respuesta: {result['response']}")
+            x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
+            y = input("Posición Y (mm) [Enter mantiene actual]: ").strip()
+            try:
+                status = robot.get_status()
+                curr_x = status['position']['x']
+                curr_y = status['position']['y']
+                x_val = curr_x if x == "" else float(x)
+                y_val = curr_y if y == "" else float(y)
+                result = cmd_manager.move_xy(x_val, y_val)
+                print(f"Respuesta: {result['response']}")
+            except ValueError:
+                print("Entrada inválida. Usa números (ej. 120 o 120.5).")
+                continue
             
         elif opcion == '2':
             enviar_movimiento_brazo(cmd_manager)
             
         elif opcion == '3':
             servo = input("Número de servo (1 o 2): ")
-            angulo = input("Ángulo (0-180): ")
+            angulo = input("Ángulo (10-160): ")
             result = cmd_manager.move_servo(int(servo), int(angulo))
             print(f"Respuesta: {result['response']}")
             

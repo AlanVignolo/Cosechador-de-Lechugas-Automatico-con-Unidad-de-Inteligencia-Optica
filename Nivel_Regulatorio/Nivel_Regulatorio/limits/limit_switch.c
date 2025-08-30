@@ -7,11 +7,11 @@ static limit_status_t limits = {false, false, false, false};
 
 void limit_switch_init(void) {
 	// Configurar pines como entradas con pull-up interno
-	// Pins 30-33 están en PORTC bits 7-4
+	// Pins 30-33 estï¿½n en PORTC bits 7-4
 	DDRC &= ~((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4));  // Entradas
 	PORTC |= (1 << 7) | (1 << 6) | (1 << 5) | (1 << 4);    // Pull-up activado
 	
-	// Pequeño delay para estabilizar
+	// Pequeï¿½o delay para estabilizar
 	for(volatile uint16_t i = 0; i < 1000; i++);
 	
 	// Leer estado inicial
@@ -24,7 +24,7 @@ void limit_switch_update(void) {
 	
 	// Actualizar estados con debounce simple
 	static uint8_t debounce_counter[4] = {0, 0, 0, 0};
-	const uint8_t DEBOUNCE_THRESHOLD = 3;
+	const uint8_t DEBOUNCE_THRESHOLD = 6;
 	
 	// H Left (Pin 30 - PC7)
 	if (!(pinc_state & (1 << 7))) {
@@ -33,14 +33,14 @@ void limit_switch_update(void) {
 			if (debounce_counter[0] == DEBOUNCE_THRESHOLD) {
 				limits.h_left_triggered = true;
 				
-				// Reportar posición cuando toca límite
+				// Reportar posiciï¿½n cuando toca lï¿½mite
 				char pos_msg[64];
 				snprintf(pos_msg, sizeof(pos_msg), "POSITION_AT_LIMIT:H=%ld,V=%ld",
 				horizontal_axis.current_position, vertical_axis.current_position);
 				uart_send_response(pos_msg);
 				uart_send_response("LIMIT_H_LEFT_TRIGGERED");
 				
-				// Terminar calibración automáticamente
+				// Terminar calibraciï¿½n automï¿½ticamente
 				stepper_stop_calibration();
 				
 				if (!horizontal_axis.direction) {  // false = izquierda
@@ -60,14 +60,14 @@ void limit_switch_update(void) {
 			if (debounce_counter[1] == DEBOUNCE_THRESHOLD) {
 				limits.h_right_triggered = true;
 				
-				// Reportar posición cuando toca límite
+				// Reportar posiciï¿½n cuando toca lï¿½mite
 				char pos_msg[64];
 				snprintf(pos_msg, sizeof(pos_msg), "POSITION_AT_LIMIT:H=%ld,V=%ld",
 				horizontal_axis.current_position, vertical_axis.current_position);
 				uart_send_response(pos_msg);
 				uart_send_response("LIMIT_H_RIGHT_TRIGGERED");
 				
-				// Terminar calibración automáticamente
+				// Terminar calibraciï¿½n automï¿½ticamente
 				stepper_stop_calibration();
 				
 				if (horizontal_axis.direction) {
@@ -85,16 +85,16 @@ void limit_switch_update(void) {
 		if (debounce_counter[2] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[2]++;
 			if (debounce_counter[2] == DEBOUNCE_THRESHOLD) {
-				limits.v_up_triggered = true;
+				limits.v_down_triggered = true;
 				
-				// Reportar posición cuando toca límite
+				// Reportar posiciï¿½n cuando toca lï¿½mite
 				char pos_msg[64];
 				snprintf(pos_msg, sizeof(pos_msg), "POSITION_AT_LIMIT:H=%ld,V=%ld",
 				horizontal_axis.current_position, vertical_axis.current_position);
 				uart_send_response(pos_msg);
 				uart_send_response("LIMIT_V_DOWN_TRIGGERED");
 				
-				// Terminar calibración automáticamente
+				// Terminar calibraciï¿½n automï¿½ticamente
 				stepper_stop_calibration();
 				
 				if (vertical_axis.direction) {
@@ -104,7 +104,7 @@ void limit_switch_update(void) {
 		}
 		} else {
 		debounce_counter[2] = 0;
-		limits.v_up_triggered = false;
+		limits.v_down_triggered = false;
 	}
 	
 	// V Up (Pin 33 - PC4)
@@ -112,16 +112,16 @@ void limit_switch_update(void) {
 		if (debounce_counter[3] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[3]++;
 			if (debounce_counter[3] == DEBOUNCE_THRESHOLD) {
-				limits.v_down_triggered = true;
+				limits.v_up_triggered = true;
 				
-				// Reportar posición cuando toca límite
+				// Reportar posiciï¿½n cuando toca lï¿½mite
 				char pos_msg[64];
 				snprintf(pos_msg, sizeof(pos_msg), "POSITION_AT_LIMIT:H=%ld,V=%ld",
 				horizontal_axis.current_position, vertical_axis.current_position);
 				uart_send_response(pos_msg);
 				uart_send_response("LIMIT_V_UP_TRIGGERED");
 				
-				// Terminar calibración automáticamente
+				// Terminar calibraciï¿½n automï¿½ticamente
 				stepper_stop_calibration();
 				
 				if (!vertical_axis.direction) {
@@ -131,12 +131,12 @@ void limit_switch_update(void) {
 		}
 		} else {
 		debounce_counter[3] = 0;
-		limits.v_down_triggered = false;
+		limits.v_up_triggered = false;
 	}
 }
 
 bool limit_switch_check_h_movement(bool direction) {
-	// Verificar si el movimiento horizontal está permitido
+	// Verificar si el movimiento horizontal estï¿½ permitido
 	if (direction && limits.h_right_triggered) {
 		return false;  // No permitir movimiento a la derecha
 	}
@@ -147,12 +147,12 @@ bool limit_switch_check_h_movement(bool direction) {
 }
 
 bool limit_switch_check_v_movement(bool direction) {
-	// Verificar si el movimiento vertical está permitido
-	if (direction && limits.v_up_triggered) {
-		return false;  // No permitir movimiento hacia arriba
+	// Verificar si el movimiento vertical estï¿½ permitido
+	if (!direction && limits.v_up_triggered) {
+		return false;  // No permitir movimiento hacia ARRIBA si estï¿½ activado UP
 	}
-	if (!direction && limits.v_down_triggered) {
-		return false;  // No permitir movimiento hacia abajo
+	if (direction && limits.v_down_triggered) {
+		return false;  // No permitir movimiento hacia ABAJO si estï¿½ activado DOWN
 	}
 	return true;  // Movimiento permitido
 }
