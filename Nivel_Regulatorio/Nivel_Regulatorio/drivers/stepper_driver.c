@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "../limits/limit_switch.h"
 
-// Variables para modo calibración
+// Variables para modo calibraciï¿½n
 static bool calibration_mode = false;
 static int32_t calibration_step_counter = 0;
 
@@ -22,13 +22,13 @@ static int32_t abs32(int32_t x) {
 	return (x < 0) ? -x : x;
 }
 
-// Timer4 para actualización periódica de velocidades (200Hz)
+// Timer4 para actualizaciï¿½n periï¿½dica de velocidades (200Hz)
 ISR(TIMER4_COMPA_vect) {
 	update_speeds_flag = true;
 	motion_profile_tick();  // Incrementar contador para motion profile
 }
 
-// Función para calcular TOP value del timer basado en velocidad deseada
+// Funciï¿½n para calcular TOP value del timer basado en velocidad deseada
 // IMPORTANTE: Calculamos para DOBLE frecuencia (para alternar HIGH/LOW)
 static uint16_t calculate_timer_top(uint16_t steps_per_second) {
 	if (steps_per_second == 0) return 0xFFFF;
@@ -52,7 +52,7 @@ static void update_horizontal_speed(uint16_t speed) {
 		return;
 	}
 	
-	// CAMBIO: No forzar velocidad mínima
+	// CAMBIO: No forzar velocidad mï¿½nima
 	// if (speed < MIN_SPEED) speed = MIN_SPEED;
 	
 	uint16_t top_value = calculate_timer_top(speed);
@@ -61,7 +61,7 @@ static void update_horizontal_speed(uint16_t speed) {
 	OCR1A = top_value;
 	OCR1B = top_value;
 	
-	// Si el timer no está corriendo, iniciarlo
+	// Si el timer no estï¿½ corriendo, iniciarlo
 	if ((TCCR1B & 0x07) == 0) {
 		TCCR1A = 0;
 		TCCR1B = (1 << WGM12) | (1 << CS11); // Modo CTC, prescaler 8
@@ -70,7 +70,7 @@ static void update_horizontal_speed(uint16_t speed) {
 	}
 }
 
-// Función para actualizar velocidad del Timer3 (motor vertical)
+// Funciï¿½n para actualizar velocidad del Timer3 (motor vertical)
 static void update_vertical_speed(uint16_t speed) {
 	if (speed == 0) {
 		// Parar Timer3
@@ -82,7 +82,7 @@ static void update_vertical_speed(uint16_t speed) {
 		return;
 	}
 	
-	// CAMBIO: No forzar velocidad mínima
+	// CAMBIO: No forzar velocidad mï¿½nima
 	// if (speed < MIN_SPEED) speed = MIN_SPEED;
 	
 	uint16_t top_value = calculate_timer_top(speed);
@@ -90,7 +90,7 @@ static void update_vertical_speed(uint16_t speed) {
 	// Actualizar OCR3A sin detener el timer
 	OCR3A = top_value;
 	
-	// Si el timer no está corriendo, iniciarlo
+	// Si el timer no estï¿½ corriendo, iniciarlo
 	if ((TCCR3B & 0x07) == 0) {
 		TCCR3A = 0;
 		TCCR3B = (1 << WGM32) | (1 << CS31); // Modo CTC, prescaler 8
@@ -193,10 +193,10 @@ void stepper_init(void) {
 	h_step_state = false;
 	v_step_state = false;
 	
-	// Inicializar módulo de motion profile
+	// Inicializar mï¿½dulo de motion profile
 	motion_profile_init();
 	
-	// Inicializar módulo de fines de carrera
+	// Inicializar mï¿½dulo de fines de carrera
 	limit_switch_init();
 	
 	// Inicializar estados por defecto
@@ -210,7 +210,7 @@ void stepper_init(void) {
 	vertical_axis.current_speed = 0;
 	vertical_axis.state = STEPPER_IDLE;
 	
-	// Configurar Timer4 para actualización de velocidades (200Hz)
+	// Configurar Timer4 para actualizaciï¿½n de velocidades (200Hz)
 	// Timer4 es de 16 bits en ATmega2560
     TCCR4A = 0;
     TCCR4B = (1 << WGM42) | (1 << CS42); // CTC mode, prescaler 256
@@ -296,7 +296,7 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 			v_speed_adjusted = (uint32_t)horizontal_axis.max_speed * v_distance / h_distance;
 			h_speed_adjusted = horizontal_axis.max_speed;
 			
-			if (v_speed_adjusted < 1000) v_speed_adjusted = 1000;
+			if (v_speed_adjusted < 500) v_speed_adjusted = 500;
 			
 			if (v_speed_adjusted > vertical_axis.max_speed) {
 				h_speed_adjusted = (uint32_t)horizontal_axis.max_speed * vertical_axis.max_speed / v_speed_adjusted;
@@ -306,7 +306,7 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 			h_speed_adjusted = (uint32_t)vertical_axis.max_speed * h_distance / v_distance;
 			v_speed_adjusted = vertical_axis.max_speed;
 			
-			if (h_speed_adjusted < 1000) h_speed_adjusted = 1000;
+			if (h_speed_adjusted < 500) h_speed_adjusted = 500;
 			
 			if (h_speed_adjusted > horizontal_axis.max_speed) {
 				v_speed_adjusted = (uint32_t)vertical_axis.max_speed * horizontal_axis.max_speed / h_speed_adjusted;
@@ -385,14 +385,14 @@ void stepper_set_position(int32_t h_pos, int32_t v_pos) {
 	vertical_axis.current_position = v_pos;
 }
 
-// Función para actualizar perfiles de velocidad
+// Funciï¿½n para actualizar perfiles de velocidad
 void stepper_update_profiles(void) {
 	if (!update_speeds_flag) return;
 	update_speeds_flag = false;
 	
 	limit_switch_update();
 	
-	// Actualizar perfil horizontal si está en movimiento
+	// Actualizar perfil horizontal si estï¿½ en movimiento
 	if (motion_profile_is_active(&horizontal_axis.profile)) {
 		uint16_t new_speed = motion_profile_update(&horizontal_axis.profile,
 		horizontal_axis.current_position);
@@ -404,7 +404,7 @@ void stepper_update_profiles(void) {
 		}
 	}
 	
-	// Actualizar perfil vertical si está en movimiento
+	// Actualizar perfil vertical si estï¿½ en movimiento
 	if (motion_profile_is_active(&vertical_axis.profile)) {
 		uint16_t new_speed = motion_profile_update(&vertical_axis.profile,
 		vertical_axis.current_position);
