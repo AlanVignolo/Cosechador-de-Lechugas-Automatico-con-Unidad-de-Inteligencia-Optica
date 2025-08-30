@@ -85,7 +85,7 @@ void limit_switch_update(void) {
 		if (debounce_counter[2] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[2]++;
 			if (debounce_counter[2] == DEBOUNCE_THRESHOLD) {
-				limits.v_up_triggered = true;
+				limits.v_down_triggered = true;
 				
 				// Reportar posici�n cuando toca l�mite
 				char pos_msg[64];
@@ -104,7 +104,7 @@ void limit_switch_update(void) {
 		}
 		} else {
 		debounce_counter[2] = 0;
-		limits.v_up_triggered = false;
+		limits.v_down_triggered = false;
 	}
 	
 	// V Up (Pin 33 - PC4)
@@ -112,7 +112,7 @@ void limit_switch_update(void) {
 		if (debounce_counter[3] < DEBOUNCE_THRESHOLD) {
 			debounce_counter[3]++;
 			if (debounce_counter[3] == DEBOUNCE_THRESHOLD) {
-				limits.v_down_triggered = true;
+				limits.v_up_triggered = true;
 				
 				// Reportar posici�n cuando toca l�mite
 				char pos_msg[64];
@@ -131,7 +131,7 @@ void limit_switch_update(void) {
 		}
 		} else {
 		debounce_counter[3] = 0;
-		limits.v_down_triggered = false;
+		limits.v_up_triggered = false;
 	}
 }
 
@@ -148,11 +148,11 @@ bool limit_switch_check_h_movement(bool direction) {
 
 bool limit_switch_check_v_movement(bool direction) {
 	// Verificar si el movimiento vertical est� permitido
-	if (direction && limits.v_up_triggered) {
-		return false;  // No permitir movimiento hacia arriba
+	if (!direction && limits.v_up_triggered) {
+		return false;  // No permitir movimiento hacia ARRIBA si est� activado UP
 	}
-	if (!direction && limits.v_down_triggered) {
-		return false;  // No permitir movimiento hacia abajo
+	if (direction && limits.v_down_triggered) {
+		return false;  // No permitir movimiento hacia ABAJO si est� activado DOWN
 	}
 	return true;  // Movimiento permitido
 }
