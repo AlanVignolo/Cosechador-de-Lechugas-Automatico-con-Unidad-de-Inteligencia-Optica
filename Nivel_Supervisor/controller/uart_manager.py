@@ -22,6 +22,8 @@ class UARTManager:
         
         self.action_events = {}
         self.waiting_for_completion = {}
+        # Cache de completados recientes para evitar condiciones de carrera
+        self.completed_actions_recent = {}
         
     def connect(self) -> bool:
         try:
@@ -78,6 +80,16 @@ class UARTManager:
         # Procesar eventos de finalización
         if "_COMPLETED:" in message:
             action_type = message.split("_COMPLETED:")[0]
+            # Marcar como completado recientemente por si aún no se registró el waiter
+            try:
+                self.completed_actions_recent[action_type] = time.time()
+            except Exception:
+                pass
+            # Log de diagnóstico
+            try:
+                self.logger.info(f"EVENT COMPLETED RX: {message} | waiting_for={list(self.waiting_for_completion.keys())}")
+            except Exception:
+                pass
             if action_type in self.waiting_for_completion:
                 event = self.waiting_for_completion[action_type]
                 event.set()
@@ -92,6 +104,10 @@ class UARTManager:
                 self.message_callbacks["status_callback"](message)
         
         elif "SERVO_MOVE_STARTED:" in message:
+            try:
+                self.logger.debug(f"EVENT STARTED RX: {message}")
+            except Exception:
+                pass
             if "servo_start_callback" in self.message_callbacks:
                 self.message_callbacks["servo_start_callback"](message)
         
@@ -108,6 +124,10 @@ class UARTManager:
                 self.message_callbacks["gripper_complete_callback"](message)
                 
         elif "STEPPER_MOVE_STARTED:" in message:
+            try:
+                self.logger.debug(f"EVENT STARTED RX: {message}")
+            except Exception:
+                pass
             if "stepper_start_callback" in self.message_callbacks:
                 self.message_callbacks["stepper_start_callback"](message)
                 
@@ -116,14 +136,23 @@ class UARTManager:
                 self.message_callbacks["stepper_complete_callback"](message)
     
     def wait_for_action_completion(self, action_type: str, timeout: float = 30.0) -> bool:
+        # Comprobar si ya se completó hace muy poco (evita carrera con comandos rápidos)
+        try:
+            ts = self.completed_actions_recent.get(action_type)
+            if ts is not None and (time.time() - ts) < 5.0:
+                del self.completed_actions_recent[action_type]
+                return True
+        except Exception:
+            pass
+
         event = threading.Event()
         self.waiting_for_completion[action_type] = event
-        
+
         completed = event.wait(timeout)
-        
+
         if action_type in self.waiting_for_completion:
             del self.waiting_for_completion[action_type]
-            
+
         return completed
     
     def send_command(self, command: str) -> Dict:

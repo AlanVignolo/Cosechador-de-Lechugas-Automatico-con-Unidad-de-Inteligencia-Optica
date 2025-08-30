@@ -84,8 +84,21 @@ class RobotController:
             if not result["success"]:
                 return {"success": False, "message": "Error en offset"}
             
-            # Esperar que complete el movimiento usando evento
+            # Esperar que complete el movimiento usando evento con caché antirace
             completed = self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=10.0)
+            if not completed:
+                # Fallback: revisar la cola por si el COMPLETED llegó sin que el waiter estuviera instalado
+                self.logger.warning("No se recibió evento de COMPLETADO del offset. Activando fallback para revisar mensajes en cola...")
+                fallback_deadline = time.time() + 3.0
+                while time.time() < fallback_deadline and not completed:
+                    try:
+                        msg = self.cmd.uart.message_queue.get(timeout=0.5)
+                        if "STEPPER_MOVE_COMPLETED:" in msg:
+                            self.logger.info(f"COMPLETADO detectado por fallback: {msg}")
+                            completed = True
+                            break
+                    except Exception:
+                        continue
             if not completed:
                 return {"success": False, "message": "Timeout esperando completar offset"}
             
@@ -203,10 +216,10 @@ class RobotController:
             if "LIMIT_H_LEFT" in limit_message:
                 print("   ✅ Límite izquierdo alcanzado")
                 
-                # ⭐ CAPTURAR MENSAJE DE PASOS
-                steps_message = self._wait_for_calibration_steps()
-                if steps_message:
-                    steps = int(steps_message.split("CALIBRATION_STEPS:")[1])
+                # ⭐ CAPTURAR PASOS DE CALIBRACIÓN
+                steps_value = self._wait_for_calibration_steps()
+                if steps_value is not None:
+                    steps = steps_value
                     horizontal_mm = steps / RobotConfig.STEPS_PER_MM_H
                     measurements["horizontal_steps"] = steps
                     measurements["horizontal_mm"] = round(horizontal_mm, 1)
@@ -231,10 +244,10 @@ class RobotController:
             if "LIMIT_V_DOWN" in limit_message:
                 print("   ✅ Límite inferior alcanzado")
                 
-                # ⭐ CAPTURAR MENSAJE DE PASOS
-                steps_message = self._wait_for_calibration_steps()
-                if steps_message:
-                    steps = int(steps_message.split("CALIBRATION_STEPS:")[1])
+                # ⭐ CAPTURAR PASOS DE CALIBRACIÓN
+                steps_value = self._wait_for_calibration_steps()
+                if steps_value is not None:
+                    steps = steps_value
                     vertical_mm = steps / RobotConfig.STEPS_PER_MM_V
                     measurements["vertical_steps"] = steps
                     measurements["vertical_mm"] = round(vertical_mm, 1)
@@ -249,15 +262,20 @@ class RobotController:
         except Exception as e:
             return {"success": False, "message": f"Error: {str(e)}"}
 
-    def _wait_for_calibration_steps(self, timeout: float = 5.0) -> Optional[str]:
-        """Esperar mensaje CALIBRATION_STEPS del micro"""
+    def _wait_for_calibration_steps(self, timeout: float = 5.0) -> Optional[int]:
+        """Esperar mensaje de pasos de calibración del micro.
+        Acepta 'CALIBRATION_STEPS:<n>' o 'CALIBRATION_COMPLETED:<n>' y devuelve <n> como int."""
         start_time = time.time()
         
         while time.time() - start_time < timeout:
             try:
                 message = self.cmd.uart.message_queue.get(timeout=0.5)
-                if "CALIBRATION_STEPS:" in message:
-                    return message
+                if "CALIBRATION_STEPS:" in message or "CALIBRATION_COMPLETED:" in message:
+                    try:
+                        value = int(message.split(":")[1])
+                        return value
+                    except Exception:
+                        continue
             except:
                 continue
         
