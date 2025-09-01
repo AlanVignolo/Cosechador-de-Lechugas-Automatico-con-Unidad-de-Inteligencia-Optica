@@ -85,6 +85,11 @@ class UARTManager:
                 self.completed_actions_recent[action_type] = time.time()
             except Exception:
                 pass
+            
+            # Procesar información de posición relativa si está disponible
+            if "STEPPER_MOVE_COMPLETED:" in message and "REL:" in message:
+                self._process_movement_completed(message)
+            
             # Log de diagnóstico
             try:
                 self.logger.info(f"EVENT COMPLETED RX: {message} | waiting_for={list(self.waiting_for_completion.keys())}")
@@ -93,6 +98,10 @@ class UARTManager:
             if action_type in self.waiting_for_completion:
                 event = self.waiting_for_completion[action_type]
                 event.set()
+        
+        # Procesar parada de emergencia con información de posición
+        elif "STEPPER_EMERGENCY_STOP:" in message:
+            self._process_emergency_stop(message)
                 
         # Procesar callbacks específicos
         if "LIMIT_" in message:
@@ -155,6 +164,36 @@ class UARTManager:
 
         return completed
     
+    def _process_movement_completed(self, message: str):
+        """Procesar mensaje de movimiento completado con información de posición relativa"""
+        try:
+            # Formato: STEPPER_MOVE_COMPLETED:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
+            parts = message.split(',')
+            if len(parts) >= 6:
+                rel_h_steps = int(parts[2].split(':')[1])
+                rel_v_steps = int(parts[3])
+                rel_h_mm = int(parts[4].split(':')[1])
+                rel_v_mm = int(parts[5])
+                
+                print(f"📍 Movimiento completado - Distancia relativa: X={rel_h_mm}mm ({rel_h_steps} pasos), Y={rel_v_mm}mm ({rel_v_steps} pasos)")
+        except Exception as e:
+            self.logger.warning(f"Error procesando mensaje de movimiento: {e}")
+    
+    def _process_emergency_stop(self, message: str):
+        """Procesar mensaje de parada de emergencia con información de posición"""
+        try:
+            # Formato: STEPPER_EMERGENCY_STOP:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
+            parts = message.split(',')
+            if len(parts) >= 6:
+                rel_h_steps = int(parts[2].split(':')[1])
+                rel_v_steps = int(parts[3])
+                rel_h_mm = int(parts[4].split(':')[1])
+                rel_v_mm = int(parts[5])
+                
+                print(f"🚨 PARADA DE EMERGENCIA - Movido hasta parada: X={rel_h_mm}mm ({rel_h_steps} pasos), Y={rel_v_mm}mm ({rel_v_steps} pasos)")
+        except Exception as e:
+            self.logger.warning(f"Error procesando mensaje de parada de emergencia: {e}")
+    
     def send_command(self, command: str) -> Dict:
         if not self.ser or not self.ser.is_open:
             return {"success": False, "error": "Puerto no conectado"}
@@ -190,11 +229,16 @@ class UARTManager:
         while time.time() - start_time < self.timeout:
             try:
                 message = self.message_queue.get(timeout=0.1)
+                # Procesar mensajes automáticos para no perder eventos durante lecturas síncronas
+                try:
+                    self._process_automatic_message(message)
+                except Exception:
+                    pass
                 responses.append(message)
                 
                 if message.startswith(("OK:", "ERR:")):
                     break
-                    
+                
             except queue.Empty:
                 continue
         
@@ -227,6 +271,11 @@ class UARTManager:
         while time.time() - start_time < timeout:
             try:
                 message = self.message_queue.get(timeout=0.5)
+                # Procesar eventos automáticos por si llegan durante la espera
+                try:
+                    self._process_automatic_message(message)
+                except Exception:
+                    pass
                 if "LIMIT_" in message and "TRIGGERED" in message:
                     return message
             except queue.Empty:
@@ -240,6 +289,11 @@ class UARTManager:
         while time.time() - start_time < timeout:
             try:
                 message = self.message_queue.get(timeout=0.5)
+                # Procesar eventos automáticos por si llegan durante la espera
+                try:
+                    self._process_automatic_message(message)
+                except Exception:
+                    pass
                 if expected_message in message:
                     self.logger.debug(f"Confirmación recibida: {message}")
                     return True

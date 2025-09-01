@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Parser manual simple para dos números
+// Parser manual simple para dos nï¿½meros
 static bool parse_two_integers(const char* str, int* x, int* y) {
 	char temp_str[32];
 	char* comma_pos;
@@ -24,7 +24,7 @@ static bool parse_two_integers(const char* str, int* x, int* y) {
 	if (!comma_pos) return false;
 	
 	// Dividir en dos strings
-	*comma_pos = '\0';  // Terminar primer número
+	*comma_pos = '\0';  // Terminar primer nï¿½mero
 	
 	// Convertir usando atoi
 	*x = atoi(temp_str);
@@ -59,7 +59,7 @@ void uart_parse_command(const char* cmd) {
 	
 	else if (cmd[0] == 'A' && cmd[1] == ':') {  // ARM smooth movement
 		// Formato: A:angle1,angle2,time_ms
-		// Ejemplo: A:45,90,2000 (mover servo1 a 45°, servo2 a 90° en 2 segundos)
+		// Ejemplo: A:45,90,2000 (mover servo1 a 45ï¿½, servo2 a 90ï¿½ en 2 segundos)
 		
 		int values[3];
 		int count = 0;
@@ -69,7 +69,7 @@ void uart_parse_command(const char* cmd) {
 		while (*ptr && count < 3) {
 			values[count] = atoi(ptr);
 			count++;
-			// Buscar siguiente número
+			// Buscar siguiente nï¿½mero
 			while (*ptr && *ptr != ',' && *ptr != '\0') ptr++;
 			if (*ptr == ',') ptr++;
 		}
@@ -95,7 +95,7 @@ void uart_parse_command(const char* cmd) {
 	}
 	
 	else if (cmd[0] == 'R' && cmd[1] == 'A') {  // Reset Arms
-		// Resetear brazos a posición por defecto (90°)
+		// Resetear brazos a posiciï¿½n por defecto (90ï¿½)
 		servo_set_position(1, 90);
 		servo_set_position(2, 90);
 		snprintf(response, sizeof(response), "OK:ARMS_RESET");

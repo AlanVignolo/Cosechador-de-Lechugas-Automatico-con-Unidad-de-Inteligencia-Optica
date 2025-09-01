@@ -9,6 +9,10 @@
 static bool calibration_mode = false;
 static int32_t calibration_step_counter = 0;
 
+// Contadores relativos para el movimiento actual (se resetean en cada movimiento)
+static volatile int32_t relative_h_counter = 0;
+static volatile int32_t relative_v_counter = 0;
+
 // Variables globales para los ejes (accesibles para debugging)
 stepper_axis_t horizontal_axis = {0};
 stepper_axis_t vertical_axis = {0};
@@ -107,24 +111,38 @@ ISR(TIMER1_COMPA_vect) {
 		
 		if (horizontal_axis.direction) {
 			horizontal_axis.current_position++;
+			relative_h_counter++;
 			} else {
 			horizontal_axis.current_position--;
+			relative_h_counter--;
 		}
 		
 		if (calibration_mode) {
 			calibration_step_counter++;
 		}
 		
-		if (horizontal_axis.current_position == horizontal_axis.target_position) {
+		// DEBUG: Verificar distancia al objetivo
+		int32_t h_distance_to_target = abs32(horizontal_axis.current_position - horizontal_axis.target_position);
+		if (h_distance_to_target <= 1) {
 			update_horizontal_speed(0);
 			horizontal_axis.state = STEPPER_IDLE;
 			motion_profile_reset(&horizontal_axis.profile);
 			
+			
 			if (vertical_axis.state == STEPPER_IDLE) {
-				char msg[64];
-				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld",
-				horizontal_axis.current_position, vertical_axis.current_position);
+				// Calcular distancia en mm desde contadores relativos
+				int32_t h_relative_mm = relative_h_counter / STEPS_PER_MM_H;
+				int32_t v_relative_mm = relative_v_counter / STEPS_PER_MM_V;
+				
+				char msg[128];
+				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
+				horizontal_axis.current_position, vertical_axis.current_position,
+				relative_h_counter, relative_v_counter, h_relative_mm, v_relative_mm);
 				uart_send_response(msg);
+				
+				// Resetear contadores relativos después de reportar
+				relative_h_counter = 0;
+				relative_v_counter = 0;
 			}
 			stepper_stop_horizontal();
 		}
@@ -141,24 +159,38 @@ ISR(TIMER3_COMPA_vect) {
 		
 		if (vertical_axis.direction) {
 			vertical_axis.current_position++;
+			relative_v_counter++;
 			} else {
 			vertical_axis.current_position--;
+			relative_v_counter--;
 		}
 		
 		if (calibration_mode) {
 			calibration_step_counter++;
 		}
 		
-		if (vertical_axis.current_position == vertical_axis.target_position) {
+		// DEBUG: Verificar distancia al objetivo
+		int32_t v_distance_to_target = abs32(vertical_axis.current_position - vertical_axis.target_position);
+		if (v_distance_to_target <= 1) {
 			update_vertical_speed(0);
 			vertical_axis.state = STEPPER_IDLE;
 			motion_profile_reset(&vertical_axis.profile);
 			
+			
 			if (horizontal_axis.state == STEPPER_IDLE) {
-				char msg[64];
-				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld",
-				horizontal_axis.current_position, vertical_axis.current_position);
+				// Calcular distancia en mm desde contadores relativos
+				int32_t h_relative_mm = relative_h_counter / STEPS_PER_MM_H;
+				int32_t v_relative_mm = relative_v_counter / STEPS_PER_MM_V;
+				
+				char msg[128];
+				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
+				horizontal_axis.current_position, vertical_axis.current_position,
+				relative_h_counter, relative_v_counter, h_relative_mm, v_relative_mm);
 				uart_send_response(msg);
+				
+				// Resetear contadores relativos después de reportar
+				relative_h_counter = 0;
+				relative_v_counter = 0;
 			}
 			stepper_stop_vertical();
 		}
@@ -262,7 +294,11 @@ void stepper_move_relative(int32_t h_steps, int32_t v_steps) {
 }
 
 void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
-	stepper_stop_all();
+	stepper_stop_silent();
+	
+	// Resetear contadores relativos al iniciar nuevo movimiento
+	relative_h_counter = 0;
+	relative_v_counter = 0;
 	
 	horizontal_axis.target_position = h_pos;
 	vertical_axis.target_position = v_pos;
@@ -353,12 +389,34 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 	
 	if (movement_started) {
 		char msg[64];
-		snprintf(msg, sizeof(msg), "STEPPER_MOVE_STARTED:%ld,%ld", h_pos, v_pos);
+		snprintf(msg, sizeof(msg), "STEPPER_MOVE_STARTED:FROM=%ld,%ld,TO=%ld,%ld", 
+			horizontal_axis.current_position, vertical_axis.current_position, h_pos, v_pos);
 		uart_send_response(msg);
 	}
 }
 
+void stepper_stop_silent(void) {
+	// Parar motores sin reportar emergencia (para inicio de nuevo movimiento)
+	update_horizontal_speed(0);
+	update_vertical_speed(0);
+	
+	horizontal_axis.state = STEPPER_IDLE;
+	vertical_axis.state = STEPPER_IDLE;
+	motion_profile_reset(&horizontal_axis.profile);
+	motion_profile_reset(&vertical_axis.profile);
+}
+
 void stepper_stop_all(void) {
+	// Calcular movimiento relativo antes de parar (para parada de emergencia)
+	bool was_moving = stepper_is_moving();
+	int32_t h_relative_mm = 0;
+	int32_t v_relative_mm = 0;
+	
+	if (was_moving) {
+		h_relative_mm = relative_h_counter / STEPS_PER_MM_H;
+		v_relative_mm = relative_v_counter / STEPS_PER_MM_V;
+	}
+	
 	// Parar timers
 	update_horizontal_speed(0);
 	update_vertical_speed(0);
@@ -368,6 +426,19 @@ void stepper_stop_all(void) {
 	vertical_axis.state = STEPPER_IDLE;
 	motion_profile_reset(&horizontal_axis.profile);
 	motion_profile_reset(&vertical_axis.profile);
+	
+	// Si estaba moviendose, reportar donde se detuvo y resetear contadores
+	if (was_moving) {
+		char msg[128];
+		snprintf(msg, sizeof(msg), "STEPPER_EMERGENCY_STOP:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
+		horizontal_axis.current_position, vertical_axis.current_position,
+		relative_h_counter, relative_v_counter, h_relative_mm, v_relative_mm);
+		uart_send_response(msg);
+		
+		// Resetear contadores relativos después de reportar emergencia
+		relative_h_counter = 0;
+		relative_v_counter = 0;
+	}
 }
 
 bool stepper_is_moving(void) {

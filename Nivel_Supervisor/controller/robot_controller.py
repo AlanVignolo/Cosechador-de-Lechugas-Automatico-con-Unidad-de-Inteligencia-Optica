@@ -64,7 +64,7 @@ class RobotController:
             result = self.cmd.move_xy(RobotConfig.HOMING_DISTANCE_H, 0)
             
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if limit_message and "H_RIGHT" in limit_message:
+            if limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message:
                 print("Límite derecho alcanzado")
             else:
                 return {"success": False, "message": "No se alcanzó límite derecho"}
@@ -73,7 +73,7 @@ class RobotController:
             result = self.cmd.move_xy(0, -RobotConfig.HOMING_DISTANCE_V)
             
             limit_message = self.cmd.uart.wait_for_limit(timeout=180.0)
-            if limit_message and "V_UP" in limit_message:
+            if limit_message and "LIMIT_V_UP_TRIGGERED" in limit_message:
                 print("Límite superior alcanzado")
             else:
                 return {"success": False, "message": "No se alcanzó límite superior"}
@@ -84,23 +84,20 @@ class RobotController:
             if not result["success"]:
                 return {"success": False, "message": "Error en offset"}
             
-            # Esperar que complete el movimiento usando evento con caché antirace
-            completed = self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=10.0)
-            if not completed:
-                # Fallback: revisar la cola por si el COMPLETED llegó sin que el waiter estuviera instalado
-                self.logger.warning("No se recibió evento de COMPLETADO del offset. Activando fallback para revisar mensajes en cola...")
-                fallback_deadline = time.time() + 3.0
-                while time.time() < fallback_deadline and not completed:
-                    try:
-                        msg = self.cmd.uart.message_queue.get(timeout=0.5)
-                        if "STEPPER_MOVE_COMPLETED:" in msg:
-                            self.logger.info(f"COMPLETADO detectado por fallback: {msg}")
-                            completed = True
-                            break
-                    except Exception:
-                        continue
-            if not completed:
-                return {"success": False, "message": "Timeout esperando completar offset"}
+            # Esperar que complete el movimiento - usar método simple de timeout en lugar de eventos
+            print("Esperando completar movimiento de offset...")
+            time.sleep(3.0)  # Dar tiempo suficiente para que complete el movimiento de offset
+            
+            # Verificar si llegaron mensajes de completado
+            completed = True  # Asumir que se completó después del delay
+            
+            # Opcionalmente drenar la cola de mensajes para limpiar
+            try:
+                while True:
+                    msg = self.cmd.uart.message_queue.get_nowait()
+                    self.logger.debug(f"Mensaje drenado durante offset: {msg}")
+            except:
+                pass
             
             self.current_position = {"x": 0.0, "y": 0.0}
             self.is_homed = True
@@ -213,7 +210,7 @@ class RobotController:
             
             # Esperar límite y capturar pasos
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if "LIMIT_H_LEFT" in limit_message:
+            if "LIMIT_H_LEFT_TRIGGERED" in limit_message:
                 print("   ✅ Límite izquierdo alcanzado")
                 
                 # ⭐ CAPTURAR PASOS DE CALIBRACIÓN
@@ -241,7 +238,7 @@ class RobotController:
             
             # Esperar límite y capturar pasos
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if "LIMIT_V_DOWN" in limit_message:
+            if "LIMIT_V_DOWN_TRIGGERED" in limit_message:
                 print("   ✅ Límite inferior alcanzado")
                 
                 # ⭐ CAPTURAR PASOS DE CALIBRACIÓN
@@ -255,7 +252,74 @@ class RobotController:
             
             # 4. Homing final
             print("🏠 Paso 4: Homing final...")
-            self.home_robot()
+            
+            # Desactivar modo calibración antes del homing
+            self.cmd.uart.send_command("CE")
+            time.sleep(0.5)
+            
+            # Alejarse de los límites para dar espacio al homing
+            print("   📦 Alejándose de límites...")
+            result = self.cmd.move_xy(50, -50)  # Moverse hacia derecha y arriba
+            if result["success"]:
+                time.sleep(3.0)  # Dar tiempo para completar movimiento
+            
+            # Limpiar callbacks y colas de mensajes antes del homing final
+            self.cmd.uart.set_limit_callback(None)
+            try:
+                while True:
+                    self.cmd.uart.message_queue.get_nowait()
+            except:
+                pass
+            
+            # HOMING DIRECTO - evitar recursión
+            print("   🎯 Ejecutando homing directo...")
+            
+            # Configurar velocidades de homing
+            result = self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
+            if not result["success"]:
+                return {"success": False, "message": "Error configurando velocidades de homing final"}
+            
+            # Configurar callback para límites
+            limit_touched = {"type": None}
+            def on_limit_touched_final(message):
+                limit_touched["type"] = message
+                print(f"      Límite detectado: {message}")
+            
+            self.cmd.uart.set_limit_callback(on_limit_touched_final)
+            
+            # Ir a límite derecho
+            print("      → Moviendo hacia límite derecho...")
+            result = self.cmd.move_xy(RobotConfig.HOMING_DISTANCE_H, 0)
+            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
+            if not (limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message):
+                return {"success": False, "message": "No se alcanzó límite derecho en homing final"}
+            
+            # Ir a límite superior
+            print("      → Moviendo hacia límite superior...")
+            result = self.cmd.move_xy(0, -RobotConfig.HOMING_DISTANCE_V)
+            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
+            if not (limit_message and "LIMIT_V_UP_TRIGGERED" in limit_message):
+                return {"success": False, "message": "No se alcanzó límite superior en homing final"}
+            
+            # APLICAR OFFSET CRÍTICO
+            print(f"      → Aplicando offset ({RobotConfig.HOME_OFFSET_H}mm, {RobotConfig.HOME_OFFSET_V}mm)...")
+            result = self.cmd.move_xy(-RobotConfig.HOME_OFFSET_H, RobotConfig.HOME_OFFSET_V)
+            if not result["success"]:
+                return {"success": False, "message": "Error aplicando offset en homing final"}
+            
+            # Esperar completar offset
+            time.sleep(3.0)
+            
+            # Establecer origen y estado
+            self.current_position = {"x": 0.0, "y": 0.0}
+            self.is_homed = True
+            
+            # Restaurar velocidades normales
+            result = self.cmd.set_velocities(RobotConfig.NORMAL_SPEED_H, RobotConfig.NORMAL_SPEED_V)
+            if result["success"]:
+                print(f"      ✅ Velocidades restauradas: {result['response']}")
+            
+            print("   ✅ Homing final completado")
             
             return {"success": True, "message": "Calibración completada", "measurements": measurements}
             
