@@ -30,13 +30,14 @@ typedef struct {
 extern stepper_axis_t horizontal_axis;
 extern stepper_axis_t vertical_axis;
 
-// Funciones públicas
+// Funciones pÃºblicas
 void stepper_init(void);
 void stepper_enable_motors(bool h_enable, bool v_enable);
 void stepper_set_speed(uint16_t h_speed, uint16_t v_speed);
 void stepper_move_relative(int32_t h_steps, int32_t v_steps);
 void stepper_move_absolute(int32_t h_pos, int32_t v_pos);
 void stepper_stop_all(void);
+void stepper_stop_silent(void);
 bool stepper_is_moving(void);
 void stepper_get_position(int32_t* h_pos, int32_t* v_pos);
 void stepper_set_position(int32_t h_pos, int32_t v_pos);
