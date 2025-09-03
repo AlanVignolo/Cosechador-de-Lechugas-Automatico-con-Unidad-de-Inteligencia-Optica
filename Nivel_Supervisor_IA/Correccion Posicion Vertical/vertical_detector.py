@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-def capture_new_image(camera_index=0):
-    """Captura una nueva imagen para detección vertical"""
+def capture_image_for_vertical_correction(camera_index=0):
+    """Captura una imagen simple para corrección de posición vertical"""
     
     recorte_config = {
         'x_inicio': 0.2,
@@ -13,52 +13,29 @@ def capture_new_image(camera_index=0):
     
     cap = cv2.VideoCapture(camera_index)
     if not cap.isOpened():
-        print("No se pudo abrir la cámara")
         return None
     
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     
-    print("=== CAPTURA NUEVA IMAGEN VERTICAL ===")
-    print("Presiona 'c' para capturar imagen, 'q' para salir")
+    # Capturar frame directamente
+    ret, frame = cap.read()
+    if not ret:
+        cap.release()
+        return None
+        
+    frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
     
-    captured_image = None
+    alto, ancho = frame_rotado.shape[:2]
+    x1 = int(ancho * recorte_config['x_inicio'])
+    x2 = int(ancho * recorte_config['x_fin'])
+    y1 = int(alto * recorte_config['y_inicio'])
+    y2 = int(alto * recorte_config['y_fin'])
     
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
-        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        
-        alto, ancho = frame_rotado.shape[:2]
-        x1 = int(ancho * recorte_config['x_inicio'])
-        x2 = int(ancho * recorte_config['x_fin'])
-        y1 = int(alto * recorte_config['y_inicio'])
-        y2 = int(alto * recorte_config['y_fin'])
-        
-        frame_recortado = frame_rotado[y1:y2, x1:x2]
-        
-        display = frame_recortado.copy()
-        h, w = display.shape[:2]
-        cv2.line(display, (0, h//2), (w, h//2), (0, 255, 0), 1)
-        cv2.putText(display, "Presiona 'c' para capturar NUEVA imagen VERTICAL", 
-                   (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-        
-        cv2.imshow('Preview - Nueva Captura Vertical', display)
-        
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('c'):
-            captured_image = frame_recortado.copy()
-            print("¡Nueva imagen capturada!")
-            break
-        elif key == ord('q') or key == 27:
-            break
+    frame_recortado = frame_rotado[y1:y2, x1:x2]
     
     cap.release()
-    cv2.destroyAllWindows()
-    
-    return captured_image
+    return frame_recortado
 
 def find_tape_vertical_position(image, debug=True):
     """
@@ -182,6 +159,34 @@ def find_tape_vertical_position(image, debug=True):
         print(f"Distancia vertical del centro: {tape_result['distance_from_center_y']} px")
     
     return [tape_result]
+
+def get_vertical_correction_distance(camera_index=0):
+    """
+    Función simplificada para corrección vertical - solo devuelve distancia en píxeles
+    Utilizada por la máquina de estados para corrección iterativa
+    """
+    # Capturar imagen
+    image = capture_image_for_vertical_correction(camera_index)
+    if image is None:
+        return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
+    
+    # Detectar cinta
+    candidates = find_tape_vertical_position(image, debug=False)
+    
+    if not candidates:
+        return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
+    
+    # Calcular distancia vertical desde centro
+    best_candidate = candidates[0]
+    img_center_y = image.shape[0] // 2
+    detected_y = best_candidate['base_y']
+    distance = detected_y - img_center_y
+    
+    return {
+        'success': True,
+        'distance_pixels': int(distance),
+        'confidence': best_candidate['score']
+    }
 
 def visualize_vertical_detection(image, candidates):
     """Visualiza la detección vertical basada en coordenada Y de la base"""

@@ -1,6 +1,8 @@
 import logging
 import threading
 import time
+import sys
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable, Dict, List, Optional, Tuple
@@ -8,6 +10,21 @@ from typing import Callable, Dict, List, Optional, Tuple
 from controller.robot_controller import RobotController
 from controller.command_manager import CommandManager
 from config.robot_config import RobotConfig
+
+# Agregar path para los módulos de IA
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
+
+try:
+    from base_width_detector import get_horizontal_correction_distance
+    from vertical_detector import get_vertical_correction_distance
+except ImportError as e:
+    logging.warning(f"No se pudieron importar módulos de IA: {e}")
+    # Funciones dummy para evitar errores
+    def get_horizontal_correction_distance(camera_index=0):
+        return {'success': False, 'distance_pixels': 0, 'error': 'Módulo no disponible'}
+    def get_vertical_correction_distance(camera_index=0):
+        return {'success': False, 'distance_pixels': 0, 'error': 'Módulo no disponible'}
 
 
 class RobotState(str, Enum):
@@ -192,6 +209,23 @@ class RobotStateMachine:
     def start_calibration(self):
         self._request_transition(RobotState.CALIBRATION)
 
+    def test_position_correction(self, camera_index=0, max_iterations=10, tolerance_mm=1.0) -> Dict:
+        """
+        Método público para probar la corrección de posición independientemente
+        """
+        if self.current_state not in [RobotState.IDLE, RobotState.MANUAL]:
+            return {"success": False, "message": "Solo se puede probar corrección en estado IDLE o MANUAL"}
+        
+        try:
+            success = self._perform_position_correction(camera_index, max_iterations, tolerance_mm)
+            if success:
+                return {"success": True, "message": "Corrección de posición completada exitosamente"}
+            else:
+                return {"success": False, "message": "Falló la corrección de posición"}
+        except Exception as e:
+            self.logger.error(f"Error en test_position_correction: {e}")
+            return {"success": False, "message": f"Error: {str(e)}"}
+
     def set_scan_hook(self, hook: Callable[[], Optional[Tuple[float, float]]]):
         """Hook que debe devolver (x_mm, y_mm) del próximo objetivo o None."""
         self.hooks["scan_next_target"] = hook
@@ -360,7 +394,14 @@ class RobotStateMachine:
 
         elif state == RobotState.HARVESTING:
             self._apply_state_config(state)
-            # Ejecutar trayectoria de recolección con el ArmController
+            
+            # PASO 1: Corrección de posición iterativa
+            if not self._perform_position_correction():
+                self.logger.error("Falló la corrección de posición")
+                self._enter_state(RobotState.ERROR)
+                return
+            
+            # PASO 2: Ejecutar trayectoria de recolección con el ArmController
             res = self.robot.arm.change_state("recoger_lechuga")
             if not res.get("success"):
                 self.logger.error(f"No se pudo iniciar recolección: {res}")
@@ -479,6 +520,122 @@ class RobotStateMachine:
                 return True
             time.sleep(0.1)
         return False
+
+    def _perform_position_correction(self, camera_index=0, max_iterations=10, tolerance_mm=1.0) -> bool:
+        """
+        Realiza corrección iterativa de posición horizontal y vertical usando IA
+        Primero horizontal, luego vertical hasta lograr ±1mm de tolerancia
+        """
+        self.logger.info("Iniciando corrección de posición con IA")
+        
+        # Conversión de píxeles a mm (aproximada, ajustar según calibración de cámara)
+        pixels_per_mm_x = 2.0  # Ajustar según tu setup
+        pixels_per_mm_y = 2.0  # Ajustar según tu setup
+        tolerance_pixels_x = int(tolerance_mm * pixels_per_mm_x)
+        tolerance_pixels_y = int(tolerance_mm * pixels_per_mm_y)
+        
+        # FASE 1: Corrección HORIZONTAL
+        self.logger.info("Iniciando corrección horizontal")
+        for h_iter in range(max_iterations):
+            # Obtener distancia horizontal usando IA
+            h_result = get_horizontal_correction_distance(camera_index)
+            
+            if not h_result['success']:
+                self.logger.error(f"Error en detección horizontal: {h_result.get('error', 'Desconocido')}")
+                return False
+            
+            distance_px = h_result['distance_pixels']
+            self.logger.info(f"Iteración horizontal {h_iter+1}: distancia = {distance_px} px")
+            
+            # Verificar si está dentro de tolerancia
+            if abs(distance_px) <= tolerance_pixels_x:
+                self.logger.info(f"Corrección horizontal completada en {h_iter+1} iteraciones")
+                break
+            
+            # Calcular movimiento en mm
+            move_mm = distance_px / pixels_per_mm_x
+            
+            # Obtener posición actual
+            status = self.robot.get_status()
+            current_x = status['position']['x']
+            current_y = status['position']['y']
+            
+            # Mover solo en X (horizontal)
+            new_x = current_x + move_mm
+            
+            # Validar límites del workspace
+            if new_x < 0 or new_x > RobotConfig.MAX_X_MM:
+                self.logger.warning(f"Movimiento horizontal fuera de límites: {new_x}")
+                return False
+            
+            # Ejecutar movimiento
+            move_res = self.robot.move_to_absolute(new_x, current_y)
+            if not move_res.get("success"):
+                self.logger.error(f"Error en movimiento horizontal: {move_res}")
+                return False
+            
+            # Esperar finalización
+            if not self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0):
+                self.logger.error("Timeout en movimiento horizontal")
+                return False
+            
+            time.sleep(0.5)  # Pausa para estabilización
+        else:
+            self.logger.warning(f"No se logró corrección horizontal en {max_iterations} iteraciones")
+            return False
+        
+        # FASE 2: Corrección VERTICAL
+        self.logger.info("Iniciando corrección vertical")
+        for v_iter in range(max_iterations):
+            # Obtener distancia vertical usando IA
+            v_result = get_vertical_correction_distance(camera_index)
+            
+            if not v_result['success']:
+                self.logger.error(f"Error en detección vertical: {v_result.get('error', 'Desconocido')}")
+                return False
+            
+            distance_px = v_result['distance_pixels']
+            self.logger.info(f"Iteración vertical {v_iter+1}: distancia = {distance_px} px")
+            
+            # Verificar si está dentro de tolerancia
+            if abs(distance_px) <= tolerance_pixels_y:
+                self.logger.info(f"Corrección vertical completada en {v_iter+1} iteraciones")
+                break
+            
+            # Calcular movimiento en mm
+            move_mm = distance_px / pixels_per_mm_y
+            
+            # Obtener posición actual
+            status = self.robot.get_status()
+            current_x = status['position']['x']
+            current_y = status['position']['y']
+            
+            # Mover solo en Y (vertical)
+            new_y = current_y + move_mm
+            
+            # Validar límites del workspace
+            if new_y < 0 or new_y > RobotConfig.MAX_Y_MM:
+                self.logger.warning(f"Movimiento vertical fuera de límites: {new_y}")
+                return False
+            
+            # Ejecutar movimiento
+            move_res = self.robot.move_to_absolute(current_x, new_y)
+            if not move_res.get("success"):
+                self.logger.error(f"Error en movimiento vertical: {move_res}")
+                return False
+            
+            # Esperar finalización
+            if not self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0):
+                self.logger.error("Timeout en movimiento vertical")
+                return False
+            
+            time.sleep(0.5)  # Pausa para estabilización
+        else:
+            self.logger.warning(f"No se logró corrección vertical en {max_iterations} iteraciones")
+            return False
+        
+        self.logger.info("Corrección de posición completada exitosamente")
+        return True
 
     # =========================
     # Gestión de transiciones
