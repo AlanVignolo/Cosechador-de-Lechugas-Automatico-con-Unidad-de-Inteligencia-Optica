@@ -127,10 +127,11 @@ def menu_interactivo(uart_manager, robot):
         print("4. Tomar snapshot de progreso")
         print("5. HOMING")
         print("6. Control Gripper")
-        print("7. PARADA DE EMERGENCIA")
-        print("8. Estado del robot")
-        print("9. CONTROL DE BRAZO POR ESTADOS")
-        print("0. Salir")
+        print("7. PARADA DE EMERGENCIA (StateMachine)")
+        print("8. Reset desde EMERGENCY_STOP")
+        print("9. HOMING (StateMachine)")
+        print("10. PROBAR CORRECCIÓN AUTOMÁTICA DE POSICIÓN")
+        print("0. Volver")
         print("-"*50)
         opcion = input("Selecciona opción: ")
 
@@ -243,8 +244,40 @@ def menu_interactivo(uart_manager, robot):
                 print("Error consultando límites")
             
         elif opcion == '9':
-            menu_control_brazo(robot.arm)
+            sm.start_homing()
+            print("HOMING solicitado a la StateMachine")
+        elif opcion == '10':
+            print("\n=== PRUEBA DE CORRECCIÓN AUTOMÁTICA ===")
+            print("Esta función usará la cámara y los módulos de IA para centrar automáticamente el robot")
+            print("ASEGÚRATE de que:")
+            print("- La cámara esté conectada y funcionando")
+            print("- Hay una cinta visible en el campo de visión")
+            print("- El robot está en una posición segura")
+            confirmar = input("¿Continuar con la prueba? (s/N): ")
             
+            if confirmar.lower() == 's':
+                print("Iniciando corrección automática de posición...")
+                try:
+                    # Parámetros configurables para la prueba
+                    camera_index = 0
+                    max_iterations = 10
+                    tolerance_mm = 1.0
+                    
+                    result = sm.test_position_correction(camera_index, max_iterations, tolerance_mm)
+                    
+                    if result['success']:
+                        print("✅ CORRECCIÓN COMPLETADA EXITOSAMENTE")
+                        print(f"Mensaje: {result['message']}")
+                        print("El robot debería estar ahora centrado en la cinta")
+                    else:
+                        print("❌ ERROR EN LA CORRECCIÓN")
+                        print(f"Mensaje: {result['message']}")
+                        print("Verifica la cámara y la visibilidad de la cinta")
+                        
+                except Exception as e:
+                    print(f"❌ ERROR INESPERADO: {e}")
+            else:
+                print("Prueba cancelada")
         elif opcion == '0':
             print("Saliendo...")
             break
