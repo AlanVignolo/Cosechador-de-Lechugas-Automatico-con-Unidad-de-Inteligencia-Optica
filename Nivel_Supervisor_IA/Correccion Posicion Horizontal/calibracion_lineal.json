@@ -1,0 +1,18 @@
+{
+  "function": "mm = 0.38769 * pixels + 0.15",
+  "coefficients": {
+    "a": 0.38768632343122444,
+    "b": 0.1517033439513478
+  },
+  "quality": {
+    "r_squared": 0.9996330952188113,
+    "average_error_mm": 0.519332484143753,
+    "max_error_mm": 1.347584022539678
+  },
+  "valid_range": {
+    "pixels_min": -140.0,
+    "pixels_max": 138.0,
+    "mm_min": -55.0,
+    "mm_max": 55.0
+  }
+}
