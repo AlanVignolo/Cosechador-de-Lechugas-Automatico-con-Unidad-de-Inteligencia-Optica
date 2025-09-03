@@ -1,0 +1,105 @@
+{
+  "function": "mm = 0.3877 * pixels + 0.15",
+  "coefficients": [
+    0.38768632343122444,
+    0.1517033439513478
+  ],
+  "data_points": [
+    {
+      "position_mm": 0.0,
+      "detected_pixels": 0.0
+    },
+    {
+      "position_mm": -5.0,
+      "detected_pixels": -13.0
+    },
+    {
+      "position_mm": -10.0,
+      "detected_pixels": -26.0
+    },
+    {
+      "position_mm": -15.0,
+      "detected_pixels": -39.0
+    },
+    {
+      "position_mm": -20.0,
+      "detected_pixels": -52.0
+    },
+    {
+      "position_mm": -25.0,
+      "detected_pixels": -66.0
+    },
+    {
+      "position_mm": -30.0,
+      "detected_pixels": -80.0
+    },
+    {
+      "position_mm": -35.0,
+      "detected_pixels": -93.0
+    },
+    {
+      "position_mm": -40.0,
+      "detected_pixels": -105.0
+    },
+    {
+      "position_mm": -45.0,
+      "detected_pixels": -117.0
+    },
+    {
+      "position_mm": -50.0,
+      "detected_pixels": -129.0
+    },
+    {
+      "position_mm": -55.0,
+      "detected_pixels": -140.0
+    },
+    {
+      "position_mm": 5.0,
+      "detected_pixels": 14.0
+    },
+    {
+      "position_mm": 10.0,
+      "detected_pixels": 27.0
+    },
+    {
+      "position_mm": 15.0,
+      "detected_pixels": 39.0
+    },
+    {
+      "position_mm": 20.0,
+      "detected_pixels": 53.0
+    },
+    {
+      "position_mm": 25.0,
+      "detected_pixels": 66.0
+    },
+    {
+      "position_mm": 30.0,
+      "detected_pixels": 79.0
+    },
+    {
+      "position_mm": 35.0,
+      "detected_pixels": 92.0
+    },
+    {
+      "position_mm": 40.0,
+      "detected_pixels": 103.0
+    },
+    {
+      "position_mm": 45.0,
+      "detected_pixels": 114.0
+    },
+    {
+      "position_mm": 50.0,
+      "detected_pixels": 126.0
+    },
+    {
+      "position_mm": 55.0,
+      "detected_pixels": 138.0
+    }
+  ],
+  "errors": {
+    "average_mm": 0.519332484143753,
+    "maximum_mm": 1.347584022539678
+  }
+}
