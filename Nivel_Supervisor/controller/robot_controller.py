@@ -11,11 +11,18 @@ class RobotController:
         self.logger = logging.getLogger(__name__)
         
         self.current_position = {"x": 0.0, "y": 0.0}
+        self.global_position = {"x": 0.0, "y": 0.0}  # Posición global acumulada
         self.arm_servo1_pos = 90
         self.arm_servo2_pos = 90  
         self.gripper_state = "unknown"
         self.is_homed = False
         self.arm = ArmController(command_manager)
+        
+        # Configurar callback para tracking de posición
+        self._setup_position_tracking()
+        
+        # Inicializar posición global al arrancar
+        self._initialize_global_position()
         
         # Solicitar estado inicial del sistema
         self._request_system_status()
@@ -31,7 +38,43 @@ class RobotController:
         limits_result = self.cmd.check_limits()
         if limits_result["success"]:
             self.logger.info(f"Estado límites: {limits_result['response']}")
-        
+    
+    def _setup_position_tracking(self):
+        """Configurar callback para tracking automático de posición global"""
+        self.cmd.uart.set_stepper_callbacks(None, self._on_movement_completed)
+    
+    def _on_movement_completed(self, message: str):
+        """Callback para actualizar posición global cuando se completa un movimiento"""
+        try:
+            # Limpiar mensaje de posibles mezclas
+            clean_message = message.split('\n')[0]
+            
+            # Formato: STEPPER_MOVE_COMPLETED:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
+            parts = clean_message.split(',')
+            if len(parts) >= 6:
+                rel_h_mm = float(parts[4].split(':')[1])
+                rel_v_mm = float(parts[5])
+                
+                # Actualizar posición global acumulada
+                self.global_position["x"] += rel_h_mm
+                self.global_position["y"] += rel_v_mm
+                
+                self.logger.info(f"Posición global actualizada: X={self.global_position['x']}mm, Y={self.global_position['y']}mm")
+                
+        except Exception as e:
+            self.logger.warning(f"Error actualizando posición global: {e}")
+    
+    def reset_global_position(self, x: float = 0.0, y: float = 0.0):
+        """Resetear posición global (usado en homing)"""
+        self.global_position["x"] = x
+        self.global_position["y"] = y
+        self.logger.info(f"Posición global reseteada a: X={x}mm, Y={y}mm")
+    
+    def _initialize_global_position(self):
+        """Inicializar posición global al arrancar Python"""
+        # Asumir posición desconocida al inicio - será 0,0 tras homing
+        self.global_position = {"x": 0.0, "y": 0.0}
+        self.logger.info("Posición global inicializada - usar HOMING para establecer origen")
     def home_robot(self) -> Dict:
         self.logger.info("Iniciando secuencia de homing reactivo...")
         
@@ -161,7 +204,7 @@ class RobotController:
         """Obtener estado completo del robot"""
         return {
             "homed": self.is_homed,
-            "position": self.current_position,
+            "position": self.global_position,  # Usar posición global acumulada
             "arm": {
                 "servo1": self.arm_servo1_pos,
                 "servo2": self.arm_servo2_pos
@@ -312,6 +355,7 @@ class RobotController:
             
             # Establecer origen y estado
             self.current_position = {"x": 0.0, "y": 0.0}
+            self.reset_global_position(0.0, 0.0)  # Resetear posición global tras homing
             self.is_homed = True
             
             # Restaurar velocidades normales

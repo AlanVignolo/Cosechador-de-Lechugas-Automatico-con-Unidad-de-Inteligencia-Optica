@@ -71,6 +71,19 @@ class CommandManager:
         """Consultar posiciones actuales de los servos"""
         return self.uart.send_command("Q")
     
+    def get_movement_progress(self) -> Dict:
+        """Obtener el progreso del movimiento actual (tomar snapshot) - no bloqueante"""
+        # Enviar comando sin esperar respuesta específica
+        if not self.uart.ser or not self.uart.ser.is_open:
+            return {"success": False, "error": "Puerto no conectado"}
+        
+        try:
+            cmd_formatted = f"<RP>"
+            self.uart.ser.write(cmd_formatted.encode('utf-8'))
+            return {"success": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
     def check_limits(self) -> Dict:
         """Consultar estado de límites"""
         return self.uart.check_limits()
