@@ -29,6 +29,20 @@ typedef struct {
 // Variables globales accesibles (para debugging)
 extern stepper_axis_t horizontal_axis;
 extern stepper_axis_t vertical_axis;
+extern volatile int32_t relative_h_counter;
+extern volatile int32_t relative_v_counter;
+
+// Sistema de snapshots de progreso
+#define MAX_SNAPSHOTS 10
+typedef struct {
+	int32_t h_mm;
+	int32_t v_mm;
+	int32_t h_steps;
+	int32_t v_steps;
+} progress_snapshot_t;
+
+extern progress_snapshot_t snapshots[MAX_SNAPSHOTS];
+extern uint8_t snapshot_count;
 
 // Funciones públicas
 void stepper_init(void);

@@ -10,8 +10,12 @@ static bool calibration_mode = false;
 static int32_t calibration_step_counter = 0;
 
 // Contadores relativos para el movimiento actual (se resetean en cada movimiento)
-static volatile int32_t relative_h_counter = 0;
-static volatile int32_t relative_v_counter = 0;
+volatile int32_t relative_h_counter = 0;
+volatile int32_t relative_v_counter = 0;
+
+// Sistema de snapshots de progreso - variables globales
+progress_snapshot_t snapshots[MAX_SNAPSHOTS];
+uint8_t snapshot_count = 0;
 
 // Variables globales para los ejes (accesibles para debugging)
 stepper_axis_t horizontal_axis = {0};
@@ -130,9 +134,13 @@ ISR(TIMER1_COMPA_vect) {
 			
 			
 			if (vertical_axis.state == STEPPER_IDLE) {
-				// Calcular distancia en mm desde contadores relativos
-				int32_t h_relative_mm = relative_h_counter / STEPS_PER_MM_H;
-				int32_t v_relative_mm = relative_v_counter / STEPS_PER_MM_V;
+				// Calcular distancia en mm desde contadores relativos con mayor precisión
+				int32_t h_relative_mm = (relative_h_counter >= 0) ? 
+					(relative_h_counter + STEPS_PER_MM_H/2) / STEPS_PER_MM_H : 
+					(relative_h_counter - STEPS_PER_MM_H/2) / STEPS_PER_MM_H;
+				int32_t v_relative_mm = (relative_v_counter >= 0) ? 
+					(relative_v_counter + STEPS_PER_MM_V/2) / STEPS_PER_MM_V : 
+					(relative_v_counter - STEPS_PER_MM_V/2) / STEPS_PER_MM_V;
 				
 				char msg[128];
 				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
@@ -140,9 +148,22 @@ ISR(TIMER1_COMPA_vect) {
 				relative_h_counter, relative_v_counter, h_relative_mm, v_relative_mm);
 				uart_send_response(msg);
 				
+				// Enviar snapshots si los hay
+				if (snapshot_count > 0) {
+					char snapshot_msg[256];
+					int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+					
+					for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+						offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+							"S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+					}
+					uart_send_response(snapshot_msg);
+				}
+				
 				// Resetear contadores relativos después de reportar
 				relative_h_counter = 0;
 				relative_v_counter = 0;
+				snapshot_count = 0;
 			}
 			stepper_stop_horizontal();
 		}
@@ -178,9 +199,13 @@ ISR(TIMER3_COMPA_vect) {
 			
 			
 			if (horizontal_axis.state == STEPPER_IDLE) {
-				// Calcular distancia en mm desde contadores relativos
-				int32_t h_relative_mm = relative_h_counter / STEPS_PER_MM_H;
-				int32_t v_relative_mm = relative_v_counter / STEPS_PER_MM_V;
+				// Calcular distancia en mm desde contadores relativos con mayor precisión
+				int32_t h_relative_mm = (relative_h_counter >= 0) ? 
+					(relative_h_counter + STEPS_PER_MM_H/2) / STEPS_PER_MM_H : 
+					(relative_h_counter - STEPS_PER_MM_H/2) / STEPS_PER_MM_H;
+				int32_t v_relative_mm = (relative_v_counter >= 0) ? 
+					(relative_v_counter + STEPS_PER_MM_V/2) / STEPS_PER_MM_V : 
+					(relative_v_counter - STEPS_PER_MM_V/2) / STEPS_PER_MM_V;
 				
 				char msg[128];
 				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
@@ -188,9 +213,22 @@ ISR(TIMER3_COMPA_vect) {
 				relative_h_counter, relative_v_counter, h_relative_mm, v_relative_mm);
 				uart_send_response(msg);
 				
+				// Enviar snapshots si los hay
+				if (snapshot_count > 0) {
+					char snapshot_msg[256];
+					int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+					
+					for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+						offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+							"S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+					}
+					uart_send_response(snapshot_msg);
+				}
+				
 				// Resetear contadores relativos después de reportar
 				relative_h_counter = 0;
 				relative_v_counter = 0;
+				snapshot_count = 0;
 			}
 			stepper_stop_vertical();
 		}
@@ -299,6 +337,9 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 	// Resetear contadores relativos al iniciar nuevo movimiento
 	relative_h_counter = 0;
 	relative_v_counter = 0;
+	
+	// Resetear snapshots al iniciar nuevo movimiento
+	snapshot_count = 0;
 	
 	horizontal_axis.target_position = h_pos;
 	vertical_axis.target_position = v_pos;
@@ -429,6 +470,14 @@ void stepper_stop_all(void) {
 	
 	// Si estaba moviendose, reportar donde se detuvo y resetear contadores
 	if (was_moving) {
+		// Calcular distancia en mm con redondeo preciso
+		h_relative_mm = (relative_h_counter >= 0) ? 
+			(relative_h_counter + STEPS_PER_MM_H/2) / STEPS_PER_MM_H : 
+			(relative_h_counter - STEPS_PER_MM_H/2) / STEPS_PER_MM_H;
+		v_relative_mm = (relative_v_counter >= 0) ? 
+			(relative_v_counter + STEPS_PER_MM_V/2) / STEPS_PER_MM_V : 
+			(relative_v_counter - STEPS_PER_MM_V/2) / STEPS_PER_MM_V;
+			
 		char msg[128];
 		snprintf(msg, sizeof(msg), "STEPPER_EMERGENCY_STOP:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
 		horizontal_axis.current_position, vertical_axis.current_position,

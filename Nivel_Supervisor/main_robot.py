@@ -124,7 +124,7 @@ def menu_interactivo(uart_manager, robot):
         print("1. Mover a posición X,Y")
         print("2. Mover brazos (suave)")
         print("3. Mover servo individual")
-        print("4. Resetear brazos a 90°")
+        print("4. Tomar snapshot de progreso")
         print("5. HOMING")
         print("6. Control Gripper")
         print("7. PARADA DE EMERGENCIA")
@@ -159,8 +159,12 @@ def menu_interactivo(uart_manager, robot):
             print(f"Respuesta: {result['response']}")
             
         elif opcion == '4':
-            result = cmd_manager.reset_arm()
-            print(f"Respuesta: {result['response']}")
+            # Tomar snapshot del progreso del movimiento actual (no bloqueante)
+            result = cmd_manager.get_movement_progress()
+            if result["success"]:
+                print("📸 Snapshot solicitado...")
+            else:
+                print(f"Error: {result.get('error', 'Error desconocido')}")
             
         elif opcion == '5':
             print("MENÚ DE CALIBRACIÓN")
@@ -230,6 +234,13 @@ def menu_interactivo(uart_manager, robot):
             print(f"Posición: X={status['position']['x']}mm, Y={status['position']['y']}mm")
             print(f"Brazo: {status['arm']}")
             print(f"Gripper: {status['gripper']}")
+            
+            # Consultar estado de límites para diagnóstico
+            limits_result = cmd_manager.check_limits()
+            if limits_result["success"]:
+                print(f"Límites: {limits_result['response']}")
+            else:
+                print("Error consultando límites")
             
         elif opcion == '9':
             menu_control_brazo(robot.arm)

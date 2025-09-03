@@ -181,6 +181,38 @@ void uart_parse_command(const char* cmd) {
 		snprintf(response, sizeof(response), "OK:CALIBRATION_ENDED");
 	}
 	
+	else if (cmd[0] == 'R' && cmd[1] == 'P') {  // RP - Take Progress Snapshot
+		// Tomar snapshot del progreso actual SILENCIOSAMENTE (no enviar nada durante movimiento)
+		extern uint8_t snapshot_count;
+		extern progress_snapshot_t snapshots[];
+		
+		bool is_moving = stepper_is_moving();
+		
+		if (is_moving && snapshot_count < MAX_SNAPSHOTS) {
+			// Convertir pasos a milímetros con redondeo preciso
+			snapshots[snapshot_count].h_mm = (relative_h_counter >= 0) ? 
+				(relative_h_counter + STEPS_PER_MM_H/2) / STEPS_PER_MM_H : 
+				(relative_h_counter - STEPS_PER_MM_H/2) / STEPS_PER_MM_H;
+			snapshots[snapshot_count].v_mm = (relative_v_counter >= 0) ? 
+				(relative_v_counter + STEPS_PER_MM_V/2) / STEPS_PER_MM_V : 
+				(relative_v_counter - STEPS_PER_MM_V/2) / STEPS_PER_MM_V;
+			snapshots[snapshot_count].h_steps = relative_h_counter;
+			snapshots[snapshot_count].v_steps = relative_v_counter;
+			
+			snapshot_count++;
+			
+			// NO RESPONDER NADA durante el movimiento - evita interrupciones
+			return;  // Salir sin enviar respuesta
+		} else {
+			// Solo responder errores cuando no se está moviendo
+			if (!is_moving) {
+				snprintf(response, sizeof(response), "SNAPSHOT_ERROR:NOT_MOVING");
+			} else {
+				snprintf(response, sizeof(response), "SNAPSHOT_ERROR:MAX_REACHED");
+			}
+		}
+	}
+
 	else if (cmd[0] == 'S' && cmd[1] == '?') {  // S? - Status query completo
 		// Enviar estado completo del sistema
 		int32_t h_pos, v_pos;

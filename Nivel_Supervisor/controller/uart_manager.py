@@ -141,8 +141,17 @@ class UARTManager:
                 self.message_callbacks["stepper_start_callback"](message)
                 
         elif "STEPPER_MOVE_COMPLETED:" in message:
+            # Evitar procesamiento duplicado
+            if hasattr(self, '_last_completed_message') and self._last_completed_message == message:
+                return
+            self._last_completed_message = message
+            
             if "stepper_complete_callback" in self.message_callbacks:
                 self.message_callbacks["stepper_complete_callback"](message)
+                
+        elif "MOVEMENT_SNAPSHOTS:" in message:
+            self._process_movement_snapshots(message)
+            
     
     def wait_for_action_completion(self, action_type: str, timeout: float = 30.0) -> bool:
         # Comprobar si ya se completó hace muy poco (evita carrera con comandos rápidos)
@@ -167,8 +176,11 @@ class UARTManager:
     def _process_movement_completed(self, message: str):
         """Procesar mensaje de movimiento completado con información de posición relativa"""
         try:
+            # Limpiar el mensaje de posibles mezclas
+            clean_message = message.split('\n')[0]  # Solo la primera línea
+            
             # Formato: STEPPER_MOVE_COMPLETED:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
-            parts = message.split(',')
+            parts = clean_message.split(',')
             if len(parts) >= 6:
                 rel_h_steps = int(parts[2].split(':')[1])
                 rel_v_steps = int(parts[3])
@@ -193,6 +205,35 @@ class UARTManager:
                 print(f"🚨 PARADA DE EMERGENCIA - Movido hasta parada: X={rel_h_mm}mm ({rel_h_steps} pasos), Y={rel_v_mm}mm ({rel_v_steps} pasos)")
         except Exception as e:
             self.logger.warning(f"Error procesando mensaje de parada de emergencia: {e}")
+    
+    def _process_movement_snapshots(self, message: str):
+        """Procesar mensaje con snapshots del movimiento"""
+        try:
+            # Limpiar el mensaje de posibles mezclas
+            clean_message = message.split('\n')[0]  # Solo la primera línea
+            snapshots_data = clean_message.replace("MOVEMENT_SNAPSHOTS:", "")
+            if not snapshots_data:
+                return
+                
+            print("📊 SNAPSHOTS DEL MOVIMIENTO:")
+            print("-" * 40)
+            
+            snapshot_parts = snapshots_data.split(';')
+            for snapshot in snapshot_parts:
+                if '=' in snapshot and ',' in snapshot:
+                    try:
+                        flag = snapshot.split('=')[0]
+                        coords = snapshot.split('=')[1].split(',')
+                        if len(coords) >= 2:
+                            x_mm = int(coords[0])
+                            y_mm = int(coords[1])
+                            print(f"{flag}: X={x_mm}mm, Y={y_mm}mm")
+                    except Exception:
+                        continue
+                        
+        except Exception as e:
+            self.logger.warning(f"Error procesando snapshots: {e}")
+    
     
     def send_command(self, command: str) -> Dict:
         if not self.ser or not self.ser.is_open:
