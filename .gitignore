@@ -15,3 +15,12 @@ Nivel_Regulatorio/Nivel_Regulatorio/Debug/
 *.bak
 .DS_Store
 Thumbs.db
+
+# Ignorar bytecode de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar configuraciones de VSCode
+.vscode/
