@@ -9,8 +9,14 @@ class CommandManager:
         self.logger = logging.getLogger(__name__)
     
     def move_xy(self, x_mm: float, y_mm: float) -> Dict:
-        """Mover a posición X,Y en mm (relativo)"""
-        command = f"M:{x_mm},{y_mm}"
+        """Mover a posición X,Y en mm (relativo)
+        NOTA: Eje X invertido - valores positivos de entrada van hacia la izquierda en el robot
+        """
+        # INVERSIÓN DEL EJE X: multiplicar por -1
+        inverted_x_mm = -x_mm
+        
+        command = f"M:{inverted_x_mm},{y_mm}"
+        self.logger.debug(f"Movimiento: entrada X={x_mm}mm → robot X={inverted_x_mm}mm, Y={y_mm}mm")
         return self.uart.send_command(command)
     
     def get_system_status(self) -> Dict:

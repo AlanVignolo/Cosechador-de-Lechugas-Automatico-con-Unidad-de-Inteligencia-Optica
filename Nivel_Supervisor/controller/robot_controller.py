@@ -4,6 +4,8 @@ from controller.arm_controller import ArmController
 from config.robot_config import RobotConfig
 import logging
 import time
+import json
+import os
 
 class RobotController:
     def __init__(self, command_manager: CommandManager):
@@ -23,6 +25,13 @@ class RobotController:
         
         # Inicializar posición global al arrancar
         self._initialize_global_position()
+        self._load_homing_reference()
+        # Cargar posición anterior si existe y el robot estaba homed
+        # (esto debe ir DESPUÉS de cargar homing reference)
+        if self.is_homed:
+            if not self._load_current_position():
+                # Si no hay posición guardada, usar la del homing reference
+                pass
         
         # Solicitar estado inicial del sistema
         self._request_system_status()
@@ -59,7 +68,12 @@ class RobotController:
                 self.global_position["x"] += rel_h_mm
                 self.global_position["y"] += rel_v_mm
                 
-                self.logger.info(f"Posición global actualizada: X={self.global_position['x']}mm, Y={self.global_position['y']}mm")
+                # Guardar posición actualizada
+                self._save_current_position()
+                
+                display_x = RobotConfig.display_x_position(self.global_position['x'])
+                display_y = RobotConfig.display_y_position(self.global_position['y'])
+                self.logger.info(f"Posición global actualizada: X={display_x}mm, Y={display_y}mm")
                 
         except Exception as e:
             self.logger.warning(f"Error actualizando posición global: {e}")
@@ -68,13 +82,93 @@ class RobotController:
         """Resetear posición global (usado en homing)"""
         self.global_position["x"] = x
         self.global_position["y"] = y
-        self.logger.info(f"Posición global reseteada a: X={x}mm, Y={y}mm")
+        display_x = RobotConfig.display_x_position(x)
+        display_y = RobotConfig.display_y_position(y)
+        self.logger.info(f"Posición global reseteada a: X={display_x}mm, Y={display_y}mm")
     
     def _initialize_global_position(self):
         """Inicializar posición global al arrancar Python"""
         # Asumir posición desconocida al inicio - será 0,0 tras homing
         self.global_position = {"x": 0.0, "y": 0.0}
         self.logger.info("Posición global inicializada - usar HOMING para establecer origen")
+    
+    def _load_homing_reference(self):
+        """Cargar referencia de homing desde archivo JSON"""
+        homing_file = os.path.join(os.path.dirname(__file__), '..', 'homing_reference.json')
+        try:
+            if os.path.exists(homing_file):
+                with open(homing_file, 'r') as f:
+                    data = json.load(f)
+                
+                if data.get('homed', False):
+                    self.current_position = data['position'].copy()
+                    self.global_position = data['position'].copy()
+                    self.is_homed = True
+                    self.logger.info(f"✅ Referencia de homing cargada: X={self.current_position['x']:.1f}mm, Y={self.current_position['y']:.1f}mm")
+                    print(f"✅ Referencia de homing restaurada desde sesión anterior")
+                    print(f"   Posición: X={self.current_position['x']:.1f}mm, Y={self.current_position['y']:.1f}mm")
+                else:
+                    self.logger.info("Referencia de homing inválida")
+            else:
+                self.logger.info("No existe referencia de homing previa")
+        except Exception as e:
+            self.logger.error(f"Error cargando referencia de homing: {e}")
+    
+    def _save_homing_reference(self):
+        """Guardar referencia de homing actual"""
+        homing_file = os.path.join(os.path.dirname(__file__), '..', 'homing_reference.json')
+        data = {
+            'timestamp': time.time(),
+            'position': self.current_position.copy(),
+            'homed': self.is_homed
+        }
+        try:
+            with open(homing_file, 'w') as f:
+                json.dump(data, f, indent=2)
+            self.logger.info(f"Referencia de homing guardada: X={self.current_position['x']:.1f}mm, Y={self.current_position['y']:.1f}mm")
+            return True
+        except Exception as e:
+            self.logger.error(f"Error guardando referencia de homing: {e}")
+            return False
+    
+    def _save_current_position(self):
+        """Guardar posición actual después de cada movimiento"""
+        if not self.is_homed:
+            return  # Solo guardar si el robot está homed
+            
+        position_file = os.path.join(os.path.dirname(__file__), '..', 'current_position.json')
+        data = {
+            'timestamp': time.time(),
+            'position': self.global_position.copy(),
+            'homed': self.is_homed
+        }
+        
+        try:
+            with open(position_file, 'w') as f:
+                json.dump(data, f, indent=2)
+        except Exception as e:
+            self.logger.warning(f"Error guardando posición actual: {e}")
+    
+    def _load_current_position(self):
+        """Cargar última posición guardada"""
+        position_file = os.path.join(os.path.dirname(__file__), '..', 'current_position.json')
+        try:
+            if os.path.exists(position_file):
+                with open(position_file, 'r') as f:
+                    data = json.load(f)
+                
+                if data.get('homed', False):
+                    self.global_position = data['position'].copy()
+                    display_x = RobotConfig.display_x_position(self.global_position['x'])
+                    display_y = RobotConfig.display_y_position(self.global_position['y'])
+                    self.logger.info(f"✅ Posición anterior restaurada: X={display_x}mm, Y={display_y}mm")
+                    print(f"✅ Posición anterior restaurada: X={display_x}mm, Y={display_y}mm")
+                    return True
+        except Exception as e:
+            self.logger.warning(f"Error cargando posición anterior: {e}")
+        
+        return False
+
     def home_robot(self) -> Dict:
         self.logger.info("Iniciando secuencia de homing reactivo...")
         
@@ -103,8 +197,8 @@ class RobotController:
             if not result["success"]:
                 return {"success": False, "message": "Error configurando velocidades"}
             
-            print("Moviendo hacia la DERECHA hasta tocar límite...")
-            result = self.cmd.move_xy(RobotConfig.HOMING_DISTANCE_H, 0)
+            print("Moviendo hacia la IZQUIERDA hasta tocar límite...")
+            result = self.cmd.move_xy(-RobotConfig.HOMING_DISTANCE_H, 0)
             
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
             if limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message:
@@ -123,7 +217,7 @@ class RobotController:
             
             print(f"Estableciendo origen ({RobotConfig.HOME_OFFSET_H}mm, {RobotConfig.HOME_OFFSET_V}mm desde límites)...")
             
-            result = self.cmd.move_xy(-RobotConfig.HOME_OFFSET_H, RobotConfig.HOME_OFFSET_V)
+            result = self.cmd.move_xy(RobotConfig.HOME_OFFSET_H, RobotConfig.HOME_OFFSET_V)
             if not result["success"]:
                 return {"success": False, "message": "Error en offset"}
             
@@ -143,7 +237,15 @@ class RobotController:
                 pass
             
             self.current_position = {"x": 0.0, "y": 0.0}
+            self.reset_global_position(0.0, 0.0)
             self.is_homed = True
+            
+            # Guardar referencia de homing
+            print("Guardando referencia de homing...")
+            if self._save_homing_reference():
+                print("   Referencia guardada exitosamente")
+            else:
+                print("   Error guardando referencia (continuando)")
             
             print("Restaurando velocidades normales...")
             result = self.cmd.set_velocities(
@@ -213,22 +315,22 @@ class RobotController:
         }
     def calibrate_workspace(self) -> Dict:
         """Calibración del workspace usando distancias del config"""
-        print("🔧 Iniciando calibración del workspace...")
+        print("Iniciando calibración del workspace...")
         
         try:
             # 0. Verificar que brazo esté en posición segura
-            print("🤖 Verificando posición del brazo...")
+            print("Verificando posición del brazo...")
             if not self.arm.is_in_safe_position():
-                print("   ⚠️  Brazo no está en posición segura. Moviendo...")
+                print("   Brazo no está en posición segura. Moviendo...")
                 result = self.arm.ensure_safe_position()
                 if not result["success"]:
                     return {"success": False, "message": "No se pudo mover brazo a posición segura"}
-                print("   ✅ Brazo en posición segura")
+                print("   Brazo en posición segura")
             else:
-                print("   ✅ Brazo ya está en posición segura")
+                print("   Brazo ya está en posición segura")
             
             # 1. Homing inicial
-            print("📍 Paso 1: Homing inicial...")
+            print("Paso 1: Homing inicial...")
             result = self.home_robot()
             if not result["success"]:
                 return {"success": False, "message": "Error en homing inicial"}
@@ -237,7 +339,7 @@ class RobotController:
             measurements = {}
             
             # 2. Calibrar horizontal (izquierda)
-            print("📏 Paso 2: Calibrando horizontal (izquierda)...")
+            print("Paso 2: Calibrando horizontal (izquierda)...")
             
             # Configurar velocidades de homing
             self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
@@ -248,61 +350,56 @@ class RobotController:
             time.sleep(0.5)
             
             # Usar distancia del config
-            distance_mm = RobotConfig.HOMING_DISTANCE_H
-            result = self.cmd.move_xy(-distance_mm, 0)
+            result = self.cmd.move_xy(RobotConfig.get_workspace_measure_direction_x(), 0)
             
             # Esperar límite y capturar pasos
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if "LIMIT_H_LEFT_TRIGGERED" in limit_message:
-                print("   ✅ Límite izquierdo alcanzado")
+            if "LIMIT_H_RIGHT_TRIGGERED" in limit_message:
+                print("   Limite derecho alcanzado")
                 
-                # ⭐ CAPTURAR PASOS DE CALIBRACIÓN
+                # CAPTURAR PASOS DE CALIBRACION
                 steps_value = self._wait_for_calibration_steps()
                 if steps_value is not None:
                     steps = steps_value
                     horizontal_mm = steps / RobotConfig.STEPS_PER_MM_H
                     measurements["horizontal_steps"] = steps
                     measurements["horizontal_mm"] = round(horizontal_mm, 1)
-                    print(f"      📐 Distancia horizontal: {horizontal_mm:.1f}mm ({steps} pasos)")
+                    print(f"      Distancia horizontal: {horizontal_mm:.1f}mm ({steps} pasos)")
             
             # 3. Calibrar vertical (abajo)
-            print("📏 Paso 3: Calibrando vertical (abajo)...")
+            print("Paso 3: Calibrando vertical (abajo)...")
             
             # Configurar velocidades de homing
             self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
             time.sleep(0.5)
             
-            # Activar modo calibración
-            self.cmd.uart.send_command("CS")
-            time.sleep(0.5)
-            
-            distance_mm = RobotConfig.HOMING_DISTANCE_V
-            result = self.cmd.move_xy(0, distance_mm)
+            # Usar distancia del config
+            result = self.cmd.move_xy(0, RobotConfig.get_workspace_measure_direction_y())
             
             # Esperar límite y capturar pasos
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
             if "LIMIT_V_DOWN_TRIGGERED" in limit_message:
-                print("   ✅ Límite inferior alcanzado")
+                print("   Limite inferior alcanzado")
                 
-                # ⭐ CAPTURAR PASOS DE CALIBRACIÓN
+                # CAPTURAR PASOS DE CALIBRACION
                 steps_value = self._wait_for_calibration_steps()
                 if steps_value is not None:
                     steps = steps_value
                     vertical_mm = steps / RobotConfig.STEPS_PER_MM_V
                     measurements["vertical_steps"] = steps
                     measurements["vertical_mm"] = round(vertical_mm, 1)
-                    print(f"      📐 Distancia vertical: {vertical_mm:.1f}mm ({steps} pasos)")
+                    print(f"      Distancia vertical: {vertical_mm:.1f}mm ({steps} pasos)")
             
             # 4. Homing final
-            print("🏠 Paso 4: Homing final...")
+            print("Paso 4: Homing final...")
             
             # Desactivar modo calibración antes del homing
             self.cmd.uart.send_command("CE")
             time.sleep(0.5)
             
             # Alejarse de los límites para dar espacio al homing
-            print("   📦 Alejándose de límites...")
-            result = self.cmd.move_xy(50, -50)  # Moverse hacia derecha y arriba
+            print("   Alejandose de limites...")
+            result = self.cmd.move_xy(RobotConfig.apply_x_direction(-50), RobotConfig.apply_y_direction(-50))  # Alejarse de límites
             if result["success"]:
                 time.sleep(3.0)  # Dar tiempo para completar movimiento
             
@@ -315,7 +412,7 @@ class RobotController:
                 pass
             
             # HOMING DIRECTO - evitar recursión
-            print("   🎯 Ejecutando homing directo...")
+            print("   Ejecutando homing directo...")
             
             # Configurar velocidades de homing
             result = self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
@@ -330,23 +427,23 @@ class RobotController:
             
             self.cmd.uart.set_limit_callback(on_limit_touched_final)
             
-            # Ir a límite derecho
-            print("      → Moviendo hacia límite derecho...")
-            result = self.cmd.move_xy(RobotConfig.HOMING_DISTANCE_H, 0)
+            # Ir a límite derecho (movimiento hacia izquierda)
+            print("      -> Moviendo hacia límite derecho...")
+            result = self.cmd.move_xy(RobotConfig.get_homing_direction_x(), 0)
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
             if not (limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message):
                 return {"success": False, "message": "No se alcanzó límite derecho en homing final"}
             
             # Ir a límite superior
             print("      → Moviendo hacia límite superior...")
-            result = self.cmd.move_xy(0, -RobotConfig.HOMING_DISTANCE_V)
+            result = self.cmd.move_xy(0, RobotConfig.get_homing_direction_y())
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
             if not (limit_message and "LIMIT_V_UP_TRIGGERED" in limit_message):
                 return {"success": False, "message": "No se alcanzó límite superior en homing final"}
             
             # APLICAR OFFSET CRÍTICO
             print(f"      → Aplicando offset ({RobotConfig.HOME_OFFSET_H}mm, {RobotConfig.HOME_OFFSET_V}mm)...")
-            result = self.cmd.move_xy(-RobotConfig.HOME_OFFSET_H, RobotConfig.HOME_OFFSET_V)
+            result = self.cmd.move_xy(RobotConfig.get_home_offset_x(), RobotConfig.get_home_offset_y())
             if not result["success"]:
                 return {"success": False, "message": "Error aplicando offset en homing final"}
             
@@ -361,9 +458,16 @@ class RobotController:
             # Restaurar velocidades normales
             result = self.cmd.set_velocities(RobotConfig.NORMAL_SPEED_H, RobotConfig.NORMAL_SPEED_V)
             if result["success"]:
-                print(f"      ✅ Velocidades restauradas: {result['response']}")
+                print(f"      Velocidades restauradas: {result['response']}")
             
-            print("   ✅ Homing final completado")
+            print("   Homing final completado")
+            
+            print(f"\n=== RESULTADOS DE CALIBRACIÓN ===")
+            if "horizontal_mm" in measurements:
+                print(f"Workspace Horizontal: {measurements['horizontal_mm']:.1f}mm ({measurements['horizontal_steps']} pasos)")
+            if "vertical_mm" in measurements:
+                print(f"Workspace Vertical: {measurements['vertical_mm']:.1f}mm ({measurements['vertical_steps']} pasos)")
+            print("=" * 35)
             
             return {"success": True, "message": "Calibración completada", "measurements": measurements}
             
