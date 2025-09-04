@@ -50,29 +50,41 @@ def scan_available_cameras():
 
 def capture_with_timeout(camera_index, timeout=5.0):
     """Captura frame con timeout para evitar que se cuelgue"""
-    result = {'frame': None, 'success': False}
+    result = {'frame': None, 'success': False, 'cap': None}
     
     def capture_thread():
+        cap = None
         try:
             cap = cv2.VideoCapture(camera_index)
+            result['cap'] = cap
             if cap.isOpened():
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
                 ret, frame = cap.read()
-                if ret:
-                    result['frame'] = frame
+                if ret and frame is not None:
+                    result['frame'] = frame.copy()
                     result['success'] = True
-                cap.release()
         except Exception as e:
             print(f"Error en captura: {e}")
-        
+            result['success'] = False
+        finally:
+            if cap is not None and cap.isOpened():
+                cap.release()
+                # Pequeña pausa para asegurar liberación completa
+                time.sleep(0.1)
+    
     thread = threading.Thread(target=capture_thread)
     thread.daemon = True
     thread.start()
     thread.join(timeout)
     
+    # Cleanup forzado si hay timeout
     if thread.is_alive():
         print(f"⚠️ Timeout en captura de cámara {camera_index}")
+        if result['cap'] is not None:
+            try:
+                result['cap'].release()
+                time.sleep(0.1)
+            except:
+                pass
         return None
     
     return result['frame'] if result['success'] else None
@@ -96,10 +108,16 @@ def capture_image_for_correction(camera_index=0, max_retries=3):
     else:
         cameras_to_try.append(camera_index)
     
+    busy_camera_detected = False
+    
     for attempt in range(max_retries):
         # Probar cámaras disponibles
         for cam_idx in cameras_to_try:
             print(f"🎥 Intento {attempt + 1}/{max_retries} - Cámara {cam_idx}...")
+            
+            # Pequeña pausa antes de intentar capturar para evitar busy state
+            if attempt > 0 or busy_camera_detected:
+                time.sleep(0.5)
             
             frame = capture_with_timeout(cam_idx, timeout=5.0)
             
@@ -120,14 +138,24 @@ def capture_image_for_correction(camera_index=0, max_retries=3):
                 y2 = int(alto * recorte_config['y_fin'])
                 
                 frame_recortado = frame_rotado[y1:y2, x1:x2]
+                
+                # Pausa adicional después de uso exitoso para liberar recursos
+                time.sleep(0.2)
                 return frame_recortado
+            else:
+                # Si la cámara cacheada falla, marcar como busy y limpiar cache
+                if cam_idx == _working_camera_cache:
+                    print(f"🔧 Cámara cacheada {cam_idx} no disponible, limpiando cache...")
+                    _working_camera_cache = None
+                    busy_camera_detected = True
         
-        # Solo escanear si fallan todos los intentos previos
-        if attempt == 0 and not cameras_to_try:
+        # Solo escanear si fallan todos los intentos previos o si hay busy camera
+        if (attempt == 0 and not cameras_to_try) or busy_camera_detected:
             print("🔍 Escaneando cámaras disponibles...")
+            busy_camera_detected = False
             available = scan_available_cameras()
             working_cameras = [cam['index'] for cam in available if cam['working']]
-            cameras_to_try.extend(working_cameras)
+            cameras_to_try = working_cameras  # Resetear lista completamente
         elif attempt == 1 and len([c for c in cameras_to_try if c != camera_index]) == 0:
             print("🔍 Buscando cámaras alternativas...")
             available = scan_available_cameras()
