@@ -1,7 +1,7 @@
-# Ignorar archivos de compilación de Atmel Studio
+# ============================
+# Atmel Studio / AVR
+# ============================
 Nivel_Regulatorio/Nivel_Regulatorio/Debug/
-
-# Ignorar archivos intermedios
 *.o
 *.d
 *.elf
@@ -9,18 +9,42 @@ Nivel_Regulatorio/Nivel_Regulatorio/Debug/
 *.map
 *.lss
 *.srec
+*.bin
 
-# Otros archivos innecesarios
-*.log
-*.bak
-.DS_Store
-Thumbs.db
-
-# Ignorar bytecode de Python
+# ============================
+# Python
+# ============================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Ignorar configuraciones de VSCode
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# ============================
+# Logs & temporales
+# ============================
+*.log
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# ============================
+# IDEs / Editor configs
+# ============================
 .vscode/
+.idea/
+
+# ============================
+# Sistema operativo
+# ============================
+.DS_Store
+Thumbs.db
