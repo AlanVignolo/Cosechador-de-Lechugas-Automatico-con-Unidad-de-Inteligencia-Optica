@@ -304,6 +304,56 @@ def find_tape_base_width(image, debug=True):
     
     return tape_candidates
 
+def simple_horizontal_detection(image, debug=True):
+    """
+    Detección horizontal simplificada usando la misma lógica que vertical
+    """
+    
+    if debug:
+        print("\n=== DETECTOR HORIZONTAL SIMPLIFICADO ===")
+    
+    h_img, w_img = image.shape[:2]
+    img_center_x = w_img // 2
+    
+    # Aplicar el mismo filtro que vertical
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    v_channel = hsv[:,:,2]
+    _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
+    
+    # Encontrar la región oscura principal
+    contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if not contours:
+        if debug:
+            print("No se encontraron contornos")
+        return []
+    
+    # Contorno más grande
+    main_contour = max(contours, key=cv2.contourArea)
+    x, y, w, h = cv2.boundingRect(main_contour)
+    
+    if debug:
+        print(f"Región principal: {w}x{h} en ({x}, {y})")
+    
+    # Calcular centro horizontal directamente desde el contorno
+    center_x = x + w // 2
+    
+    tape_result = {
+        'base_center_x': center_x,
+        'base_width': w,
+        'start_x': x,
+        'end_x': x + w,
+        'base_y': y + h // 2,  # Centro vertical
+        'distance_from_center_x': abs(center_x - img_center_x),
+        'score': 0.8
+    }
+    
+    if debug:
+        print(f"✅ Centro detectado en X = {center_x} px")
+        print(f"Distancia del centro: {tape_result['distance_from_center_x']} px")
+    
+    return [tape_result]
+
 def get_horizontal_correction_distance(camera_index=0):
     """
     Función simplificada para corrección horizontal - solo devuelve distancia en píxeles
@@ -314,11 +364,14 @@ def get_horizontal_correction_distance(camera_index=0):
     if image is None:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
     
-    # Detectar cinta
-    candidates = find_tape_base_width(image, debug=False)
+    # Detectar cinta con algoritmo simplificado
+    candidates = simple_horizontal_detection(image, debug=False)
     
     if not candidates:
-        return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
+        # Si falla, intentar con el algoritmo original como respaldo
+        candidates = find_tape_base_width(image, debug=False)
+        if not candidates:
+            return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
     
     # Calcular distancia desde centro
     best_candidate = candidates[0]
