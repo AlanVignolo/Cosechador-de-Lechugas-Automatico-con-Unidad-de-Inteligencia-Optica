@@ -214,22 +214,8 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
                 print(f"Corrección horizontal completada en {h_iter+1} iteraciones")
                 break
             
-            # Obtener posición actual
-            status = robot.get_status()
-            current_x = status['position']['x']
-            current_y = status['position']['y']
-            
-            # Mover solo en X (horizontal)
-            new_x = current_x + move_mm
-            
-            # Validar límites del workspace
-            if new_x < 0 or new_x > RobotConfig.MAX_X:
-                print(f"Movimiento horizontal fuera de límites: {new_x}mm")
-                print(f"Límites válidos: 0 a {RobotConfig.MAX_X}mm")
-                return {"success": False, "message": f"Límites excedidos: {new_x}mm"}
-            
-            # Ejecutar movimiento
-            move_res = robot.move_to_absolute(new_x, current_y)
+            # Ejecutar movimiento relativo horizontal
+            move_res = robot.cmd.move_xy(move_mm, 0)  # Solo corrección horizontal
             if not move_res.get("success"):
                 print(f"Error en movimiento horizontal: {move_res}")
                 return {"success": False, "message": f"Error movimiento: {move_res}"}
@@ -249,9 +235,8 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
                 return {"success": False, "message": f"Error vertical: {v_result.get('error')}"}
             
             distance_px = v_result['distance_pixels']
-            # CORREGIR SIGNO: Para coherencia, valores positivos de Y van hacia abajo
-            # Si IA detecta que necesita ir hacia arriba (-px), el robot debe moverse hacia abajo (+mm)
-            move_mm = -distance_px / pixels_per_mm_y  # Invertir signo para coherencia
+            # Usar mismo signo que en test individual (sin inversión)
+            move_mm = distance_px / pixels_per_mm_y
             
             print(f"Iteración vertical {v_iter+1}: corrección = {distance_px}px → {move_mm:.1f}mm")
             
@@ -260,22 +245,8 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
                 print(f"Corrección vertical completada en {v_iter+1} iteraciones")
                 break
             
-            # Obtener posición actual
-            status = robot.get_status()
-            current_x = status['position']['x']
-            current_y = status['position']['y']
-            
-            # Mover solo en Y (vertical)
-            new_y = current_y + move_mm
-            
-            # Validar límites del workspace
-            if new_y < 0 or new_y > RobotConfig.MAX_Y:
-                print(f"Movimiento vertical fuera de límites: {new_y}mm")
-                print(f"Límites válidos: 0 a {RobotConfig.MAX_Y}mm")
-                return {"success": False, "message": f"Límites excedidos: {new_y}mm"}
-            
-            # Ejecutar movimiento
-            move_res = robot.move_to_absolute(current_x, new_y)
+            # Ejecutar movimiento relativo vertical
+            move_res = robot.cmd.move_xy(0, move_mm)  # Solo corrección vertical
             if not move_res.get("success"):
                 print(f"Error en movimiento vertical: {move_res}")
                 return {"success": False, "message": f"Error movimiento: {move_res}"}
