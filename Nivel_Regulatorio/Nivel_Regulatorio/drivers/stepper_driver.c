@@ -547,7 +547,7 @@ void stepper_stop_calibration(void) {
 	calibration_mode = false;
 	
 	char report_msg[64];
-	snprintf(report_msg, sizeof(report_msg), "CALIBRATION_COMPLETED:%ld", calibration_step_counter);
+	snprintf(report_msg, sizeof(report_msg), "CALIBRATION_COMPLETED:%lu", (uint32_t)calibration_step_counter);
 	uart_send_response(report_msg);
 	
 	calibration_step_counter = 0;

@@ -5,6 +5,7 @@ from typing import Optional, Dict, Callable
 from threading import Lock, Thread, Event
 import queue
 import threading
+from config.robot_config import RobotConfig
 
 class UARTManager:
     def __init__(self, port: str, baud_rate: int = 115200, timeout: float = 2.0):
@@ -73,7 +74,8 @@ class UARTManager:
                 
                 time.sleep(0.01)
             except Exception as e:
-                self.logger.warning(f"Error escuchando: {e}")
+                if RobotConfig.VERBOSE_LOGGING:
+                    self.logger.warning(f"Error escuchando: {e}")
                 time.sleep(0.1)
     
     def _process_automatic_message(self, message: str):
@@ -92,7 +94,8 @@ class UARTManager:
             
             # Log de diagnóstico
             try:
-                self.logger.info(f"EVENT COMPLETED RX: {message} | waiting_for={list(self.waiting_for_completion.keys())}")
+                if RobotConfig.SHOW_UART_EVENTS:
+                    self.logger.info(f"EVENT COMPLETED RX: {message} | waiting_for={list(self.waiting_for_completion.keys())}")
             except Exception:
                 pass
             if action_type in self.waiting_for_completion:
@@ -187,9 +190,15 @@ class UARTManager:
                 rel_h_mm = int(parts[4].split(':')[1])
                 rel_v_mm = int(parts[5])
                 
-                print(f"📍 Movimiento completado - Distancia relativa: X={rel_h_mm}mm ({rel_h_steps} pasos), Y={rel_v_mm}mm ({rel_v_steps} pasos)")
+                if RobotConfig.SHOW_MOVEMENT_COMPLETE:
+                    display_x_mm = RobotConfig.display_x_distance(rel_h_mm)
+                    display_y_mm = RobotConfig.display_y_distance(rel_v_mm)
+                    display_x_steps = RobotConfig.display_x_distance(rel_h_steps)
+                    display_y_steps = RobotConfig.display_y_distance(rel_v_steps)
+                    print(f"📍 Movimiento completado - Distancia relativa: X={display_x_mm}mm ({display_x_steps} pasos), Y={display_y_mm}mm ({display_y_steps} pasos)")
         except Exception as e:
-            self.logger.warning(f"Error procesando mensaje de movimiento: {e}")
+            if RobotConfig.VERBOSE_LOGGING:
+                self.logger.warning(f"Error procesando mensaje de movimiento: {e}")
     
     def _process_emergency_stop(self, message: str):
         """Procesar mensaje de parada de emergencia con información de posición"""
@@ -204,7 +213,8 @@ class UARTManager:
                 
                 print(f"🚨 PARADA DE EMERGENCIA - Movido hasta parada: X={rel_h_mm}mm ({rel_h_steps} pasos), Y={rel_v_mm}mm ({rel_v_steps} pasos)")
         except Exception as e:
-            self.logger.warning(f"Error procesando mensaje de parada de emergencia: {e}")
+            if RobotConfig.VERBOSE_LOGGING:
+                self.logger.warning(f"Error procesando mensaje de parada de emergencia: {e}")
     
     def _process_movement_snapshots(self, message: str):
         """Procesar mensaje con snapshots del movimiento"""
@@ -232,7 +242,8 @@ class UARTManager:
                         continue
                         
         except Exception as e:
-            self.logger.warning(f"Error procesando snapshots: {e}")
+            if RobotConfig.VERBOSE_LOGGING:
+                self.logger.warning(f"Error procesando snapshots: {e}")
     
     
     def send_command(self, command: str) -> Dict:

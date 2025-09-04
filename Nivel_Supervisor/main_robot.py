@@ -2,8 +2,10 @@ import logging
 import sys
 import time
 import threading
-from controller.uart_manager import UARTManager
+import json
+from controller.uart_manager import UARTManager  
 from controller.command_manager import CommandManager
+from controller.arm_controller import ArmController
 from controller.robot_controller import RobotController
 from config.robot_config import RobotConfig
 from controller.trajectories import TrajectoryDefinitions, get_trajectory_time_estimate
@@ -26,6 +28,52 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+# Archivo para persistencia del homing
+HOMING_DATA_FILE = os.path.join(os.path.dirname(__file__), 'homing_reference.json')
+
+def save_homing_reference(position, origin_steps=None):
+    """Guardar referencia de homing en archivo JSON"""
+    data = {
+        'timestamp': time.time(),
+        'position': position,
+        'origin_steps': origin_steps,
+        'homed': True
+    }
+    try:
+        with open(HOMING_DATA_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+        logger.info(f"Referencia de homing guardada: {position}")
+        return True
+    except Exception as e:
+        logger.error(f"Error guardando referencia de homing: {e}")
+        return False
+
+def load_homing_reference():
+    """Cargar referencia de homing desde archivo JSON"""
+    try:
+        if os.path.exists(HOMING_DATA_FILE):
+            with open(HOMING_DATA_FILE, 'r') as f:
+                data = json.load(f)
+            logger.info(f"Referencia de homing cargada: {data['position']}")
+            return data
+        else:
+            logger.info("No existe referencia de homing previa")
+            return None
+    except Exception as e:
+        logger.error(f"Error cargando referencia de homing: {e}")
+        return None
+
+def clear_homing_reference():
+    """Limpiar referencia de homing"""
+    try:
+        if os.path.exists(HOMING_DATA_FILE):
+            os.remove(HOMING_DATA_FILE)
+        logger.info("Referencia de homing eliminada")
+        return True
+    except Exception as e:
+        logger.error(f"Error eliminando referencia de homing: {e}")
+        return False
 
 def test_connection():
     print("Probando conexión UART...")
@@ -241,11 +289,217 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
     except Exception as e:
         return {"success": False, "message": f"Error inesperado: {str(e)}"}
 
+# Parámetros globales para las pruebas de IA
+AI_TEST_PARAMS = {
+    "camera_index": 0,
+    "max_iterations": 10,
+    "tolerance_mm": 1.0,
+    "pixels_per_mm_x": 2.0,
+    "pixels_per_mm_y": 2.0
+}
+
+def configure_ai_test_parameters():
+    """Configurar parámetros para las pruebas de IA"""
+    global AI_TEST_PARAMS
+    
+    print("\nCONFIGURACION ACTUAL:")
+    print(f"   Camara: {AI_TEST_PARAMS['camera_index']}")
+    print(f"   Max iteraciones: {AI_TEST_PARAMS['max_iterations']}")
+    print(f"   Tolerancia: {AI_TEST_PARAMS['tolerance_mm']}mm")
+    print(f"   Pixeles/mm X: {AI_TEST_PARAMS['pixels_per_mm_x']}")
+    print(f"   Pixeles/mm Y: {AI_TEST_PARAMS['pixels_per_mm_y']}")
+    
+    try:
+        print("\nPresiona Enter para mantener valor actual")
+        
+        camera = input(f"Indice de camara [{AI_TEST_PARAMS['camera_index']}]: ").strip()
+        if camera: AI_TEST_PARAMS['camera_index'] = int(camera)
+        
+        iterations = input(f"Max iteraciones [{AI_TEST_PARAMS['max_iterations']}]: ").strip()
+        if iterations: AI_TEST_PARAMS['max_iterations'] = int(iterations)
+        
+        tolerance = input(f"Tolerancia mm [{AI_TEST_PARAMS['tolerance_mm']}]: ").strip()
+        if tolerance: AI_TEST_PARAMS['tolerance_mm'] = float(tolerance)
+        
+        px_x = input(f"Pixeles/mm X [{AI_TEST_PARAMS['pixels_per_mm_x']}]: ").strip()
+        if px_x: AI_TEST_PARAMS['pixels_per_mm_x'] = float(px_x)
+        
+        px_y = input(f"Pixeles/mm Y [{AI_TEST_PARAMS['pixels_per_mm_y']}]: ").strip()
+        if px_y: AI_TEST_PARAMS['pixels_per_mm_y'] = float(px_y)
+        
+        print("\nConfiguracion actualizada")
+        
+    except ValueError:
+        print("Valor invalido, configuracion no cambiada")
+
+def test_horizontal_correction_only(robot):
+    """Probar solo corrección horizontal"""
+    if not AI_MODULES_AVAILABLE:
+        print("Modulos de IA no disponibles")
+        return
+    
+    print("\nCORRECCION HORIZONTAL UNICAMENTE")
+    print("ASEGURATE de que:")
+    print("- La camara este conectada y funcionando")
+    print("- Hay una cinta horizontal visible")
+    print("- El robot esta en posicion segura")
+    
+    if input("Continuar? (s/N): ").lower() != 's':
+        print("Prueba cancelada")
+        return
+    
+    try:
+        tolerance_pixels_x = int(AI_TEST_PARAMS['tolerance_mm'] * AI_TEST_PARAMS['pixels_per_mm_x'])
+        
+        for iteration in range(AI_TEST_PARAMS['max_iterations']):
+            print(f"\nIteracion horizontal {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
+            
+            # Obtener corrección horizontal
+            result = get_horizontal_correction_distance(AI_TEST_PARAMS['camera_index'])
+            
+            if not result['success']:
+                print(f"Error en deteccion: {result.get('error', 'Desconocido')}")
+                break
+            
+            distance_px = result['distance_pixels']
+            move_mm = distance_px / AI_TEST_PARAMS['pixels_per_mm_x']
+            
+            print(f"   Correccion detectada: {distance_px}px -> {move_mm:.1f}mm")
+            
+            if abs(distance_px) <= tolerance_pixels_x:
+                print(f"Correccion horizontal completada en {iteration + 1} iteraciones")
+                return
+            
+            # Ejecutar movimiento
+            status = robot.get_status()
+            new_x = status['position']['x'] + move_mm
+            
+            move_result = robot.move_to_absolute(new_x, status['position']['y'])
+            if not move_result.get("success"):
+                print(f"Error en movimiento: {move_result}")
+                break
+            
+            time.sleep(1.0)
+        
+        print(f"No se logro correccion en {AI_TEST_PARAMS['max_iterations']} iteraciones")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+
+def test_vertical_correction_only(robot):
+    """Probar solo corrección vertical"""
+    if not AI_MODULES_AVAILABLE:
+        print("Modulos de IA no disponibles")
+        return
+    
+    print("\nCORRECCION VERTICAL UNICAMENTE")
+    print("ASEGURATE de que:")
+    print("- La camara este conectada y funcionando")
+    print("- Hay una cinta vertical visible")
+    print("- El robot esta en posicion segura")
+    
+    if input("Continuar? (s/N): ").lower() != 's':
+        print("Prueba cancelada")
+        return
+    
+    try:
+        tolerance_pixels_y = int(AI_TEST_PARAMS['tolerance_mm'] * AI_TEST_PARAMS['pixels_per_mm_y'])
+        
+        for iteration in range(AI_TEST_PARAMS['max_iterations']):
+            print(f"\nIteracion vertical {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
+            
+            # Obtener corrección vertical
+            result = get_vertical_correction_distance(AI_TEST_PARAMS['camera_index'])
+            
+            if not result['success']:
+                print(f"Error en deteccion: {result.get('error', 'Desconocido')}")
+                break
+            
+            distance_px = result['distance_pixels']
+            move_mm = -distance_px / AI_TEST_PARAMS['pixels_per_mm_y']
+            
+            print(f"   Correccion detectada: {distance_px}px -> {move_mm:.1f}mm")
+            
+            if abs(distance_px) <= tolerance_pixels_y:
+                print(f"Correccion vertical completada en {iteration + 1} iteraciones")
+                return
+            
+            # Ejecutar movimiento
+            status = robot.get_status()
+            new_y = status['position']['y'] + move_mm
+            
+            move_result = robot.move_to_absolute(status['position']['x'], new_y)
+            if not move_result.get("success"):
+                print(f"Error en movimiento: {move_result}")
+                break
+            
+            time.sleep(1.0)
+        
+        print(f"No se logro correccion en {AI_TEST_PARAMS['max_iterations']} iteraciones")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+
+def test_full_position_correction(robot):
+    """Probar corrección completa (horizontal + vertical)"""
+    if not AI_MODULES_AVAILABLE:
+        print("Modulos de IA no disponibles")
+        return
+    
+    print("\nCORRECCION COMPLETA (HORIZONTAL + VERTICAL)")
+    print("ASEGURATE de que:")
+    print("- La camara este conectada y funcionando")
+    print("- Hay una cinta visible (ambos ejes)")
+    print("- El robot esta en posicion segura")
+    
+    if input("Continuar? (s/N): ").lower() != 's':
+        print("Prueba cancelada")
+        return
+    
+    try:
+        result = test_position_correction_direct(
+            robot, 
+            AI_TEST_PARAMS['camera_index'], 
+            AI_TEST_PARAMS['max_iterations'], 
+            AI_TEST_PARAMS['tolerance_mm']
+        )
+        
+        if result['success']:
+            print("\nCORRECCION COMPLETADA EXITOSAMENTE")
+            print(f"Resultado: {result['message']}")
+        else:
+            print("\nERROR EN LA CORRECCION")
+            print(f"Error: {result['message']}")
+            
+    except Exception as e:
+        print(f"Error inesperado: {e}")
+
 def menu_interactivo(uart_manager, robot):
     cmd_manager = robot.cmd
     
     while True:
-        opcion = input("Selecciona opción: ")
+        print("\n" + "="*60)
+        print("MENU PRINCIPAL - CONTROL DEL ROBOT CLAUDIO")
+        print("="*60)
+        status = robot.get_status()
+        print(f"Estado: {'Homed' if status['homed'] else 'Sin Homing'}")
+        print(f"Posicion: X={status['position']['x']:.1f}mm, Y={status['position']['y']:.1f}mm")
+        print("="*60)
+        print("1.  Mover a posicion XY")
+        print("2.  Movimiento de brazo completo")
+        print("3.  Mover servo individual")
+        print("4.  Snapshot de progreso")
+        print("5.  Calibracion y Homing")
+        print("6.  Control de Gripper")
+        print("7.  Parada de emergencia")
+        print("8.  Consultar estado completo")
+        print("9.  Menu avanzado del brazo")
+        print("10. Prueba correccion IA (Horizontal + Vertical)")
+        print("-"*60)
+        print("0.  Salir")
+        print("-"*60)
+        
+        opcion = input("Selecciona opción (0-10): ")
 
         if opcion == '1':
             x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
@@ -344,7 +598,9 @@ def menu_interactivo(uart_manager, robot):
             status = robot.get_status()
             print(f"Estado del robot:")
             print(f"Homed: {'Sí' if status['homed'] else 'No'}")
-            print(f"Posición: X={status['position']['x']}mm, Y={status['position']['y']}mm")
+            display_x = RobotConfig.display_x_position(status['position']['x'])
+            display_y = RobotConfig.display_y_position(status['position']['y'])
+            print(f"Posición: X={display_x}mm, Y={display_y}mm")
             print(f"Brazo: {status['arm']}")
             print(f"Gripper: {status['gripper']}")
             
@@ -358,37 +614,34 @@ def menu_interactivo(uart_manager, robot):
         elif opcion == '9':
             menu_control_brazo(robot.arm)
         elif opcion == '10':
-            print("\n=== PRUEBA DE CORRECCIÓN AUTOMÁTICA ===")
-            print("Esta función usará la cámara y los módulos de IA para centrar automáticamente el robot")
-            print("ASEGÚRATE de que:")
-            print("- La cámara esté conectada y funcionando")
-            print("- Hay una cinta visible en el campo de visión")
-            print("- El robot está en una posición segura")
-            confirmar = input("¿Continuar con la prueba? (s/N): ")
+            print("\n" + "="*60)
+            print("MENU DE PRUEBAS DE CORRECCION IA")
+            print("="*60)
+            print("1. Correccion HORIZONTAL unicamente")
+            print("2. Correccion VERTICAL unicamente")
+            print("3. Correccion COMPLETA (horizontal + vertical)")
+            print("4. Configurar parametros")
+            print("0. Volver al menu principal")
+            print("-"*60)
             
-            if confirmar.lower() == 's':
-                print("Iniciando corrección automática de posición...")
-                try:
-                    # Parámetros configurables para la prueba
-                    camera_index = 0
-                    max_iterations = 10
-                    tolerance_mm = 1.0
-                    
-                    result = test_position_correction_direct(robot, camera_index, max_iterations, tolerance_mm)
-                    
-                    if result['success']:
-                        print("✅ CORRECCIÓN COMPLETADA EXITOSAMENTE")
-                        print(f"Mensaje: {result['message']}")
-                        print("El robot debería estar ahora centrado en la cinta")
-                    else:
-                        print("❌ ERROR EN LA CORRECCIÓN")
-                        print(f"Mensaje: {result['message']}")
-                        print("Verifica la cámara y la visibilidad de la cinta")
-                        
-                except Exception as e:
-                    print(f"❌ ERROR INESPERADO: {e}")
+            sub_opcion = input("Selecciona tipo de prueba (0-4): ")
+            
+            if sub_opcion == '1':
+                print("\nINICIANDO CORRECCION HORIZONTAL")
+                test_horizontal_correction_only(robot)
+            elif sub_opcion == '2':
+                print("\nINICIANDO CORRECCION VERTICAL")
+                test_vertical_correction_only(robot)
+            elif sub_opcion == '3':
+                print("\nINICIANDO CORRECCION COMPLETA")
+                test_full_position_correction(robot)
+            elif sub_opcion == '4':
+                print("\nCONFIGURACION DE PARAMETROS")
+                configure_ai_test_parameters()
+            elif sub_opcion == '0':
+                pass
             else:
-                print("Prueba cancelada")
+                print("Opcion invalida")
         elif opcion == '0':
             print("Saliendo...")
             break
@@ -401,12 +654,16 @@ if __name__ == "__main__":
     print("CLAUDIO - Control Supervisor del Robot")
     print("=" * 50)
     
-    print(f"Puerto: {RobotConfig.SERIAL_PORT}")
-    print(f"Baudios: {RobotConfig.BAUD_RATE}")
+    # Auto-detectar plataforma o usar configuración manual
+    detected_platform = RobotConfig.auto_detect_platform()
+    serial_port = RobotConfig.get_serial_port()
     
+    print(f"Plataforma: {detected_platform}")
+    print(f"Puerto: {serial_port}")
+    print(f"Baudios: {RobotConfig.BAUD_RATE}")
     print("Conectando al robot...")
     
-    uart = UARTManager(RobotConfig.SERIAL_PORT, RobotConfig.BAUD_RATE)
+    uart = UARTManager(serial_port, RobotConfig.BAUD_RATE)
     
     if uart.connect():
         print("Conectado al robot")
