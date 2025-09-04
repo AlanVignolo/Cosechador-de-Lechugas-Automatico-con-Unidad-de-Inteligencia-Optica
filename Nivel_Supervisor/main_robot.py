@@ -154,9 +154,10 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
                 return {"success": False, "message": f"Error horizontal: {h_result.get('error')}"}
             
             distance_px = h_result['distance_pixels']
-            # CORREGIR SIGNO: Para coherencia, valores positivos de X van hacia la derecha
-            # Si IA detecta que necesita ir hacia la izquierda (-px), el robot debe moverse hacia la derecha (+mm)
-            move_mm = -distance_px / pixels_per_mm_x  # Invertir signo para coherencia
+            # SISTEMA DE COORDENADAS: X positivo = derecha (confirmado por usuario)
+            # IA: +px = mover derecha, -px = mover izquierda
+            # Robot: +mm = derecha, -mm = izquierda → Coinciden perfectamente
+            move_mm = distance_px / pixels_per_mm_x  # Directo: +px → +mm (derecha)
             
             print(f"Iteración horizontal {h_iter+1}: corrección = {distance_px}px → {move_mm:.1f}mm")
             
