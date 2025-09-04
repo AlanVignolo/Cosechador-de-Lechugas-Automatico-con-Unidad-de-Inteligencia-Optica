@@ -1,11 +1,24 @@
 import logging
 import sys
 import time
+import threading
 from controller.uart_manager import UARTManager
 from controller.command_manager import CommandManager
 from controller.robot_controller import RobotController
 from config.robot_config import RobotConfig
 from controller.trajectories import TrajectoryDefinitions, get_trajectory_time_estimate
+# Importar módulos de IA para corrección de posición
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
+
+try:
+    from base_width_detector import get_horizontal_correction_distance
+    from vertical_detector import get_vertical_correction_distance
+    AI_MODULES_AVAILABLE = True
+except ImportError as e:
+    print(f"Módulos de IA no disponibles: {e}")
+    AI_MODULES_AVAILABLE = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -114,25 +127,123 @@ def menu_control_brazo(arm_controller):
 
         input("\nPresiona Enter para continuar...")
 
+def test_position_correction_direct(robot, camera_index=0, max_iterations=10, tolerance_mm=1.0):
+    """
+    Función directa para probar corrección de posición sin StateMachine
+    """
+    if not AI_MODULES_AVAILABLE:
+        return {"success": False, "message": "Módulos de IA no disponibles"}
+    
+    print("Iniciando corrección de posición con IA...")
+    
+    # Conversión de píxeles a mm (aproximada, ajustar según calibración de cámara)
+    pixels_per_mm_x = 2.0  # Ajustar según tu setup
+    pixels_per_mm_y = 2.0  # Ajustar según tu setup
+    tolerance_pixels_x = int(tolerance_mm * pixels_per_mm_x)
+    tolerance_pixels_y = int(tolerance_mm * pixels_per_mm_y)
+    
+    try:
+        # FASE 1: Corrección HORIZONTAL
+        print("Iniciando corrección horizontal...")
+        for h_iter in range(max_iterations):
+            # Obtener distancia horizontal usando IA
+            h_result = get_horizontal_correction_distance(camera_index)
+            
+            if not h_result['success']:
+                print(f"Error en detección horizontal: {h_result.get('error', 'Desconocido')}")
+                return {"success": False, "message": f"Error horizontal: {h_result.get('error')}"}
+            
+            distance_px = h_result['distance_pixels']
+            # CORREGIR SIGNO: Para coherencia, valores positivos de X van hacia la derecha
+            # Si IA detecta que necesita ir hacia la izquierda (-px), el robot debe moverse hacia la derecha (+mm)
+            move_mm = -distance_px / pixels_per_mm_x  # Invertir signo para coherencia
+            
+            print(f"Iteración horizontal {h_iter+1}: corrección = {distance_px}px → {move_mm:.1f}mm")
+            
+            # Verificar si está dentro de tolerancia
+            if abs(distance_px) <= tolerance_pixels_x:
+                print(f"Corrección horizontal completada en {h_iter+1} iteraciones")
+                break
+            
+            # Obtener posición actual
+            status = robot.get_status()
+            current_x = status['position']['x']
+            current_y = status['position']['y']
+            
+            # Mover solo en X (horizontal)
+            new_x = current_x + move_mm
+            
+            # Validar límites del workspace
+            if new_x < 0 or new_x > RobotConfig.MAX_X:
+                print(f"Movimiento horizontal fuera de límites: {new_x}mm")
+                print(f"Límites válidos: 0 a {RobotConfig.MAX_X}mm")
+                return {"success": False, "message": f"Límites excedidos: {new_x}mm"}
+            
+            # Ejecutar movimiento
+            move_res = robot.move_to_absolute(new_x, current_y)
+            if not move_res.get("success"):
+                print(f"Error en movimiento horizontal: {move_res}")
+                return {"success": False, "message": f"Error movimiento: {move_res}"}
+            
+            time.sleep(1.0)  # Pausa para estabilización
+        else:
+            return {"success": False, "message": f"No se logró corrección horizontal en {max_iterations} iteraciones"}
+        
+        # FASE 2: Corrección VERTICAL
+        print("Iniciando corrección vertical...")
+        for v_iter in range(max_iterations):
+            # Obtener distancia vertical usando IA
+            v_result = get_vertical_correction_distance(camera_index)
+            
+            if not v_result['success']:
+                print(f"Error en detección vertical: {v_result.get('error', 'Desconocido')}")
+                return {"success": False, "message": f"Error vertical: {v_result.get('error')}"}
+            
+            distance_px = v_result['distance_pixels']
+            # CORREGIR SIGNO: Para coherencia, valores positivos de Y van hacia abajo
+            # Si IA detecta que necesita ir hacia arriba (-px), el robot debe moverse hacia abajo (+mm)
+            move_mm = -distance_px / pixels_per_mm_y  # Invertir signo para coherencia
+            
+            print(f"Iteración vertical {v_iter+1}: corrección = {distance_px}px → {move_mm:.1f}mm")
+            
+            # Verificar si está dentro de tolerancia
+            if abs(distance_px) <= tolerance_pixels_y:
+                print(f"Corrección vertical completada en {v_iter+1} iteraciones")
+                break
+            
+            # Obtener posición actual
+            status = robot.get_status()
+            current_x = status['position']['x']
+            current_y = status['position']['y']
+            
+            # Mover solo en Y (vertical)
+            new_y = current_y + move_mm
+            
+            # Validar límites del workspace
+            if new_y < 0 or new_y > RobotConfig.MAX_Y:
+                print(f"Movimiento vertical fuera de límites: {new_y}mm")
+                print(f"Límites válidos: 0 a {RobotConfig.MAX_Y}mm")
+                return {"success": False, "message": f"Límites excedidos: {new_y}mm"}
+            
+            # Ejecutar movimiento
+            move_res = robot.move_to_absolute(current_x, new_y)
+            if not move_res.get("success"):
+                print(f"Error en movimiento vertical: {move_res}")
+                return {"success": False, "message": f"Error movimiento: {move_res}"}
+            
+            time.sleep(1.0)  # Pausa para estabilización
+        else:
+            return {"success": False, "message": f"No se logró corrección vertical en {max_iterations} iteraciones"}
+        
+        return {"success": True, "message": "Corrección de posición completada exitosamente"}
+        
+    except Exception as e:
+        return {"success": False, "message": f"Error inesperado: {str(e)}"}
+
 def menu_interactivo(uart_manager, robot):
     cmd_manager = robot.cmd
     
     while True:
-        print("\n" + "="*50)
-        print("CONTROL DE ROBOT - MENÚ PRINCIPAL")
-        print("="*50)
-        print("1. Mover a posición X,Y")
-        print("2. Mover brazos (suave)")
-        print("3. Mover servo individual")
-        print("4. Tomar snapshot de progreso")
-        print("5. HOMING")
-        print("6. Control Gripper")
-        print("7. PARADA DE EMERGENCIA (StateMachine)")
-        print("8. Reset desde EMERGENCY_STOP")
-        print("9. HOMING (StateMachine)")
-        print("10. PROBAR CORRECCIÓN AUTOMÁTICA DE POSICIÓN")
-        print("0. Volver")
-        print("-"*50)
         opcion = input("Selecciona opción: ")
 
         if opcion == '1':
@@ -244,8 +355,7 @@ def menu_interactivo(uart_manager, robot):
                 print("Error consultando límites")
             
         elif opcion == '9':
-            sm.start_homing()
-            print("HOMING solicitado a la StateMachine")
+            menu_control_brazo(robot.arm)
         elif opcion == '10':
             print("\n=== PRUEBA DE CORRECCIÓN AUTOMÁTICA ===")
             print("Esta función usará la cámara y los módulos de IA para centrar automáticamente el robot")
@@ -263,7 +373,7 @@ def menu_interactivo(uart_manager, robot):
                     max_iterations = 10
                     tolerance_mm = 1.0
                     
-                    result = sm.test_position_correction(camera_index, max_iterations, tolerance_mm)
+                    result = test_position_correction_direct(robot, camera_index, max_iterations, tolerance_mm)
                     
                     if result['success']:
                         print("✅ CORRECCIÓN COMPLETADA EXITOSAMENTE")
