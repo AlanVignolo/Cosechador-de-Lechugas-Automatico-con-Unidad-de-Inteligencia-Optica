@@ -1,12 +1,45 @@
 import cv2
 import numpy as np
+import os
+import time
+from datetime import datetime
+import threading
 
 def capture_new_image(camera_index=0):
     """Alias para capture_image_for_correction - mantiene compatibilidad con otros módulos"""
     return capture_image_for_correction(camera_index)
 
-def capture_image_for_correction(camera_index=0):
-    """Captura una imagen simple para corrección de posición horizontal"""
+def capture_with_timeout(camera_index, timeout=5.0):
+    """Captura frame con timeout para evitar que se cuelgue"""
+    result = {'frame': None, 'success': False}
+    
+    def capture_thread():
+        try:
+            cap = cv2.VideoCapture(camera_index)
+            if cap.isOpened():
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+                ret, frame = cap.read()
+                if ret:
+                    result['frame'] = frame
+                    result['success'] = True
+                cap.release()
+        except Exception as e:
+            print(f"Error en captura: {e}")
+        
+    thread = threading.Thread(target=capture_thread)
+    thread.daemon = True
+    thread.start()
+    thread.join(timeout)
+    
+    if thread.is_alive():
+        print(f"⚠️ Timeout en captura de cámara {camera_index}")
+        return None
+    
+    return result['frame'] if result['success'] else None
+
+def capture_image_for_correction(camera_index=0, max_retries=3):
+    """Captura una imagen simple para corrección de posición horizontal con reintentos"""
     
     recorte_config = {
         'x_inicio': 0.2,
@@ -15,31 +48,30 @@ def capture_image_for_correction(camera_index=0):
         'y_fin': 0.7
     }
     
-    cap = cv2.VideoCapture(camera_index)
-    if not cap.isOpened():
-        return None
-    
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    
-    # Capturar frame directamente
-    ret, frame = cap.read()
-    if not ret:
-        cap.release()
-        return None
+    for attempt in range(max_retries):
+        print(f"🎥 Intento {attempt + 1}/{max_retries} - Capturando imagen horizontal...")
         
-    frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        frame = capture_with_timeout(camera_index, timeout=5.0)
+        
+        if frame is not None:
+            print("✅ Imagen capturada exitosamente")
+            frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            
+            alto, ancho = frame_rotado.shape[:2]
+            x1 = int(ancho * recorte_config['x_inicio'])
+            x2 = int(ancho * recorte_config['x_fin'])
+            y1 = int(alto * recorte_config['y_inicio'])
+            y2 = int(alto * recorte_config['y_fin'])
+            
+            frame_recortado = frame_rotado[y1:y2, x1:x2]
+            return frame_recortado
+        
+        if attempt < max_retries - 1:
+            print(f"❌ Fallo en intento {attempt + 1}, esperando 2 segundos...")
+            time.sleep(2)
     
-    alto, ancho = frame_rotado.shape[:2]
-    x1 = int(ancho * recorte_config['x_inicio'])
-    x2 = int(ancho * recorte_config['x_fin'])
-    y1 = int(alto * recorte_config['y_inicio'])
-    y2 = int(alto * recorte_config['y_fin'])
-    
-    frame_recortado = frame_rotado[y1:y2, x1:x2]
-    
-    cap.release()
-    return frame_recortado
+    print("❌ Error: No se pudo capturar imagen después de todos los intentos")
+    return None
 
 def find_tape_base_width(image, debug=True):
     """
