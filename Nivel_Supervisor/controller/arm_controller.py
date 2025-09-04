@@ -116,23 +116,43 @@ class ArmController:
         if self.current_state == "unknown":
             return False
             
-        safe_state = ARM_STATES["movimiento"]
-        tolerance = 10
-        
-        pos_ok = (
-            abs(self.current_position[0] - safe_state["servo1"]) <= tolerance and
-            abs(self.current_position[1] - safe_state["servo2"]) <= tolerance
-        )
-        
-        return pos_ok and self.current_state == "movimiento"
+        # Posiciones seguras para movimientos: "movimiento" y "mover_lechuga"
+        safe_states = ["movimiento", "mover_lechuga"]
+        return self.current_state in safe_states
     
     def ensure_safe_position(self) -> Dict:
         if self.is_in_safe_position():
             self.logger.info("Brazo ya está en posición segura")
             return {"success": True, "message": "Ya en posición segura"}
         
-        self.logger.info("Moviendo brazo a posición segura...")
-        return self.change_state("movimiento")
+        # Determinar cuál posición segura está más cerca
+        closest_safe_state = self._get_closest_safe_position()
+        
+        self.logger.info(f"Moviendo brazo a posición segura más cercana: {closest_safe_state}")
+        return self.change_state(closest_safe_state)
+    
+    def _get_closest_safe_position(self) -> str:
+        """Determina cuál de las dos posiciones seguras está más cerca del brazo actual"""
+        safe_states = ["movimiento", "mover_lechuga"]
+        current_servo1, current_servo2 = self.current_position
+        
+        min_distance = float('inf')
+        closest_state = "movimiento"  # default
+        
+        for state in safe_states:
+            target_config = ARM_STATES[state]
+            target_servo1 = target_config["servo1"]
+            target_servo2 = target_config["servo2"]
+            
+            # Calcular distancia euclidiana
+            distance = ((current_servo1 - target_servo1) ** 2 + (current_servo2 - target_servo2) ** 2) ** 0.5
+            
+            if distance < min_distance:
+                min_distance = distance
+                closest_state = state
+        
+        self.logger.info(f"Estado más cercano: {closest_state} (distancia: {min_distance:.1f})")
+        return closest_state
     
     def change_state(self, target_state: str) -> Dict:
         if target_state not in ARM_STATES:

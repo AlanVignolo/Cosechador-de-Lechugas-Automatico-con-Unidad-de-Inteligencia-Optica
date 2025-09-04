@@ -370,11 +370,8 @@ def test_horizontal_correction_only(robot):
                 print(f"Correccion horizontal completada en {iteration + 1} iteraciones")
                 return
             
-            # Ejecutar movimiento
-            status = robot.get_status()
-            new_x = status['position']['x'] + move_mm
-            
-            move_result = robot.move_to_absolute(new_x, status['position']['y'])
+            # Ejecutar movimiento relativo
+            move_result = robot.cmd.move_xy(move_mm, 0)  # Solo corrección horizontal
             if not move_result.get("success"):
                 print(f"Error en movimiento: {move_result}")
                 break
@@ -424,11 +421,8 @@ def test_vertical_correction_only(robot):
                 print(f"Correccion vertical completada en {iteration + 1} iteraciones")
                 return
             
-            # Ejecutar movimiento
-            status = robot.get_status()
-            new_y = status['position']['y'] + move_mm
-            
-            move_result = robot.move_to_absolute(status['position']['x'], new_y)
+            # Ejecutar movimiento relativo
+            move_result = robot.cmd.move_xy(0, move_mm)  # Solo corrección vertical
             if not move_result.get("success"):
                 print(f"Error en movimiento: {move_result}")
                 break
