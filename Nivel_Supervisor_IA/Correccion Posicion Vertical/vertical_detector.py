@@ -38,6 +38,31 @@ def capture_with_timeout_vertical(camera_index, timeout=5.0):
     
     return result['frame'] if result['success'] else None
 
+def scan_available_cameras_vertical():
+    """Escanea cámaras disponibles - versión vertical"""
+    available_cameras = []
+    
+    print("🔍 Escaneando cámaras disponibles (vertical)...")
+    
+    for i in range(10):
+        try:
+            cap = cv2.VideoCapture(i)
+            if cap.isOpened():
+                ret, frame = cap.read()
+                if ret and frame is not None:
+                    h, w = frame.shape[:2]
+                    available_cameras.append({
+                        'index': i,
+                        'resolution': f"{w}x{h}",
+                        'working': True
+                    })
+                    print(f"✅ Cámara {i}: {w}x{h} - FUNCIONAL")
+                cap.release()
+        except Exception:
+            continue
+    
+    return available_cameras
+
 def capture_image_for_vertical_correction(camera_index=0, max_retries=3):
     """Captura una imagen simple para corrección de posición vertical con reintentos"""
     
@@ -48,29 +73,50 @@ def capture_image_for_vertical_correction(camera_index=0, max_retries=3):
         'y_fin': 0.7
     }
     
+    # Si falla la cámara especificada, buscar automáticamente
+    cameras_to_try = [camera_index]
+    
     for attempt in range(max_retries):
-        print(f"🎥 Intento {attempt + 1}/{max_retries} - Capturando imagen vertical...")
-        
-        frame = capture_with_timeout_vertical(camera_index, timeout=5.0)
-        
-        if frame is not None:
-            print("✅ Imagen vertical capturada exitosamente")
-            frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        # En el primer fallo, escanear cámaras disponibles
+        if attempt == 1 and len(cameras_to_try) == 1:
+            print("🔍 Buscando cámaras alternativas...")
+            available = scan_available_cameras_vertical()
+            working_cameras = [cam['index'] for cam in available if cam['working']]
             
-            alto, ancho = frame_rotado.shape[:2]
-            x1 = int(ancho * recorte_config['x_inicio'])
-            x2 = int(ancho * recorte_config['x_fin'])
-            y1 = int(alto * recorte_config['y_inicio'])
-            y2 = int(alto * recorte_config['y_fin'])
+            # Agregar cámaras funcionales que no hayamos probado
+            for cam_idx in working_cameras:
+                if cam_idx not in cameras_to_try:
+                    cameras_to_try.append(cam_idx)
+                    
+        # Probar cámaras disponibles
+        for cam_idx in cameras_to_try:
+            print(f"🎥 Intento {attempt + 1}/{max_retries} - Cámara vertical {cam_idx}...")
             
-            frame_recortado = frame_rotado[y1:y2, x1:x2]
-            return frame_recortado
+            frame = capture_with_timeout_vertical(cam_idx, timeout=5.0)
+            
+            if frame is not None:
+                print(f"✅ Imagen vertical capturada exitosamente desde cámara {cam_idx}")
+                frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                
+                alto, ancho = frame_rotado.shape[:2]
+                x1 = int(ancho * recorte_config['x_inicio'])
+                x2 = int(ancho * recorte_config['x_fin'])
+                y1 = int(alto * recorte_config['y_inicio'])
+                y2 = int(alto * recorte_config['y_fin'])
+                
+                frame_recortado = frame_rotado[y1:y2, x1:x2]
+                
+                if cam_idx != camera_index:
+                    print(f"💡 Nota: Usar cámara {cam_idx} en lugar de {camera_index}")
+                
+                return frame_recortado
         
         if attempt < max_retries - 1:
             print(f"❌ Fallo en intento vertical {attempt + 1}, esperando 2 segundos...")
             time.sleep(2)
     
     print("❌ Error: No se pudo capturar imagen vertical después de todos los intentos")
+    print("💡 Sugerencia: Verificar conexión de cámaras o cambiar índice en configuración")
     return None
 
 def find_tape_vertical_position(image, debug=True):
