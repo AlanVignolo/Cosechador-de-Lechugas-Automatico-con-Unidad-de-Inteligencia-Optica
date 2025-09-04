@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
 
+def capture_new_image(camera_index=0):
+    """Alias para capture_image_for_vertical_correction - mantiene compatibilidad con otros módulos"""
+    return capture_image_for_vertical_correction(camera_index)
+
 def capture_image_for_vertical_correction(camera_index=0):
     """Captura una imagen simple para corrección de posición vertical"""
     
