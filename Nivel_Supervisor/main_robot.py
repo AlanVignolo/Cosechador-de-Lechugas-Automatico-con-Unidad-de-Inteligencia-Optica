@@ -184,21 +184,39 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
     
     print("Iniciando corrección de posición con IA...")
     
-    # Importar funciones de calibración
+    # Importar funciones de calibración y cargar con rutas correctas
     import sys
     import os
+    import json
+    
+    # Rutas a los archivos de calibración
+    h_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_lineal.json')
+    v_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical_lineal.json')
+    
+    # Cargar calibración horizontal
+    try:
+        with open(h_calibration_path, 'r') as f:
+            h_calibration = json.load(f)
+        a_h = h_calibration['coefficients']['a']
+        b_h = h_calibration['coefficients']['b']
+    except Exception as e:
+        return {"success": False, "message": f"Error cargando calibración horizontal: {str(e)}"}
+    
+    # Cargar calibración vertical
+    try:
+        with open(v_calibration_path, 'r') as f:
+            v_calibration = json.load(f)
+        a_v = v_calibration['coefficients']['a']
+        b_v = v_calibration['coefficients']['b']
+    except Exception as e:
+        return {"success": False, "message": f"Error cargando calibración vertical: {str(e)}"}
+    
+    # Importar solo las funciones de conversión
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
     
-    from final_measurement_system import load_calibration as load_h_calibration, pixels_to_mm
-    from vertical_calibration import load_calibration as load_v_calibration, pixels_to_mm_vertical
-    
-    # Cargar calibraciones
-    a_h, b_h = load_h_calibration()
-    a_v, b_v = load_v_calibration()
-    
-    if a_h is None or a_v is None:
-        return {"success": False, "message": "Error: No se pudieron cargar las calibraciones"}
+    from final_measurement_system import pixels_to_mm
+    from vertical_calibration import pixels_to_mm_vertical
     
     print(f"Calibración horizontal: mm = {a_h:.5f} * px + {b_h:.2f}")
     print(f"Calibración vertical: mm = {a_v:.5f} * px + {b_v:.2f}")
@@ -329,17 +347,25 @@ def test_horizontal_correction_only(robot):
         return
     
     try:
-        # Importar funciones de calibración horizontal
+        # Cargar calibración horizontal con ruta absoluta
         import sys
         import os
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
-        from final_measurement_system import load_calibration, pixels_to_mm
+        import json
         
-        # Cargar calibración horizontal
-        a, b = load_calibration()
-        if a is None:
-            print("Error: No se pudo cargar calibración horizontal")
+        h_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_lineal.json')
+        
+        try:
+            with open(h_calibration_path, 'r') as f:
+                h_calibration = json.load(f)
+            a = h_calibration['coefficients']['a']
+            b = h_calibration['coefficients']['b']
+        except Exception as e:
+            print(f"Error cargando calibración horizontal: {str(e)}")
             return
+        
+        # Importar función de conversión
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
+        from final_measurement_system import pixels_to_mm
         
         print(f"Iniciando corrección horizontal con calibración: mm = {a:.5f} * px + {b:.2f}")
         
@@ -395,17 +421,25 @@ def test_vertical_correction_only(robot):
         return
     
     try:
-        # Importar funciones de calibración vertical
+        # Cargar calibración vertical con ruta absoluta
         import sys
         import os
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
-        from vertical_calibration import load_calibration, pixels_to_mm_vertical
+        import json
         
-        # Cargar calibración vertical
-        a, b = load_calibration()
-        if a is None:
-            print("Error: No se pudo cargar calibración vertical")
+        v_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical_lineal.json')
+        
+        try:
+            with open(v_calibration_path, 'r') as f:
+                v_calibration = json.load(f)
+            a = v_calibration['coefficients']['a']
+            b = v_calibration['coefficients']['b']
+        except Exception as e:
+            print(f"Error cargando calibración vertical: {str(e)}")
             return
+        
+        # Importar función de conversión
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
+        from vertical_calibration import pixels_to_mm_vertical
         
         print(f"Iniciando corrección vertical con calibración: mm = {a:.5f} * px + {b:.2f}")
         
