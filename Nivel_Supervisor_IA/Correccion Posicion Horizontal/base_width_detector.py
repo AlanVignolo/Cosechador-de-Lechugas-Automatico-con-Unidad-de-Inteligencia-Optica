@@ -459,20 +459,26 @@ def capture_image_for_correction_debug(camera_index=0, max_retries=1):
         
         frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
-        # Mostrar imagen rotada
-        cv2.imshow("DEBUG: Imagen Rotada 90°", frame_rotado)
-        print("🔄 Imagen rotada 90° - Presiona 'c' para continuar...")
-        while True:
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('c'):
-                break
-        cv2.destroyAllWindows()
-        
+        # Calcular área de recorte
         alto, ancho = frame_rotado.shape[:2]
         x1 = int(ancho * recorte_config['x_inicio'])
         x2 = int(ancho * recorte_config['x_fin'])
         y1 = int(alto * recorte_config['y_inicio'])
         y2 = int(alto * recorte_config['y_fin'])
+        
+        # Mostrar imagen rotada con cuadrado de referencia
+        frame_con_rectangulo = frame_rotado.copy()
+        cv2.rectangle(frame_con_rectangulo, (x1, y1), (x2, y2), (0, 255, 0), 3)
+        cv2.putText(frame_con_rectangulo, "AREA DE ANALISIS", (x1, y1-10), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        cv2.imshow("DEBUG: Imagen Rotada + Área de Análisis", frame_con_rectangulo)
+        print("🔄 Imagen rotada con cuadrado de referencia - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
         
         frame_recortado = frame_rotado[y1:y2, x1:x2]
         
@@ -569,6 +575,9 @@ def detect_tape_position_debug(image, debug=True):
             break
     cv2.destroyAllWindows()
     
+    # Calcular distancia desde el centro (igual que modo normal)
+    distance_pixels = center_x - img_center_x
+    
     # Crear resultado igual que el modo normal
     tape_result = {
         'base_center_x': center_x,
@@ -576,11 +585,12 @@ def detect_tape_position_debug(image, debug=True):
         'start_x': x,
         'end_x': x + w,
         'base_y': y + h // 2,
-        'distance_from_center_x': abs(center_x - img_center_x),
+        'distance_from_center_x': abs(distance_pixels),
+        'distance_pixels': distance_pixels,  # Campo requerido por main_robot.py
         'score': 0.8
     }
     
-    print(f"📊 Resultado: centro X={center_x}px, distancia del centro={abs(center_x - img_center_x)}px")
+    print(f"📊 Resultado: centro X={center_x}px, distancia del centro={distance_pixels}px")
     
     return [tape_result]
 
