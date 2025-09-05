@@ -597,19 +597,21 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     try:
         with open(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_lineal.json'), 'r') as f:
             cal_data = json.load(f)
-            a, b = cal_data['a'], cal_data['b']
-            print(f"Calibración horizontal: mm = {a:.5f} * px + {b:.2f}")
-    except:
-        print("⚠️ No se pudo cargar calibración horizontal, usando valores por defecto")
+            a, b = cal_data['coefficients']['a'], cal_data['coefficients']['b']
+            print(f"✅ Calibración horizontal: mm = {a:.5f} * px + {b:.2f}")
+    except Exception as e:
+        print(f"⚠️ No se pudo cargar calibración horizontal: {e}")
+        print("⚠️ Usando valores por defecto")
         a, b = 0.38769, 0.15
     
     try:
         with open(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical_lineal.json'), 'r') as f:
             cal_data_v = json.load(f)
-            a_v, b_v = cal_data_v['a'], cal_data_v['b']
-            print(f"Calibración vertical: mm = {a_v:.5f} * px + {b_v:.2f}")
-    except:
-        print("⚠️ No se pudo cargar calibración vertical, usando valores por defecto")
+            a_v, b_v = cal_data_v['coefficients']['a'], cal_data_v['coefficients']['b']
+            print(f"✅ Calibración vertical: mm = {a_v:.5f} * px + {b_v:.2f}")
+    except Exception as e:
+        print(f"⚠️ No se pudo cargar calibración vertical: {e}")
+        print("⚠️ Usando valores por defecto")
         a_v, b_v = 0.38769, 0.15
     
     # Importar funciones de conversión
