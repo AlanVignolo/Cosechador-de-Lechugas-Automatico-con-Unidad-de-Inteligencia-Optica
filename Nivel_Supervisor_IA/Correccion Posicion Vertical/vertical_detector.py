@@ -364,5 +364,163 @@ def main():
     
     return result
 
+def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
+    """Captura una imagen para corrección de posición vertical con modo debug"""
+    global _working_camera_cache
+    
+    # Liberar recursos previos
+    cv2.destroyAllWindows()
+    time.sleep(0.3)
+    
+    recorte_config = {
+        'x_inicio': 0.2,
+        'x_fin': 0.8,
+        'y_inicio': 0.3,
+        'y_fin': 0.7
+    }
+    
+    # Captura directa - cámara siempre en índice fijo
+    print(f"🎥 Intento 1/3 - Cámara vertical {camera_index}...")
+    
+    frame = capture_with_timeout(camera_index, timeout=4.0)
+    
+    if frame is not None:
+        print(f"✅ Imagen vertical capturada exitosamente desde cámara {camera_index}")
+        
+        # Mostrar imagen original
+        cv2.imshow("DEBUG VERTICAL: Imagen Original", frame)
+        print("📷 Imagen vertical original - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
+        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        
+        # Mostrar imagen rotada
+        cv2.imshow("DEBUG VERTICAL: Imagen Rotada 90°", frame_rotado)
+        print("🔄 Imagen vertical rotada 90° - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
+        alto, ancho = frame_rotado.shape[:2]
+        x1 = int(ancho * recorte_config['x_inicio'])
+        x2 = int(ancho * recorte_config['x_fin'])
+        y1 = int(alto * recorte_config['y_inicio'])
+        y2 = int(alto * recorte_config['y_fin'])
+        
+        frame_recortado = frame_rotado[y1:y2, x1:x2]
+        
+        # Mostrar imagen recortada
+        cv2.imshow("DEBUG VERTICAL: Imagen Recortada", frame_recortado)
+        print("✂️ Imagen vertical recortada - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
+        return frame_recortado
+    else:
+        print("❌ Error: No se pudo capturar imagen vertical")
+        return None
+
+def detect_tape_position_vertical_debug(image, debug=True):
+    """Detecta la posición de la cinta vertical con modo debug visual"""
+    if image is None:
+        return []
+    
+    h_img, w_img = image.shape[:2]
+    img_center_y = h_img // 2
+    
+    # Mostrar imagen original
+    cv2.imshow("DEBUG VERTICAL: Imagen Original", image)
+    print("📷 Imagen vertical para análisis - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Aplicar filtros
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    v_channel = hsv[:,:,2]
+    
+    # Mostrar canal V
+    cv2.imshow("DEBUG VERTICAL: Canal V (HSV)", v_channel)
+    print("🌈 Canal V extraído - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Aplicar threshold
+    _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
+    
+    # Mostrar imagen binaria
+    cv2.imshow("DEBUG VERTICAL: Imagen Binaria", binary_img)
+    print("🎭 Threshold aplicado - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Encontrar contornos
+    contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if not contours:
+        print("❌ No se encontraron contornos verticales")
+        return []
+    
+    # Encontrar el contorno más grande
+    main_contour = max(contours, key=cv2.contourArea)
+    
+    if cv2.contourArea(main_contour) < 500:
+        print("❌ Contorno vertical demasiado pequeño")
+        return []
+    
+    # Crear imagen con contornos
+    contour_image = image.copy()
+    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
+    
+    # Calcular el centro
+    x, y, w, h = cv2.boundingRect(main_contour)
+    center_x = x + w // 2
+    center_y = y + h // 2
+    
+    # Dibujar centro y línea de referencia (vertical usa Y)
+    cv2.circle(contour_image, (center_x, center_y), 10, (255, 0, 0), -1)
+    cv2.line(contour_image, (0, img_center_y), (w_img, img_center_y), (0, 0, 255), 2)
+    cv2.line(contour_image, (0, center_y), (w_img, center_y), (255, 0, 0), 2)
+    
+    # Mostrar resultado final
+    cv2.imshow("DEBUG VERTICAL: Detección Final", contour_image)
+    print(f"✅ Cinta vertical detectada en Y={center_y}px (centro imagen={img_center_y}px) - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Calcular distancia desde el centro (vertical usa Y)
+    distance_pixels = center_y - img_center_y
+    
+    tape_result = {
+        'center_x': center_x,
+        'center_y': center_y,
+        'distance_pixels': distance_pixels,
+        'contour_area': int(cv2.contourArea(main_contour)),
+        'bbox': (x, y, w, h)
+    }
+    
+    return [tape_result]
+
 if __name__ == "__main__":
     main()

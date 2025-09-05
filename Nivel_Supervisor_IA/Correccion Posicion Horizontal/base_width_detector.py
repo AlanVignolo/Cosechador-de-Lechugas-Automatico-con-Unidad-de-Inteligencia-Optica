@@ -423,15 +423,179 @@ def detect_tape_position(image, debug=True):
         print(f"✅ Centro detectado en X = {center_x} px")
         print(f"Distancia del centro: {tape_result['distance_from_center_x']} px")
     
+    return frame_recortado
+
+def capture_image_for_correction_debug(camera_index=0, max_retries=1):
+    """Captura una imagen para corrección de posición horizontal con modo debug"""
+    global _working_camera_cache
+    
+    recorte_config = {
+        'x_inicio': 0.2,
+        'x_fin': 0.8,
+        'y_inicio': 0.3,
+        'y_fin': 0.7
+    }
+    
+    # Liberar recursos previos
+    cv2.destroyAllWindows()
+    time.sleep(0.3)
+    
+    # Captura directa - cámara siempre en índice fijo
+    print(f"🎥 Intento 1/3 - Cámara {camera_index}...")
+    
+    frame = capture_with_timeout(camera_index, timeout=4.0)
+    
+    if frame is not None:
+        print(f"✅ Imagen capturada exitosamente desde cámara {camera_index}")
+        
+        # Mostrar imagen original
+        cv2.imshow("DEBUG: Imagen Original", frame)
+        print("📷 Imagen original capturada - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
+        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        
+        # Mostrar imagen rotada
+        cv2.imshow("DEBUG: Imagen Rotada 90°", frame_rotado)
+        print("🔄 Imagen rotada 90° - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
+        alto, ancho = frame_rotado.shape[:2]
+        x1 = int(ancho * recorte_config['x_inicio'])
+        x2 = int(ancho * recorte_config['x_fin'])
+        y1 = int(alto * recorte_config['y_inicio'])
+        y2 = int(alto * recorte_config['y_fin'])
+        
+        frame_recortado = frame_rotado[y1:y2, x1:x2]
+        
+        # Mostrar imagen recortada
+        cv2.imshow("DEBUG: Imagen Recortada", frame_recortado)
+        print("✂️ Imagen recortada para análisis - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
+        return frame_recortado
+    else:
+        print("❌ Error: No se pudo capturar imagen")
+        return None
+
+def detect_tape_position_debug(image, debug=True):
+    """Detecta la posición de la cinta horizontal con modo debug visual"""
+    if image is None:
+        return []
+    
+    # Aplicar filtros HSV
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    
+    # Mostrar imagen HSV
+    cv2.imshow("DEBUG: Imagen HSV", hsv)
+    print("🌈 Imagen convertida a HSV - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Definir rango de color para la cinta (verde/amarillo)
+    lower_green = np.array([40, 50, 50])
+    upper_green = np.array([80, 255, 255])
+    
+    # Crear máscara
+    mask = cv2.inRange(hsv, lower_green, upper_green)
+    
+    # Mostrar máscara
+    cv2.imshow("DEBUG: Máscara de Color", mask)
+    print("🎭 Máscara de color aplicada - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Operaciones morfológicas para limpiar la máscara
+    kernel = np.ones((5,5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    
+    # Mostrar máscara limpia
+    cv2.imshow("DEBUG: Máscara Limpia", mask)
+    print("🧹 Máscara procesada - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Encontrar contornos
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if not contours:
+        print("❌ No se encontraron contornos")
+        return []
+    
+    # Encontrar el contorno más grande
+    main_contour = max(contours, key=cv2.contourArea)
+    
+    if cv2.contourArea(main_contour) < 500:  # Área mínima
+        print("❌ Contorno demasiado pequeño")
+        return []
+    
+    # Crear imagen con contornos
+    contour_image = image.copy()
+    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
+    
+    # Calcular el centro
+    x, y, w, h = cv2.boundingRect(main_contour)
+    center_x = x + w // 2
+    center_y = y + h // 2
+    
+    # Dibujar centro y línea de referencia
+    cv2.circle(contour_image, (center_x, center_y), 10, (255, 0, 0), -1)
+    image_center_x = image.shape[1] // 2
+    cv2.line(contour_image, (image_center_x, 0), (image_center_x, image.shape[0]), (0, 0, 255), 2)
+    cv2.line(contour_image, (center_x, 0), (center_x, image.shape[0]), (255, 0, 0), 2)
+    
+    # Mostrar resultado final
+    cv2.imshow("DEBUG: Detección Final", contour_image)
+    print(f"✅ Cinta detectada en X={center_x}px (centro imagen={image_center_x}px) - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Calcular distancia desde el centro
+    distance_pixels = center_x - image_center_x
+    
+    tape_result = {
+        'center_x': center_x,
+        'center_y': center_y,
+        'distance_pixels': distance_pixels,
+        'contour_area': int(cv2.contourArea(main_contour)),
+        'bbox': (x, y, w, h)
+    }
+    
     return [tape_result]
 
-def get_horizontal_correction_distance(camera_index=0):
+def get_horizontal_distance_for_correction(camera_index=0):
     """
     Función simplificada para corrección horizontal - solo devuelve distancia en píxeles
     Utilizada por la máquina de estados para corrección iterativa
     """
     # Capturar imagen
     image = capture_image_for_correction(camera_index)
+    
     if image is None:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
     

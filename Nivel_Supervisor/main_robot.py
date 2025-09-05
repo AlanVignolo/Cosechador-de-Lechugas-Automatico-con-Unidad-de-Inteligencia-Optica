@@ -530,6 +530,156 @@ def test_full_position_correction(robot):
     except Exception as e:
         print(f"Error inesperado: {e}")
 
+def test_full_position_correction_debug(robot):
+    """Probar corrección completa con modo debug (muestra imágenes paso a paso)"""
+    if not AI_MODULES_AVAILABLE:
+        print("Modulos de IA no disponibles")
+        return
+    
+    print("\nCORRECCION COMPLETA (DEBUG - MODO VISUAL)")
+    print("ASEGURATE de que:")
+    print("- La camara este conectada y funcionando")
+    print("- Hay una cinta visible (ambos ejes)")
+    print("- El robot esta en posicion segura")
+    print("- Puedes ver las ventanas de imagen (presiona 'c' para continuar)")
+    
+    if input("Continuar? (s/N): ").lower() != 's':
+        print("Prueba cancelada")
+        return
+    
+    try:
+        result = test_position_correction_direct_debug(
+            robot, 
+            AI_TEST_PARAMS['camera_index'], 
+            AI_TEST_PARAMS['max_iterations'], 
+            AI_TEST_PARAMS['tolerance_mm']
+        )
+        
+        if result['success']:
+            print("\nCORRECCION COMPLETADA EXITOSAMENTE")
+            print(f"Resultado: {result['message']}")
+        else:
+            print("\nERROR EN LA CORRECCION")
+            print(f"Error: {result['message']}")
+            
+    except Exception as e:
+        print(f"Error inesperado: {e}")
+
+def test_position_correction_direct_debug(robot, camera_index, max_iterations, tolerance_mm):
+    """
+    Corrección de posición completa (horizontal + vertical) con modo debug visual
+    """
+    print("Iniciando corrección de posición con IA...")
+    
+    # Cargar calibraciones
+    try:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_lineal.json'), 'r') as f:
+            cal_data = json.load(f)
+            a, b = cal_data['a'], cal_data['b']
+            print(f"Calibración horizontal: mm = {a:.5f} * px + {b:.2f}")
+    except:
+        print("⚠️ No se pudo cargar calibración horizontal, usando valores por defecto")
+        a, b = 0.38769, 0.15
+    
+    try:
+        with open(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical_lineal.json'), 'r') as f:
+            cal_data_v = json.load(f)
+            a_v, b_v = cal_data_v['a'], cal_data_v['b']
+            print(f"Calibración vertical: mm = {a_v:.5f} * px + {b_v:.2f}")
+    except:
+        print("⚠️ No se pudo cargar calibración vertical, usando valores por defecto")
+        a_v, b_v = 0.38769, 0.15
+    
+    print("\n🎯 INICIANDO CORRECCIÓN HORIZONTAL (DEBUG)...")
+    
+    # Fase 1: Corrección horizontal con debug
+    for iteration in range(1, max_iterations + 1):
+        print(f"\nIteracion horizontal {iteration}/{max_iterations}")
+        
+        try:
+            # Capturar imagen con debug
+            image = capture_image_for_correction_debug(camera_index)
+            if image is None:
+                return {'success': False, 'message': "Error horizontal: No se pudo capturar imagen"}
+            
+            # Detectar cinta con debug
+            results = detect_tape_position_debug(image, debug=True)
+            if not results:
+                return {'success': False, 'message': "Error horizontal: No se detectó cinta"}
+            
+            result = results[0]
+            
+            # Convertir offset de mm a pixels usando calibración
+            offset_x_px = mm_to_pixels(AI_TEST_PARAMS['offset_x_mm'], a, b)
+            distance_px = result['distance_pixels'] - offset_x_px
+            move_mm = pixels_to_mm(distance_px, a, b)
+            
+            print(f"Detección: {result['distance_pixels']:.1f}px, offset({AI_TEST_PARAMS['offset_x_mm']:.1f}mm = {offset_x_px:.1f}px) = {distance_px:.1f}px")
+            print(f"Movimiento requerido: {move_mm:.2f}mm")
+            
+            if abs(move_mm) <= tolerance_mm:
+                print(f"✅ Corrección horizontal completada (tolerancia: {tolerance_mm}mm)")
+                break
+            
+            print(f"Moviendo robot: X={move_mm:.2f}mm")
+            move_result = robot.cmd.move_xy(move_mm, 0)
+            
+            if not move_result['success']:
+                return {'success': False, 'message': f"Error de movimiento: {move_result['message']}"}
+            
+            time.sleep(1)
+            
+        except Exception as e:
+            return {'success': False, 'message': f"Error horizontal: {str(e)}"}
+    else:
+        return {'success': False, 'message': "No se logró corrección horizontal en el número máximo de iteraciones"}
+    
+    print("\n🎯 INICIANDO CORRECCIÓN VERTICAL (DEBUG)...")
+    
+    # Fase 2: Corrección vertical con debug
+    for iteration in range(1, max_iterations + 1):
+        print(f"\nIteracion vertical {iteration}/{max_iterations}")
+        
+        try:
+            # Capturar imagen vertical con debug
+            image_v = capture_image_for_correction_vertical_debug(camera_index)
+            if image_v is None:
+                return {'success': False, 'message': "Error vertical: No se pudo capturar imagen"}
+            
+            # Detectar cinta vertical con debug
+            results_v = detect_tape_position_vertical_debug(image_v, debug=True)
+            if not results_v:
+                return {'success': False, 'message': "Error vertical: No se detectó cinta"}
+            
+            result_v = results_v[0]
+            
+            # Convertir offset de mm a pixels usando calibración vertical
+            offset_y_px = mm_to_pixels_vertical(AI_TEST_PARAMS['offset_y_mm'], a_v, b_v)
+            distance_px_v = result_v['distance_pixels'] - offset_y_px
+            move_mm_v = pixels_to_mm_vertical(distance_px_v, a_v, b_v)
+            
+            print(f"Detección: {result_v['distance_pixels']:.1f}px, offset({AI_TEST_PARAMS['offset_y_mm']:.1f}mm = {offset_y_px:.1f}px) = {distance_px_v:.1f}px")
+            print(f"Movimiento requerido: {move_mm_v:.2f}mm")
+            
+            if abs(move_mm_v) <= tolerance_mm:
+                print(f"✅ Corrección vertical completada (tolerancia: {tolerance_mm}mm)")
+                break
+            
+            print(f"Moviendo robot: Y={move_mm_v:.2f}mm")
+            move_result_v = robot.cmd.move_xy(0, move_mm_v)
+            
+            if not move_result_v['success']:
+                return {'success': False, 'message': f"Error de movimiento: {move_result_v['message']}"}
+            
+            time.sleep(1)
+            
+        except Exception as e:
+            return {'success': False, 'message': f"Error vertical: {str(e)}"}
+    else:
+        return {'success': False, 'message': "No se logró corrección vertical en el número máximo de iteraciones"}
+    
+    return {'success': True, 'message': "Corrección completa (horizontal + vertical) exitosa"}
+
 def menu_interactivo(uart_manager, robot):
     cmd_manager = robot.cmd
     
@@ -676,11 +826,12 @@ def menu_interactivo(uart_manager, robot):
             print("1. Correccion HORIZONTAL unicamente")
             print("2. Correccion VERTICAL unicamente")
             print("3. Correccion COMPLETA (horizontal + vertical)")
-            print("4. Configurar parametros")
+            print("4. Correccion COMPLETA (DEBUG - muestra imagenes)")
+            print("5. Configurar parametros")
             print("0. Volver al menu principal")
             print("-"*60)
             
-            sub_opcion = input("Selecciona tipo de prueba (0-4): ")
+            sub_opcion = input("Selecciona tipo de prueba (0-5): ")
             
             if sub_opcion == '1':
                 print("\nINICIANDO CORRECCION HORIZONTAL")
@@ -692,6 +843,9 @@ def menu_interactivo(uart_manager, robot):
                 print("\nINICIANDO CORRECCION COMPLETA")
                 test_full_position_correction(robot)
             elif sub_opcion == '4':
+                print("\nINICIANDO CORRECCION COMPLETA (DEBUG)")
+                test_full_position_correction_debug(robot)
+            elif sub_opcion == '5':
                 print("\nCONFIGURACION DE PARAMETROS")
                 configure_ai_test_parameters()
             elif sub_opcion == '0':
