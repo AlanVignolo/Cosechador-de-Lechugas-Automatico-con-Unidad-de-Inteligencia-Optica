@@ -15,19 +15,33 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
 
 try:
+    print("Intentando importar base_width_detector...")
     from base_width_detector import (
-        get_horizontal_correction_distance,
+        get_horizontal_distance_for_correction,
         capture_image_for_correction_debug,
         detect_tape_position_debug
     )
+    print("✅ base_width_detector importado exitosamente")
+    
+    print("Intentando importar vertical_detector...")
     from vertical_detector import (
         get_vertical_correction_distance,
         capture_image_for_correction_vertical_debug, 
         detect_tape_position_vertical_debug
     )
+    print("✅ vertical_detector importado exitosamente")
+    
     AI_MODULES_AVAILABLE = True
+    print("✅ Todos los módulos de IA disponibles")
 except ImportError as e:
-    print(f"Módulos de IA no disponibles: {e}")
+    print(f"❌ Error importando módulos de IA: {e}")
+    import traceback
+    traceback.print_exc()
+    AI_MODULES_AVAILABLE = False
+except Exception as e:
+    print(f"❌ Error inesperado en imports: {e}")
+    import traceback
+    traceback.print_exc()
     AI_MODULES_AVAILABLE = False
 
 logging.basicConfig(
