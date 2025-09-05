@@ -387,37 +387,34 @@ def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
     if frame is not None:
         print(f"✅ Imagen vertical capturada exitosamente desde cámara {camera_index}")
         
-        # Mostrar imagen original
-        cv2.imshow("DEBUG VERTICAL: Imagen Original", frame)
-        print("📷 Imagen vertical original - Presiona 'c' para continuar...")
-        while True:
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('c'):
-                break
-        cv2.destroyAllWindows()
-        
         frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
-        # Mostrar imagen rotada
-        cv2.imshow("DEBUG VERTICAL: Imagen Rotada 90°", frame_rotado)
-        print("🔄 Imagen vertical rotada 90° - Presiona 'c' para continuar...")
-        while True:
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('c'):
-                break
-        cv2.destroyAllWindows()
-        
+        # Calcular área de recorte
         alto, ancho = frame_rotado.shape[:2]
         x1 = int(ancho * recorte_config['x_inicio'])
         x2 = int(ancho * recorte_config['x_fin'])
         y1 = int(alto * recorte_config['y_inicio'])
         y2 = int(alto * recorte_config['y_fin'])
         
+        # Mostrar imagen rotada con cuadrado de referencia
+        frame_con_rectangulo = frame_rotado.copy()
+        cv2.rectangle(frame_con_rectangulo, (x1, y1), (x2, y2), (0, 255, 0), 3)
+        cv2.putText(frame_con_rectangulo, "AREA DE ANALISIS VERTICAL", (x1, y1-10), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        cv2.imshow("DEBUG VERTICAL: 1. Imagen + Area de Analisis", frame_con_rectangulo)
+        print("🔄 1. Imagen vertical con área de análisis marcada - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
         frame_recortado = frame_rotado[y1:y2, x1:x2]
         
         # Mostrar imagen recortada
-        cv2.imshow("DEBUG VERTICAL: Imagen Recortada", frame_recortado)
-        print("✂️ Imagen vertical recortada - Presiona 'c' para continuar...")
+        cv2.imshow("DEBUG VERTICAL: 2. Imagen Recortada", frame_recortado)
+        print("✂️ 2. Imagen recortada para análisis vertical - Presiona 'c' para continuar...")
         while True:
             key = cv2.waitKey(1) & 0xFF
             if key == ord('c'):
@@ -437,14 +434,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
     h_img, w_img = image.shape[:2]
     img_center_y = h_img // 2
     
-    # Mostrar imagen original
-    cv2.imshow("DEBUG VERTICAL: Imagen Original", image)
-    print("📷 Imagen vertical para análisis - Presiona 'c' para continuar...")
-    while True:
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('c'):
-            break
-    cv2.destroyAllWindows()
+    print(f"🔍 Analizando imagen vertical: {w_img}x{h_img}, centro Y: {img_center_y}")
     
     # Aplicar filtros
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -452,8 +442,8 @@ def detect_tape_position_vertical_debug(image, debug=True):
     v_channel = hsv[:,:,2]
     
     # Mostrar canal V
-    cv2.imshow("DEBUG VERTICAL: Canal V (HSV)", v_channel)
-    print("🌈 Canal V extraído - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 3. Canal V (Brillo)", v_channel)
+    print("🌈 3. Canal V extraído - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -464,8 +454,8 @@ def detect_tape_position_vertical_debug(image, debug=True):
     _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
     
     # Mostrar imagen binaria
-    cv2.imshow("DEBUG VERTICAL: Imagen Binaria", binary_img)
-    print("🎭 Threshold aplicado - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 4. Imagen Binaria", binary_img)
+    print("🎭 4. Threshold aplicado (zonas oscuras) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -486,23 +476,39 @@ def detect_tape_position_vertical_debug(image, debug=True):
         print("❌ Contorno vertical demasiado pequeño")
         return []
     
-    # Crear imagen con contornos
-    contour_image = image.copy()
-    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
-    
     # Calcular el centro
     x, y, w, h = cv2.boundingRect(main_contour)
     center_x = x + w // 2
     center_y = y + h // 2
     
-    # Dibujar centro y línea de referencia (vertical usa Y)
-    cv2.circle(contour_image, (center_x, center_y), 10, (255, 0, 0), -1)
-    cv2.line(contour_image, (0, img_center_y), (w_img, img_center_y), (0, 0, 255), 2)
-    cv2.line(contour_image, (0, center_y), (w_img, center_y), (255, 0, 0), 2)
+    print(f"📏 Región principal: {w}x{h} en ({x}, {y})")
+    
+    # Crear imagen con contornos sobre imagen a COLOR
+    if len(image.shape) == 3:
+        contour_image = image.copy()
+    else:
+        # Si es escala de grises, convertir a color
+        contour_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    
+    # Dibujar contorno y rectángulo
+    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
+    cv2.rectangle(contour_image, (x, y), (x + w, y + h), (0, 255, 255), 3)  # Amarillo
+    
+    # Dibujar centro como círculo grande
+    cv2.circle(contour_image, (center_x, center_y), 15, (0, 0, 255), -1)  # Rojo
+    
+    # Líneas de referencia MÁS GRUESAS (HORIZONTALES para vertical)
+    cv2.line(contour_image, (0, img_center_y), (w_img, img_center_y), (255, 0, 255), 4)  # Magenta = centro imagen Y
+    cv2.line(contour_image, (0, center_y), (w_img, center_y), (0, 0, 255), 4)  # Rojo = centro detectado Y
+    
+    # Agregar texto explicativo
+    cv2.putText(contour_image, f"Centro IMG Y: {img_center_y}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+    cv2.putText(contour_image, f"Centro CINTA Y: {center_y}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.putText(contour_image, f"DIFERENCIA Y: {center_y - img_center_y}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
     
     # Mostrar resultado final
-    cv2.imshow("DEBUG VERTICAL: Detección Final", contour_image)
-    print(f"✅ Cinta vertical detectada en Y={center_y}px (centro imagen={img_center_y}px) - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 5. DETECCION FINAL", contour_image)
+    print(f"✅ 5. Cinta detectada en Y={center_y}px (centro imagen Y={img_center_y}px) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
