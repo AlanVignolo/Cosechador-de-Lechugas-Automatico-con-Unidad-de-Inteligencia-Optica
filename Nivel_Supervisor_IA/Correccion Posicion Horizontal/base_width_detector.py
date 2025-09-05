@@ -464,6 +464,7 @@ def capture_image_for_correction_debug(camera_index=0, max_retries=1):
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
         cv2.imshow("DEBUG: 1. Imagen + Area de Analisis", frame_con_rectangulo)
+        cv2.resizeWindow("DEBUG: 1. Imagen + Area de Analisis", 800, 600)
         print("🔄 1. Imagen con área de análisis marcada - Presiona 'c' para continuar...")
         while True:
             key = cv2.waitKey(1) & 0xFF
@@ -475,6 +476,7 @@ def capture_image_for_correction_debug(camera_index=0, max_retries=1):
         
         # Mostrar imagen recortada
         cv2.imshow("DEBUG: 2. Imagen Recortada", frame_recortado)
+        cv2.resizeWindow("DEBUG: 2. Imagen Recortada", 800, 600)
         print("✂️ 2. Imagen recortada para análisis - Presiona 'c' para continuar...")
         while True:
             key = cv2.waitKey(1) & 0xFF
@@ -512,6 +514,7 @@ def detect_tape_position_debug(image, debug=True):
     
     # Mostrar canal V
     cv2.imshow("DEBUG: 3. Canal V (Brillo)", v_channel)
+    cv2.resizeWindow("DEBUG: 3. Canal V (Brillo)", 800, 600)
     print("🌈 3. Canal V extraído - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
@@ -524,6 +527,7 @@ def detect_tape_position_debug(image, debug=True):
     
     # Mostrar threshold
     cv2.imshow("DEBUG: 4. Imagen Binaria", thresh)
+    cv2.resizeWindow("DEBUG: 4. Imagen Binaria", 800, 600)
     print("🎭 4. Threshold aplicado (zonas oscuras) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
@@ -572,6 +576,7 @@ def detect_tape_position_debug(image, debug=True):
     
     # Mostrar resultado final
     cv2.imshow("DEBUG: 5. DETECCION FINAL", contour_image)
+    cv2.resizeWindow("DEBUG: 5. DETECCION FINAL", 800, 600)
     print(f"✅ 5. Centro detectado en X={center_x}px (centro imagen={img_center_x}px) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
