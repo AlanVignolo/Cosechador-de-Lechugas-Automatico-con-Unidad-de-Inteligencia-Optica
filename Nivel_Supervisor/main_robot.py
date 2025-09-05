@@ -256,7 +256,7 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
         print("Iniciando corrección horizontal...")
         for h_iter in range(max_iterations):
             # Obtener distancia horizontal usando IA
-            h_result = get_horizontal_correction_distance(camera_index)
+            h_result = get_horizontal_distance_for_correction(camera_index)
             
             if not h_result['success']:
                 print(f"Error en detección horizontal: {h_result.get('error', 'Desconocido')}")
@@ -411,7 +411,7 @@ def test_horizontal_correction_only(robot):
             print(f"\nIteracion horizontal {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
             
             # Obtener corrección horizontal
-            result = get_horizontal_correction_distance(AI_TEST_PARAMS['camera_index'])
+            result = get_horizontal_distance_for_correction(AI_TEST_PARAMS['camera_index'])
             
             if not result['success']:
                 print(f"Error en deteccion: {result.get('error', 'Desconocido')}")

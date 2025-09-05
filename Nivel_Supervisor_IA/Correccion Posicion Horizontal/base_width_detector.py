@@ -423,7 +423,7 @@ def detect_tape_position(image, debug=True):
         print(f"✅ Centro detectado en X = {center_x} px")
         print(f"Distancia del centro: {tape_result['distance_from_center_x']} px")
     
-    return frame_recortado
+    return [tape_result]
 
 def capture_image_for_correction_debug(camera_index=0, max_retries=1):
     """Captura una imagen para corrección de posición horizontal con modo debug"""
