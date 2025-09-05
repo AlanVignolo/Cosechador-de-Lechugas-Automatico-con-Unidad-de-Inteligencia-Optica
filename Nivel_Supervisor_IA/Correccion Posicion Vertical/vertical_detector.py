@@ -80,7 +80,7 @@ def scan_available_cameras_vertical():
     
     return available_cameras
 
-def capture_image_for_vertical_correction(camera_index=0, max_retries=3):
+def capture_image_for_vertical_correction(camera_index=1, max_retries=1):
     """Captura una imagen simple para corrección de posición vertical con reintentos optimizado"""
     global _working_camera_cache_vertical
     
@@ -91,77 +91,26 @@ def capture_image_for_vertical_correction(camera_index=0, max_retries=3):
         'y_fin': 0.7
     }
     
-    # Usar cache si existe, sino empezar con el índice solicitado
-    cameras_to_try = []
-    if _working_camera_cache_vertical is not None:
-        cameras_to_try.append(_working_camera_cache_vertical)
-        print(f"🎯 Usando cámara vertical cacheada: {_working_camera_cache_vertical}")
-    else:
-        cameras_to_try.append(camera_index)
+    # Captura directa - cámara siempre en índice fijo
+    print(f"🎥 Capturando desde cámara vertical {camera_index}...")
     
-    busy_camera_detected = False
+    frame = capture_with_timeout_vertical(camera_index, timeout=3.0)
     
-    for attempt in range(max_retries):
-        # Probar cámaras disponibles
-        for cam_idx in cameras_to_try:
-            print(f"🎥 Intento {attempt + 1}/{max_retries} - Cámara vertical {cam_idx}...")
-            
-            # Pequeña pausa antes de intentar capturar para evitar busy state
-            if attempt > 0 or busy_camera_detected:
-                time.sleep(0.5)
-            
-            frame = capture_with_timeout_vertical(cam_idx, timeout=5.0)
-            
-            if frame is not None:
-                print(f"✅ Imagen vertical capturada exitosamente desde cámara {cam_idx}")
-                
-                # Actualizar cache con la cámara que funciona
-                if _working_camera_cache_vertical != cam_idx:
-                    _working_camera_cache_vertical = cam_idx
-                    print(f"📌 Cache vertical actualizado: cámara {cam_idx}")
-                
-                frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                
-                alto, ancho = frame_rotado.shape[:2]
-                x1 = int(ancho * recorte_config['x_inicio'])
-                x2 = int(ancho * recorte_config['x_fin'])
-                y1 = int(alto * recorte_config['y_inicio'])
-                y2 = int(alto * recorte_config['y_fin'])
-                
-                frame_recortado = frame_rotado[y1:y2, x1:x2]
-                
-                # Pausa adicional después de uso exitoso para liberar recursos
-                time.sleep(0.2)
-                return frame_recortado
-            else:
-                # Si la cámara cacheada falla, marcar como busy y limpiar cache
-                if cam_idx == _working_camera_cache_vertical:
-                    print(f"🔧 Cámara vertical cacheada {cam_idx} no disponible, limpiando cache...")
-                    _working_camera_cache_vertical = None
-                    busy_camera_detected = True
+    if frame is not None:
+        print(f"✅ Imagen vertical capturada exitosamente")
         
-        # Solo escanear si fallan todos los intentos previos o si hay busy camera
-        if (attempt == 0 and not cameras_to_try) or busy_camera_detected:
-            print("🔍 Escaneando cámaras disponibles (vertical)...")
-            busy_camera_detected = False
-            available = scan_available_cameras_vertical()
-            working_cameras = [cam['index'] for cam in available if cam['working']]
-            cameras_to_try = working_cameras  # Resetear lista completamente
-        elif attempt == 1 and len([c for c in cameras_to_try if c != camera_index]) == 0:
-            print("🔍 Buscando cámaras alternativas...")
-            available = scan_available_cameras_vertical()
-            working_cameras = [cam['index'] for cam in available if cam['working']]
-            
-            # Agregar solo cámaras no probadas
-            for cam_idx in working_cameras:
-                if cam_idx not in cameras_to_try:
-                    cameras_to_try.append(cam_idx)
+        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
-        if attempt < max_retries - 1:
-            print(f"❌ Fallo en intento vertical {attempt + 1}, esperando 2 segundos...")
-            time.sleep(2)
+        alto, ancho = frame_rotado.shape[:2]
+        x1 = int(ancho * recorte_config['x_inicio'])
+        x2 = int(ancho * recorte_config['x_fin'])
+        y1 = int(alto * recorte_config['y_inicio'])
+        y2 = int(alto * recorte_config['y_fin'])
+        
+        frame_recortado = frame_rotado[y1:y2, x1:x2]
+        return frame_recortado
     
-    print("❌ Error: No se pudo capturar imagen vertical después de todos los intentos")
+    print("❌ Error: No se pudo capturar imagen vertical")
     return None
 
 def find_tape_vertical_position(image, debug=True):
