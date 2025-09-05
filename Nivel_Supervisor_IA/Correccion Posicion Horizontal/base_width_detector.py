@@ -491,46 +491,43 @@ def capture_image_for_correction_debug(camera_index=0, max_retries=1):
         return None
 
 def detect_tape_position_debug(image, debug=True):
-    """Detecta la posición de la cinta horizontal con modo debug visual"""
+    """Detecta la posición de la cinta horizontal con modo debug visual - MISMO ALGORITMO QUE EL NORMAL"""
     if image is None:
         return []
     
-    # Aplicar filtros HSV
+    h_img, w_img = image.shape[:2]
+    img_center_x = w_img // 2
+    
+    print(f"🔍 Analizando imagen: {w_img}x{h_img}, centro X: {img_center_x}")
+    
+    # Mostrar imagen original
+    cv2.imshow("DEBUG: Imagen Original", image)
+    print("📷 Imagen para análisis - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # USAR MISMO ALGORITMO QUE EL MODO NORMAL: HSV V-channel threshold
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    v_channel = hsv[:,:,2]
     
-    # Mostrar imagen HSV
-    cv2.imshow("DEBUG: Imagen HSV", hsv)
-    print("🌈 Imagen convertida a HSV - Presiona 'c' para continuar...")
+    # Mostrar canal V
+    cv2.imshow("DEBUG: Canal V (HSV)", v_channel)
+    print("🌈 Canal V extraído - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
             break
     cv2.destroyAllWindows()
     
-    # Definir rango de color para la cinta (verde/amarillo)
-    lower_green = np.array([40, 50, 50])
-    upper_green = np.array([80, 255, 255])
+    # Threshold igual que el modo normal
+    _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
     
-    # Crear máscara
-    mask = cv2.inRange(hsv, lower_green, upper_green)
-    
-    # Mostrar máscara
-    cv2.imshow("DEBUG: Máscara de Color", mask)
-    print("🎭 Máscara de color aplicada - Presiona 'c' para continuar...")
-    while True:
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('c'):
-            break
-    cv2.destroyAllWindows()
-    
-    # Operaciones morfológicas para limpiar la máscara
-    kernel = np.ones((5,5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    
-    # Mostrar máscara limpia
-    cv2.imshow("DEBUG: Máscara Limpia", mask)
-    print("🧹 Máscara procesada - Presiona 'c' para continuar...")
+    # Mostrar imagen binaria
+    cv2.imshow("DEBUG: Imagen Binaria (Threshold 30)", binary_img)
+    print("🎭 Threshold aplicado (zonas oscuras) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -538,53 +535,52 @@ def detect_tape_position_debug(image, debug=True):
     cv2.destroyAllWindows()
     
     # Encontrar contornos
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
         print("❌ No se encontraron contornos")
         return []
     
-    # Encontrar el contorno más grande
+    # Contorno más grande (igual que modo normal)
     main_contour = max(contours, key=cv2.contourArea)
+    x, y, w, h = cv2.boundingRect(main_contour)
     
-    if cv2.contourArea(main_contour) < 500:  # Área mínima
-        print("❌ Contorno demasiado pequeño")
-        return []
+    print(f"📏 Región principal: {w}x{h} en ({x}, {y})")
     
     # Crear imagen con contornos
     contour_image = image.copy()
     cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
+    cv2.rectangle(contour_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
     
-    # Calcular el centro
-    x, y, w, h = cv2.boundingRect(main_contour)
+    # Calcular centro horizontal (igual que modo normal)
     center_x = x + w // 2
-    center_y = y + h // 2
     
     # Dibujar centro y línea de referencia
-    cv2.circle(contour_image, (center_x, center_y), 10, (255, 0, 0), -1)
-    image_center_x = image.shape[1] // 2
-    cv2.line(contour_image, (image_center_x, 0), (image_center_x, image.shape[0]), (0, 0, 255), 2)
-    cv2.line(contour_image, (center_x, 0), (center_x, image.shape[0]), (255, 0, 0), 2)
+    cv2.circle(contour_image, (center_x, y + h // 2), 10, (255, 0, 0), -1)
+    cv2.line(contour_image, (img_center_x, 0), (img_center_x, h_img), (0, 0, 255), 2)
+    cv2.line(contour_image, (center_x, 0), (center_x, h_img), (255, 0, 0), 2)
     
     # Mostrar resultado final
     cv2.imshow("DEBUG: Detección Final", contour_image)
-    print(f"✅ Cinta detectada en X={center_x}px (centro imagen={image_center_x}px) - Presiona 'c' para continuar...")
+    print(f"✅ Centro detectado en X={center_x}px (centro imagen={img_center_x}px) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
             break
     cv2.destroyAllWindows()
     
-    # Calcular distancia desde el centro
-    distance_pixels = center_x - image_center_x
-    
+    # Crear resultado igual que el modo normal
     tape_result = {
-        'center_x': center_x,
-        'center_y': center_y,
-        'distance_pixels': distance_pixels,
-        'contour_area': int(cv2.contourArea(main_contour)),
-        'bbox': (x, y, w, h)
+        'base_center_x': center_x,
+        'base_width': w,
+        'start_x': x,
+        'end_x': x + w,
+        'base_y': y + h // 2,
+        'distance_from_center_x': abs(center_x - img_center_x),
+        'score': 0.8
     }
+    
+    print(f"📊 Resultado: centro X={center_x}px, distancia del centro={abs(center_x - img_center_x)}px")
     
     return [tape_result]
 
