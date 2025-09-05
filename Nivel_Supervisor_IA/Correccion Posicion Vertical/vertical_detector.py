@@ -403,6 +403,7 @@ def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
         cv2.imshow("DEBUG VERTICAL: 1. Imagen + Area de Analisis", frame_con_rectangulo)
+        cv2.resizeWindow("DEBUG VERTICAL: 1. Imagen + Area de Analisis", 800, 600)
         print("🔄 1. Imagen vertical con área de análisis marcada - Presiona 'c' para continuar...")
         while True:
             key = cv2.waitKey(1) & 0xFF
@@ -414,6 +415,7 @@ def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
         
         # Mostrar imagen recortada
         cv2.imshow("DEBUG VERTICAL: 2. Imagen Recortada", frame_recortado)
+        cv2.resizeWindow("DEBUG VERTICAL: 2. Imagen Recortada", 800, 600)
         print("✂️ 2. Imagen recortada para análisis vertical - Presiona 'c' para continuar...")
         while True:
             key = cv2.waitKey(1) & 0xFF
@@ -443,6 +445,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
     
     # Mostrar canal V
     cv2.imshow("DEBUG VERTICAL: 3. Canal V (Brillo)", v_channel)
+    cv2.resizeWindow("DEBUG VERTICAL: 3. Canal V (Brillo)", 800, 600)
     print("🌈 3. Canal V extraído - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
@@ -455,6 +458,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
     
     # Mostrar imagen binaria
     cv2.imshow("DEBUG VERTICAL: 4. Imagen Binaria", binary_img)
+    cv2.resizeWindow("DEBUG VERTICAL: 4. Imagen Binaria", 800, 600)
     print("🎭 4. Threshold aplicado (zonas oscuras) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
@@ -476,12 +480,13 @@ def detect_tape_position_vertical_debug(image, debug=True):
         print("❌ Contorno vertical demasiado pequeño")
         return []
     
-    # Calcular el centro
+    # Calcular BASE del rectángulo (línea inferior)
     x, y, w, h = cv2.boundingRect(main_contour)
-    center_x = x + w // 2
-    center_y = y + h // 2
+    center_x = x + w // 2  # Centro horizontal (para visualización)
+    base_y = y + h         # BASE del rectángulo (línea inferior) - ESTO ES LO IMPORTANTE
     
     print(f"📏 Región principal: {w}x{h} en ({x}, {y})")
+    print(f"🔴 Base de cinta en Y={base_y}px (y={y} + h={h})")
     
     # Crear imagen con contornos sobre imagen a COLOR
     if len(image.shape) == 3:
@@ -490,37 +495,39 @@ def detect_tape_position_vertical_debug(image, debug=True):
         # Si es escala de grises, convertir a color
         contour_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     
-    # Dibujar contorno y rectángulo
+    # Dibujar solo el contorno (no el rectángulo completo)
     cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
-    cv2.rectangle(contour_image, (x, y), (x + w, y + h), (0, 255, 255), 3)  # Amarillo
     
-    # Dibujar centro como círculo grande
-    cv2.circle(contour_image, (center_x, center_y), 15, (0, 0, 255), -1)  # Rojo
+    # Dibujar LÍNEA DE BASE (la más importante) - MUY GRUESA
+    cv2.line(contour_image, (x, base_y), (x + w, base_y), (0, 0, 255), 6)  # Rojo = BASE detectada
     
-    # Líneas de referencia MÁS GRUESAS (HORIZONTALES para vertical)
+    # Marcar centro de la base con círculo
+    cv2.circle(contour_image, (center_x, base_y), 10, (0, 0, 255), -1)  # Rojo
+    
+    # Línea de referencia (centro de imagen Y)
     cv2.line(contour_image, (0, img_center_y), (w_img, img_center_y), (255, 0, 255), 4)  # Magenta = centro imagen Y
-    cv2.line(contour_image, (0, center_y), (w_img, center_y), (0, 0, 255), 4)  # Rojo = centro detectado Y
     
     # Agregar texto explicativo
     cv2.putText(contour_image, f"Centro IMG Y: {img_center_y}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
-    cv2.putText(contour_image, f"Centro CINTA Y: {center_y}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    cv2.putText(contour_image, f"DIFERENCIA Y: {center_y - img_center_y}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    cv2.putText(contour_image, f"BASE CINTA Y: {base_y}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.putText(contour_image, f"DIFERENCIA Y: {base_y - img_center_y}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
     
     # Mostrar resultado final
     cv2.imshow("DEBUG VERTICAL: 5. DETECCION FINAL", contour_image)
-    print(f"✅ 5. Cinta detectada en Y={center_y}px (centro imagen Y={img_center_y}px) - Presiona 'c' para continuar...")
+    cv2.resizeWindow("DEBUG VERTICAL: 5. DETECCION FINAL", 800, 600)
+    print(f"✅ 5. BASE detectada en Y={base_y}px (centro imagen Y={img_center_y}px) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
             break
     cv2.destroyAllWindows()
     
-    # Calcular distancia desde el centro (vertical usa Y)
-    distance_pixels = center_y - img_center_y
+    # Calcular distancia desde la BASE (vertical usa BASE Y)
+    distance_pixels = base_y - img_center_y
     
     tape_result = {
         'center_x': center_x,
-        'center_y': center_y,
+        'base_y': base_y,           # CAMBIO: usar base_y en lugar de center_y
         'distance_pixels': distance_pixels,
         'contour_area': int(cv2.contourArea(main_contour)),
         'bbox': (x, y, w, h)
