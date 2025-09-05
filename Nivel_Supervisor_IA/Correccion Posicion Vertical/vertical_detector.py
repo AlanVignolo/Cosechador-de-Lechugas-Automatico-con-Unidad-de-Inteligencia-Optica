@@ -19,11 +19,15 @@ def capture_with_timeout(camera_index, timeout=5.0):
     def capture_thread():
         cap = None
         try:
+            # Intentar liberar cualquier instancia previa
+            cv2.destroyAllWindows()
+            time.sleep(0.2)
+            
             cap = cv2.VideoCapture(camera_index)
             result['cap'] = cap
             if cap.isOpened():
-                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+                # Esperar un momento para que la cámara se inicialice
+                time.sleep(0.1)
                 ret, frame = cap.read()
                 if ret and frame is not None:
                     result['frame'] = frame.copy()
@@ -32,10 +36,13 @@ def capture_with_timeout(camera_index, timeout=5.0):
             print(f"Error en captura: {e}")
             result['success'] = False
         finally:
-            if cap is not None and cap.isOpened():
-                cap.release()
-                # Pequeña pausa para asegurar liberación completa
-                time.sleep(0.1)
+            if cap is not None:
+                try:
+                    cap.release()
+                    time.sleep(0.2)  # Más tiempo para liberación
+                    cv2.destroyAllWindows()
+                except:
+                    pass
     
     thread = threading.Thread(target=capture_thread)
     thread.daemon = True
@@ -48,10 +55,19 @@ def capture_with_timeout(camera_index, timeout=5.0):
         if result['cap'] is not None:
             try:
                 result['cap'].release()
-                time.sleep(0.1)
+                time.sleep(0.3)
+                cv2.destroyAllWindows()
             except:
                 pass
         return None
+    
+    # Liberación adicional después del hilo
+    if result['cap'] is not None:
+        try:
+            result['cap'].release()
+            time.sleep(0.2)
+        except:
+            pass
     
     return result['frame'] if result['success'] else None
 
@@ -83,6 +99,10 @@ def scan_available_cameras():
 def capture_image_for_correction(camera_index=0, max_retries=1):
     """Captura una imagen para corrección de posición vertical"""
     global _working_camera_cache
+    
+    # Liberar recursos previos
+    cv2.destroyAllWindows()
+    time.sleep(0.3)
     
     recorte_config = {
         'x_inicio': 0.2,

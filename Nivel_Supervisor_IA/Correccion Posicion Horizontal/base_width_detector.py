@@ -55,9 +55,15 @@ def capture_with_timeout(camera_index, timeout=5.0):
     def capture_thread():
         cap = None
         try:
+            # Intentar liberar cualquier instancia previa
+            cv2.destroyAllWindows()
+            time.sleep(0.2)
+            
             cap = cv2.VideoCapture(camera_index)
             result['cap'] = cap
             if cap.isOpened():
+                # Esperar un momento para que la cámara se inicialice
+                time.sleep(0.1)
                 ret, frame = cap.read()
                 if ret and frame is not None:
                     result['frame'] = frame.copy()
@@ -66,10 +72,13 @@ def capture_with_timeout(camera_index, timeout=5.0):
             print(f"Error en captura: {e}")
             result['success'] = False
         finally:
-            if cap is not None and cap.isOpened():
-                cap.release()
-                # Pequeña pausa para asegurar liberación completa
-                time.sleep(0.1)
+            if cap is not None:
+                try:
+                    cap.release()
+                    time.sleep(0.2)  # Más tiempo para liberación
+                    cv2.destroyAllWindows()
+                except:
+                    pass
     
     thread = threading.Thread(target=capture_thread)
     thread.daemon = True
@@ -82,10 +91,19 @@ def capture_with_timeout(camera_index, timeout=5.0):
         if result['cap'] is not None:
             try:
                 result['cap'].release()
-                time.sleep(0.1)
+                time.sleep(0.3)
+                cv2.destroyAllWindows()
             except:
                 pass
         return None
+    
+    # Liberación adicional después del hilo
+    if result['cap'] is not None:
+        try:
+            result['cap'].release()
+            time.sleep(0.2)
+        except:
+            pass
     
     return result['frame'] if result['success'] else None
 
@@ -100,10 +118,14 @@ def capture_image_for_correction(camera_index=0, max_retries=1):
         'y_fin': 0.7
     }
     
+    # Liberar recursos previos
+    cv2.destroyAllWindows()
+    time.sleep(0.3)
+    
     # Captura directa - cámara siempre en índice fijo
     print(f"🎥 Intento 1/3 - Cámara {camera_index}...")
     
-    frame = capture_with_timeout(camera_index, timeout=3.0)
+    frame = capture_with_timeout(camera_index, timeout=4.0)
     
     if frame is not None:
         print(f"✅ Imagen capturada exitosamente desde cámara {camera_index}")
