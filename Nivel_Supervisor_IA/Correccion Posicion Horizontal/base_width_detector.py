@@ -448,15 +448,6 @@ def capture_image_for_correction_debug(camera_index=0, max_retries=1):
     if frame is not None:
         print(f"✅ Imagen capturada exitosamente desde cámara {camera_index}")
         
-        # Mostrar imagen original
-        cv2.imshow("DEBUG: Imagen Original", frame)
-        print("📷 Imagen original capturada - Presiona 'c' para continuar...")
-        while True:
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('c'):
-                break
-        cv2.destroyAllWindows()
-        
         frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
         # Calcular área de recorte
@@ -472,8 +463,8 @@ def capture_image_for_correction_debug(camera_index=0, max_retries=1):
         cv2.putText(frame_con_rectangulo, "AREA DE ANALISIS", (x1, y1-10), 
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
-        cv2.imshow("DEBUG: Imagen Rotada + Área de Análisis", frame_con_rectangulo)
-        print("🔄 Imagen rotada con cuadrado de referencia - Presiona 'c' para continuar...")
+        cv2.imshow("DEBUG: 1. Imagen + Area de Analisis", frame_con_rectangulo)
+        print("🔄 1. Imagen con área de análisis marcada - Presiona 'c' para continuar...")
         while True:
             key = cv2.waitKey(1) & 0xFF
             if key == ord('c'):
@@ -483,8 +474,8 @@ def capture_image_for_correction_debug(camera_index=0, max_retries=1):
         frame_recortado = frame_rotado[y1:y2, x1:x2]
         
         # Mostrar imagen recortada
-        cv2.imshow("DEBUG: Imagen Recortada", frame_recortado)
-        print("✂️ Imagen recortada para análisis - Presiona 'c' para continuar...")
+        cv2.imshow("DEBUG: 2. Imagen Recortada", frame_recortado)
+        print("✂️ 2. Imagen recortada para análisis - Presiona 'c' para continuar...")
         while True:
             key = cv2.waitKey(1) & 0xFF
             if key == ord('c'):
@@ -520,20 +511,20 @@ def detect_tape_position_debug(image, debug=True):
     v_channel = hsv[:,:,2]
     
     # Mostrar canal V
-    cv2.imshow("DEBUG: Canal V (HSV)", v_channel)
-    print("🌈 Canal V extraído - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG: 3. Canal V (Brillo)", v_channel)
+    print("🌈 3. Canal V extraído - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
             break
     cv2.destroyAllWindows()
     
-    # Threshold igual que el modo normal
-    _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
+    # Threshold para zonas oscuras (igual que modo normal)
+    _, thresh = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
     
-    # Mostrar imagen binaria
-    cv2.imshow("DEBUG: Imagen Binaria (Threshold 30)", binary_img)
-    print("🎭 Threshold aplicado (zonas oscuras) - Presiona 'c' para continuar...")
+    # Mostrar threshold
+    cv2.imshow("DEBUG: 4. Imagen Binaria", thresh)
+    print("🎭 4. Threshold aplicado (zonas oscuras) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -541,7 +532,7 @@ def detect_tape_position_debug(image, debug=True):
     cv2.destroyAllWindows()
     
     # Encontrar contornos
-    contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
         print("❌ No se encontraron contornos")
@@ -553,22 +544,35 @@ def detect_tape_position_debug(image, debug=True):
     
     print(f"📏 Región principal: {w}x{h} en ({x}, {y})")
     
-    # Crear imagen con contornos
-    contour_image = image.copy()
-    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
-    cv2.rectangle(contour_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+    # Crear imagen con contornos sobre imagen a COLOR
+    if len(image.shape) == 3:
+        contour_image = image.copy()
+    else:
+        # Si es escala de grises, convertir a color
+        contour_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     
     # Calcular centro horizontal (igual que modo normal)
     center_x = x + w // 2
     
-    # Dibujar centro y línea de referencia
-    cv2.circle(contour_image, (center_x, y + h // 2), 10, (255, 0, 0), -1)
-    cv2.line(contour_image, (img_center_x, 0), (img_center_x, h_img), (0, 0, 255), 2)
-    cv2.line(contour_image, (center_x, 0), (center_x, h_img), (255, 0, 0), 2)
+    # Dibujar contorno y rectángulo
+    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
+    cv2.rectangle(contour_image, (x, y), (x + w, y + h), (0, 255, 255), 3)  # Amarillo
+    
+    # Dibujar centro como círculo grande
+    cv2.circle(contour_image, (center_x, y + h // 2), 15, (0, 0, 255), -1)  # Rojo
+    
+    # Líneas de referencia MÁS GRUESAS
+    cv2.line(contour_image, (img_center_x, 0), (img_center_x, h_img), (255, 0, 255), 4)  # Magenta = centro imagen
+    cv2.line(contour_image, (center_x, 0), (center_x, h_img), (0, 0, 255), 4)  # Rojo = centro detectado
+    
+    # Agregar texto explicativo
+    cv2.putText(contour_image, f"Centro IMG: {img_center_x}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+    cv2.putText(contour_image, f"Centro CINTA: {center_x}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.putText(contour_image, f"DIFERENCIA: {center_x - img_center_x}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
     
     # Mostrar resultado final
-    cv2.imshow("DEBUG: Detección Final", contour_image)
-    print(f"✅ Centro detectado en X={center_x}px (centro imagen={img_center_x}px) - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG: 5. DETECCION FINAL", contour_image)
+    print(f"✅ 5. Centro detectado en X={center_x}px (centro imagen={img_center_x}px) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
