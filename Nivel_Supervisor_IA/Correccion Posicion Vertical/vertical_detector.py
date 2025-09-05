@@ -6,14 +6,14 @@ import threading
 import time
 
 # Cache global para recordar qué cámara funciona
-_working_camera_cache_vertical = None
+_working_camera_cache = None
 
 def capture_new_image(camera_index=0):
-    """Alias para capture_image_for_vertical_correction - mantiene compatibilidad con otros módulos"""
-    return capture_image_for_vertical_correction(camera_index)
+    """Alias para capture_image_for_correction - mantiene compatibilidad con otros módulos"""
+    return capture_image_for_correction(camera_index)
 
-def capture_with_timeout_vertical(camera_index, timeout=5.0):
-    """Captura frame con timeout para evitar que se cuelgue - versión vertical"""
+def capture_with_timeout(camera_index, timeout=5.0):
+    """Captura frame con timeout para evitar que se cuelgue"""
     result = {'frame': None, 'success': False, 'cap': None}
     
     def capture_thread():
@@ -29,7 +29,7 @@ def capture_with_timeout_vertical(camera_index, timeout=5.0):
                     result['frame'] = frame.copy()
                     result['success'] = True
         except Exception as e:
-            print(f"Error en captura vertical: {e}")
+            print(f"Error en captura: {e}")
             result['success'] = False
         finally:
             if cap is not None and cap.isOpened():
@@ -44,7 +44,7 @@ def capture_with_timeout_vertical(camera_index, timeout=5.0):
     
     # Cleanup forzado si hay timeout
     if thread.is_alive():
-        print(f"⚠️ Timeout en captura vertical de cámara {camera_index}")
+        print(f"⚠️ Timeout en captura de cámara {camera_index}")
         if result['cap'] is not None:
             try:
                 result['cap'].release()
@@ -55,11 +55,11 @@ def capture_with_timeout_vertical(camera_index, timeout=5.0):
     
     return result['frame'] if result['success'] else None
 
-def scan_available_cameras_vertical():
-    """Escanea cámaras disponibles - versión vertical"""
+def scan_available_cameras():
+    """Escanea cámaras disponibles"""
     available_cameras = []
     
-    print("🔍 Escaneando cámaras disponibles (vertical)...")
+    print("🔍 Escaneando cámaras disponibles...")
     
     for i in range(10):
         try:
@@ -80,9 +80,9 @@ def scan_available_cameras_vertical():
     
     return available_cameras
 
-def capture_image_for_vertical_correction(camera_index=1, max_retries=1):
-    """Captura una imagen simple para corrección de posición vertical con reintentos optimizado"""
-    global _working_camera_cache_vertical
+def capture_image_for_correction(camera_index=0, max_retries=1):
+    """Captura una imagen para corrección de posición vertical"""
+    global _working_camera_cache
     
     recorte_config = {
         'x_inicio': 0.2,
@@ -92,12 +92,12 @@ def capture_image_for_vertical_correction(camera_index=1, max_retries=1):
     }
     
     # Captura directa - cámara siempre en índice fijo
-    print(f"🎥 Capturando desde cámara vertical {camera_index}...")
+    print(f"🎥 Intento 1/3 - Cámara vertical {camera_index}...")
     
-    frame = capture_with_timeout_vertical(camera_index, timeout=3.0)
+    frame = capture_with_timeout(camera_index, timeout=3.0)
     
     if frame is not None:
-        print(f"✅ Imagen vertical capturada exitosamente")
+        print(f"✅ Imagen vertical capturada exitosamente desde cámara {camera_index}")
         
         frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
@@ -113,14 +113,13 @@ def capture_image_for_vertical_correction(camera_index=1, max_retries=1):
     print("❌ Error: No se pudo capturar imagen vertical")
     return None
 
-def find_tape_vertical_position(image, debug=True):
+def detect_tape_position(image, debug=True):
     """
-    Estrategia vertical: encontrar la posición Y de la BASE de la cinta
+    Detección de posición de cinta usando algoritmo unificado
     """
     
     if debug:
-        print("\n=== DETECTOR VERTICAL DE BASE DE CINTA ===")
-        print("Estrategia: encontrar coordenada Y de la base como referencia vertical")
+        print("\n=== DETECTOR DE POSICIÓN DE CINTA ===")
     
     h_img, w_img = image.shape[:2]
     img_center_y = h_img // 2
@@ -134,7 +133,7 @@ def find_tape_vertical_position(image, debug=True):
     if debug:
         print("Usando filtro hsv_muy_oscuro (el más limpio)")
     
-    # PASO 1: Encontrar la región oscura principal
+    # Encontrar la región oscura principal
     contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
@@ -149,89 +148,22 @@ def find_tape_vertical_position(image, debug=True):
     if debug:
         print(f"Región principal: {w}x{h} en ({x}, {y})")
     
-    # PASO 2: BUSCAR LA BASE - analizamos las últimas filas de la región
-    roi = binary_img[y:y+h, x:x+w]
-    
-    # Analizar últimas filas para encontrar la base sólida
-    base_rows_to_check = min(20, h // 4)  # Últimas 20 filas o 25% de la altura
-    base_candidates = []
-    
-    if debug:
-        print(f"Buscando base en las últimas {base_rows_to_check} filas...")
-    
-    for row_offset in range(base_rows_to_check):
-        row_idx = h - 1 - row_offset  # Desde abajo hacia arriba
-        row = roi[row_idx, :]
-        
-        # Encontrar segmentos horizontales sólidos en esta fila
-        white_pixels = np.where(row == 255)[0]
-        
-        if len(white_pixels) == 0:
-            continue
-        
-        # Encontrar segmentos continuos
-        segments = []
-        start = white_pixels[0]
-        end = white_pixels[0]
-        
-        for i in range(1, len(white_pixels)):
-            if white_pixels[i] == white_pixels[i-1] + 1:
-                end = white_pixels[i]
-            else:
-                segments.append((start, end))
-                start = white_pixels[i]
-                end = white_pixels[i]
-        segments.append((start, end))
-        
-        # Evaluar cada segmento como posible base de cinta
-        for seg_start, seg_end in segments:
-            seg_width = seg_end - seg_start + 1
-            seg_center_x = x + (seg_start + seg_end) // 2
-            
-            # Criterios para ser base de cinta
-            if (seg_width >= 10 and  # Ancho mínimo razonable
-                seg_width <= w * 0.8 and  # No más del 80% del ancho total
-                seg_center_x >= w_img * 0.2 and  # No muy en el borde
-                seg_center_x <= w_img * 0.8):
-                
-                base_candidates.append({
-                    'row': row_idx,
-                    'absolute_row': y + row_idx,  # COORDENADA Y ABSOLUTA
-                    'start_x': x + seg_start,
-                    'end_x': x + seg_end,
-                    'width': seg_width,
-                    'center_x': seg_center_x,
-                    'distance_from_center_y': abs((y + row_idx) - img_center_y)
-                })
-    
-    if not base_candidates:
-        if debug:
-            print("No se encontraron candidatos a base")
-        return []
-    
-    # Ordenar por: ancho (más ancho mejor) y cercanía al centro Y
-    base_candidates.sort(key=lambda b: (b['width'], -b['distance_from_center_y']), reverse=True)
-    
-    if debug:
-        print(f"Candidatos a base encontrados: {len(base_candidates)}")
-        for i, base in enumerate(base_candidates[:3]):
-            print(f"  {i+1}. Y={base['absolute_row']}: ancho={base['width']}px, centro_x={base['center_x']}")
-    
-    # Tomar el mejor candidato y crear resultado
-    best_base = base_candidates[0]
+    # Calcular centro y posición directamente desde el contorno (versión vertical)
+    center_x = x + w // 2
+    center_y = y + h // 2  # Para corrección vertical usamos Y
     
     tape_result = {
-        'base_width': best_base['width'],
-        'base_center_x': best_base['center_x'],
-        'base_y': best_base['absolute_row'],  # ESTA ES LA COORDENADA Y PRINCIPAL
-        'start_x': best_base['start_x'],
-        'end_x': best_base['end_x'],
-        'distance_from_center_y': best_base['distance_from_center_y'],
-        'score': 0.8  # Score fijo
+        'base_center_x': center_x,
+        'base_y': center_y,  # Coordenada Y para corrección vertical
+        'base_width': w,
+        'start_x': x,
+        'end_x': x + w,
+        'distance_from_center_y': abs(center_y - img_center_y),
+        'score': 0.8
     }
     
     if debug:
-        print(f"✅ Base detectada en Y = {tape_result['base_y']} px")
+        print(f"✅ Centro detectado en Y = {center_y} px")
         print(f"Distancia vertical del centro: {tape_result['distance_from_center_y']} px")
     
     return [tape_result]
@@ -242,12 +174,12 @@ def get_vertical_correction_distance(camera_index=0):
     Utilizada por la máquina de estados para corrección iterativa
     """
     # Capturar imagen
-    image = capture_image_for_vertical_correction(camera_index)
+    image = capture_image_for_correction(camera_index)
     if image is None:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
     
     # Detectar cinta
-    candidates = find_tape_vertical_position(image, debug=False)
+    candidates = detect_tape_position(image, debug=False)
     
     if not candidates:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
@@ -360,18 +292,16 @@ def main():
         print("No se capturó ninguna imagen")
         return
     
-    cv2.imwrite('imagen_nueva_vertical.jpg', image)
-    print("Nueva imagen guardada como 'imagen_nueva_vertical.jpg'\n")
+    # Imagen capturada - procesando sin guardar archivos
     
-    # Detectar usando método vertical
-    candidates = find_tape_vertical_position(image, debug=True)
+    # Detectar posición de cinta
+    candidates = detect_tape_position(image, debug=True)
     
     if candidates:
         best_candidate = candidates[0]
         
-        # Visualizar
-        result_img = visualize_vertical_detection(image, candidates)
-        cv2.imwrite('deteccion_vertical_y.jpg', result_img)
+        # Calcular resultado sin guardar imágenes
+        # result_img = visualize_vertical_detection(image, candidates)
         
         # Calcular resultado VERTICAL
         img_center_y = image.shape[0] // 2
