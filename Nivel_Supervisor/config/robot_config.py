@@ -160,9 +160,9 @@ class RobotConfig:
 
 # Parámetros para corrección de posición basada en IA
 AI_TEST_PARAMS = {
-    'camera_index': 1,  # Cámara siempre en índice 1 (USB fijo)
+    'camera_index': 0,  # Cámara disponible en índice 0
     'max_iterations': 10,
     'tolerance_mm': 1.0,
-    'x_offset_mm': 0,
-    'y_offset_mm': 0
+    'offset_x_mm': 0.0,  # Offset horizontal en milímetros
+    'offset_y_mm': 0.0   # Offset vertical en milímetros
 }
