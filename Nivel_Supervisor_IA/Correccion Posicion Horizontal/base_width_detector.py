@@ -89,8 +89,8 @@ def capture_with_timeout(camera_index, timeout=5.0):
     
     return result['frame'] if result['success'] else None
 
-def capture_image_for_correction(camera_index=1, max_retries=1):
-    """Captura una imagen simple para corrección de posición horizontal con reintentos optimizado"""
+def capture_image_for_correction(camera_index=0, max_retries=1):
+    """Captura una imagen para corrección de posición horizontal"""
     global _working_camera_cache
     
     recorte_config = {
@@ -101,12 +101,12 @@ def capture_image_for_correction(camera_index=1, max_retries=1):
     }
     
     # Captura directa - cámara siempre en índice fijo
-    print(f"🎥 Capturando desde cámara {camera_index}...")
+    print(f"🎥 Intento 1/3 - Cámara {camera_index}...")
     
     frame = capture_with_timeout(camera_index, timeout=3.0)
     
     if frame is not None:
-        print(f"✅ Imagen capturada exitosamente")
+        print(f"✅ Imagen capturada exitosamente desde cámara {camera_index}")
         
         frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
@@ -353,13 +353,13 @@ def find_tape_base_width(image, debug=True):
     
     return tape_candidates
 
-def simple_horizontal_detection(image, debug=True):
+def detect_tape_position(image, debug=True):
     """
-    Detección horizontal simplificada usando la misma lógica que vertical
+    Detección de posición de cinta usando algoritmo unificado
     """
     
     if debug:
-        print("\n=== DETECTOR HORIZONTAL SIMPLIFICADO ===")
+        print("\n=== DETECTOR DE POSICIÓN DE CINTA ===")
     
     h_img, w_img = image.shape[:2]
     img_center_x = w_img // 2
@@ -413,14 +413,11 @@ def get_horizontal_correction_distance(camera_index=0):
     if image is None:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
     
-    # Detectar cinta con algoritmo simplificado
-    candidates = simple_horizontal_detection(image, debug=False)
+    # Detectar cinta
+    candidates = detect_tape_position(image, debug=False)
     
     if not candidates:
-        # Si falla, intentar con el algoritmo original como respaldo
-        candidates = find_tape_base_width(image, debug=False)
-        if not candidates:
-            return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
+        return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
     
     # Calcular distancia desde centro
     best_candidate = candidates[0]
@@ -540,18 +537,16 @@ def main():
         print("No se capturó ninguna imagen")
         return
     
-    cv2.imwrite('imagen_nueva_base.jpg', image)
-    print("Nueva imagen guardada como 'imagen_nueva_base.jpg'\n")
+    # Imagen capturada - procesando sin guardar archivos
     
-    # Detectar usando ancho de base real
-    candidates = find_tape_base_width(image, debug=True)
+    # Detectar posición de cinta
+    candidates = detect_tape_position(image, debug=True)
     
     if candidates:
         best_candidate = candidates[0]
         
-        # Visualizar
-        result_img = visualize_base_width_detection(image, candidates)
-        cv2.imwrite('deteccion_base_real.jpg', result_img)
+        # Calcular resultado sin guardar imágenes
+        # result_img = visualize_base_width_detection(image, candidates)
         
         # Calcular resultado
         img_center_x = image.shape[1] // 2
