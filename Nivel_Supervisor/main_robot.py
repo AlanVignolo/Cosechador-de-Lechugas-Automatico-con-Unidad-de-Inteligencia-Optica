@@ -15,8 +15,16 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
 
 try:
-    from base_width_detector import get_horizontal_correction_distance
-    from vertical_detector import get_vertical_correction_distance
+    from base_width_detector import (
+        get_horizontal_correction_distance,
+        capture_image_for_correction_debug,
+        detect_tape_position_debug
+    )
+    from vertical_detector import (
+        get_vertical_correction_distance,
+        capture_image_for_correction_vertical_debug, 
+        detect_tape_position_vertical_debug
+    )
     AI_MODULES_AVAILABLE = True
 except ImportError as e:
     print(f"Módulos de IA no disponibles: {e}")
@@ -589,6 +597,21 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     except:
         print("⚠️ No se pudo cargar calibración vertical, usando valores por defecto")
         a_v, b_v = 0.38769, 0.15
+    
+    # Importar funciones de conversión
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
+    
+    from final_measurement_system import pixels_to_mm
+    from vertical_calibration import pixels_to_mm_vertical
+    
+    def mm_to_pixels(mm, a, b):
+        """Convierte milímetros a píxeles usando calibración horizontal: px = (mm - b) / a"""
+        return (mm - b) / a
+        
+    def mm_to_pixels_vertical(mm, a, b):
+        """Convierte milímetros a píxeles usando calibración vertical: px = (mm - b) / a"""
+        return (mm - b) / a
     
     print("\n🎯 INICIANDO CORRECCIÓN HORIZONTAL (DEBUG)...")
     
