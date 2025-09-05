@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from vertical_detector import capture_new_image, find_tape_vertical_position
+from vertical_detector import capture_new_image, detect_tape_position
 
 def create_linear_calibration():
     """Crea función lineal con tus datos de calibración vertical del archivo JSON"""
@@ -120,7 +120,7 @@ def measure_vertical_distance():
             continue
         
         # Detectar con tu IA vertical
-        candidates = find_tape_vertical_position(image, debug=False)
+        candidates = detect_tape_position(image, debug=False)
         if not candidates:
             print("❌ No se detectó cinta")
             continue
