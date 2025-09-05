@@ -218,6 +218,14 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
     from final_measurement_system import pixels_to_mm
     from vertical_calibration import pixels_to_mm_vertical
     
+    def mm_to_pixels(mm, a, b):
+        """Convierte milímetros a píxeles usando calibración horizontal: px = (mm - b) / a"""
+        return (mm - b) / a
+        
+    def mm_to_pixels_vertical(mm, a, b):
+        """Convierte milímetros a píxeles usando calibración vertical: px = (mm - b) / a"""
+        return (mm - b) / a
+    
     print(f"Calibración horizontal: mm = {a_h:.5f} * px + {b_h:.2f}")
     print(f"Calibración vertical: mm = {a_v:.5f} * px + {b_v:.2f}")
     
@@ -232,14 +240,15 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
                 print(f"Error en detección horizontal: {h_result.get('error', 'Desconocido')}")
                 return {"success": False, "message": f"Error horizontal: {h_result.get('error')}"}
             
-            # Aplicar offset horizontal: en lugar de centrar (0), apuntar a offset_x_px
-            distance_px = h_result['distance_pixels'] - AI_TEST_PARAMS['offset_x_px']
+            # Aplicar offset horizontal: convertir offset_x_mm a píxeles
+            offset_x_px = mm_to_pixels(AI_TEST_PARAMS['offset_x_mm'], a_h, b_h)
+            distance_px = h_result['distance_pixels'] - offset_x_px
             # SISTEMA DE COORDENADAS: X positivo = derecha (confirmado por usuario)
             # IA: +px = mover derecha, -px = mover izquierda
             # Robot: +mm = derecha, -mm = izquierda → Coinciden perfectamente
             move_mm = pixels_to_mm(distance_px, a_h, b_h)  # Usar calibración real
             
-            print(f"Iteración horizontal {h_iter+1}: detección = {h_result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_x_px']}px) = {distance_px}px → {move_mm:.1f}mm")
+            print(f"Iteración horizontal {h_iter+1}: detección = {h_result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_x_mm']}mm = {offset_x_px:.1f}px) = {distance_px:.1f}px → {move_mm:.1f}mm")
             
             # Verificar si está dentro de tolerancia
             if abs(move_mm) <= tolerance_mm:
@@ -266,12 +275,13 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
                 print(f"Error en detección vertical: {v_result.get('error', 'Desconocido')}")
                 return {"success": False, "message": f"Error vertical: {v_result.get('error')}"}
             
-            # Aplicar offset vertical: en lugar de centrar (0), apuntar a offset_y_px
-            distance_px = v_result['distance_pixels'] - AI_TEST_PARAMS['offset_y_px']
+            # Aplicar offset vertical: convertir offset_y_mm a píxeles
+            offset_y_px = mm_to_pixels_vertical(AI_TEST_PARAMS['offset_y_mm'], a_v, b_v)
+            distance_px = v_result['distance_pixels'] - offset_y_px
             # Usar mismo signo que en test individual (sin inversión)
             move_mm = pixels_to_mm_vertical(distance_px, a_v, b_v)  # Usar calibración real
             
-            print(f"Iteración vertical {v_iter+1}: detección = {v_result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_y_px']}px) = {distance_px}px → {move_mm:.1f}mm")
+            print(f"Iteración vertical {v_iter+1}: detección = {v_result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_y_mm']}mm = {offset_y_px:.1f}px) = {distance_px:.1f}px → {move_mm:.1f}mm")
             
             # Verificar si está dentro de tolerancia
             if abs(move_mm) <= tolerance_mm:
@@ -304,8 +314,8 @@ def configure_ai_test_parameters():
     print(f"   Camara: {AI_TEST_PARAMS['camera_index']}")
     print(f"   Max iteraciones: {AI_TEST_PARAMS['max_iterations']}")
     print(f"   Tolerancia: {AI_TEST_PARAMS['tolerance_mm']}mm")
-    print(f"   Offset X: {AI_TEST_PARAMS['offset_x_px']}px")
-    print(f"   Offset Y: {AI_TEST_PARAMS['offset_y_px']}px")
+    print(f"   Offset X: {AI_TEST_PARAMS['offset_x_mm']}mm")
+    print(f"   Offset Y: {AI_TEST_PARAMS['offset_y_mm']}mm")
     
     try:
         print("\nPresiona Enter para mantener valor actual")
@@ -319,11 +329,11 @@ def configure_ai_test_parameters():
         tolerance = input(f"Tolerancia mm [{AI_TEST_PARAMS['tolerance_mm']}]: ").strip()
         if tolerance: AI_TEST_PARAMS['tolerance_mm'] = float(tolerance)
         
-        offset_x = input(f"Offset X px [{AI_TEST_PARAMS['offset_x_px']}]: ").strip()
-        if offset_x: AI_TEST_PARAMS['offset_x_px'] = int(offset_x)
+        offset_x = input(f"Offset X mm [{AI_TEST_PARAMS['offset_x_mm']}]: ").strip()
+        if offset_x: AI_TEST_PARAMS['offset_x_mm'] = float(offset_x)
         
-        offset_y = input(f"Offset Y px [{AI_TEST_PARAMS['offset_y_px']}]: ").strip()
-        if offset_y: AI_TEST_PARAMS['offset_y_px'] = int(offset_y)
+        offset_y = input(f"Offset Y mm [{AI_TEST_PARAMS['offset_y_mm']}]: ").strip()
+        if offset_y: AI_TEST_PARAMS['offset_y_mm'] = float(offset_y)
         
         print("\nConfiguracion actualizada")
         
@@ -367,6 +377,10 @@ def test_horizontal_correction_only(robot):
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
         from final_measurement_system import pixels_to_mm
         
+        def mm_to_pixels(mm, a, b):
+            """Convierte milímetros a píxeles: px = (mm - b) / a"""
+            return (mm - b) / a
+        
         print(f"Iniciando corrección horizontal con calibración: mm = {a:.5f} * px + {b:.2f}")
         
         tolerance_mm = AI_TEST_PARAMS['tolerance_mm']
@@ -381,11 +395,12 @@ def test_horizontal_correction_only(robot):
                 print(f"Error en deteccion: {result.get('error', 'Desconocido')}")
                 break
             
-            # Aplicar offset: en lugar de centrar (0), apuntar a offset_x_px
-            distance_px = result['distance_pixels'] - AI_TEST_PARAMS['offset_x_px']
+            # Aplicar offset: convertir offset_x_mm a píxeles
+            offset_x_px = mm_to_pixels(AI_TEST_PARAMS['offset_x_mm'], a, b)
+            distance_px = result['distance_pixels'] - offset_x_px
             move_mm = pixels_to_mm(distance_px, a, b)
             
-            print(f"   Correccion detectada: {result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_x_px']}px) = {distance_px}px -> {move_mm:.1f}mm")
+            print(f"   Correccion detectada: {result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_x_mm']}mm = {offset_x_px:.1f}px) = {distance_px:.1f}px -> {move_mm:.1f}mm")
             
             if abs(move_mm) <= tolerance_mm:
                 print(f"Correccion horizontal completada en {iteration + 1} iteraciones")
@@ -441,6 +456,10 @@ def test_vertical_correction_only(robot):
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
         from vertical_calibration import pixels_to_mm_vertical
         
+        def mm_to_pixels_vertical(mm, a, b):
+            """Convierte milímetros a píxeles vertical: px = (mm - b) / a"""
+            return (mm - b) / a
+        
         print(f"Iniciando corrección vertical con calibración: mm = {a:.5f} * px + {b:.2f}")
         
         for iteration in range(AI_TEST_PARAMS['max_iterations']):
@@ -453,11 +472,12 @@ def test_vertical_correction_only(robot):
                 print(f"Error en deteccion: {result.get('error', 'Desconocido')}")
                 break
             
-            # Aplicar offset: en lugar de centrar (0), apuntar a offset_y_px
-            distance_px = result['distance_pixels'] - AI_TEST_PARAMS['offset_y_px']
+            # Aplicar offset: convertir offset_y_mm a píxeles
+            offset_y_px = mm_to_pixels_vertical(AI_TEST_PARAMS['offset_y_mm'], a, b)
+            distance_px = result['distance_pixels'] - offset_y_px
             move_mm = pixels_to_mm_vertical(distance_px, a, b)
             
-            print(f"   Correccion detectada: {result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_y_px']}px) = {distance_px}px -> {move_mm:.1f}mm")
+            print(f"   Correccion detectada: {result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_y_mm']}mm = {offset_y_px:.1f}px) = {distance_px:.1f}px -> {move_mm:.1f}mm")
             
             if abs(move_mm) <= AI_TEST_PARAMS['tolerance_mm']:
                 print(f"Correccion vertical completada en {iteration + 1} iteraciones")

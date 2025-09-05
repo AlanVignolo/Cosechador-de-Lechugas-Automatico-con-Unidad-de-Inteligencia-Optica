@@ -36,6 +36,7 @@ env/
 *.tmp
 *.swp
 *.swo
+.json
 
 # ============================
 # IDEs / Editor configs
