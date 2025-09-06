@@ -408,15 +408,15 @@ def evaluate_rectangularity_bottom_10_percent(contour):
     # Rectangularidad = qué porcentaje del rectángulo está ocupado por el contorno
     rectangularity = contour_area_bottom / rectangle_area_bottom
     
-    # Para cinta esperamos alta rectangularidad (>0.7) en la base
-    if rectangularity >= 0.85:
-        return 1.0  # Muy rectangular
+    # FILTRO ESTRICTO: Para cinta esperamos MUY alta rectangularidad (>0.75) en la base
+    if rectangularity >= 0.90:
+        return 1.0  # Perfectamente rectangular - cinta clara
+    elif rectangularity >= 0.80:
+        return 0.6  # Muy rectangular - cinta probable
     elif rectangularity >= 0.70:
-        return 0.8  # Bastante rectangular
-    elif rectangularity >= 0.50:
-        return 0.4  # Algo rectangular
+        return 0.2  # Algo rectangular - dudoso
     else:
-        return 0.1  # Poco rectangular (probablemente sombra irregular)
+        return 0.0  # Irregular - RECHAZAR completamente
 
 def evaluate_base_straightness(contour):
     """Evalúa qué tan recta es la base horizontal del contorno"""
@@ -575,15 +575,37 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
     if debug:
         print(f"Contornos tras pre-filtrado: {len(filtered_contours)}")
     
-    # 2. Agrupar contornos alineados (para manejar cinta partida por reflejos)
-    contour_groups = group_aligned_contours(filtered_contours, img_width)
+    # 2. PRE-FILTRO RECTANGULARIDAD: Eliminar contornos con baja rectangularidad
+    rectangle_filtered_contours = []
+    for contour in filtered_contours:
+        rectangularity = evaluate_rectangularity_bottom_10_percent(contour)
+        if rectangularity >= 0.70:  # Solo mantener contornos con base rectangular clara
+            rectangle_filtered_contours.append(contour)
+            if debug:
+                x, y, w, h = cv2.boundingRect(contour)
+                print(f"  ✓ Contorno ({x}, {y}, {w}x{h}) pasa filtro rectangularidad: {rectangularity:.3f}")
+        else:
+            if debug:
+                x, y, w, h = cv2.boundingRect(contour)
+                print(f"  ✗ Contorno ({x}, {y}, {w}x{h}) rechazado por baja rectangularidad: {rectangularity:.3f}")
+    
+    if not rectangle_filtered_contours:
+        if debug:
+            print("  ❌ Ningún contorno pasó el filtro de rectangularidad")
+        return None
+    
+    if debug:
+        print(f"  📦 {len(rectangle_filtered_contours)} contornos pasaron filtro rectangularidad")
+
+    # 3. Agrupar contornos alineados (para manejar cinta partida por reflejos)
+    contour_groups = group_aligned_contours(rectangle_filtered_contours, img_width)
     
     if debug:
         print(f"Grupos de contornos alineados: {len(contour_groups)}")
         for i, group in enumerate(contour_groups):
             print(f"  Grupo {i+1}: {len(group)} contornos")
     
-    # 3. Seleccionar el contorno más bajo de cada grupo
+    # 4. Seleccionar el contorno más bajo de cada grupo
     candidate_contours = []
     for group in contour_groups:
         lowest = select_lowest_in_group(group)
@@ -593,7 +615,7 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
             x, y, w, h = cv2.boundingRect(lowest)
             print(f"  Grupo con {len(group)} contornos → seleccionado más bajo en Y={y+h}")
     
-    # 4. Evaluar cada candidato con múltiples criterios
+    # 5. Evaluar cada candidato con múltiples criterios
     candidate_scores = []
     
     for contour in candidate_contours:
