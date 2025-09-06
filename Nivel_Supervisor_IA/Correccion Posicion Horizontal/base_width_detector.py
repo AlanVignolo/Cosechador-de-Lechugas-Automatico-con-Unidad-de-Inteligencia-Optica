@@ -711,13 +711,43 @@ def detect_tape_position(image, debug=True):
             print("❌ No se encontraron contornos")
         return []
     
-    # Contorno más grande (MISMO ALGORITMO QUE DEBUG)
-    main_contour = max(contours, key=cv2.contourArea)
+    # ALGORITMO MEJORADO: Priorizar ANCHO DE BASE, no área total
+    best_contour = None
+    best_score = 0
     
-    if cv2.contourArea(main_contour) < 500:
+    if debug:
+        print(f"Evaluando {len(contours)} contornos por ancho de base:")
+    
+    for i, contour in enumerate(contours):
+        area = cv2.contourArea(contour)
+        if area < 500:  # Filtro básico de área mínima
+            continue
+            
+        x, y, w, h = cv2.boundingRect(contour)
+        
+        # CRITERIO PRINCIPAL: Ancho de base (w es más importante que área)
+        base_width_score = w / 100.0  # Normalizar ancho de base
+        area_score = min(area / 10000.0, 1.0)  # Área normalizada pero limitada
+        
+        # Score combinado: 70% ancho de base + 30% área
+        combined_score = (base_width_score * 0.7) + (area_score * 0.3)
+        
         if debug:
-            print("❌ Contorno demasiado pequeño")
+            print(f"  Contorno {i+1}: {w}x{h} | Área={int(area)} | Base={w}px | Score={combined_score:.3f}")
+        
+        if combined_score > best_score:
+            best_score = combined_score
+            best_contour = contour
+    
+    if best_contour is None:
+        if debug:
+            print("❌ No se encontró contorno válido")
         return []
+    
+    main_contour = best_contour
+    if debug:
+        x, y, w, h = cv2.boundingRect(main_contour)
+        print(f"✅ ELEGIDO: {w}x{h} con ancho de base {w}px (score: {best_score:.3f})")
     
     # Calcular información del contorno seleccionado
     x, y, w, h = cv2.boundingRect(main_contour)
