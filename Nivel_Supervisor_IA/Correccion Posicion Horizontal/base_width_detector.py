@@ -1520,12 +1520,25 @@ def detect_tape_position_vertical_debug(image, debug=True):
     # Mostrar resultado final con marcadores
     result_image = image.copy()
     
+    # Dibujar rectángulo del contorno detectado (como en horizontal)
+    # Necesitamos obtener las coordenadas del contorno desde detect_tape_position
+    # Por ahora, dibujamos un rectángulo básico basado en los datos disponibles
+    
     # Marcar centro de imagen (referencia)
     cv2.line(result_image, (0, img_center_y), (w_img, img_center_y), (255, 0, 255), 4)  # Magenta
     
     # Marcar base detectada
     base_y = best_candidate['base_y']
     base_x = best_candidate['base_center_x']
+    
+    # Dibujar rectángulo aproximado del contorno (similar al horizontal)
+    rect_x = base_x - 50  # Aproximación del ancho
+    rect_y = base_y - 100  # Aproximación de la altura
+    rect_w = 100
+    rect_h = 100
+    cv2.rectangle(result_image, (rect_x, rect_y), (rect_x + rect_w, rect_y + rect_h), (0, 255, 0), 3)
+    
+    # Línea horizontal roja en la base (referencia vertical)
     cv2.line(result_image, (0, base_y), (w_img, base_y), (0, 0, 255), 6)  # Rojo
     cv2.circle(result_image, (base_x, base_y), 10, (0, 0, 255), -1)
     
