@@ -751,14 +751,61 @@ def detect_tape_position(image, debug=True):
     
     # Calcular información del contorno seleccionado
     x, y, w, h = cv2.boundingRect(main_contour)
-    center_x = x + w // 2
-    base_y = y + h  # Línea base (parte inferior)
+    
+    # USAR SOLO EL 10% INFERIOR DEL CONTORNO PARA CENTRO Y ANCHO
+    bottom_fraction = 0.10  # 10% inferior
+    bottom_height = max(int(h * bottom_fraction), 5)  # Mínimo 5 píxeles
+    bottom_y_start = y + h - bottom_height
+    
+    # Crear máscara para extraer solo el 10% inferior
+    mask = np.zeros((h_img, w_img), dtype=np.uint8)
+    cv2.drawContours(mask, [main_contour], -1, 255, -1)
+    
+    # Extraer solo la región inferior
+    bottom_region = mask[bottom_y_start:y+h, :]
+    
+    # Encontrar el ancho real de la base en esta región
+    base_pixels_found = False
+    real_base_x_min = w_img
+    real_base_x_max = 0
+    
+    for row_idx in range(bottom_region.shape[0]):
+        row = bottom_region[row_idx, :]
+        white_pixels = np.where(row == 255)[0]
+        
+        if len(white_pixels) > 0:
+            base_pixels_found = True
+            row_x_min = white_pixels[0]
+            row_x_max = white_pixels[-1]
+            real_base_x_min = min(real_base_x_min, row_x_min)
+            real_base_x_max = max(real_base_x_max, row_x_max)
+    
+    if base_pixels_found:
+        # Usar dimensiones REALES de la base (solo 10% inferior)
+        real_base_width = real_base_x_max - real_base_x_min + 1
+        real_center_x = (real_base_x_min + real_base_x_max) // 2
+        base_y = y + h  # Línea base (parte inferior)
+        
+        if debug:
+            print(f"📏 Contorno completo: {w}x{h}")
+            print(f"📏 Base real (10% inferior): ancho={real_base_width}px, centro={real_center_x}px")
+            print(f"📏 Reducción: {w}px → {real_base_width}px")
+    else:
+        # Fallback: usar contorno completo si falla extracción de base
+        real_base_width = w
+        real_center_x = x + w // 2
+        base_y = y + h
+        if debug:
+            print("⚠️ No se pudo extraer base, usando contorno completo")
+    
+    center_x = real_center_x
+    base_width = real_base_width
     
     tape_result = {
         'base_center_x': center_x,
-        'base_width': w,
-        'start_x': x,
-        'end_x': x + w,
+        'base_width': base_width,  # Usar ancho REAL de la base (10% inferior)
+        'start_x': real_base_x_min if base_pixels_found else x,
+        'end_x': real_base_x_max if base_pixels_found else x + w,
         'base_y': base_y,  # Usar línea base en lugar de centro
         'distance_from_center_x': abs(center_x - img_center_x),
         'score': 0.9  # Mayor confianza con selección inteligente
