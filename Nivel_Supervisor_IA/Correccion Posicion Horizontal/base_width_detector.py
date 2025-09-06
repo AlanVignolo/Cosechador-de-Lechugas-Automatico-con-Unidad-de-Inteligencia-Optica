@@ -935,9 +935,83 @@ def detect_tape_position_debug(image, debug=True):
         print("❌ No se encontraron contornos")
         return []
     
-    # Contorno más grande (igual que modo normal)
-    main_contour = max(contours, key=cv2.contourArea)
+    # USAR MISMO ALGORITMO MEJORADO QUE MODO NORMAL
+    best_contour = None
+    best_score = 0
+    
+    print(f"Evaluando {len(contours)} contornos por ancho de base:")
+    
+    for i, contour in enumerate(contours):
+        area = cv2.contourArea(contour)
+        if area < 500:  # Filtro básico de área mínima
+            continue
+            
+        x, y, w, h = cv2.boundingRect(contour)
+        
+        # CRITERIO PRINCIPAL: Ancho de base (w es más importante que área)
+        base_width_score = w / 100.0  # Normalizar ancho de base
+        area_score = min(area / 10000.0, 1.0)  # Área normalizada pero limitada
+        
+        # Score combinado: 70% ancho de base + 30% área
+        combined_score = (base_width_score * 0.7) + (area_score * 0.3)
+        
+        print(f"  Contorno {i+1}: {w}x{h} | Área={int(area)} | Base={w}px | Score={combined_score:.3f}")
+        
+        if combined_score > best_score:
+            best_score = combined_score
+            best_contour = contour
+    
+    if best_contour is None:
+        print("❌ No se encontró contorno válido")
+        return []
+    
+    main_contour = best_contour
     x, y, w, h = cv2.boundingRect(main_contour)
+    print(f"✅ ELEGIDO: {w}x{h} con ancho de base {w}px (score: {best_score:.3f})")
+    
+    # EXTRAER SOLO EL 10% INFERIOR (igual que modo normal)
+    bottom_fraction = 0.10  # 10% inferior
+    bottom_height = max(int(h * bottom_fraction), 5)  # Mínimo 5 píxeles
+    bottom_y_start = y + h - bottom_height
+    
+    # Crear máscara para extraer solo el 10% inferior
+    mask = np.zeros((h_img, w_img), dtype=np.uint8)
+    cv2.drawContours(mask, [main_contour], -1, 255, -1)
+    
+    # Extraer solo la región inferior
+    bottom_region = mask[bottom_y_start:y+h, :]
+    
+    # Encontrar el ancho real de la base en esta región
+    base_pixels_found = False
+    real_base_x_min = w_img
+    real_base_x_max = 0
+    
+    for row_idx in range(bottom_region.shape[0]):
+        row = bottom_region[row_idx, :]
+        white_pixels = np.where(row == 255)[0]
+        
+        if len(white_pixels) > 0:
+            base_pixels_found = True
+            row_x_min = white_pixels[0]
+            row_x_max = white_pixels[-1]
+            real_base_x_min = min(real_base_x_min, row_x_min)
+            real_base_x_max = max(real_base_x_max, row_x_max)
+    
+    if base_pixels_found:
+        # Usar dimensiones REALES de la base (solo 10% inferior)
+        real_base_width = real_base_x_max - real_base_x_min + 1
+        real_center_x = (real_base_x_min + real_base_x_max) // 2
+        print(f"📏 Contorno completo: {w}x{h}")
+        print(f"📏 Base real (10% inferior): ancho={real_base_width}px, centro={real_center_x}px")
+        print(f"📏 Reducción: {w}px → {real_base_width}px")
+    else:
+        # Fallback: usar contorno completo si falla extracción de base
+        real_base_width = w
+        real_center_x = x + w // 2
+        print("⚠️ No se pudo extraer base, usando contorno completo")
+    
+    center_x = real_center_x
+    base_width = real_base_width
     
     print(f"📏 Región principal: {w}x{h} en ({x}, {y})")
     
@@ -948,24 +1022,39 @@ def detect_tape_position_debug(image, debug=True):
         # Si es escala de grises, convertir a color
         contour_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     
-    # Calcular centro horizontal (igual que modo normal)
-    center_x = x + w // 2
+    # Dibujar contorno completo (verde)
+    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 2)
     
-    # Dibujar contorno y rectángulo
-    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
-    cv2.rectangle(contour_image, (x, y), (x + w, y + h), (0, 255, 255), 3)  # Amarillo
+    # Dibujar SOLO la región de la base real (10% inferior) - RECTÁNGULO AZUL
+    if base_pixels_found:
+        base_rect_x = real_base_x_min
+        base_rect_y = bottom_y_start
+        base_rect_w = real_base_width
+        base_rect_h = bottom_height
+        cv2.rectangle(contour_image, (base_rect_x, base_rect_y), 
+                     (base_rect_x + base_rect_w, base_rect_y + base_rect_h), 
+                     (255, 0, 0), 4)  # AZUL GRUESO = Base real
+        
+        # Marcar línea de la base específicamente (ROJA)
+        cv2.line(contour_image, (real_base_x_min, y + h), (real_base_x_max, y + h), (0, 0, 255), 3)
+    else:
+        # Si falla, usar rectángulo completo (amarillo)
+        cv2.rectangle(contour_image, (x, y), (x + w, y + h), (0, 255, 255), 3)  # Amarillo
     
-    # Dibujar centro como círculo grande
-    cv2.circle(contour_image, (center_x, y + h // 2), 15, (0, 0, 255), -1)  # Rojo
+    # Dibujar centro REAL (círculo grande ROJO)
+    cv2.circle(contour_image, (center_x, y + h - bottom_height // 2), 15, (0, 0, 255), -1)
     
     # Líneas de referencia MÁS GRUESAS
     cv2.line(contour_image, (img_center_x, 0), (img_center_x, h_img), (255, 0, 255), 4)  # Magenta = centro imagen
     cv2.line(contour_image, (center_x, 0), (center_x, h_img), (0, 0, 255), 4)  # Rojo = centro detectado
     
-    # Agregar texto explicativo
+    # Agregar texto explicativo ACTUALIZADO
     cv2.putText(contour_image, f"Centro IMG: {img_center_x}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
-    cv2.putText(contour_image, f"Centro CINTA: {center_x}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.putText(contour_image, f"Centro BASE REAL: {center_x}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     cv2.putText(contour_image, f"DIFERENCIA: {center_x - img_center_x}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    if base_pixels_found:
+        cv2.putText(contour_image, f"Ancho base real: {real_base_width}px", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
+        cv2.putText(contour_image, f"RECTANGULO AZUL = 10% inferior", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
     
     # Mostrar resultado final
     cv2.imshow("DEBUG: 5. DETECCION FINAL", contour_image)
@@ -980,13 +1069,13 @@ def detect_tape_position_debug(image, debug=True):
     # Calcular distancia desde el centro (igual que modo normal)
     distance_pixels = center_x - img_center_x
     
-    # Crear resultado igual que el modo normal
+    # Crear resultado usando BASE REAL (igual que modo normal)
     tape_result = {
-        'base_center_x': center_x,
-        'base_width': w,
-        'start_x': x,
-        'end_x': x + w,
-        'base_y': y + h // 2,
+        'base_center_x': center_x,  # Centro de la base real
+        'base_width': base_width,   # Ancho de la base real
+        'start_x': real_base_x_min if base_pixels_found else x,
+        'end_x': real_base_x_max if base_pixels_found else x + w,
+        'base_y': y + h,  # Línea base
         'distance_from_center_x': abs(distance_pixels),
         'distance_pixels': distance_pixels,  # Campo requerido por main_robot.py
         'score': 0.8
