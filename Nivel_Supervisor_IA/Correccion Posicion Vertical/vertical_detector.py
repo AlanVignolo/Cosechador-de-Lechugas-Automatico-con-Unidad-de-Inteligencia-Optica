@@ -477,9 +477,13 @@ def detect_tape_position(image, debug=True):
     # ALGORITMO BASADO EN CALIDAD DE BASE: Evaluar 10% inferior de cada contorno
     best_contour = None
     best_score = 0
+    contour_analysis = []  # Para guardar análisis de cada contorno
     
-    if debug:
-        print(f"Evaluando {len(contours)} contornos por CALIDAD DE BASE (10% inferior):")
+    print(f"Evaluando {len(contours)} contornos por CALIDAD DE BASE (10% inferior):")
+    
+    # Crear imagen para mostrar análisis de todos los contornos
+    analysis_image = image.copy()
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
     
     for i, contour in enumerate(contours):
         area = cv2.contourArea(contour)
@@ -561,6 +565,23 @@ def detect_tape_position(image, debug=True):
             size_bonus                    # Bonus adicional por ancho
         )
         
+        # Guardar análisis para visualización
+        contour_info = {
+            'contour': contour,
+            'index': i + 1,
+            'bbox': (x, y, w, h),
+            'base_bbox': (real_base_x_min, bottom_y_start, real_base_width, bottom_height),
+            'real_base_width': real_base_width,
+            'consistency_score': consistency_score,
+            'straightness_score': straightness_score,
+            'occupancy_score': occupancy_score,
+            'width_score': width_score,
+            'size_bonus': size_bonus,
+            'combined_score': combined_score,
+            'color': colors[i % len(colors)]
+        }
+        contour_analysis.append(contour_info)
+        
         if debug:
             print(f"  Contorno {i+1}: {w}x{h} | Base: {real_base_width}px")
             print(f"    Consistencia: {consistency_score:.3f} | Rectitud: {straightness_score:.3f}")
@@ -575,6 +596,50 @@ def detect_tape_position(image, debug=True):
         if debug:
             print("❌ No se encontró contorno válido")
         return []
+    
+    # CREAR IMAGEN DE ANÁLISIS VISUAL (solo en modo debug)
+    if debug:
+        # Dibujar todos los contornos analizados con sus métricas
+        for info in contour_analysis:
+            color = info['color']
+            
+            # 1. Dibujar contorno completo
+            cv2.drawContours(analysis_image, [info['contour']], -1, color, 2)
+            
+            # 2. Dibujar rectángulo de la base (10% inferior)
+            base_x, base_y, base_w, base_h = info['base_bbox']
+            cv2.rectangle(analysis_image, (base_x, base_y), (base_x + base_w, base_y + base_h), color, 2)
+            
+            # 3. Marcar si es el contorno elegido
+            x, y, w, h = info['bbox']
+            marker = "✓ ELEGIDO" if info['contour'] is best_contour else f"#{info['index']}"
+            font_scale = 0.6 if info['contour'] is best_contour else 0.5
+            thickness = 2 if info['contour'] is best_contour else 1
+            
+            # Texto de identificación
+            cv2.putText(analysis_image, marker, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+            
+            # 4. Mostrar métricas individuales al lado del contorno
+            metrics_text = [
+                f"W:{info['width_score']:.2f}(40%)",
+                f"C:{info['consistency_score']:.2f}(30%)",
+                f"O:{info['occupancy_score']:.2f}(20%)", 
+                f"R:{info['straightness_score']:.2f}(10%)",
+                f"B:{info['size_bonus']:.2f}",
+                f"TOT:{info['combined_score']:.2f}"
+            ]
+            
+            for j, text in enumerate(metrics_text):
+                cv2.putText(analysis_image, text, 
+                           (x + w + 10, y + 20 + j * 25), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+        
+        # Mostrar imagen de análisis
+        cv2.imshow('ANÁLISIS VERTICAL - Métricas por Área', analysis_image)
+        print(f"\n🔍 IMAGEN DE ANÁLISIS VERTICAL: Mostrando {len(contour_analysis)} contornos con sus puntajes")
+        print("   - Contorno completo (color)")
+        print("   - Base 10% inferior (rectángulo del mismo color)")
+        print("   - W=Ancho(40%), C=Consistencia(30%), O=Ocupación(20%), R=Rectitud(10%), B=Bonus")
     
     main_contour = best_contour
     if debug:
