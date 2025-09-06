@@ -1508,8 +1508,14 @@ def detect_tape_position_vertical_debug(image, debug=True):
         print("❌ No se detectó cinta con algoritmo inteligente")
         return []
     
+    # DEBUG: Mostrar TODOS los candidatos detectados
+    print(f"🔍 DEBUG VERTICAL: Se encontraron {len(candidates)} candidatos:")
+    for i, candidate in enumerate(candidates):
+        print(f"  Candidato {i+1}: base_center_x={candidate.get('base_center_x', 'N/A')}, base_y={candidate.get('base_y', 'N/A')}, score={candidate.get('score', 'N/A')}")
+    
     # Convertir resultado para compatibilidad con main_robot.py
     best_candidate = candidates[0]
+    print(f"🎯 MEJOR CANDIDATO VERTICAL: {best_candidate}")
     
     # Mostrar resultado final con marcadores
     result_image = image.copy()
