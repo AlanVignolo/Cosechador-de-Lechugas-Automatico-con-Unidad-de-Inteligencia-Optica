@@ -789,15 +789,19 @@ def detect_tape_position_vertical_debug(image, debug=True):
         print("❌ No se encontraron contornos verticales")
         return []
     
-    # Encontrar el contorno más grande
-    main_contour = max(contours, key=cv2.contourArea)
+    # USAR MISMO ALGORITMO INTELIGENTE QUE EL MODO NORMAL
+    best_contour = smart_contour_selection(contours, w_img, h_img, debug=True)
     
-    if cv2.contourArea(main_contour) < 500:
+    if best_contour is None:
+        print("❌ No se pudo seleccionar un contorno válido con algoritmo inteligente vertical")
+        return []
+    
+    if cv2.contourArea(best_contour) < 500:
         print("❌ Contorno vertical demasiado pequeño")
         return []
     
     # Calcular BASE del rectángulo (línea inferior)
-    x, y, w, h = cv2.boundingRect(main_contour)
+    x, y, w, h = cv2.boundingRect(best_contour)
     center_x = x + w // 2  # Centro horizontal (para visualización)
     base_y = y + h         # BASE del rectángulo (línea inferior) - ESTO ES LO IMPORTANTE
     
@@ -812,7 +816,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
         contour_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     
     # Dibujar solo el contorno (no el rectángulo completo)
-    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
+    cv2.drawContours(contour_image, [best_contour], -1, (0, 255, 0), 3)
     
     # Dibujar LÍNEA DE BASE (la más importante) - MUY GRUESA
     cv2.line(contour_image, (x, base_y), (x + w, base_y), (0, 0, 255), 6)  # Rojo = BASE detectada
