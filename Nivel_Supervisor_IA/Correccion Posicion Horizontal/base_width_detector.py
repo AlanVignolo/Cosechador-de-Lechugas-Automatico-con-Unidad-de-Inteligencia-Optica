@@ -858,9 +858,14 @@ def detect_tape_position_debug(image, debug=True):
         print("❌ No se encontraron contornos")
         return []
     
-    # Contorno más grande (igual que modo normal)
-    main_contour = max(contours, key=cv2.contourArea)
-    x, y, w, h = cv2.boundingRect(main_contour)
+    # USAR MISMO ALGORITMO INTELIGENTE QUE EL MODO NORMAL
+    best_contour = smart_contour_selection(contours, w_img, h_img, debug=True)
+    
+    if best_contour is None:
+        print("❌ No se pudo seleccionar un contorno válido con algoritmo inteligente")
+        return []
+    
+    x, y, w, h = cv2.boundingRect(best_contour)
     
     print(f"📏 Región principal: {w}x{h} en ({x}, {y})")
     
@@ -875,7 +880,7 @@ def detect_tape_position_debug(image, debug=True):
     center_x = x + w // 2
     
     # Dibujar contorno y rectángulo
-    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
+    cv2.drawContours(contour_image, [best_contour], -1, (0, 255, 0), 3)
     cv2.rectangle(contour_image, (x, y), (x + w, y + h), (0, 255, 255), 3)  # Amarillo
     
     # Dibujar centro como círculo grande
