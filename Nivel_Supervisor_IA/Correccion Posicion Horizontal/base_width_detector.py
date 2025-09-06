@@ -375,52 +375,299 @@ def find_tape_base_width(image, debug=True):
     
     return tape_candidates
 
+def evaluate_base_straightness(contour):
+    """Evalúa qué tan recta es la base horizontal del contorno"""
+    x, y, w, h = cv2.boundingRect(contour)
+    base_y = y + h  # Línea base (parte inferior)
+    
+    # Extraer píxeles de la base en un rango de ±2 píxeles
+    mask = np.zeros((h + 4, w + 4), dtype=np.uint8)
+    cv2.drawContours(mask, [contour - [x-2, y-2]], -1, 255, -1)
+    
+    # Buscar píxeles en la región de la base
+    base_pixels = []
+    for i in range(max(0, base_y-2), min(mask.shape[0], base_y+3)):
+        for j in range(mask.shape[1]):
+            if mask[i-y+2, j] == 255:
+                base_pixels.append(i)
+    
+    if len(base_pixels) < 3:
+        return 0.0  # No hay suficientes píxeles para evaluar rectitud
+    
+    # Calcular desviación estándar (menor = más recto)
+    std_dev = np.std(base_pixels)
+    # Convertir a score: 0-1 donde 1 es perfectamente recto
+    straightness_score = max(0, 1 - std_dev / 5.0)  # 5 píxeles de tolerancia
+    
+    return straightness_score
+
+def evaluate_aspect_ratio(contour):
+    """Evalúa el aspect ratio de la porción inferior del contorno (solo cinta, sin lechuga)"""
+    x, y, w, h = cv2.boundingRect(contour)
+    
+    if w == 0 or h == 0:
+        return 0.0
+    
+    # Extraer solo la franja inferior (25% inferior) donde debería estar la cinta
+    # Esto evita que la lechuga arriba afecte el aspect ratio
+    tape_fraction = 0.25  # 25% inferior del contorno
+    tape_height = max(int(h * tape_fraction), 10)  # Mínimo 10 píxeles
+    
+    # Si el contorno es muy pequeño, usar todo
+    if h < 40:  # Contorno pequeño, probablemente solo cinta
+        tape_height = h
+    
+    # Aspect ratio de la franja inferior (cinta real)
+    aspect_ratio = tape_height / w
+    
+    # Para cinta vertical en franja inferior esperamos ratio menor
+    # porque es solo la parte de la cinta, no toda la altura
+    if 0.3 <= aspect_ratio <= 1.5:  # Rango ajustado para franja inferior
+        # Score óptimo entre 0.5 y 1.0
+        if 0.5 <= aspect_ratio <= 1.0:
+            return 1.0
+        else:
+            # Penalizar gradualmente fuera del rango óptimo
+            return max(0.4, 1.0 - abs(aspect_ratio - 0.75) / 1.0)
+    else:
+        # Muy pequeña o muy alta incluso para franja
+        return 0.2
+
+def evaluate_centrality(contour, img_center_x):
+    """Evalúa qué tan cerca del centro está el contorno"""
+    x, y, w, h = cv2.boundingRect(contour)
+    contour_center_x = x + w // 2
+    
+    distance_from_center = abs(contour_center_x - img_center_x)
+    max_distance = img_center_x  # Máxima distancia posible
+    
+    # Score: 1.0 = en el centro, 0.0 = en el borde
+    centrality_score = max(0, 1.0 - distance_from_center / max_distance)
+    
+    return centrality_score
+
+def group_aligned_contours(contours, img_width):
+    """Agrupa contornos que están alineados horizontalmente (misma X aproximada)"""
+    if len(contours) <= 1:
+        return [[c] for c in contours]
+    
+    groups = []
+    tolerance = img_width * 0.15  # 15% del ancho como tolerancia
+    
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        center_x = x + w // 2
+        
+        # Buscar grupo existente
+        added_to_group = False
+        for group in groups:
+            # Verificar si está alineado con algún contorno del grupo
+            for existing_contour in group:
+                ex, ey, ew, eh = cv2.boundingRect(existing_contour)
+                existing_center_x = ex + ew // 2
+                
+                if abs(center_x - existing_center_x) <= tolerance:
+                    group.append(contour)
+                    added_to_group = True
+                    break
+            
+            if added_to_group:
+                break
+        
+        # Si no se añadió a ningún grupo, crear uno nuevo
+        if not added_to_group:
+            groups.append([contour])
+    
+    return groups
+
+def select_lowest_in_group(contour_group):
+    """De un grupo de contornos alineados, selecciona el más bajo (mayor Y)"""
+    if len(contour_group) == 1:
+        return contour_group[0]
+    
+    lowest_contour = None
+    lowest_y = -1
+    
+    for contour in contour_group:
+        x, y, w, h = cv2.boundingRect(contour)
+        base_y = y + h  # Parte inferior del contorno
+        
+        if base_y > lowest_y:
+            lowest_y = base_y
+            lowest_contour = contour
+    
+    return lowest_contour
+
+def smart_contour_selection(contours, img_width, img_height, debug=True):
+    """Selección inteligente de contorno usando múltiples criterios"""
+    
+    if not contours:
+        return None
+    
+    img_center_x = img_width // 2
+    img_area = img_width * img_height
+    
+    if debug:
+        print(f"\n=== SELECCIÓN INTELIGENTE DE CONTORNOS ===")
+        print(f"Contornos encontrados: {len(contours)}")
+    
+    # 1. Pre-filtrado básico
+    filtered_contours = []
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        x, y, w, h = cv2.boundingRect(contour)
+        
+        # Filtros básicos - permitir contornos grandes (cinta+vaso+lechuga unificados)
+        if (area >= 200 and  # Área mínima
+            area <= img_area * 0.95 and  # Permitir hasta 95% (casi toda la imagen)
+            x > img_width * 0.02 and  # Menos restrictivo en bordes
+            x + w < img_width * 0.98):  # Menos restrictivo en bordes
+            filtered_contours.append(contour)
+    
+    if not filtered_contours:
+        if debug:
+            print("❌ No hay contornos que pasen el pre-filtrado")
+        return None
+    
+    if debug:
+        print(f"Contornos tras pre-filtrado: {len(filtered_contours)}")
+    
+    # 2. Agrupar contornos alineados (para manejar cinta partida por reflejos)
+    contour_groups = group_aligned_contours(filtered_contours, img_width)
+    
+    if debug:
+        print(f"Grupos de contornos alineados: {len(contour_groups)}")
+        for i, group in enumerate(contour_groups):
+            print(f"  Grupo {i+1}: {len(group)} contornos")
+    
+    # 3. Seleccionar el contorno más bajo de cada grupo
+    candidate_contours = []
+    for group in contour_groups:
+        lowest = select_lowest_in_group(group)
+        candidate_contours.append(lowest)
+        
+        if debug and len(group) > 1:
+            x, y, w, h = cv2.boundingRect(lowest)
+            print(f"  Grupo con {len(group)} contornos → seleccionado más bajo en Y={y+h}")
+    
+    # 4. Evaluar cada candidato con múltiples criterios
+    candidate_scores = []
+    
+    for contour in candidate_contours:
+        # Evaluar criterios individuales
+        straightness = evaluate_base_straightness(contour)
+        aspect_ratio = evaluate_aspect_ratio(contour)
+        centrality = evaluate_centrality(contour, img_center_x)
+        
+        # Bonus por ser el más bajo en caso de grupos múltiples
+        x, y, w, h = cv2.boundingRect(contour)
+        base_y = y + h
+        
+        # Encontrar si hay otros contornos en posición similar
+        position_bonus = 0.0
+        for other_contour in candidate_contours:
+            if other_contour is contour:
+                continue
+            ox, oy, ow, oh = cv2.boundingRect(other_contour)
+            other_center_x = ox + ow // 2
+            contour_center_x = x + w // 2
+            
+            # Si están alineados horizontalmente, dar bonus al más bajo
+            if abs(contour_center_x - other_center_x) <= img_width * 0.15:
+                other_base_y = oy + oh
+                if base_y > other_base_y:
+                    position_bonus = 0.2  # Bonus por ser más bajo
+        
+        # Score final combinado
+        final_score = (
+            straightness * 0.35 +
+            aspect_ratio * 0.25 +
+            centrality * 0.25 +
+            0.15 + position_bonus  # Base score + bonus por posición
+        )
+        
+        candidate_scores.append({
+            'contour': contour,
+            'score': final_score,
+            'straightness': straightness,
+            'aspect_ratio': aspect_ratio,
+            'centrality': centrality,
+            'position_bonus': position_bonus,
+            'bbox': (x, y, w, h)
+        })
+        
+        if debug:
+            print(f"  Candidato en ({x}, {y}, {w}, {h}):")
+            print(f"    Rectitud base: {straightness:.3f}")
+            print(f"    Aspect ratio: {aspect_ratio:.3f}")
+            print(f"    Centralidad: {centrality:.3f}")
+            print(f"    Bonus posición: {position_bonus:.3f}")
+            print(f"    Score final: {final_score:.3f}")
+    
+    # 5. Seleccionar el mejor candidato
+    if not candidate_scores:
+        return None
+    
+    best_candidate = max(candidate_scores, key=lambda c: c['score'])
+    
+    if debug:
+        x, y, w, h = best_candidate['bbox']
+        print(f"\n✅ MEJOR CANDIDATO seleccionado:")
+        print(f"    Posición: ({x}, {y}, {w}, {h})")
+        print(f"    Score: {best_candidate['score']:.3f}")
+    
+    return best_candidate['contour']
+
 def detect_tape_position(image, debug=True):
     """
-    Detección de posición de cinta usando algoritmo unificado
+    Detección de posición de cinta usando selección inteligente de contornos
     """
     
     if debug:
-        print("\n=== DETECTOR DE POSICIÓN DE CINTA ===")
+        print("\n=== DETECTOR DE POSICIÓN DE CINTA CON SELECCIÓN INTELIGENTE ===")
     
     h_img, w_img = image.shape[:2]
     img_center_x = w_img // 2
     
-    # Aplicar el mismo filtro que vertical
+    # Aplicar filtrado HSV
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     v_channel = hsv[:,:,2]
     _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
     
-    # Encontrar la región oscura principal
+    # Encontrar todos los contornos
     contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
         if debug:
-            print("No se encontraron contornos")
+            print("❌ No se encontraron contornos")
         return []
     
-    # Contorno más grande
-    main_contour = max(contours, key=cv2.contourArea)
-    x, y, w, h = cv2.boundingRect(main_contour)
+    # Selección inteligente del mejor contorno
+    best_contour = smart_contour_selection(contours, w_img, h_img, debug)
     
-    if debug:
-        print(f"Región principal: {w}x{h} en ({x}, {y})")
+    if best_contour is None:
+        if debug:
+            print("❌ No se pudo seleccionar un contorno válido")
+        return []
     
-    # Calcular centro horizontal directamente desde el contorno
+    # Calcular información del contorno seleccionado
+    x, y, w, h = cv2.boundingRect(best_contour)
     center_x = x + w // 2
+    base_y = y + h  # Línea base (parte inferior)
     
     tape_result = {
         'base_center_x': center_x,
         'base_width': w,
         'start_x': x,
         'end_x': x + w,
-        'base_y': y + h // 2,  # Centro vertical
+        'base_y': base_y,  # Usar línea base en lugar de centro
         'distance_from_center_x': abs(center_x - img_center_x),
-        'score': 0.8
+        'score': 0.9  # Mayor confianza con selección inteligente
     }
     
     if debug:
         print(f"✅ Centro detectado en X = {center_x} px")
+        print(f"✅ Base detectada en Y = {base_y} px")
         print(f"Distancia del centro: {tape_result['distance_from_center_x']} px")
     
     return [tape_result]
