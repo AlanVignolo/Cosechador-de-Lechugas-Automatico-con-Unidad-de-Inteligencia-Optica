@@ -1004,11 +1004,16 @@ def detect_tape_position_debug(image, debug=True):
         print("❌ No se encontraron contornos")
         return []
     
-    # USAR MISMO ALGORITMO MEJORADO QUE MODO NORMAL
+    # USAR MISMO ALGORITMO MEJORADO QUE MODO NORMAL + ANÁLISIS VISUAL
     best_contour = None
     best_score = 0
+    contour_analysis = []  # Para guardar análisis de cada contorno
     
     print(f"Evaluando {len(contours)} contornos por ancho de base:")
+    
+    # Crear imagen para mostrar análisis de todos los contornos
+    analysis_image = image.copy()
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
     
     for i, contour in enumerate(contours):
         area = cv2.contourArea(contour)
@@ -1017,14 +1022,92 @@ def detect_tape_position_debug(image, debug=True):
             
         x, y, w, h = cv2.boundingRect(contour)
         
-        # CRITERIO PRINCIPAL: Ancho de base (w es más importante que área)
-        base_width_score = w / 100.0  # Normalizar ancho de base
-        area_score = min(area / 10000.0, 1.0)  # Área normalizada pero limitada
+        # EXTRAER 10% INFERIOR PARA EVALUACIÓN (MISMO ALGORITMO ACTUALIZADO)
+        bottom_fraction = 0.10
+        bottom_height = max(int(h * bottom_fraction), 5)
+        bottom_y_start = y + h - bottom_height
         
-        # Score combinado: 70% ancho de base + 30% área
-        combined_score = (base_width_score * 0.7) + (area_score * 0.3)
+        # Crear máscara para esta base específica
+        mask = np.zeros((h_img, w_img), dtype=np.uint8)
+        cv2.drawContours(mask, [contour], -1, 255, -1)
+        bottom_region = mask[bottom_y_start:y+h, :]
         
-        print(f"  Contorno {i+1}: {w}x{h} | Área={int(area)} | Base={w}px | Score={combined_score:.3f}")
+        # Evaluar CALIDAD de esta base
+        base_pixels_found = False
+        real_base_x_min = w_img
+        real_base_x_max = 0
+        
+        # Contar píxeles blancos por fila para evaluar rectitud
+        row_widths = []
+        for row_idx in range(bottom_region.shape[0]):
+            row = bottom_region[row_idx, :]
+            white_pixels = np.where(row == 255)[0]
+            
+            if len(white_pixels) > 0:
+                base_pixels_found = True
+                row_x_min = white_pixels[0]
+                row_x_max = white_pixels[-1]
+                row_width = row_x_max - row_x_min + 1
+                row_widths.append(row_width)
+                real_base_x_min = min(real_base_x_min, row_x_min)
+                real_base_x_max = max(real_base_x_max, row_x_max)
+        
+        if not base_pixels_found or len(row_widths) < 2:
+            print(f"  Contorno {i+1}: No tiene base válida")
+            continue
+        
+        # MÉTRICAS DE CALIDAD DE BASE
+        real_base_width = real_base_x_max - real_base_x_min + 1
+        
+        # FILTRO: Base debe ser suficientemente ancha
+        if real_base_width < 30:
+            print(f"  Contorno {i+1}: Base muy estrecha ({real_base_width}px < 30px)")
+            continue
+        
+        # Calcular métricas individuales
+        width_variance = np.var(row_widths) if len(row_widths) > 1 else 1000
+        consistency_score = max(0, 1.0 - (width_variance / 100.0))
+        
+        avg_width = np.mean(row_widths)
+        straightness_score = avg_width / real_base_width if real_base_width > 0 else 0
+        
+        total_pixels_in_base = np.sum(bottom_region == 255)
+        max_possible_pixels = real_base_width * bottom_height
+        occupancy_score = total_pixels_in_base / max_possible_pixels if max_possible_pixels > 0 else 0
+        
+        width_score = min(real_base_width / 40.0, 1.0)
+        size_bonus = min(real_base_width / 100.0, 0.3)
+        
+        # Score combinado
+        combined_score = (
+            width_score * 0.40 +
+            consistency_score * 0.30 +
+            occupancy_score * 0.20 +
+            straightness_score * 0.10 +
+            size_bonus
+        )
+        
+        # Guardar análisis para visualización
+        contour_info = {
+            'contour': contour,
+            'index': i + 1,
+            'bbox': (x, y, w, h),
+            'base_bbox': (real_base_x_min, bottom_y_start, real_base_width, bottom_height),
+            'real_base_width': real_base_width,
+            'consistency_score': consistency_score,
+            'straightness_score': straightness_score,
+            'occupancy_score': occupancy_score,
+            'width_score': width_score,
+            'size_bonus': size_bonus,
+            'combined_score': combined_score,
+            'color': colors[i % len(colors)]
+        }
+        contour_analysis.append(contour_info)
+        
+        print(f"  Contorno {i+1}: {w}x{h} | Base: {real_base_width}px")
+        print(f"    Consistencia: {consistency_score:.3f} | Rectitud: {straightness_score:.3f}")
+        print(f"    Ocupación: {occupancy_score:.3f} | Ancho: {width_score:.3f}")
+        print(f"    Size bonus: {size_bonus:.3f} | Score TOTAL: {combined_score:.3f}")
         
         if combined_score > best_score:
             best_score = combined_score
@@ -1033,6 +1116,49 @@ def detect_tape_position_debug(image, debug=True):
     if best_contour is None:
         print("❌ No se encontró contorno válido")
         return []
+    
+    # CREAR IMAGEN DE ANÁLISIS VISUAL
+    # Dibujar todos los contornos analizados con sus métricas
+    for info in contour_analysis:
+        color = info['color']
+        
+        # 1. Dibujar contorno completo
+        cv2.drawContours(analysis_image, [info['contour']], -1, color, 2)
+        
+        # 2. Dibujar rectángulo de la base (10% inferior)
+        base_x, base_y, base_w, base_h = info['base_bbox']
+        cv2.rectangle(analysis_image, (base_x, base_y), (base_x + base_w, base_y + base_h), color, 2)
+        
+        # 3. Marcar si es el contorno elegido
+        x, y, w, h = info['bbox']
+        marker = "✓ ELEGIDO" if info['contour'] is best_contour else f"#{info['index']}"
+        font_scale = 0.6 if info['contour'] is best_contour else 0.5
+        thickness = 2 if info['contour'] is best_contour else 1
+        
+        # Texto de identificación
+        cv2.putText(analysis_image, marker, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+        
+        # 4. Mostrar métricas individuales al lado del contorno
+        metrics_text = [
+            f"W:{info['width_score']:.2f}(40%)",
+            f"C:{info['consistency_score']:.2f}(30%)",
+            f"O:{info['occupancy_score']:.2f}(20%)", 
+            f"R:{info['straightness_score']:.2f}(10%)",
+            f"B:{info['size_bonus']:.2f}",
+            f"TOT:{info['combined_score']:.2f}"
+        ]
+        
+        for j, text in enumerate(metrics_text):
+            cv2.putText(analysis_image, text, 
+                       (x + w + 10, y + 20 + j * 25), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+    
+    # Mostrar imagen de análisis
+    cv2.imshow('ANÁLISIS DE CONTORNOS - Métricas por Área', analysis_image)
+    print(f"\n🔍 IMAGEN DE ANÁLISIS: Mostrando {len(contour_analysis)} contornos con sus puntajes")
+    print("   - Contorno completo (color)")
+    print("   - Base 10% inferior (rectángulo del mismo color)")
+    print("   - W=Ancho(40%), C=Consistencia(30%), O=Ocupación(20%), R=Rectitud(10%), B=Bonus")
     
     main_contour = best_contour
     x, y, w, h = cv2.boundingRect(main_contour)
