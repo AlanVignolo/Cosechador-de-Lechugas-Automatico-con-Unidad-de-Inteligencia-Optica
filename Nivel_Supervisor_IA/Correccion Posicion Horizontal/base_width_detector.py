@@ -687,7 +687,7 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
     
     return best_candidate['contour']
 
-def detect_tape_position(image, debug=True):
+def detect_tape_position(image, debug=False, mode='horizontal'):
     """
     Detección de posición de cinta usando selección inteligente de contornos
     """
@@ -864,8 +864,12 @@ def detect_tape_position(image, debug=True):
     center_x = real_center_x
     base_width = real_base_width
     
-    # Calcular distancia desde el centro (igual que vertical)
-    distance_pixels = center_x - img_center_x
+    # Calcular distancia según el modo
+    if mode == 'vertical':
+        img_center_y = h_img // 2
+        distance_pixels = img_center_y - base_y  # Para vertical: negativo=subir, positivo=bajar
+    else:
+        distance_pixels = center_x - img_center_x  # Para horizontal usar coordenada X
     
     tape_result = {
         'base_center_x': center_x,
@@ -1298,21 +1302,14 @@ def get_position_distance_for_correction(camera_index=0, mode='horizontal'):
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
     
     # Detectar cinta
-    candidates = detect_tape_position(image, debug=False)
+    candidates = detect_tape_position(image, debug=False, mode=mode)
     
     if not candidates:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
     
-    # Calcular distancia según el modo
+    # Usar distancia ya calculada por detect_tape_position
     best_candidate = candidates[0]
-    if mode == 'vertical':
-        img_center_y = image.shape[0] // 2
-        tape_base_y = best_candidate['base_y']
-        distance = tape_base_y - img_center_y  # Volver al cálculo original
-    else:
-        img_center_x = image.shape[1] // 2
-        tape_center_x = best_candidate['base_center_x']  # Volver al original que funcionaba
-        distance = tape_center_x - img_center_x
+    distance = best_candidate['distance_pixels']  # Ya calculada correctamente según el modo
     
     return {
         'success': True,
@@ -1502,7 +1499,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
     
     # USAR EL ALGORITMO INTELIGENTE con visualización
     print("🧠 Ejecutando algoritmo inteligente de detección...")
-    candidates = detect_tape_position(image, debug=True)
+    candidates = detect_tape_position(image, debug=True, mode='vertical')
     
     if not candidates:
         print("❌ No se detectó cinta con algoritmo inteligente")
@@ -1676,7 +1673,7 @@ def main():
     # Imagen capturada - procesando sin guardar archivos
     
     # Detectar posición de cinta
-    candidates = detect_tape_position(image, debug=True)
+    candidates = detect_tape_position(image, debug=True, mode='horizontal')
     
     if candidates:
         best_candidate = candidates[0]
