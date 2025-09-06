@@ -114,7 +114,7 @@ def capture_image_for_correction(camera_index=0, max_retries=1):
     # Captura directa - cámara siempre en índice fijo
     print(f"🎥 Intento 1/3 - Cámara vertical {camera_index}...")
     
-    frame = capture_with_timeout(camera_index, timeout=3.0)
+    frame = capture_with_timeout(camera_index, timeout=4.0)
     
     if frame is not None:
         print(f"✅ Imagen vertical capturada exitosamente desde cámara {camera_index}")
@@ -885,108 +885,26 @@ def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
         return None
 
 def detect_tape_position_vertical_debug(image, debug=True):
-    """Detecta la posición de la cinta vertical con modo debug visual"""
+    """Detecta la posición de la cinta vertical con modo debug visual - USA ALGORITMO INTELIGENTE"""
     if image is None:
         return []
     
-    h_img, w_img = image.shape[:2]
-    img_center_y = h_img // 2
+    # USAR EL MISMO ALGORITMO INTELIGENTE que la función principal
+    candidates = detect_tape_position(image, debug=True)
     
-    print(f"🔍 Analizando imagen vertical: {w_img}x{h_img}, centro Y: {img_center_y}")
-    
-    # Aplicar filtros
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    v_channel = hsv[:,:,2]
-    
-    # Mostrar canal V
-    cv2.imshow("DEBUG VERTICAL: 3. Canal V (Brillo)", v_channel)
-    cv2.resizeWindow("DEBUG VERTICAL: 3. Canal V (Brillo)", 800, 600)
-    print("🌈 3. Canal V extraído - Presiona 'c' para continuar...")
-    while True:
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('c'):
-            break
-    cv2.destroyAllWindows()
-    
-    # Aplicar threshold
-    _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
-    
-    # Mostrar imagen binaria
-    cv2.imshow("DEBUG VERTICAL: 4. Imagen Binaria", binary_img)
-    cv2.resizeWindow("DEBUG VERTICAL: 4. Imagen Binaria", 800, 600)
-    print("🎭 4. Threshold aplicado (zonas oscuras) - Presiona 'c' para continuar...")
-    while True:
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('c'):
-            break
-    cv2.destroyAllWindows()
-    
-    # Encontrar contornos
-    contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    if not contours:
-        print("❌ No se encontraron contornos verticales")
+    if not candidates:
+        print("❌ No se detectó cinta con algoritmo inteligente")
         return []
     
-    # Encontrar el contorno más grande
-    main_contour = max(contours, key=cv2.contourArea)
-    
-    if cv2.contourArea(main_contour) < 500:
-        print("❌ Contorno vertical demasiado pequeño")
-        return []
-    
-    # Calcular BASE del rectángulo (línea inferior)
-    x, y, w, h = cv2.boundingRect(main_contour)
-    center_x = x + w // 2  # Centro horizontal (para visualización)
-    base_y = y + h         # BASE del rectángulo (línea inferior) - ESTO ES LO IMPORTANTE
-    
-    print(f"📏 Región principal: {w}x{h} en ({x}, {y})")
-    print(f"🔴 Base de cinta en Y={base_y}px (y={y} + h={h})")
-    
-    # Crear imagen con contornos sobre imagen a COLOR
-    if len(image.shape) == 3:
-        contour_image = image.copy()
-    else:
-        # Si es escala de grises, convertir a color
-        contour_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-    
-    # Dibujar solo el contorno (no el rectángulo completo)
-    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 3)
-    
-    # Dibujar LÍNEA DE BASE (la más importante) - MUY GRUESA
-    cv2.line(contour_image, (x, base_y), (x + w, base_y), (0, 0, 255), 6)  # Rojo = BASE detectada
-    
-    # Marcar centro de la base con círculo
-    cv2.circle(contour_image, (center_x, base_y), 10, (0, 0, 255), -1)  # Rojo
-    
-    # Línea de referencia (centro de imagen Y)
-    cv2.line(contour_image, (0, img_center_y), (w_img, img_center_y), (255, 0, 255), 4)  # Magenta = centro imagen Y
-    
-    # Agregar texto explicativo
-    cv2.putText(contour_image, f"Centro IMG Y: {img_center_y}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
-    cv2.putText(contour_image, f"BASE CINTA Y: {base_y}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    cv2.putText(contour_image, f"DIFERENCIA Y: {base_y - img_center_y}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-    
-    # Mostrar resultado final
-    cv2.imshow("DEBUG VERTICAL: 5. DETECCION FINAL", contour_image)
-    cv2.resizeWindow("DEBUG VERTICAL: 5. DETECCION FINAL", 800, 600)
-    print(f"✅ 5. BASE detectada en Y={base_y}px (centro imagen Y={img_center_y}px) - Presiona 'c' para continuar...")
-    while True:
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('c'):
-            break
-    cv2.destroyAllWindows()
-    
-    # Calcular distancia desde la BASE (vertical usa BASE Y)
-    distance_pixels = base_y - img_center_y
+    # Convertir resultado para compatibilidad con main_robot.py
+    best_candidate = candidates[0]
     
     tape_result = {
-        'center_x': center_x,
-        'base_y': base_y,           # CAMBIO: usar base_y en lugar de center_y
-        'distance_pixels': distance_pixels,
-        'contour_area': int(cv2.contourArea(main_contour)),
-        'bbox': (x, y, w, h)
+        'center_x': best_candidate['base_center_x'],
+        'base_y': best_candidate['base_y'],
+        'distance_pixels': best_candidate['distance_pixels'],
+        'contour_area': 1000,  # Placeholder
+        'bbox': (0, 0, 100, 100)  # Placeholder
     }
     
     return [tape_result]
