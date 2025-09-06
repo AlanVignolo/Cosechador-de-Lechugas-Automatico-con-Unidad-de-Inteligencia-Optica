@@ -870,13 +870,17 @@ def detect_tape_position(image, debug=True):
     center_x = real_center_x
     base_width = real_base_width
     
+    # Calcular distancia desde el centro (igual que vertical)
+    distance_pixels = center_x - img_center_x
+    
     tape_result = {
         'base_center_x': center_x,
         'base_width': base_width,  # Usar ancho REAL de la base (10% inferior)
         'start_x': real_base_x_min if base_pixels_found else x,
         'end_x': real_base_x_max if base_pixels_found else x + w,
         'base_y': base_y,  # Usar línea base en lugar de centro
-        'distance_from_center_x': abs(center_x - img_center_x),
+        'distance_from_center_x': abs(distance_pixels),
+        'distance_pixels': distance_pixels,  # Campo requerido por main_robot.py
         'score': 0.9  # Mayor confianza con selección inteligente
     }
     
