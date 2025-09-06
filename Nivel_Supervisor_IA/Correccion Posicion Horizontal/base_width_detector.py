@@ -375,6 +375,49 @@ def find_tape_base_width(image, debug=True):
     
     return tape_candidates
 
+def evaluate_rectangularity_bottom_10_percent(contour):
+    """Evalúa qué tan rectangular es el 10% inferior del contorno (base de cinta)"""
+    x, y, w, h = cv2.boundingRect(contour)
+    
+    if h < 10:  # Contorno muy pequeño
+        return 0.0
+    
+    # Extraer solo el 10% inferior
+    bottom_fraction = 0.10
+    bottom_height = max(int(h * bottom_fraction), 3)  # Mínimo 3 píxeles
+    bottom_y_start = y + h - bottom_height
+    
+    # Crear máscara para el 10% inferior
+    bottom_mask = np.zeros((bottom_height, w), dtype=np.uint8)
+    
+    # Trasladar contorno para que coincida con la región inferior
+    translated_contour = contour - [x, bottom_y_start]  
+    
+    # Dibujar solo la parte que cae en la región inferior
+    cv2.drawContours(bottom_mask, [translated_contour], -1, 255, -1)
+    
+    # Calcular área del contorno en la región inferior
+    contour_area_bottom = cv2.countNonZero(bottom_mask)
+    
+    if contour_area_bottom == 0:
+        return 0.0
+    
+    # Área del rectángulo completo del 10% inferior
+    rectangle_area_bottom = w * bottom_height
+    
+    # Rectangularidad = qué porcentaje del rectángulo está ocupado por el contorno
+    rectangularity = contour_area_bottom / rectangle_area_bottom
+    
+    # Para cinta esperamos alta rectangularidad (>0.7) en la base
+    if rectangularity >= 0.85:
+        return 1.0  # Muy rectangular
+    elif rectangularity >= 0.70:
+        return 0.8  # Bastante rectangular
+    elif rectangularity >= 0.50:
+        return 0.4  # Algo rectangular
+    else:
+        return 0.1  # Poco rectangular (probablemente sombra irregular)
+
 def evaluate_base_straightness(contour):
     """Evalúa qué tan recta es la base horizontal del contorno"""
     x, y, w, h = cv2.boundingRect(contour)
@@ -558,6 +601,7 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
         straightness = evaluate_base_straightness(contour)
         aspect_ratio = evaluate_aspect_ratio(contour)
         centrality = evaluate_centrality(contour, img_center_x)
+        rectangularity = evaluate_rectangularity_bottom_10_percent(contour)  # NUEVO
         
         # Bonus por ser el más bajo en caso de grupos múltiples
         x, y, w, h = cv2.boundingRect(contour)
@@ -578,12 +622,13 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
                 if base_y > other_base_y:
                     position_bonus = 0.2  # Bonus por ser más bajo
         
-        # Score final combinado
+        # Score final combinado - rectangularidad es crítica para filtrar sombras
         final_score = (
-            straightness * 0.35 +
-            aspect_ratio * 0.25 +
-            centrality * 0.25 +
-            0.15 + position_bonus  # Base score + bonus por posición
+            rectangularity * 0.30 +      # NUEVO: Filtrar sombras irregulares
+            straightness * 0.30 +        # Rectitud sigue siendo importante
+            aspect_ratio * 0.20 +        # Reducido pero importante
+            centrality * 0.20 +          # Reducido pero importante
+            position_bonus               # Bonus sin peso base
         )
         
         candidate_scores.append({
@@ -592,12 +637,14 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
             'straightness': straightness,
             'aspect_ratio': aspect_ratio,
             'centrality': centrality,
+            'rectangularity': rectangularity,  # NUEVO
             'position_bonus': position_bonus,
             'bbox': (x, y, w, h)
         })
         
         if debug:
             print(f"  Candidato en ({x}, {y}, {w}, {h}):")
+            print(f"    Rectangularidad 10%: {rectangularity:.3f}")  # NUEVO - PRIMERO
             print(f"    Rectitud base: {straightness:.3f}")
             print(f"    Aspect ratio: {aspect_ratio:.3f}")
             print(f"    Centralidad: {centrality:.3f}")
