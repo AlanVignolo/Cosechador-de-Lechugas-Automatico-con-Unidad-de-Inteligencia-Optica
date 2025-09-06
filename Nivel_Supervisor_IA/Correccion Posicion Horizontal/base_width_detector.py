@@ -711,16 +711,16 @@ def detect_tape_position(image, debug=True):
             print("❌ No se encontraron contornos")
         return []
     
-    # Selección inteligente del mejor contorno
-    best_contour = smart_contour_selection(contours, w_img, h_img, debug)
+    # Contorno más grande (MISMO ALGORITMO QUE DEBUG)
+    main_contour = max(contours, key=cv2.contourArea)
     
-    if best_contour is None:
+    if cv2.contourArea(main_contour) < 500:
         if debug:
-            print("❌ No se pudo seleccionar un contorno válido")
+            print("❌ Contorno demasiado pequeño")
         return []
     
     # Calcular información del contorno seleccionado
-    x, y, w, h = cv2.boundingRect(best_contour)
+    x, y, w, h = cv2.boundingRect(main_contour)
     center_x = x + w // 2
     base_y = y + h  # Línea base (parte inferior)
     
