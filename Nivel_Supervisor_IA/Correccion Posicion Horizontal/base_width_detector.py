@@ -1278,13 +1278,20 @@ def detect_tape_position_debug(image, debug=True):
     
     return [tape_result]
 
-def get_horizontal_distance_for_correction(camera_index=0):
+def get_position_distance_for_correction(camera_index=0, mode='horizontal'):
     """
-    Función simplificada para corrección horizontal - solo devuelve distancia en píxeles
+    Función unificada para corrección horizontal y vertical - devuelve distancia en píxeles
     Utilizada por la máquina de estados para corrección iterativa
+    
+    Args:
+        camera_index: Índice de la cámara
+        mode: 'horizontal' o 'vertical'
     """
-    # Capturar imagen
-    image = capture_image_for_correction(camera_index)
+    # Capturar imagen según el modo
+    if mode == 'vertical':
+        image = capture_image_for_vertical_correction(camera_index)
+    else:
+        image = capture_image_for_correction(camera_index)
     
     if image is None:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
@@ -1295,17 +1302,249 @@ def get_horizontal_distance_for_correction(camera_index=0):
     if not candidates:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
     
-    # Calcular distancia desde centro
+    # Calcular distancia según el modo
     best_candidate = candidates[0]
-    img_center_x = image.shape[1] // 2
-    tape_center_x = best_candidate['base_center_x']
-    distance = tape_center_x - img_center_x
+    if mode == 'vertical':
+        img_center_y = image.shape[0] // 2
+        tape_base_y = best_candidate['base_y']
+        distance = tape_base_y - img_center_y
+    else:
+        img_center_x = image.shape[1] // 2
+        tape_center_x = best_candidate['base_center_x']
+        distance = tape_center_x - img_center_x
     
     return {
         'success': True,
         'distance_pixels': int(distance),
         'confidence': best_candidate['score']
     }
+
+def get_horizontal_distance_for_correction(camera_index=0):
+    """Función de compatibilidad para corrección horizontal"""
+    return get_position_distance_for_correction(camera_index, mode='horizontal')
+
+def get_vertical_correction_distance(camera_index=0):
+    """Función de compatibilidad para corrección vertical"""
+    return get_position_distance_for_correction(camera_index, mode='vertical')
+
+def capture_image_for_vertical_correction(camera_index=0):
+    """Captura imagen para corrección vertical con rotación y recorte"""
+    global _working_camera_cache
+    
+    # Liberar recursos previos
+    cv2.destroyAllWindows()
+    time.sleep(0.3)
+    
+    recorte_config = {
+        'x_inicio': 0.2,
+        'x_fin': 0.8,
+        'y_inicio': 0.3,
+        'y_fin': 0.7
+    }
+    
+    print(f"🎥 Capturando imagen vertical desde cámara {camera_index}...")
+    
+    frame = capture_with_timeout(camera_index, timeout=4.0)
+    
+    if frame is not None:
+        print(f"✅ Imagen vertical capturada exitosamente desde cámara {camera_index}")
+        
+        # Rotar imagen 90 grados en sentido antihorario
+        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        
+        # Calcular área de recorte
+        alto, ancho = frame_rotado.shape[:2]
+        x1 = int(ancho * recorte_config['x_inicio'])
+        x2 = int(ancho * recorte_config['x_fin'])
+        y1 = int(alto * recorte_config['y_inicio'])
+        y2 = int(alto * recorte_config['y_fin'])
+        
+        # Aplicar recorte
+        frame_recortado = frame_rotado[y1:y2, x1:x2]
+        
+        return frame_recortado
+    else:
+        print("❌ Error: No se pudo capturar imagen vertical")
+        return None
+
+def capture_with_timeout(camera_index, timeout=4.0):
+    """Captura imagen con timeout"""
+    result = [None]
+    
+    def capture():
+        try:
+            cap = cv2.VideoCapture(camera_index)
+            if cap.isOpened():
+                ret, frame = cap.read()
+                if ret:
+                    result[0] = frame
+            cap.release()
+        except:
+            pass
+    
+    thread = threading.Thread(target=capture)
+    thread.start()
+    thread.join(timeout)
+    
+    return result[0]
+
+def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
+    """Captura una imagen para corrección de posición vertical con modo debug"""
+    global _working_camera_cache
+    
+    # Liberar recursos previos
+    cv2.destroyAllWindows()
+    time.sleep(0.3)
+    
+    recorte_config = {
+        'x_inicio': 0.2,
+        'x_fin': 0.8,
+        'y_inicio': 0.3,
+        'y_fin': 0.7
+    }
+    
+    # Captura directa - cámara siempre en índice fijo
+    print(f"🎥 Intento 1/3 - Cámara vertical {camera_index}...")
+    
+    frame = capture_with_timeout(camera_index, timeout=4.0)
+    
+    if frame is not None:
+        print(f"✅ Imagen vertical capturada exitosamente desde cámara {camera_index}")
+        
+        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        
+        # Calcular área de recorte
+        alto, ancho = frame_rotado.shape[:2]
+        x1 = int(ancho * recorte_config['x_inicio'])
+        x2 = int(ancho * recorte_config['x_fin'])
+        y1 = int(alto * recorte_config['y_inicio'])
+        y2 = int(alto * recorte_config['y_fin'])
+        
+        # Mostrar imagen rotada con cuadrado de referencia
+        frame_con_rectangulo = frame_rotado.copy()
+        cv2.rectangle(frame_con_rectangulo, (x1, y1), (x2, y2), (0, 255, 0), 3)
+        cv2.putText(frame_con_rectangulo, "AREA DE ANALISIS VERTICAL", (x1, y1-10), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        cv2.imshow("DEBUG VERTICAL: 1. Imagen + Area de Analisis", frame_con_rectangulo)
+        cv2.resizeWindow("DEBUG VERTICAL: 1. Imagen + Area de Analisis", 800, 600)
+        print("🔄 1. Imagen vertical con área de análisis marcada - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
+        frame_recortado = frame_rotado[y1:y2, x1:x2]
+        
+        # Mostrar imagen recortada
+        cv2.imshow("DEBUG VERTICAL: 2. Imagen Recortada", frame_recortado)
+        cv2.resizeWindow("DEBUG VERTICAL: 2. Imagen Recortada", 800, 600)
+        print("✂️ 2. Imagen recortada para análisis vertical - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+        
+        return frame_recortado
+    else:
+        print("❌ Error: No se pudo capturar imagen vertical")
+        return None
+
+def detect_tape_position_vertical_debug(image, debug=True):
+    """Detecta la posición de la cinta vertical con modo debug visual paso a paso"""
+    if image is None:
+        return []
+    
+    h_img, w_img = image.shape[:2]
+    img_center_y = h_img // 2
+    
+    print(f"🔍 Analizando imagen VERTICAL: {w_img}x{h_img}, centro Y: {img_center_y}")
+    
+    # Mostrar imagen original
+    cv2.imshow("DEBUG VERTICAL: Imagen Original", image)
+    cv2.resizeWindow("DEBUG VERTICAL: Imagen Original", 800, 600)
+    print("📷 Imagen vertical para análisis - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Convertir a HSV y extraer canal V
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    v_channel = hsv[:,:,2]
+    
+    # Mostrar canal V
+    cv2.imshow("DEBUG VERTICAL: Canal V (Brillo)", v_channel)
+    cv2.resizeWindow("DEBUG VERTICAL: Canal V (Brillo)", 800, 600)
+    print("🌈 Canal V extraído - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Threshold para zonas oscuras
+    _, thresh = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
+    
+    # Mostrar threshold
+    cv2.imshow("DEBUG VERTICAL: Imagen Binaria", thresh)
+    cv2.resizeWindow("DEBUG VERTICAL: Imagen Binaria", 800, 600)
+    print("🎭 Threshold aplicado (zonas oscuras) - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # USAR EL ALGORITMO INTELIGENTE con visualización
+    print("🧠 Ejecutando algoritmo inteligente de detección...")
+    candidates = detect_tape_position(image, debug=True)
+    
+    if not candidates:
+        print("❌ No se detectó cinta con algoritmo inteligente")
+        return []
+    
+    # Convertir resultado para compatibilidad con main_robot.py
+    best_candidate = candidates[0]
+    
+    # Mostrar resultado final con marcadores
+    result_image = image.copy()
+    
+    # Marcar centro de imagen (referencia)
+    cv2.line(result_image, (0, img_center_y), (w_img, img_center_y), (255, 0, 255), 4)  # Magenta
+    
+    # Marcar base detectada
+    base_y = best_candidate['base_y']
+    base_x = best_candidate['base_center_x']
+    cv2.line(result_image, (0, base_y), (w_img, base_y), (0, 0, 255), 6)  # Rojo
+    cv2.circle(result_image, (base_x, base_y), 10, (0, 0, 255), -1)
+    
+    # Texto informativo
+    cv2.putText(result_image, f"Centro IMG Y: {img_center_y}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+    cv2.putText(result_image, f"BASE CINTA Y: {base_y}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.putText(result_image, f"DIFERENCIA Y: {base_y - img_center_y}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    
+    cv2.imshow("DEBUG VERTICAL: DETECCION FINAL", result_image)
+    cv2.resizeWindow("DEBUG VERTICAL: DETECCION FINAL", 800, 600)
+    print(f"✅ BASE detectada en Y={base_y}px (centro Y={img_center_y}px) - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    tape_result = {
+        'center_x': best_candidate['base_center_x'],
+        'base_y': best_candidate['base_y'],
+        'distance_pixels': best_candidate['distance_pixels'],
+        'contour_area': 1000,  # Placeholder
+        'bbox': (0, 0, 100, 100)  # Placeholder
+    }
+    
+    return [tape_result]
 
 def visualize_base_width_detection(image, candidates):
     """Visualiza la detección basada en ancho de base real"""
