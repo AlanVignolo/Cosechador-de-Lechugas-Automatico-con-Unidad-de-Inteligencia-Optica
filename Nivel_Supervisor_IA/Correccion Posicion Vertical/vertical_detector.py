@@ -498,7 +498,6 @@ def detect_tape_position(image, debug=True):
         base_pixels_found = False
         real_base_x_min = w_img
         real_base_x_max = 0
-        base_consistency = 0
         
         # Contar píxeles blancos por fila para evaluar rectitud
         row_widths = []
@@ -529,34 +528,28 @@ def detect_tape_position(image, debug=True):
                 print(f"  Contorno {i+1}: Base muy estrecha ({real_base_width}px < 30px)")
             continue
         
-        # 1. Consistencia de ancho (qué tan rectangular es la base)
+        # Calcular métricas individuales
         width_variance = np.var(row_widths) if len(row_widths) > 1 else 1000
-        consistency_score = max(0, 1.0 - (width_variance / 100.0))  # Menor varianza = mejor
+        consistency_score = max(0, 1.0 - (width_variance / 100.0))
         
-        # 2. Rectitud de base (ancho promedio vs máximo) - PESO REDUCIDO
         avg_width = np.mean(row_widths)
         straightness_score = avg_width / real_base_width if real_base_width > 0 else 0
         
-        # 3. Ocupación de la base (cuánto de la base está lleno)
         total_pixels_in_base = np.sum(bottom_region == 255)
         max_possible_pixels = real_base_width * bottom_height
         occupancy_score = total_pixels_in_base / max_possible_pixels if max_possible_pixels > 0 else 0
         
-        # 4. Ancho de base - PESO AUMENTADO (lo más importante para cinta vs lechuga)
-        width_score = min(real_base_width / 40.0, 1.0)  # Normalizar (reducido de 50 a 40)
+        width_score = min(real_base_width / 40.0, 1.0)
+        size_bonus = min(real_base_width / 100.0, 0.3)
         
-        # 5. NUEVO: Bonus por base grande vs pequeña
-        size_bonus = min(real_base_width / 100.0, 0.3)  # Hasta 0.3 puntos extra por bases anchas
-        
-        # SCORE COMBINADO: PRIORIZAR ANCHO Y FORMA RECTANGULAR
+        # Score combinado
         combined_score = (
-            width_score * 0.40 +          # 40% - ANCHO (lo más importante)
-            consistency_score * 0.30 +    # 30% - Rectangular 
-            occupancy_score * 0.20 +      # 20% - Sólida
-            straightness_score * 0.10 +   # 10% - Rectitud (reducido, puede estar inclinada)
-            size_bonus                    # Bonus adicional por ancho
+            width_score * 0.40 +
+            consistency_score * 0.30 +
+            occupancy_score * 0.20 +
+            straightness_score * 0.10 +
+            size_bonus
         )
-        
         
         if debug:
             print(f"  Contorno {i+1}: {w}x{h} | Base: {real_base_width}px")
