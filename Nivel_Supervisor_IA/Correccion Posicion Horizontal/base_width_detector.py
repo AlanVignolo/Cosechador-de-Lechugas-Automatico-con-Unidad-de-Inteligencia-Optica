@@ -869,6 +869,7 @@ def detect_tape_position(image, debug=True):
     
     tape_result = {
         'base_center_x': center_x,
+        'contour_center_x': x + w // 2,  # Centro del contorno completo (para horizontal)
         'base_width': base_width,  # Usar ancho REAL de la base (10% inferior)
         'start_x': real_base_x_min if base_pixels_found else x,
         'end_x': real_base_x_max if base_pixels_found else x + w,
@@ -1310,7 +1311,7 @@ def get_position_distance_for_correction(camera_index=0, mode='horizontal'):
         distance = tape_base_y - img_center_y
     else:
         img_center_x = image.shape[1] // 2
-        tape_center_x = best_candidate['base_center_x']
+        tape_center_x = best_candidate['base_center_x']  # Volver al original que funcionaba
         distance = tape_center_x - img_center_x
     
     return {
