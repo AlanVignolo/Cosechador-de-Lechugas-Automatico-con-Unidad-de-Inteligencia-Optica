@@ -882,7 +882,7 @@ def detect_tape_position(image, debug=True):
     if debug:
         print(f"✅ Centro detectado en X = {center_x} px")
         print(f"✅ Base detectada en Y = {base_y} px")
-        print(f"Distancia del centro: {tape_result['distance_from_center_x']} px")
+        print(f"Distancia del centro: {tape_result['distance_pixels']} px (con signo)")
     
     return [tape_result]
 
@@ -1308,7 +1308,7 @@ def get_position_distance_for_correction(camera_index=0, mode='horizontal'):
     if mode == 'vertical':
         img_center_y = image.shape[0] // 2
         tape_base_y = best_candidate['base_y']
-        distance = img_center_y - tape_base_y  # Invertir signo para corregir movimiento
+        distance = tape_base_y - img_center_y  # Volver al cálculo original
     else:
         img_center_x = image.shape[1] // 2
         tape_center_x = best_candidate['base_center_x']  # Volver al original que funcionaba
