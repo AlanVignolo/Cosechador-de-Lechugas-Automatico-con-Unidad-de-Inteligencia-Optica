@@ -1308,7 +1308,7 @@ def get_position_distance_for_correction(camera_index=0, mode='horizontal'):
     if mode == 'vertical':
         img_center_y = image.shape[0] // 2
         tape_base_y = best_candidate['base_y']
-        distance = tape_base_y - img_center_y
+        distance = img_center_y - tape_base_y  # Invertir signo para corregir movimiento
     else:
         img_center_x = image.shape[1] // 2
         tape_center_x = best_candidate['base_center_x']  # Volver al original que funcionaba
@@ -1531,11 +1531,12 @@ def detect_tape_position_vertical_debug(image, debug=True):
     base_y = best_candidate['base_y']
     base_x = best_candidate['base_center_x']
     
-    # Dibujar rectángulo aproximado del contorno (similar al horizontal)
-    rect_x = base_x - 50  # Aproximación del ancho
-    rect_y = base_y - 100  # Aproximación de la altura
-    rect_w = 100
-    rect_h = 100
+    # Dibujar rectángulo basado en dimensiones reales (como horizontal)
+    base_width = best_candidate.get('base_width', 50)
+    rect_x = base_x - base_width // 2
+    rect_y = base_y - base_width  # Usar mismo tamaño que el ancho
+    rect_w = base_width
+    rect_h = base_width
     cv2.rectangle(result_image, (rect_x, rect_y), (rect_x + rect_w, rect_y + rect_h), (0, 255, 0), 3)
     
     # Línea horizontal roja en la base (referencia vertical)
