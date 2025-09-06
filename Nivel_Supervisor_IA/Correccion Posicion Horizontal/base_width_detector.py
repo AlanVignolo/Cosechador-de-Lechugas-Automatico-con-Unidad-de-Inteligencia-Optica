@@ -711,12 +711,12 @@ def detect_tape_position(image, debug=True):
             print("❌ No se encontraron contornos")
         return []
     
-    # ALGORITMO MEJORADO: Priorizar ANCHO DE BASE, no área total
+    # ALGORITMO BASADO EN CALIDAD DE BASE: Evaluar 10% inferior de cada contorno
     best_contour = None
     best_score = 0
     
     if debug:
-        print(f"Evaluando {len(contours)} contornos por ancho de base:")
+        print(f"Evaluando {len(contours)} contornos por CALIDAD DE BASE (10% inferior):")
     
     for i, contour in enumerate(contours):
         area = cv2.contourArea(contour)
@@ -725,15 +725,74 @@ def detect_tape_position(image, debug=True):
             
         x, y, w, h = cv2.boundingRect(contour)
         
-        # CRITERIO PRINCIPAL: Ancho de base (w es más importante que área)
-        base_width_score = w / 100.0  # Normalizar ancho de base
-        area_score = min(area / 10000.0, 1.0)  # Área normalizada pero limitada
+        # EXTRAER 10% INFERIOR PARA EVALUACIÓN
+        bottom_fraction = 0.10
+        bottom_height = max(int(h * bottom_fraction), 5)
+        bottom_y_start = y + h - bottom_height
         
-        # Score combinado: 70% ancho de base + 30% área
-        combined_score = (base_width_score * 0.7) + (area_score * 0.3)
+        # Crear máscara para esta base específica
+        mask = np.zeros((h_img, w_img), dtype=np.uint8)
+        cv2.drawContours(mask, [contour], -1, 255, -1)
+        bottom_region = mask[bottom_y_start:y+h, :]
+        
+        # Evaluar CALIDAD de esta base
+        base_pixels_found = False
+        real_base_x_min = w_img
+        real_base_x_max = 0
+        base_consistency = 0
+        
+        # Contar píxeles blancos por fila para evaluar rectitud
+        row_widths = []
+        for row_idx in range(bottom_region.shape[0]):
+            row = bottom_region[row_idx, :]
+            white_pixels = np.where(row == 255)[0]
+            
+            if len(white_pixels) > 0:
+                base_pixels_found = True
+                row_x_min = white_pixels[0]
+                row_x_max = white_pixels[-1]
+                row_width = row_x_max - row_x_min + 1
+                row_widths.append(row_width)
+                real_base_x_min = min(real_base_x_min, row_x_min)
+                real_base_x_max = max(real_base_x_max, row_x_max)
+        
+        if not base_pixels_found or len(row_widths) < 2:
+            if debug:
+                print(f"  Contorno {i+1}: No tiene base válida")
+            continue
+        
+        # MÉTRICAS DE CALIDAD DE BASE
+        real_base_width = real_base_x_max - real_base_x_min + 1
+        
+        # 1. Consistencia de ancho (qué tan rectangular es la base)
+        width_variance = np.var(row_widths) if len(row_widths) > 1 else 1000
+        consistency_score = max(0, 1.0 - (width_variance / 100.0))  # Menor varianza = mejor
+        
+        # 2. Rectitud de base (ancho promedio vs máximo)
+        avg_width = np.mean(row_widths)
+        straightness_score = avg_width / real_base_width if real_base_width > 0 else 0
+        
+        # 3. Ocupación de la base (cuánto de la base está lleno)
+        total_pixels_in_base = np.sum(bottom_region == 255)
+        max_possible_pixels = real_base_width * bottom_height
+        occupancy_score = total_pixels_in_base / max_possible_pixels if max_possible_pixels > 0 else 0
+        
+        # 4. Ancho de base normalizado
+        width_score = min(real_base_width / 50.0, 1.0)  # Normalizar
+        
+        # SCORE COMBINADO: Priorizar CALIDAD de base sobre tamaño
+        combined_score = (
+            consistency_score * 0.35 +    # 35% - Qué tan rectangular
+            straightness_score * 0.25 +   # 25% - Qué tan recta  
+            occupancy_score * 0.25 +      # 25% - Qué tan sólida
+            width_score * 0.15            # 15% - Tamaño (menos peso)
+        )
         
         if debug:
-            print(f"  Contorno {i+1}: {w}x{h} | Área={int(area)} | Base={w}px | Score={combined_score:.3f}")
+            print(f"  Contorno {i+1}: {w}x{h} | Base: {real_base_width}px")
+            print(f"    Consistencia: {consistency_score:.3f} | Rectitud: {straightness_score:.3f}")
+            print(f"    Ocupación: {occupancy_score:.3f} | Ancho: {width_score:.3f}")
+            print(f"    Score TOTAL: {combined_score:.3f}")
         
         if combined_score > best_score:
             best_score = combined_score
@@ -747,7 +806,7 @@ def detect_tape_position(image, debug=True):
     main_contour = best_contour
     if debug:
         x, y, w, h = cv2.boundingRect(main_contour)
-        print(f"✅ ELEGIDO: {w}x{h} con ancho de base {w}px (score: {best_score:.3f})")
+        print(f"✅ ELEGIDO: {w}x{h} con MEJOR CALIDAD DE BASE (score: {best_score:.3f})")
     
     # Calcular información del contorno seleccionado
     x, y, w, h = cv2.boundingRect(main_contour)
