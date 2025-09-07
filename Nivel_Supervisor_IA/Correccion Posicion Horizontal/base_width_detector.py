@@ -867,7 +867,7 @@ def detect_tape_position(image, debug=False, mode='horizontal'):
     # Calcular distancia según el modo
     if mode == 'vertical':
         img_center_y = h_img // 2
-        distance_pixels = img_center_y - base_y  # Para vertical: negativo=subir, positivo=bajar
+        distance_pixels = base_y - img_center_y  # Para vertical: negativo=subir, positivo=bajar
     else:
         distance_pixels = center_x - img_center_x  # Para horizontal usar coordenada X
     
