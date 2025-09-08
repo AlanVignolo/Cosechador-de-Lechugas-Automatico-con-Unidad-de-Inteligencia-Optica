@@ -50,6 +50,9 @@ logger = logging.getLogger(__name__)
 # Archivo para persistencia del homing
 HOMING_DATA_FILE = os.path.join(os.path.dirname(__file__), 'homing_reference.json')
 
+# Variable global para estado de lechuga
+lettuce_on = True  # True = robot tiene lechuga, False = robot no tiene lechuga
+
 def save_homing_reference(position, origin_steps=None):
     """Guardar referencia de homing en archivo JSON"""
     data = {
@@ -191,7 +194,7 @@ def menu_control_brazo(arm_controller):
         else:
             print("Opción inválida")
 
-        input("\nPresiona Enter para continuar...")
+        # input("\nPresiona Enter para continuar...")  # Confirmación removida
 
 def test_position_correction_direct(robot, camera_index=0, max_iterations=10, tolerance_mm=1.0):
     """
@@ -370,9 +373,10 @@ def test_horizontal_correction_only(robot):
     print("- Hay una cinta horizontal visible")
     print("- El robot esta en posicion segura")
     
-    if input("Continuar? (s/N): ").lower() != 's':
-        print("Prueba cancelada")
-        return
+    # if input("Continuar? (s/N): ").lower() != 's':
+    #     print("Prueba cancelada")
+    #     return
+    print("Iniciando automáticamente...")
     
     try:
         # Cargar calibración horizontal con ruta absoluta
@@ -449,9 +453,10 @@ def test_vertical_correction_only(robot):
     print("- Hay una cinta vertical visible")
     print("- El robot esta en posicion segura")
     
-    if input("Continuar? (s/N): ").lower() != 's':
-        print("Prueba cancelada")
-        return
+    # if input("Continuar? (s/N): ").lower() != 's':
+    #     print("Prueba cancelada")
+    #     return
+    print("Iniciando automáticamente...")
     
     try:
         # Cargar calibración vertical con ruta absoluta
@@ -526,9 +531,10 @@ def test_full_position_correction(robot):
     print("- Hay una cinta visible (ambos ejes)")
     print("- El robot esta en posicion segura")
     
-    if input("Continuar? (s/N): ").lower() != 's':
-        print("Prueba cancelada")
-        return
+    # if input("Continuar? (s/N): ").lower() != 's':
+    #     print("Prueba cancelada")
+    #     return
+    print("Iniciando automáticamente...")
     
     try:
         result = test_position_correction_direct(
@@ -561,9 +567,10 @@ def test_full_position_correction_debug(robot):
     print("- El robot esta en posicion segura")
     print("- Puedes ver las ventanas de imagen (presiona 'c' para continuar)")
     
-    if input("Continuar? (s/N): ").lower() != 's':
-        print("Prueba cancelada")
-        return
+    # if input("Continuar? (s/N): ").lower() != 's':
+    #     print("Prueba cancelada")
+    #     return
+    print("Iniciando automáticamente...")
     
     try:
         result = test_position_correction_direct_debug(
@@ -736,11 +743,12 @@ def menu_interactivo(uart_manager, robot):
         print("8.  Consultar estado completo")
         print("9.  Menu avanzado del brazo")
         print("10. Prueba correccion IA (Horizontal + Vertical)")
+        print(f"11. Toggle Lechuga {'ON' if lettuce_on else 'OFF'} (Estado: {'Con lechuga' if lettuce_on else 'Sin lechuga'})")
         print("-"*60)
         print("0.  Salir")
         print("-"*60)
         
-        opcion = input("Selecciona opción (0-10): ")
+        opcion = input("Selecciona opción (0-11): ")
 
         if opcion == '1':
             x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
@@ -783,35 +791,35 @@ def menu_interactivo(uart_manager, robot):
             if calib_opt == '1':
                 print("INICIANDO SECUENCIA DE HOMING")
                 print("ASEGÚRATE DE QUE EL ROBOT TENGA ESPACIO LIBRE")
-                confirmar = input("¿Continuar? (s/N): ")
-                
-                if confirmar.lower() == 's':
-                    result = robot.home_robot()
+                # confirmar = input("¿Continuar? (s/N): ")
+                # 
+                # if confirmar.lower() == 's':
+                result = robot.home_robot()
                     
-                    if result["success"]:
-                        print("HOMING COMPLETADO")
-                        print(f"Posición actual: {result.get('position', 'N/A')}")
-                    else:
-                        print("ERROR EN HOMING")
-                        print(f"{result['message']}")
+                if result["success"]:
+                    print("HOMING COMPLETADO")
+                    print(f"Posición actual: {result.get('position', 'N/A')}")
                 else:
-                    print("Homing cancelado")
+                    print("ERROR EN HOMING")
+                    print(f"{result['message']}")
+                # else:
+                #     print("Homing cancelado")
                     
             elif calib_opt == '2':
                 print("INICIANDO CALIBRACIÓN COMPLETA DEL WORKSPACE")
                 print("Esto tomará varios minutos y medirá todo el área de trabajo")
-                confirmar = input("¿Continuar? (s/N): ")
-                
-                if confirmar.lower() == 's':
-                    result = robot.calibrate_workspace()
-                    if result["success"]:
-                        print("CALIBRACIÓN COMPLETADA")
-                        print(f"Medidas: {result['measurements']}")
-                    else:
-                        print("ERROR EN CALIBRACIÓN")
-                        print(f"{result['message']}")
+                # confirmar = input("¿Continuar? (s/N): ")
+                # 
+                # if confirmar.lower() == 's':
+                result = robot.calibrate_workspace()
+                if result["success"]:
+                    print("CALIBRACIÓN COMPLETADA")
+                    print(f"Medidas: {result['measurements']}")
                 else:
-                    print("Calibración cancelada")
+                    print("ERROR EN CALIBRACIÓN")
+                    print(f"{result['message']}")
+                # else:
+                #     print("Calibración cancelada")
             else:
                 print("Opción inválida")
             
@@ -887,6 +895,14 @@ def menu_interactivo(uart_manager, robot):
                 pass
             else:
                 print("Opcion invalida")
+        elif opcion == '11':
+            global lettuce_on
+            lettuce_on = not lettuce_on
+            # Sincronizar con el ArmController
+            robot.arm.set_lettuce_state(lettuce_on)
+            estado = 'CON lechuga' if lettuce_on else 'SIN lechuga'
+            print(f"✅ Estado cambiado: Robot ahora está {estado}")
+            print(f"Las trayectorias mover_lechuga -> recoger_lechuga usarán el comportamiento para {estado.lower()}")
         elif opcion == '0':
             print("Saliendo...")
             break

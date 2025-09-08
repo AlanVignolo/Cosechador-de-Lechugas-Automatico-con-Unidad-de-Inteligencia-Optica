@@ -14,6 +14,9 @@ class ArmController:
         self.current_position = (90, 90)
         self.gripper_state = "unknown"
         
+        # Estado de lechuga para trayectorias
+        self.lettuce_on = True  # True = robot tiene lechuga, False = robot no tiene lechuga
+        
         self.is_executing_trajectory = False
         self.current_trajectory = None
         self.current_step_index = 0
@@ -164,7 +167,7 @@ class ArmController:
         if self.is_executing_trajectory:
             return {"success": False, "message": "Ya ejecutando una trayectoria"}
         
-        trajectory = TrajectoryDefinitions.get_trajectory(self.current_state, target_state)
+        trajectory = TrajectoryDefinitions.get_trajectory(self.current_state, target_state, self.lettuce_on)
         
         if not trajectory:
             return {
@@ -336,10 +339,20 @@ class ArmController:
         possible = []
         for state in ARM_STATES.keys():
             if state != self.current_state:
-                trajectory = TrajectoryDefinitions.get_trajectory(self.current_state, state)
+                trajectory = TrajectoryDefinitions.get_trajectory(self.current_state, state, self.lettuce_on)
                 if trajectory:
                     possible.append(state)
         return possible
+    
+    def set_lettuce_state(self, has_lettuce: bool):
+        """Actualizar el estado de lechuga del robot"""
+        self.lettuce_on = has_lettuce
+        estado = "CON lechuga" if has_lettuce else "SIN lechuga"
+        self.logger.info(f"Estado de lechuga actualizado: {estado}")
+    
+    def get_lettuce_state(self) -> bool:
+        """Obtener el estado actual de lechuga"""
+        return self.lettuce_on
     
     def _detect_initial_state(self):
         try:
