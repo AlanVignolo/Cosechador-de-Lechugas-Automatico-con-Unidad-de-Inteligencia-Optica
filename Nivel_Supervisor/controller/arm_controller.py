@@ -323,17 +323,23 @@ class ArmController:
             response = result["response"]
             if "GRIPPER_STATUS:" in response:
                 status_str = response.split("GRIPPER_STATUS:")[1].strip()
-                parts = status_str.split(",")
+                # Limpiar respuesta: tomar solo la primera línea para evitar mensajes concatenados
+                status_line = status_str.split('\n')[0].strip()
+                parts = status_line.split(",")
                 if len(parts) >= 2:
                     state = parts[0].strip()
-                    position = parts[1].strip()
-                    return {
-                        "success": True,
-                        "state": state.lower(),
-                        "position": int(position)
-                    }
+                    position_str = parts[1].strip()
+                    try:
+                        position = int(position_str)
+                        return {
+                            "success": True,
+                            "state": state.lower(),
+                            "position": position
+                        }
+                    except ValueError:
+                        self.logger.warning(f"No se pudo convertir posición a entero: '{position_str}'")
                 else:
-                    self.logger.warning(f"Formato inesperado en respuesta gripper: {status_str}")
+                    self.logger.warning(f"Formato inesperado en respuesta gripper: {status_line}")
         
         return {"success": False, "message": "No se pudo consultar estado del gripper"}
     
