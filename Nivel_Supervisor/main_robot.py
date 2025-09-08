@@ -723,6 +723,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     return {'success': True, 'message': "Corrección completa (horizontal + vertical) exitosa"}
 
 def menu_interactivo(uart_manager, robot):
+    global lettuce_on
     cmd_manager = robot.cmd
     
     while True:
@@ -896,7 +897,6 @@ def menu_interactivo(uart_manager, robot):
             else:
                 print("Opcion invalida")
         elif opcion == '11':
-            global lettuce_on
             lettuce_on = not lettuce_on
             # Sincronizar con el ArmController
             robot.arm.set_lettuce_state(lettuce_on)
