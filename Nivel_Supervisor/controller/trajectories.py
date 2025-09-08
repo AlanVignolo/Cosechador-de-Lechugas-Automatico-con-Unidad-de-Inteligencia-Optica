@@ -4,8 +4,23 @@ class TrajectoryDefinitions:
     """Definición de todas las trayectorias del brazo"""
     
     @staticmethod
-    def get_trajectory(from_state: str, to_state: str) -> dict:
-        """Obtener trayectoria entre dos estados"""
+    def get_trajectory(from_state: str, to_state: str, lechuga_on: bool = True) -> dict:
+        """Obtener trayectoria entre dos estados
+        
+        Args:
+            from_state: Estado origen
+            to_state: Estado destino
+            lechuga_on: True si el robot tiene lechuga, False si no la tiene
+        """
+        # Caso especial: mover_lechuga -> recoger_lechuga depende de lechuga_on
+        if from_state == "mover_lechuga" and to_state == "recoger_lechuga":
+            if lechuga_on:
+                # Tiene lechuga: usar trayectoria normal (depositar)
+                return TrajectoryDefinitions.mover_lechuga_to_recoger_lechuga_with_lettuce()
+            else:
+                # No tiene lechuga: usar trayectoria especial (recoger)
+                return TrajectoryDefinitions.mover_lechuga_to_recoger_lechuga_no_lettuce()
+        
         trajectory_name = f"{from_state}_to_{to_state}"
         
         # Buscar trayectoria específica
@@ -170,13 +185,13 @@ class TrajectoryDefinitions:
         }
         
     @staticmethod
-    def mover_lechuga_to_recoger_lechuga():
-        """Ir a posición para depositar lechuga"""
+    def mover_lechuga_to_recoger_lechuga_with_lettuce():
+        """Ir a posición para depositar lechuga (cuando SI tiene lechuga)"""
         target_state = ARM_STATES["recoger_lechuga"]
         
         return {
-            "name": "mover_lechuga_to_recoger_lechuga", 
-            "description": "Posicionar para sembrar lechuga",
+            "name": "mover_lechuga_to_recoger_lechuga_with_lettuce", 
+            "description": "Posicionar para depositar lechuga (con lechuga)",
             "estimated_time": 3.0,
             "steps": [
                 {
@@ -190,6 +205,43 @@ class TrajectoryDefinitions:
                     "type": "gripper",
                     "action": "open",
                     "description": "🔥 ABRIR gripper para soltar lechuga"
+                }
+            ]
+        }
+    
+    @staticmethod
+    def mover_lechuga_to_recoger_lechuga_no_lettuce():
+        """Ir a posición para recoger lechuga (cuando NO tiene lechuga)"""
+        target_state = ARM_STATES["recoger_lechuga"]
+        
+        return {
+            "name": "mover_lechuga_to_recoger_lechuga_no_lettuce", 
+            "description": "Posicionar para recoger lechuga (sin lechuga)",
+            "estimated_time": 4.0,
+            "steps": [
+                {
+                    "type": "gripper",
+                    "action": "open",
+                    "description": "Asegurar gripper abierto antes de mover"
+                },
+                {
+                    "type": "arm_move",
+                    "servo1": 0,
+                    "servo2": 120,
+                    "time_ms": 2500,
+                    "description": "Elevar brazo a posición intermedia"
+                },
+                {
+                    "type": "arm_move",
+                    "servo1": target_state["servo1"],
+                    "servo2": target_state["servo2"],
+                    "time_ms": 1500,
+                    "description": "Extender a posición de recolección"
+                },
+                {
+                    "type": "gripper",
+                    "action": "close",
+                    "description": "🔥 CERRAR gripper para agarrar lechuga"
                 }
             ]
         }
