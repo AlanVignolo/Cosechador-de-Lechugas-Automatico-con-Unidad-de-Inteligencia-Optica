@@ -300,7 +300,7 @@ class ArmController:
         self.current_step_index = 0
         self.target_state = None
         
-        print("Trayectoria completada exitosamente")
+        self.logger.info("Trayectoria completada exitosamente")
         return {"success": True, "message": "Trayectoria completada"}
     
     def stop_trajectory(self) -> Dict:
@@ -322,13 +322,18 @@ class ArmController:
         if result["success"]:
             response = result["response"]
             if "GRIPPER_STATUS:" in response:
-                status_str = response.split("GRIPPER_STATUS:")[1]
-                state, position = status_str.split(",")
-                return {
-                    "success": True,
-                    "state": state.lower(),
-                    "position": int(position)
-                }
+                status_str = response.split("GRIPPER_STATUS:")[1].strip()
+                parts = status_str.split(",")
+                if len(parts) >= 2:
+                    state = parts[0].strip()
+                    position = parts[1].strip()
+                    return {
+                        "success": True,
+                        "state": state.lower(),
+                        "position": int(position)
+                    }
+                else:
+                    self.logger.warning(f"Formato inesperado en respuesta gripper: {status_str}")
         
         return {"success": False, "message": "No se pudo consultar estado del gripper"}
     
