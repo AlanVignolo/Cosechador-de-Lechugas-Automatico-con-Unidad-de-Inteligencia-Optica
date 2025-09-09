@@ -705,7 +705,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
             # Convertir offset de mm a pixels usando calibración vertical
             offset_y_px = mm_to_pixels_vertical(AI_TEST_PARAMS['offset_y_mm'], a_v, b_v)
             distance_px_v = result_v['distance_pixels'] - offset_y_px
-            move_mm_v = pixels_to_mm_vertical(distance_px_v, a_v, b_v)
+            move_mm_v = -pixels_to_mm_vertical(distance_px_v, a_v, b_v)  # Negar para dirección correcta
             
             print(f"Detección: {result_v['distance_pixels']:.1f}px, offset({AI_TEST_PARAMS['offset_y_mm']:.1f}mm = {offset_y_px:.1f}px) = {distance_px_v:.1f}px")
             print(f"Movimiento requerido: {move_mm_v:.2f}mm")

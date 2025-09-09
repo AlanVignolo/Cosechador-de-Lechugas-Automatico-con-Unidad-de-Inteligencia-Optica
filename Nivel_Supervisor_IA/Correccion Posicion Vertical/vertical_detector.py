@@ -620,7 +620,7 @@ def get_vertical_correction_distance(camera_index=0):
     best_candidate = candidates[0]
     img_center_y = image.shape[0] // 2
     detected_y = best_candidate['base_y']
-    distance = -(detected_y - img_center_y)  # Invertir signo: negativo=abajo, positivo=arriba
+    distance = detected_y - img_center_y  # Positivo=abajo, Negativo=arriba (consistente con línea 583)
     
     return {
         'success': True,
