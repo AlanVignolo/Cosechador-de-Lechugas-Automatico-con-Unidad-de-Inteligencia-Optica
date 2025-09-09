@@ -16,17 +16,23 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
 
 try:
-    print("Intentando importar detector unificado...")
+    print("Intentando importar detectores horizontal y vertical...")
+    # Importar funciones horizontales
     from base_width_detector import (
         get_horizontal_distance_for_correction,
-        get_vertical_correction_distance,
+        get_position_distance_for_correction,
         capture_image_for_correction_debug,
-        capture_image_for_correction_vertical_debug,
-        detect_tape_position_debug,
-        detect_tape_position_vertical_debug,
-        get_position_distance_for_correction
+        detect_tape_position_debug
     )
-    print("✅ Detector unificado importado exitosamente")
+    print("✅ Detector horizontal importado exitosamente")
+    
+    # Importar funciones verticales
+    from vertical_detector import (
+        get_vertical_correction_distance,
+        capture_image_for_correction_vertical_debug,
+        detect_tape_position_vertical_debug
+    )
+    print("✅ Detector vertical importado exitosamente")
     
     AI_MODULES_AVAILABLE = True
     print("✅ Todos los módulos de IA disponibles")
