@@ -9,6 +9,7 @@ from controller.arm_controller import ArmController
 from controller.robot_controller import RobotController
 from config.robot_config import RobotConfig
 from controller.trajectories import TrajectoryDefinitions, get_trajectory_time_estimate
+from camera_manager import get_camera_manager
 # Importar módulos de IA para corrección de posición
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
@@ -722,6 +723,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     
     return {'success': True, 'message': "Corrección completa (horizontal + vertical) exitosa"}
 
+
 def menu_interactivo(uart_manager, robot):
     global lettuce_on
     cmd_manager = robot.cmd
@@ -909,11 +911,26 @@ def menu_interactivo(uart_manager, robot):
         else:
             print("Opción inválida")
     
+    # Liberar recursos al salir
+    print("Liberando recursos...")
+    try:
+        camera_mgr = get_camera_manager()
+        camera_mgr.release_camera()
+    except:
+        pass
     uart_manager.disconnect()
 
 if __name__ == "__main__":
     print("CLAUDIO - Control Supervisor del Robot")
     print("=" * 50)
+    
+    # Inicializar gestor de cámara automáticamente
+    print("Inicializando gestor de cámara...")
+    camera_mgr = get_camera_manager()
+    if camera_mgr.initialize_camera():
+        print("✅ Cámara inicializada exitosamente")
+    else:
+        print("⚠️ Advertencia: No se pudo inicializar cámara (funciones de IA pueden fallar)")
     
     # Auto-detectar plataforma o usar configuración manual
     detected_platform = RobotConfig.auto_detect_platform()
