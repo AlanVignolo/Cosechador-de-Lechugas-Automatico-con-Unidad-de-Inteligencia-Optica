@@ -636,7 +636,7 @@ def visualize_vertical_detection(image, candidates):
         no_detection_img = image.copy()
         cv2.putText(no_detection_img, "NO SE DETECTÓ BASE DE CINTA VERTICAL", (50, 50),
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        cv2.imshow('RESULTADO - Sin Base Detectada', no_detection_img)
+        cv2.imshow('RESULTADO VERTICAL - Sin Base Detectada', no_detection_img)
         return no_detection_img
     
     result_img = image.copy()
@@ -682,7 +682,7 @@ def visualize_vertical_detection(image, candidates):
     # Mostrar ventana principal
     cv2.namedWindow('RESULTADO - Detección Vertical Y', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('RESULTADO - Detección Vertical Y', 900, 700)
-    cv2.imshow('RESULTADO - Detección Vertical Y', result_img)
+    cv2.imshow('RESULTADO VERTICAL - Detección Y', result_img)
     
     # Comparación
     original_resized = cv2.resize(image, (400, 300))
@@ -694,7 +694,7 @@ def visualize_vertical_detection(image, candidates):
     cv2.putText(comparison, "Y DETECTADA", (410, 25), 
                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
     
-    cv2.imshow('Comparación: Nueva Imagen vs Y Detectada', comparison)
+    cv2.imshow('COMPARACIÓN VERTICAL: Nueva Imagen vs Y Detectada', comparison)
     
     print(f"\n🔍 VENTANAS ABIERTAS (DETECCIÓN VERTICAL):")
     print(f"   1. 'RESULTADO - Detección Vertical Y' (principal)")
