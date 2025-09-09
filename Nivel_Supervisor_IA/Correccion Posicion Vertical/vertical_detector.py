@@ -1,9 +1,15 @@
 import cv2
 import numpy as np
 import json
-import os
+import matplotlib.pyplot as plt
 import threading
 import time
+import os
+import sys
+
+# Importar el gestor de cámara centralizado
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor'))
+from camera_manager import get_camera_manager
 
 # Cache global para recordar qué cámara funciona
 _working_camera_cache = None
@@ -13,63 +19,25 @@ def capture_new_image(camera_index=0):
     return capture_image_for_correction(camera_index)
 
 def capture_with_timeout(camera_index, timeout=5.0):
-    """Captura frame con timeout para evitar que se cuelgue"""
-    result = {'frame': None, 'success': False, 'cap': None}
+    """Captura frame usando el gestor centralizado de cámara"""
+    camera_mgr = get_camera_manager()
     
-    def capture_thread():
-        cap = None
-        try:
-            # Intentar liberar cualquier instancia previa
-            cv2.destroyAllWindows()
-            time.sleep(0.2)
-            
-            cap = cv2.VideoCapture(camera_index)
-            result['cap'] = cap
-            if cap.isOpened():
-                # Esperar un momento para que la cámara se inicialice
-                time.sleep(0.1)
-                ret, frame = cap.read()
-                if ret and frame is not None:
-                    result['frame'] = frame.copy()
-                    result['success'] = True
-        except Exception as e:
-            print(f"Error en captura: {e}")
-            result['success'] = False
-        finally:
-            if cap is not None:
-                try:
-                    cap.release()
-                    time.sleep(0.2)  # Más tiempo para liberación
-                    cv2.destroyAllWindows()
-                except:
-                    pass
+    # Inicializar cámara si no está activa
+    if not camera_mgr.is_camera_active():
+        print(f"🎥 Inicializando cámara {camera_index}...")
+        if not camera_mgr.initialize_camera(camera_index):
+            print(f"❌ Error: No se pudo inicializar cámara {camera_index}")
+            return None
     
-    thread = threading.Thread(target=capture_thread)
-    thread.daemon = True
-    thread.start()
-    thread.join(timeout)
+    # Capturar frame
+    frame = camera_mgr.capture_frame(timeout=timeout, max_retries=3)
     
-    # Cleanup forzado si hay timeout
-    if thread.is_alive():
-        print(f"⚠️ Timeout en captura de cámara {camera_index}")
-        if result['cap'] is not None:
-            try:
-                result['cap'].release()
-                time.sleep(0.3)
-                cv2.destroyAllWindows()
-            except:
-                pass
-        return None
+    if frame is not None:
+        print(f"✅ Frame capturado exitosamente")
+    else:
+        print(f"❌ Error: No se pudo capturar frame")
     
-    # Liberación adicional después del hilo
-    if result['cap'] is not None:
-        try:
-            result['cap'].release()
-            time.sleep(0.2)
-        except:
-            pass
-    
-    return result['frame'] if result['success'] else None
+    return frame
 
 def scan_available_cameras():
     """Escanea cámaras disponibles"""
@@ -97,13 +65,7 @@ def scan_available_cameras():
     return available_cameras
 
 def capture_image_for_correction(camera_index=0, max_retries=1):
-    """Captura una imagen para corrección de posición vertical"""
-    global _working_camera_cache
-    
-    # Liberar recursos previos
-    cv2.destroyAllWindows()
-    time.sleep(0.3)
-    
+    """Captura una imagen para corrección de posición vertical usando el gestor centralizado"""
     recorte_config = {
         'x_inicio': 0.2,
         'x_fin': 0.8,
@@ -111,14 +73,9 @@ def capture_image_for_correction(camera_index=0, max_retries=1):
         'y_fin': 0.7
     }
     
-    # Captura directa - cámara siempre en índice fijo
-    print(f"🎥 Intento 1/3 - Cámara vertical {camera_index}...")
-    
     frame = capture_with_timeout(camera_index, timeout=4.0)
     
     if frame is not None:
-        print(f"✅ Imagen vertical capturada exitosamente desde cámara {camera_index}")
-        
         frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
         alto, ancho = frame_rotado.shape[:2]
@@ -130,7 +87,6 @@ def capture_image_for_correction(camera_index=0, max_retries=1):
         frame_recortado = frame_rotado[y1:y2, x1:x2]
         return frame_recortado
     
-    print("❌ Error: No se pudo capturar imagen vertical")
     return None
 
 def evaluate_rectangularity_bottom_10_percent(contour):
