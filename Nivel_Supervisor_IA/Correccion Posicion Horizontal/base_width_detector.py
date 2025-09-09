@@ -117,7 +117,7 @@ def find_tape_base_width(image, debug=True):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     v_channel = hsv[:,:,2]
-    _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)  # hsv_muy_oscuro
+    _, binary_img = cv2.threshold(v_channel, 50, 255, cv2.THRESH_BINARY_INV)  # Filtro moderado (era 30)
     
     if debug:
         print("Usando filtro hsv_muy_oscuro (el más limpio)")
@@ -658,7 +658,7 @@ def detect_tape_position(image, debug=False, mode='horizontal'):
     # Aplicar filtrado HSV
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     v_channel = hsv[:,:,2]
-    _, binary_img = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
+    _, binary_img = cv2.threshold(v_channel, 50, 255, cv2.THRESH_BINARY_INV)  # Filtro moderado
     
     # Encontrar todos los contornos
     contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -721,9 +721,9 @@ def detect_tape_position(image, debug=False, mode='horizontal'):
         real_base_width = real_base_x_max - real_base_x_min + 1
         
         # FILTRO: Base debe ser suficientemente ancha (eliminar bases muy pequeñas de lechuga)
-        if real_base_width < 30:  # Mínimo 30px de ancho de base
+        if real_base_width < 25:  # Mínimo 25px de ancho de base
             if debug:
-                print(f"  Contorno {i+1}: Base muy estrecha ({real_base_width}px < 30px)")
+                print(f"  Contorno {i+1}: Base muy estrecha ({real_base_width}px < 25px)")
             continue
         
         # Calcular métricas individuales
@@ -945,7 +945,7 @@ def detect_tape_position_debug(image, debug=True):
     cv2.destroyAllWindows()
     
     # Threshold para zonas oscuras (igual que modo normal)
-    _, thresh = cv2.threshold(v_channel, 30, 255, cv2.THRESH_BINARY_INV)
+    _, thresh = cv2.threshold(v_channel, 50, 255, cv2.THRESH_BINARY_INV)  # Filtro moderado
     
     # Mostrar threshold
     cv2.imshow("DEBUG HORIZONTAL: 4. Imagen Binaria", thresh)
@@ -1020,8 +1020,8 @@ def detect_tape_position_debug(image, debug=True):
         real_base_width = real_base_x_max - real_base_x_min + 1
         
         # FILTRO: Base debe ser suficientemente ancha
-        if real_base_width < 30:
-            print(f"  Contorno {i+1}: Base muy estrecha ({real_base_width}px < 30px)")
+        if real_base_width < 25:
+            print(f"  Contorno {i+1}: Base muy estrecha ({real_base_width}px < 25px)")
             continue
         
         # Calcular métricas individuales
