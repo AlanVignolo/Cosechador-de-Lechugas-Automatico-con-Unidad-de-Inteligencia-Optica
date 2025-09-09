@@ -579,8 +579,8 @@ def detect_tape_position(image, debug=True):
     center_x = real_center_x
     base_width = real_base_width
     
-    # Calcular distancia desde el centro (igual que horizontal)
-    distance_pixels = center_x - img_center_x
+    # Calcular distancia desde el centro (VERTICAL usa Y, no X)
+    distance_pixels = base_y - img_center_y  # Negativo=arriba, Positivo=abajo
     
     tape_result = {
         'base_center_x': center_x,
@@ -620,7 +620,7 @@ def get_vertical_correction_distance(camera_index=0):
     best_candidate = candidates[0]
     img_center_y = image.shape[0] // 2
     detected_y = best_candidate['base_y']
-    distance = detected_y - img_center_y
+    distance = -(detected_y - img_center_y)  # Invertir signo: negativo=abajo, positivo=arriba
     
     return {
         'success': True,
