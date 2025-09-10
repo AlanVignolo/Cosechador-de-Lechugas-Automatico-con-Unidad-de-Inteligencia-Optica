@@ -572,7 +572,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
             sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
             from calibration_horizontal import pixels_to_mm
             
-            detected_x = candidates[0]['center_x']
+            detected_x = candidates[0]['base_center_x']
             img_center_x = image.shape[1] // 2
             distance_pixels = detected_x - img_center_x
             
