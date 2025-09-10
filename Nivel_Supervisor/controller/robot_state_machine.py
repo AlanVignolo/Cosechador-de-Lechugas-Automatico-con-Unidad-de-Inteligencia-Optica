@@ -16,8 +16,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Super
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
 
 try:
-    from base_width_detector import get_horizontal_correction_distance
-    from vertical_detector import get_vertical_correction_distance
+    from tape_detector_horizontal import get_horizontal_correction_distance
+    from tape_detector_vertical import get_vertical_correction_distance
 except ImportError as e:
     logging.warning(f"No se pudieron importar módulos de IA: {e}")
     # Funciones dummy para evitar errores

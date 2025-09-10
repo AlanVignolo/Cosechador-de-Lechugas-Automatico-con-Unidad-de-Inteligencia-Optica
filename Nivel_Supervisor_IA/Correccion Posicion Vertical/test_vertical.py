@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from vertical_detector import capture_new_image, detect_tape_position
+from tape_detector_vertical import capture_new_image, detect_tape_position
 
 def create_linear_calibration():
     """Crea función lineal con tus datos de calibración vertical del archivo JSON"""
