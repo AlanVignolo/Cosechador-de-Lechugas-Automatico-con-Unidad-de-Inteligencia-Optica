@@ -558,8 +558,28 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
         print(f"\nIteracion horizontal {iteration}/{max_iterations}")
         
         try:
-            # Obtener corrección directamente en mm usando la nueva función
-            move_mm = get_horizontal_correction_mm(camera_index, AI_TEST_PARAMS['offset_x_mm'])
+            # Capturar imagen con debug visual
+            image = capture_image_for_correction_debug(camera_index)
+            if image is None:
+                return {'success': False, 'message': "Error horizontal: No se pudo capturar imagen"}
+            
+            # Detectar posición con debug visual (muestra todas las etapas)
+            candidates = detect_tape_position_debug(image)
+            if not candidates:
+                return {'success': False, 'message': "Error horizontal: No se detectó cinta"}
+            
+            # Calcular movimiento en mm usando calibración
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
+            from calibration_horizontal import pixels_to_mm
+            
+            detected_x = candidates[0]['center_x']
+            img_center_x = image.shape[1] // 2
+            distance_pixels = detected_x - img_center_x
+            
+            try:
+                move_mm = pixels_to_mm(distance_pixels) + AI_TEST_PARAMS['offset_x_mm']
+            except Exception as e:
+                return {'success': False, 'message': f"Error en calibración horizontal: {e}"}
             
             if move_mm is None:
                 return {'success': False, 'message': "Error horizontal: No se detectó cinta o error en calibración"}
@@ -590,8 +610,28 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
         print(f"\nIteracion vertical {iteration}/{max_iterations}")
         
         try:
-            # Obtener corrección directamente en mm usando la nueva función
-            move_mm_v = get_vertical_correction_mm(camera_index, AI_TEST_PARAMS['offset_y_mm'])
+            # Capturar imagen con debug visual
+            image_v = capture_image_for_correction_vertical_debug(camera_index)
+            if image_v is None:
+                return {'success': False, 'message': "Error vertical: No se pudo capturar imagen"}
+            
+            # Detectar posición con debug visual (muestra todas las etapas)
+            candidates_v = detect_tape_position_vertical_debug(image_v)
+            if not candidates_v:
+                return {'success': False, 'message': "Error vertical: No se detectó cinta"}
+            
+            # Calcular movimiento en mm usando calibración
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
+            from test_vertical import pixels_to_mm_vertical
+            
+            detected_y = candidates_v[0]['base_y']
+            img_center_y = image_v.shape[0] // 2
+            distance_pixels_v = img_center_y - detected_y  # Corrected coordinate system
+            
+            try:
+                move_mm_v = pixels_to_mm_vertical(distance_pixels_v) + AI_TEST_PARAMS['offset_y_mm']
+            except Exception as e:
+                return {'success': False, 'message': f"Error en calibración vertical: {e}"}
             
             if move_mm_v is None:
                 return {'success': False, 'message': "Error vertical: No se detectó cinta o error en calibración"}
