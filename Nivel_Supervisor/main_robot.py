@@ -218,8 +218,8 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
     import json
     
     # Rutas a los archivos de calibración
-    h_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_lineal.json')
-    v_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical_lineal.json')
+    h_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_horizontal.json')
+    v_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical.json')
     
     # Cargar calibración horizontal
     try:
