@@ -908,17 +908,29 @@ def get_vertical_correction_distance(camera_index=0):
     """
     Función que devuelve corrección vertical en píxeles
     """
-    # Detectar posición de cinta
-    candidates = detect_tape_position_vertical_debug(capture_image_for_correction_vertical_debug(camera_index), debug=True)
+    # Capturar imagen
+    image = capture_image_for_correction_vertical_debug(camera_index)
+    
+    if image is None:
+        return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
+    
+    # Detectar cinta
+    candidates = detect_tape_position_vertical_debug(image, debug=True)
     
     if not candidates:
-        print(" No se detectó cinta")
-        return None
+        return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
     
-    # Convertir resultado para compatibilidad con main_robot.py
+    # Calcular distancia vertical desde centro
     best_candidate = candidates[0]
+    img_center_y = image.shape[0] // 2
+    detected_y = best_candidate['base_y']
+    distance = detected_y - img_center_y  # Positivo = abajo, Negativo = arriba
     
-    return best_candidate['distance_pixels']
+    return {
+        'success': True,
+        'distance_pixels': int(distance),
+        'confidence': best_candidate['score']
+    }
 
 if __name__ == "__main__":
     main()
