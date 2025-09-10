@@ -841,25 +841,113 @@ def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
         return None
 
 def detect_tape_position_vertical_debug(image, debug=True):
-    """Detecta la posición de la cinta vertical con modo debug visual - USA ALGORITMO INTELIGENTE"""
+    """Detecta la posición de la cinta vertical con modo debug visual - MISMO ALGORITMO QUE EL NORMAL"""
     if image is None:
         return []
     
+    h_img, w_img = image.shape[:2]
+    img_center_y = h_img // 2
+    
+    print(f"🔍 Analizando imagen vertical: {w_img}x{h_img}, centro Y: {img_center_y}")
+    
+    # Mostrar imagen original
+    cv2.imshow("DEBUG VERTICAL: Imagen Original", image)
+    print("📷 Imagen para análisis vertical - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # USAR MISMO ALGORITMO QUE EL MODO NORMAL: HSV V-channel threshold
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    v_channel = hsv[:,:,2]
+    
+    # Mostrar canal V
+    cv2.imshow("DEBUG VERTICAL: 3. Canal V (Brillo)", v_channel)
+    cv2.resizeWindow("DEBUG VERTICAL: 3. Canal V (Brillo)", 800, 600)
+    print("🌈 3. Canal V extraído (vertical) - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Threshold para zonas oscuras (igual que modo normal)
+    _, thresh = cv2.threshold(v_channel, 50, 255, cv2.THRESH_BINARY_INV)
+    
+    # Mostrar threshold
+    cv2.imshow("DEBUG VERTICAL: 4. Imagen Binaria", thresh)
+    cv2.resizeWindow("DEBUG VERTICAL: 4. Imagen Binaria", 800, 600)
+    print("🎭 4. Threshold aplicado (zonas oscuras) vertical - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
     # USAR EL MISMO ALGORITMO INTELIGENTE que la función principal
-    candidates = detect_tape_position(image, debug=True)
+    candidates = detect_tape_position(image, debug=False)  # No debug para evitar duplicar imágenes
     
     if not candidates:
         print("❌ No se detectó cinta con algoritmo inteligente")
+        # Mostrar imagen de no detección
+        no_detection_img = image.copy()
+        cv2.putText(no_detection_img, "NO SE DETECTÓ CINTA VERTICAL", (50, 50),
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        cv2.imshow("DEBUG VERTICAL: 5. SIN DETECCION", no_detection_img)
+        cv2.resizeWindow("DEBUG VERTICAL: 5. SIN DETECCION", 800, 600)
+        print("❌ 5. No se detectó cinta - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
         return []
     
-    # Convertir resultado para compatibilidad con main_robot.py
+    # Mostrar resultado final con detección
     best_candidate = candidates[0]
     
+    # Crear imagen con detección marcada
+    detection_image = image.copy()
+    
+    # Marcar centro detectado
+    center_x = best_candidate['base_center_x']
+    base_y = best_candidate['base_y']
+    
+    # Dibujar líneas de referencia
+    cv2.line(detection_image, (0, img_center_y), (w_img, img_center_y), (255, 0, 255), 4)  # Magenta = centro imagen
+    cv2.line(detection_image, (0, base_y), (w_img, base_y), (0, 0, 255), 4)  # Rojo = base detectada
+    
+    # Marcar centro con círculo
+    cv2.circle(detection_image, (center_x, base_y), 15, (0, 0, 255), -1)
+    
+    # Agregar texto explicativo
+    cv2.putText(detection_image, f"Centro IMG: {img_center_y}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+    cv2.putText(detection_image, f"Base DETECTADA: {base_y}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.putText(detection_image, f"DIFERENCIA: {img_center_y - base_y}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    
+    # Mostrar detección final
+    cv2.imshow("DEBUG VERTICAL: 5. DETECCION FINAL", detection_image)
+    cv2.resizeWindow("DEBUG VERTICAL: 5. DETECCION FINAL", 800, 600)
+    print(f"✅ 5. Base detectada en Y={base_y}px (centro imagen={img_center_y}px) - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+    
+    # Calcular distancia desde el centro
+    distance_pixels = img_center_y - base_y
+    
+    print(f"📊 Resultado vertical: base Y={base_y}px, distancia del centro={distance_pixels}px")
+    
+    # Convertir resultado para compatibilidad con main_robot.py
     tape_result = {
         'center_x': best_candidate['base_center_x'],
         'base_y': best_candidate['base_y'],
-        'distance_pixels': best_candidate['distance_pixels'],
-        'score': best_candidate.get('score', 0.8),  # Add missing score field
+        'distance_pixels': distance_pixels,
+        'score': best_candidate.get('score', 0.8),
         'contour_area': 1000,  # Placeholder
         'bbox': (0, 0, 100, 100)  # Placeholder
     }
