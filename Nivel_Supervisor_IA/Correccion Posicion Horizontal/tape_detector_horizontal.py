@@ -1246,27 +1246,20 @@ def get_position_distance_for_correction(camera_index=0, mode='horizontal'):
     Utilizada por la máquina de estados para corrección iterativa
     
     Args:
-        camera_index: Índice de la cámara
-        mode: 'horizontal' o 'vertical'
-    """
-    # Capturar imagen según el modo
-    if mode == 'vertical':
-        image = capture_image_for_vertical_correction(camera_index)
-    else:
-        image = capture_image_for_correction(camera_index)
-    
     if image is None:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
     
     # Detectar cinta
-    candidates = detect_tape_position(image, debug=False, mode=mode)
+    candidates = detect_tape_position(image, debug=False)
     
     if not candidates:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
     
-    # Usar distancia ya calculada por detect_tape_position
+    # Calcular distancia horizontal desde centro
     best_candidate = candidates[0]
-    distance = best_candidate['distance_pixels']  # Ya calculada correctamente según el modo
+    img_center_x = image.shape[1] // 2
+    detected_x = best_candidate['base_center_x']
+    distance = detected_x - img_center_x  # Positivo = derecha, Negativo = izquierda
     
     return {
         'success': True,
@@ -1274,13 +1267,45 @@ def get_position_distance_for_correction(camera_index=0, mode='horizontal'):
         'confidence': best_candidate['score']
     }
 
-def get_horizontal_distance_for_correction(camera_index=0):
-    """Función de compatibilidad para corrección horizontal"""
-    return get_position_distance_for_correction(camera_index, mode='horizontal')
-
-def get_vertical_correction_distance(camera_index=0):
-    """Función de compatibilidad para corrección vertical"""
-    return get_position_distance_for_correction(camera_index, mode='vertical')
+def get_horizontal_correction_mm(camera_index=0, offset_x_mm=0.0):
+    """
+    Función NUEVA que devuelve corrección horizontal directamente en MM
+    Aplica calibración interna y devuelve movimiento necesario en milímetros
+    """
+    try:
+        # Cargar calibración
+        calibracion_path = os.path.join(os.path.dirname(__file__), "calibracion_horizontal.json")
+        calibracion_lineal_path = os.path.join(os.path.dirname(__file__), "calibracion_lineal_horizontal.json")
+        
+        with open(calibracion_path, 'r') as f:
+            calibracion = json.load(f)
+        
+        with open(calibracion_lineal_path, 'r') as f:
+            calibracion_lineal = json.load(f)
+            
+        pixeles_por_mm = calibracion['pixeles_por_mm']
+        a_coef = calibracion_lineal['a']
+        b_coef = calibracion_lineal['b']
+        
+        # Obtener corrección en píxeles
+        pixel_distance = get_position_distance_for_correction(camera_index, mode='horizontal')
+        
+        if pixel_distance is None:
+            return None
+            
+        # Convertir píxeles a mm usando calibración lineal
+        correction_mm = (pixel_distance - b_coef) / a_coef
+        
+        # Aplicar offset si se proporciona
+        final_correction_mm = correction_mm + offset_x_mm
+        
+        print(f"🔧 Corrección horizontal: {pixel_distance}px -> {correction_mm:.2f}mm (final: {final_correction_mm:.2f}mm)")
+        
+        return final_correction_mm
+        
+    except Exception as e:
+        print(f"❌ Error en get_horizontal_correction_mm: {e}")
+        return None
 
 def capture_image_for_vertical_correction(camera_index=0):
     """Captura imagen para corrección vertical con rotación y recorte"""

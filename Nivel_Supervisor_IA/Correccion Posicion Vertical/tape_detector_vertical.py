@@ -865,5 +865,61 @@ def detect_tape_position_vertical_debug(image, debug=True):
     
     return [tape_result]
 
+def get_vertical_correction_mm(camera_index=0, offset_y_mm=0.0):
+    """
+    Función NUEVA que devuelve corrección vertical directamente en MM
+    Aplica calibración interna y devuelve movimiento necesario en milímetros
+    """
+    try:
+        # Cargar calibración
+        calibracion_path = os.path.join(os.path.dirname(__file__), "calibracion_vertical.json")
+        calibracion_lineal_path = os.path.join(os.path.dirname(__file__), "calibracion_vertical_lineal.json")
+        
+        with open(calibracion_path, 'r') as f:
+            calibracion = json.load(f)
+        
+        with open(calibracion_lineal_path, 'r') as f:
+            calibracion_lineal = json.load(f)
+            
+        pixeles_por_mm = calibracion['pixeles_por_mm']
+        a_coef = calibracion_lineal['a']
+        b_coef = calibracion_lineal['b']
+        
+        # Obtener corrección en píxeles
+        pixel_distance = get_vertical_correction_distance(camera_index)
+        
+        if pixel_distance is None:
+            return None
+            
+        # Convertir píxeles a mm usando calibración lineal
+        correction_mm = (pixel_distance - b_coef) / a_coef
+        
+        # Aplicar offset si se proporciona
+        final_correction_mm = correction_mm + offset_y_mm
+        
+        print(f" Corrección vertical: {pixel_distance}px -> {correction_mm:.2f}mm (final: {final_correction_mm:.2f}mm)")
+        
+        return final_correction_mm
+        
+    except Exception as e:
+        print(f" Error en get_vertical_correction_mm: {e}")
+        return None
+
+def get_vertical_correction_distance(camera_index=0):
+    """
+    Función que devuelve corrección vertical en píxeles
+    """
+    # Detectar posición de cinta
+    candidates = detect_tape_position_vertical_debug(capture_image_for_correction_vertical_debug(camera_index), debug=True)
+    
+    if not candidates:
+        print(" No se detectó cinta")
+        return None
+    
+    # Convertir resultado para compatibilidad con main_robot.py
+    best_candidate = candidates[0]
+    
+    return best_candidate['distance_pixels']
+
 if __name__ == "__main__":
     main()
