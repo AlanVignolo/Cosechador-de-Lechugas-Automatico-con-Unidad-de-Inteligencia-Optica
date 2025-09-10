@@ -243,8 +243,8 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
     
-    from final_measurement_system import pixels_to_mm
-    from vertical_calibration import pixels_to_mm_vertical
+    from calibration_horizontal import pixels_to_mm
+    from test_vertical import pixels_to_mm_vertical
     
     def mm_to_pixels(mm, a, b):
         """Convierte milímetros a píxeles usando calibración horizontal: px = (mm - b) / a"""
@@ -404,7 +404,7 @@ def test_horizontal_correction_only(robot):
         
         # Importar función de conversión
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
-        from final_measurement_system import pixels_to_mm
+        from calibration_horizontal import pixels_to_mm
         
         def mm_to_pixels(mm, a, b):
             """Convierte milímetros a píxeles: px = (mm - b) / a"""
@@ -484,7 +484,7 @@ def test_vertical_correction_only(robot):
         
         # Importar función de conversión
         sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
-        from vertical_calibration import pixels_to_mm_vertical
+        from test_vertical import pixels_to_mm_vertical
         
         def mm_to_pixels_vertical(mm, a, b):
             """Convierte milímetros a píxeles vertical: px = (mm - b) / a"""
@@ -628,8 +628,8 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
     
-    from final_measurement_system import pixels_to_mm
-    from vertical_calibration import pixels_to_mm_vertical
+    from calibration_horizontal import pixels_to_mm
+    from test_vertical import pixels_to_mm_vertical
     
     def mm_to_pixels(mm, a, b):
         """Convierte milímetros a píxeles usando calibración horizontal: px = (mm - b) / a"""
