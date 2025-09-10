@@ -6,8 +6,9 @@ Evita problemas de recursos al abrir/cerrar constantemente la cámara en Raspber
 import cv2
 import time
 import threading
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable
 import numpy as np
+from queue import Queue, Empty
 
 class CameraManager:
     """Gestor singleton para la cámara del robot CLAUDIO"""
@@ -31,6 +32,14 @@ class CameraManager:
             self.last_frame = None
             self.initialized = True
             self._working_camera_cache = None
+            
+            # Video streaming functionality
+            self.video_mode = False
+            self.video_thread = None
+            self.video_queue = Queue(maxsize=5)
+            self.video_callbacks = []
+            self.video_fps = 30
+            self.video_stop_event = threading.Event()
     
     def find_working_camera(self) -> Optional[int]:
         """Encuentra una cámara que funcione, probando índices de 0 a 9"""
@@ -255,9 +264,135 @@ class CameraManager:
                     self.camera_index = None
                     self.last_frame = None
     
+    def _video_capture_loop(self):
+        """Loop interno de captura de video en hilo separado"""
+        frame_interval = 1.0 / self.video_fps
+        
+        while not self.video_stop_event.is_set():
+            try:
+                if not self.is_active:
+                    time.sleep(0.1)
+                    continue
+                
+                frame = self.capture_frame(timeout=1.0, max_retries=1)
+                if frame is not None:
+                    # Agregar frame al queue (elimina el más viejo si está lleno)
+                    try:
+                        self.video_queue.put_nowait(frame.copy())
+                    except:
+                        # Queue lleno, remover el más viejo y agregar el nuevo
+                        try:
+                            self.video_queue.get_nowait()
+                            self.video_queue.put_nowait(frame.copy())
+                        except Empty:
+                            pass
+                    
+                    # Llamar callbacks registrados
+                    for callback in self.video_callbacks:
+                        try:
+                            callback(frame.copy())
+                        except Exception as e:
+                            print(f"Error en callback de video: {e}")
+                
+                time.sleep(frame_interval)
+                
+            except Exception as e:
+                print(f"Error en video loop: {e}")
+                time.sleep(0.1)
+    
+    def start_video_stream(self, fps: int = 30) -> bool:
+        """
+        Inicia el modo de video streaming automático
+        
+        Args:
+            fps: Frames por segundo deseados
+            
+        Returns:
+            True si se inició correctamente
+        """
+        if self.video_mode:
+            return True
+            
+        if not self.initialize_camera():
+            return False
+            
+        self.video_fps = fps
+        self.video_stop_event.clear()
+        self.video_thread = threading.Thread(target=self._video_capture_loop, daemon=True)
+        self.video_thread.start()
+        self.video_mode = True
+        
+        print(f"Video stream iniciado a {fps} FPS")
+        return True
+    
+    def stop_video_stream(self):
+        """Detiene el modo de video streaming"""
+        if not self.video_mode:
+            return
+            
+        self.video_stop_event.set()
+        if self.video_thread and self.video_thread.is_alive():
+            self.video_thread.join(timeout=2.0)
+        
+        # Limpiar queue
+        while not self.video_queue.empty():
+            try:
+                self.video_queue.get_nowait()
+            except Empty:
+                break
+                
+        self.video_mode = False
+        self.video_callbacks.clear()
+        print("Video stream detenido")
+    
+    def register_video_callback(self, callback: Callable[[np.ndarray], None]):
+        """
+        Registra una función que será llamada automáticamente con cada frame
+        
+        Args:
+            callback: Función que recibe un frame (numpy array) como parámetro
+        """
+        if callback not in self.video_callbacks:
+            self.video_callbacks.append(callback)
+    
+    def unregister_video_callback(self, callback: Callable[[np.ndarray], None]):
+        """Desregistra un callback de video"""
+        if callback in self.video_callbacks:
+            self.video_callbacks.remove(callback)
+    
+    def get_latest_video_frame(self, timeout: float = 0.1) -> Optional[np.ndarray]:
+        """
+        Obtiene el frame más reciente del stream de video
+        
+        Args:
+            timeout: Tiempo máximo de espera
+            
+        Returns:
+            Frame más reciente o None si no hay disponible
+        """
+        if not self.video_mode:
+            return self.capture_frame()
+            
+        try:
+            # Obtener el frame más reciente (descartar los viejos)
+            latest_frame = None
+            while True:
+                try:
+                    latest_frame = self.video_queue.get_nowait()
+                except Empty:
+                    break
+            return latest_frame
+        except:
+            return None
+    
+    def is_video_streaming(self) -> bool:
+        """Verifica si el modo de video streaming está activo"""
+        return self.video_mode and (self.video_thread is not None and self.video_thread.is_alive())
+
     def __del__(self):
         """Destructor para asegurar liberación de recursos"""
         try:
+            self.stop_video_stream()
             self.release_camera()
         except:
             pass
@@ -281,3 +416,24 @@ def initialize_camera_safe(camera_index: Optional[int] = None) -> bool:
 def get_camera_status() -> dict:
     """Función de conveniencia para obtener estado de la cámara"""
     return camera_manager.get_camera_info()
+
+# Funciones de conveniencia para video streaming
+def start_video_stream(fps: int = 30) -> bool:
+    """Inicia video streaming automático"""
+    return camera_manager.start_video_stream(fps)
+
+def stop_video_stream():
+    """Detiene video streaming"""
+    camera_manager.stop_video_stream()
+
+def register_video_callback(callback):
+    """Registra función que será llamada con cada frame automáticamente"""
+    camera_manager.register_video_callback(callback)
+
+def get_latest_video_frame():
+    """Obtiene el frame más reciente del video stream"""
+    return camera_manager.get_latest_video_frame()
+
+def is_video_streaming() -> bool:
+    """Verifica si está en modo video streaming"""
+    return camera_manager.is_video_streaming()
