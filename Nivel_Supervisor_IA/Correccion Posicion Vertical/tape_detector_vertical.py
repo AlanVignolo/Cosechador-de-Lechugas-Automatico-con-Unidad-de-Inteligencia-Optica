@@ -859,6 +859,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
         'center_x': best_candidate['base_center_x'],
         'base_y': best_candidate['base_y'],
         'distance_pixels': best_candidate['distance_pixels'],
+        'score': best_candidate.get('score', 0.8),  # Add missing score field
         'contour_area': 1000,  # Placeholder
         'bbox': (0, 0, 100, 100)  # Placeholder
     }
@@ -909,13 +910,13 @@ def get_vertical_correction_distance(camera_index=0):
     Función que devuelve corrección vertical en píxeles
     """
     # Capturar imagen
-    image = capture_image_for_correction_vertical_debug(camera_index)
+    image = capture_image_for_correction(camera_index)
     
     if image is None:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
     
-    # Detectar cinta
-    candidates = detect_tape_position_vertical_debug(image, debug=True)
+    # Detectar cinta (sin debug para modo normal)
+    candidates = detect_tape_position(image, debug=False)
     
     if not candidates:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se detectó cinta'}
