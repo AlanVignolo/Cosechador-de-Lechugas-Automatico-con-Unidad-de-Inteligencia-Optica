@@ -568,16 +568,29 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
             if not candidates:
                 return {'success': False, 'message': "Error horizontal: No se detectó cinta"}
             
-            # Calcular movimiento en mm usando calibración
+            # Calcular movimiento en mm usando calibración (igual que modo normal)
             sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
-            from calibration_horizontal import pixels_to_mm
-            
-            detected_x = candidates[0]['base_center_x']
-            img_center_x = image.shape[1] // 2
-            distance_pixels = detected_x - img_center_x
             
             try:
-                move_mm = pixels_to_mm(distance_pixels) + AI_TEST_PARAMS['offset_x_mm']
+                import json
+                # Cargar calibración lineal
+                calibracion_lineal_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', "calibracion_lineal_horizontal.json")
+                
+                with open(calibracion_lineal_path, 'r') as f:
+                    calibracion_lineal = json.load(f)
+                    
+                # Obtener coeficientes de la calibración lineal: mm = a * pixels + b
+                a_coef = calibracion_lineal['coefficients']['a']
+                b_coef = calibracion_lineal['coefficients']['b']
+                
+                detected_x = candidates[0]['base_center_x']
+                img_center_x = image.shape[1] // 2
+                distance_pixels = detected_x - img_center_x
+                
+                # Convertir píxeles a mm usando calibración lineal: mm = a * pixels + b
+                correction_mm = a_coef * distance_pixels + b_coef
+                move_mm = correction_mm + AI_TEST_PARAMS['offset_x_mm']
+                
             except Exception as e:
                 return {'success': False, 'message': f"Error en calibración horizontal: {e}"}
             
@@ -620,16 +633,29 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
             if not candidates_v:
                 return {'success': False, 'message': "Error vertical: No se detectó cinta"}
             
-            # Calcular movimiento en mm usando calibración
+            # Calcular movimiento en mm usando calibración (igual que modo normal)
             sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
-            from test_vertical import pixels_to_mm_vertical
-            
-            detected_y = candidates_v[0]['base_y']
-            img_center_y = image_v.shape[0] // 2
-            distance_pixels_v = img_center_y - detected_y  # Corrected coordinate system
             
             try:
-                move_mm_v = pixels_to_mm_vertical(distance_pixels_v) + AI_TEST_PARAMS['offset_y_mm']
+                import json
+                # Cargar calibración lineal vertical
+                calibracion_lineal_path_v = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', "calibracion_lineal_vertical.json")
+                
+                with open(calibracion_lineal_path_v, 'r') as f:
+                    calibracion_lineal_v = json.load(f)
+                    
+                # Obtener coeficientes de la calibración lineal: mm = a * pixels + b
+                a_coef_v = calibracion_lineal_v['coefficients']['a']
+                b_coef_v = calibracion_lineal_v['coefficients']['b']
+                
+                detected_y = candidates_v[0]['base_y']
+                img_center_y = image_v.shape[0] // 2
+                distance_pixels_v = img_center_y - detected_y  # Corrected coordinate system
+                
+                # Convertir píxeles a mm usando calibración lineal: mm = a * pixels + b
+                correction_mm_v = a_coef_v * distance_pixels_v + b_coef_v
+                move_mm_v = correction_mm_v + AI_TEST_PARAMS['offset_y_mm']
+                
             except Exception as e:
                 return {'success': False, 'message': f"Error en calibración vertical: {e}"}
             
