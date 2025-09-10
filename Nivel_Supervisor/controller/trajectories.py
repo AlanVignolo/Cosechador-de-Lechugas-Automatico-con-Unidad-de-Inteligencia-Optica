@@ -21,6 +21,15 @@ class TrajectoryDefinitions:
                 # No tiene lechuga: usar trayectoria especial (recoger)
                 return TrajectoryDefinitions.mover_lechuga_to_recoger_lechuga_no_lettuce()
         
+        # Caso especial: recoger_lechuga -> mover_lechuga depende de lechuga_on
+        if from_state == "recoger_lechuga" and to_state == "mover_lechuga":
+            if lechuga_on:
+                # Tiene lechuga: usar trayectoria normal (ya existe)
+                return TrajectoryDefinitions.recoger_lechuga_to_mover_lechuga()
+            else:
+                # No tiene lechuga: usar trayectoria especial (nueva)
+                return TrajectoryDefinitions.recoger_lechuga_to_mover_lechuga_no_lettuce()
+        
         trajectory_name = f"{from_state}_to_{to_state}"
         
         # Buscar trayectoria específica
