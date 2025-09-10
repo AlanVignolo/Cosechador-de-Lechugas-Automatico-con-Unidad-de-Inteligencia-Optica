@@ -639,7 +639,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
             try:
                 import json
                 # Cargar calibración lineal vertical
-                calibracion_lineal_path_v = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', "calibracion_lineal_vertical.json")
+                calibracion_lineal_path_v = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', "calibracion_vertical_lineal.json")
                 
                 with open(calibracion_lineal_path_v, 'r') as f:
                     calibracion_lineal_v = json.load(f)
