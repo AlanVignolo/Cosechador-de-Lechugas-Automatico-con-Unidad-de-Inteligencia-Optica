@@ -18,7 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_
 try:
     print("Intentando importar detectores horizontal y vertical...")
     # Importar funciones horizontales
-    from base_width_detector import (
+    from tape_detector_horizontal import (
         get_horizontal_distance_for_correction,
         get_position_distance_for_correction,
         capture_image_for_correction_debug,
@@ -27,7 +27,7 @@ try:
     print("✅ Detector horizontal importado exitosamente")
     
     # Importar funciones verticales
-    from vertical_detector import (
+    from tape_detector_vertical import (
         get_vertical_correction_distance,
         capture_image_for_correction_vertical_debug,
         detect_tape_position_vertical_debug

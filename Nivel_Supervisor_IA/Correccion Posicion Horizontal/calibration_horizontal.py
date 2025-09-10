@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from base_width_detector import capture_new_image, find_tape_base_width
+from tape_detector_horizontal import capture_new_image, find_tape_base_width
 
 def create_linear_calibration():
     """Crea función lineal con tus datos de calibración"""

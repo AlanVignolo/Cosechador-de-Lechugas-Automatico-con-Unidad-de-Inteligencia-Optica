@@ -96,8 +96,8 @@ def test_ai_integration():
     
     try:
         # Probar importación de detectores
-        from base_width_detector import capture_with_timeout
-        from vertical_detector import capture_with_timeout as capture_with_timeout_v
+        from tape_detector_horizontal import capture_with_timeout
+        from tape_detector_vertical import capture_with_timeout as capture_with_timeout_v
         
         print("\n1. Probando detector horizontal...")
         frame_h = capture_with_timeout(0, timeout=3.0)
