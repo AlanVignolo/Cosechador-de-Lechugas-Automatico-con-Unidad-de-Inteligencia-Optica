@@ -55,10 +55,10 @@ def create_linear_calibration():
         }
     }
     
-    with open('calibracion_lineal.json', 'w') as f:
+    with open('calibracion_horizontal.json', 'w') as f:
         json.dump(calibration, f, indent=2)
     
-    print("✓ Función guardada en 'calibracion_lineal.json'")
+    print("✓ Función guardada en 'calibracion_horizontal.json'")
     
     # Mostrar algunos ejemplos
     print(f"\n=== EJEMPLOS DE CONVERSIÓN ===")
@@ -72,11 +72,11 @@ def create_linear_calibration():
 def load_calibration():
     """Carga la función de calibración"""
     try:
-        with open('calibracion_lineal.json', 'r') as f:
+        with open('calibracion_horizontal.json', 'r') as f:
             calibration = json.load(f)
         return calibration['coefficients']['a'], calibration['coefficients']['b']
     except:
-        print("❌ No se encontró calibracion_lineal.json")
+        print("❌ No se encontró calibracion_horizontal.json")
         print("Ejecuta create_linear_calibration() primero")
         return None, None
 
