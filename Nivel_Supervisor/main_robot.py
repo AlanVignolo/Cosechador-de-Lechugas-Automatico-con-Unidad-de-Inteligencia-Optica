@@ -19,7 +19,7 @@ try:
     print("Intentando importar detectores horizontal y vertical...")
     # Importar funciones horizontales
     from tape_detector_horizontal import (
-        get_horizontal_distance_for_correction,
+        get_horizontal_correction_mm,
         get_position_distance_for_correction,
         capture_image_for_correction_debug,
         detect_tape_position_debug
@@ -28,7 +28,7 @@ try:
     
     # Importar funciones verticales
     from tape_detector_vertical import (
-        get_vertical_correction_distance,
+        get_vertical_correction_mm,
         capture_image_for_correction_vertical_debug,
         detect_tape_position_vertical_debug
     )
@@ -369,7 +369,7 @@ def test_horizontal_correction_only(robot):
             print(f"\nIteracion horizontal {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
             
             # Obtener corrección horizontal
-            result = get_horizontal_distance_for_correction(AI_TEST_PARAMS['camera_index'])
+            result = get_horizontal_correction_mm(AI_TEST_PARAMS['camera_index'])
             
             if not result['success']:
                 print(f"Error en deteccion: {result.get('error', 'Desconocido')}")
@@ -447,7 +447,7 @@ def test_vertical_correction_only(robot):
             print(f"\nIteracion vertical {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
             
             # Obtener corrección vertical
-            result = get_vertical_correction_distance(AI_TEST_PARAMS['camera_index'])
+            result = get_vertical_correction_mm(AI_TEST_PARAMS['camera_index'])
             
             if not result['success']:
                 print(f"Error en deteccion: {result.get('error', 'Desconocido')}")

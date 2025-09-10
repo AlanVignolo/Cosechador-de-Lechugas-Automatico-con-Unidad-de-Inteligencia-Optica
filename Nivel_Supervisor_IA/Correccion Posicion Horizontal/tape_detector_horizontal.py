@@ -1246,6 +1246,17 @@ def get_position_distance_for_correction(camera_index=0, mode='horizontal'):
     Utilizada por la máquina de estados para corrección iterativa
     
     Args:
+        camera_index: Índice de la cámara a usar
+        mode: Modo de corrección ('horizontal' o 'vertical')
+    """
+    # Capturar imagen
+    if mode == 'horizontal':
+        image = capture_image_for_correction(camera_index)
+    elif mode == 'vertical':
+        image = capture_image_for_vertical_correction(camera_index)
+    else:
+        raise ValueError("Modo de corrección no válido")
+    
     if image is None:
         return {'success': False, 'distance_pixels': 0, 'error': 'No se pudo capturar imagen'}
     
