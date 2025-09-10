@@ -169,6 +169,38 @@ class TrajectoryDefinitions:
         }
 
     @staticmethod
+    def recoger_lechuga_to_mover_lechuga_no_lettuce():
+        """Cambiar a posición de transporte (cuando NO tiene lechuga - gripper abierto)"""
+        target_state = ARM_STATES["mover_lechuga"]
+        initial_state = ARM_STATES["recoger_lechuga"]
+        return {
+            "name": "recoger_lechuga_to_mover_lechuga_no_lettuce",
+            "description": "Ir a posición de transporte (SIN lechuga - gripper abierto)",
+            "estimated_time": 1.5,
+            "steps": [
+                {
+                    "type": "gripper",
+                    "action": "open",
+                    "description": "🔓 Abrir gripper (no hay lechuga)"
+                },
+                {
+                    "type": "arm_move",
+                    "servo1": 0,
+                    "servo2": 120,
+                    "time_ms": 2500,
+                    "description": "Elevar brazo a posición intermedia"
+                },
+                {
+                    "type": "arm_move",
+                    "servo1": target_state["servo1"],
+                    "servo2": target_state["servo2"],
+                    "time_ms": 1500,
+                    "description": "Mover a posición de transporte (gripper abierto)"
+                }
+            ]
+        }
+
+    @staticmethod
     def mover_lechuga_to_depositar_lechuga():
         """Ir a posición para depositar lechuga"""
         target_state = ARM_STATES["depositar_lechuga"]
