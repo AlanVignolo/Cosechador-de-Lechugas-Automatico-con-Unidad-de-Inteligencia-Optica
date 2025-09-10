@@ -197,8 +197,15 @@ class TrajectoryDefinitions:
                 {
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
-                    "servo2": target_state["servo2"],
+                    "servo2": target_state["servo2"] + 20,
                     "time_ms": 3000,
+                    "description": "Posicionar sobre zona de depósito"
+                },
+                {
+                    "type": "arm_move",
+                    "servo1": target_state["servo1"],
+                    "servo2": target_state["servo2"],
+                    "time_ms": 1000,
                     "description": "Posicionar sobre zona de depósito"
                 },
                 {
