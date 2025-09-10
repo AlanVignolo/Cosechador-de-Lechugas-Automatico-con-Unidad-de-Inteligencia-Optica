@@ -163,6 +163,6 @@ AI_TEST_PARAMS = {
     'camera_index': 0,  # Cámara disponible en índice 0
     'max_iterations': 10,
     'tolerance_mm': 1.0,
-    'offset_x_mm': 40.0,  # Offset horizontal en milÃ­metros
+    'offset_x_mm': -40.0,  # Offset horizontal en milÃ­metros
     'offset_y_mm': -5.0   # Offset vertical en milÃ­metros
 }
