@@ -212,71 +212,26 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
     
     print("Iniciando corrección de posición con IA...")
     
-    # Importar funciones de calibración y cargar con rutas correctas
+    # Importar funciones de corrección directa en mm
     import sys
     import os
-    import json
-    
-    # Rutas a los archivos de calibración
-    h_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_lineal_horizontal.json')
-    v_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical_lineal.json')
-    
-    # Cargar calibración horizontal
-    try:
-        with open(h_calibration_path, 'r') as f:
-            h_calibration = json.load(f)
-        a_h = h_calibration['coefficients']['a']
-        b_h = h_calibration['coefficients']['b']
-    except Exception as e:
-        return {"success": False, "message": f"Error cargando calibración horizontal: {str(e)}"}
-    
-    # Cargar calibración vertical
-    try:
-        with open(v_calibration_path, 'r') as f:
-            v_calibration = json.load(f)
-        a_v = v_calibration['coefficients']['a']
-        b_v = v_calibration['coefficients']['b']
-    except Exception as e:
-        return {"success": False, "message": f"Error cargando calibración vertical: {str(e)}"}
-    
-    # Importar solo las funciones de conversión
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
     
-    from calibration_horizontal import pixels_to_mm
-    from test_vertical import pixels_to_mm_vertical
-    
-    def mm_to_pixels(mm, a, b):
-        """Convierte milímetros a píxeles usando calibración horizontal: px = (mm - b) / a"""
-        return (mm - b) / a
-        
-    def mm_to_pixels_vertical(mm, a, b):
-        """Convierte milímetros a píxeles usando calibración vertical: px = (mm - b) / a"""
-        return (mm - b) / a
-    
-    print(f"Calibración horizontal: mm = {a_h:.5f} * px + {b_h:.2f}")
-    print(f"Calibración vertical: mm = {a_v:.5f} * px + {b_v:.2f}")
+    from tape_detector_horizontal import get_horizontal_correction_mm
+    from tape_detector_vertical import get_vertical_correction_mm
     
     try:
         # FASE 1: Corrección HORIZONTAL
         print("Iniciando corrección horizontal...")
         for h_iter in range(max_iterations):
-            # Obtener distancia horizontal usando IA
-            h_result = get_horizontal_distance_for_correction(camera_index)
+            # Obtener corrección directamente en mm usando la nueva función
+            move_mm = get_horizontal_correction_mm(camera_index, AI_TEST_PARAMS['offset_x_mm'])
             
-            if not h_result['success']:
-                print(f"Error en detección horizontal: {h_result.get('error', 'Desconocido')}")
-                return {"success": False, "message": f"Error horizontal: {h_result.get('error')}"}
+            if move_mm is None:
+                return {"success": False, "message": "Error horizontal: No se detectó cinta o error en calibración"}
             
-            # Aplicar offset horizontal: convertir offset_x_mm a píxeles
-            offset_x_px = mm_to_pixels(AI_TEST_PARAMS['offset_x_mm'], a_h, b_h)
-            distance_px = h_result['distance_pixels'] - offset_x_px
-            # SISTEMA DE COORDENADAS: X positivo = derecha (confirmado por usuario)
-            # IA: +px = mover derecha, -px = mover izquierda
-            # Robot: +mm = derecha, -mm = izquierda → Coinciden perfectamente
-            move_mm = pixels_to_mm(distance_px, a_h, b_h)  # Usar calibración real
-            
-            print(f"Iteración horizontal {h_iter+1}: detección = {h_result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_x_mm']}mm = {offset_x_px:.1f}px) = {distance_px:.1f}px → {move_mm:.1f}mm")
+            print(f"Iteración horizontal {h_iter+1}: detección → {move_mm:.1f}mm")
             
             # Verificar si está dentro de tolerancia
             if abs(move_mm) <= tolerance_mm:
@@ -296,20 +251,16 @@ def test_position_correction_direct(robot, camera_index=0, max_iterations=10, to
         # FASE 2: Corrección VERTICAL
         print("Iniciando corrección vertical...")
         for v_iter in range(max_iterations):
-            # Obtener distancia vertical usando IA
-            v_result = get_vertical_correction_distance(camera_index)
+            # Obtener corrección directamente en mm usando la nueva función
+            move_mm = get_vertical_correction_mm(camera_index, AI_TEST_PARAMS['offset_y_mm'])
             
-            if not v_result['success']:
-                print(f"Error en detección vertical: {v_result.get('error', 'Desconocido')}")
-                return {"success": False, "message": f"Error vertical: {v_result.get('error')}"}
+            if move_mm is None:
+                return {"success": False, "message": "Error vertical: No se detectó cinta o error en calibración"}
             
-            # Aplicar offset vertical: convertir offset_y_mm a píxeles
-            offset_y_px = mm_to_pixels_vertical(AI_TEST_PARAMS['offset_y_mm'], a_v, b_v)
-            distance_px = v_result['distance_pixels'] - offset_y_px
-            # Usar mismo signo que en test individual (sin inversión)
-            move_mm = pixels_to_mm_vertical(distance_px, a_v, b_v)  # Usar calibración real
+            # Aplicar corrección de signo para dirección correcta
+            move_mm = -move_mm
             
-            print(f"Iteración vertical {v_iter+1}: detección = {v_result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_y_mm']}mm = {offset_y_px:.1f}px) = {distance_px:.1f}px → {move_mm:.1f}mm")
+            print(f"Iteración vertical {v_iter+1}: detección → {move_mm:.1f}mm")
             
             # Verificar si está dentro de tolerancia
             if abs(move_mm) <= tolerance_mm:
