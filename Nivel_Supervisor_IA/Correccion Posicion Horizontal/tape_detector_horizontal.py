@@ -1284,33 +1284,32 @@ def get_horizontal_correction_mm(camera_index=0, offset_x_mm=0.0):
     Aplica calibración interna y devuelve movimiento necesario en milímetros
     """
     try:
-        # Cargar calibración
-        calibracion_path = os.path.join(os.path.dirname(__file__), "calibracion_horizontal.json")
+        # Cargar calibración lineal
         calibracion_lineal_path = os.path.join(os.path.dirname(__file__), "calibracion_lineal_horizontal.json")
-        
-        with open(calibracion_path, 'r') as f:
-            calibracion = json.load(f)
         
         with open(calibracion_lineal_path, 'r') as f:
             calibracion_lineal = json.load(f)
             
-        pixeles_por_mm = calibracion['pixeles_por_mm']
-        a_coef = calibracion_lineal['a']
-        b_coef = calibracion_lineal['b']
+        # Obtener coeficientes de la calibración lineal: mm = a * pixels + b
+        a_coef = calibracion_lineal['coefficients']['a']
+        b_coef = calibracion_lineal['coefficients']['b']
         
         # Obtener corrección en píxeles
-        pixel_distance = get_position_distance_for_correction(camera_index, mode='horizontal')
+        pixel_result = get_position_distance_for_correction(camera_index, mode='horizontal')
         
-        if pixel_distance is None:
+        if not pixel_result['success']:
+            print(f"❌ Error obteniendo corrección: {pixel_result.get('error', 'Desconocido')}")
             return None
             
-        # Convertir píxeles a mm usando calibración lineal
-        correction_mm = (pixel_distance - b_coef) / a_coef
+        distance_pixels = pixel_result['distance_pixels']
+        
+        # Convertir píxeles a mm usando calibración lineal: mm = a * pixels + b
+        correction_mm = a_coef * distance_pixels + b_coef
         
         # Aplicar offset si se proporciona
         final_correction_mm = correction_mm + offset_x_mm
         
-        print(f"🔧 Corrección horizontal: {pixel_distance}px -> {correction_mm:.2f}mm (final: {final_correction_mm:.2f}mm)")
+        print(f"🔧 Corrección horizontal: {distance_pixels}px -> {correction_mm:.2f}mm (final: {final_correction_mm:.2f}mm)")
         
         return final_correction_mm
         

@@ -369,18 +369,13 @@ def test_horizontal_correction_only(robot):
             print(f"\nIteracion horizontal {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
             
             # Obtener corrección horizontal
-            result = get_horizontal_correction_mm(AI_TEST_PARAMS['camera_index'])
+            move_mm = get_horizontal_correction_mm(AI_TEST_PARAMS['camera_index'])
             
-            if not result['success']:
-                print(f"Error en deteccion: {result.get('error', 'Desconocido')}")
+            if move_mm is None:
+                print(f"Error en deteccion horizontal")
                 break
             
-            # Aplicar offset: convertir offset_x_mm a píxeles
-            offset_x_px = mm_to_pixels(AI_TEST_PARAMS['offset_x_mm'], a, b)
-            distance_px = result['distance_pixels'] - offset_x_px
-            move_mm = pixels_to_mm(distance_px, a, b)
-            
-            print(f"   Correccion detectada: {result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_x_mm']}mm = {offset_x_px:.1f}px) = {distance_px:.1f}px -> {move_mm:.1f}mm")
+            print(f"   Correccion detectada: {move_mm:.1f}mm")
             
             if abs(move_mm) <= tolerance_mm:
                 print(f"Correccion horizontal completada en {iteration + 1} iteraciones")
@@ -447,18 +442,13 @@ def test_vertical_correction_only(robot):
             print(f"\nIteracion vertical {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
             
             # Obtener corrección vertical
-            result = get_vertical_correction_mm(AI_TEST_PARAMS['camera_index'])
+            move_mm = get_vertical_correction_mm(AI_TEST_PARAMS['camera_index'])
             
-            if not result['success']:
-                print(f"Error en deteccion: {result.get('error', 'Desconocido')}")
+            if move_mm is None:
+                print(f"Error en deteccion vertical")
                 break
             
-            # Aplicar offset: convertir offset_y_mm a píxeles
-            offset_y_px = mm_to_pixels_vertical(AI_TEST_PARAMS['offset_y_mm'], a, b)
-            distance_px = result['distance_pixels'] - offset_y_px
-            move_mm = pixels_to_mm_vertical(distance_px, a, b)
-            
-            print(f"   Correccion detectada: {result['distance_pixels']}px - offset({AI_TEST_PARAMS['offset_y_mm']}mm = {offset_y_px:.1f}px) = {distance_px:.1f}px -> {move_mm:.1f}mm")
+            print(f"   Correccion detectada: {move_mm:.1f}mm")
             
             if abs(move_mm) <= AI_TEST_PARAMS['tolerance_mm']:
                 print(f"Correccion vertical completada en {iteration + 1} iteraciones")
