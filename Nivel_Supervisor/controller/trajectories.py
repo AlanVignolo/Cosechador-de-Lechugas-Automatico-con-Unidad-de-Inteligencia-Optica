@@ -181,7 +181,7 @@ class TrajectoryDefinitions:
                 {
                     "type": "gripper",
                     "action": "open",
-                    "description": "🔓 Abrir gripper (no hay lechuga)"
+                    "description": "Abrir gripper (no hay lechuga)"
                 },
                 {
                     "type": "arm_move",
