@@ -58,8 +58,8 @@ class HorizontalScanner:
                 # Aplicar recorte similar al detector horizontal
                 alto, ancho = frame_rotado.shape[:2]
                 recorte_config = {
-                    'x_inicio': 0.2,
-                    'x_fin': 0.8,
+                    'x_inicio': 0.1,
+                    'x_fin': 0.9,
                     'y_inicio': 0.3,
                     'y_fin': 0.7
                 }
@@ -153,9 +153,9 @@ class HorizontalScanner:
             
             robot.cmd.uart.set_limit_callback(on_limit_callback)
             
-            # Mover hacia el switch derecho (movimiento hacia la izquierda)
+            # Mover hacia el switch derecho (movimiento hacia la derecha)
             print("   Moviendo hacia switch derecho...")
-            result = robot.cmd.move_xy(RobotConfig.get_homing_direction_x(), 0)
+            result = robot.cmd.move_xy(2000, 0)  # Hacia la derecha - debería alcanzar límite antes
             
             # Esperar límite derecho
             limit_message = robot.cmd.uart.wait_for_limit(timeout=30.0)
@@ -167,7 +167,7 @@ class HorizontalScanner:
             
             # 3. Retroceder 1cm
             print("Fase 2: Retrocediendo 1cm desde el switch...")
-            result = robot.cmd.move_xy(10, 0)  # 10mm hacia la derecha
+            result = robot.cmd.move_xy(-10, 0)  # 10mm hacia la izquierda (alejarse del switch derecho)
             if not result["success"]:
                 print(f"Error en retroceso: {result}")
                 return False
@@ -184,7 +184,7 @@ class HorizontalScanner:
             limit_reached = {"reached": False, "type": None}
             robot.cmd.uart.set_limit_callback(on_limit_callback)
             
-            # Mover hacia el switch izquierdo (movimiento hacia la derecha) - DISTANCIA MUY LARGA
+            # Mover hacia el switch izquierdo (movimiento hacia la izquierda) - DISTANCIA MUY LARGA
             result = robot.cmd.move_xy(-2000, 0)  # 2000mm hacia la izquierda - debería alcanzar límite antes
             
             # Esperar límite izquierdo
