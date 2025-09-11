@@ -57,7 +57,7 @@ def scan_horizontal_with_live_camera(robot):
         print("✅ Cámara iniciada")
         
         # Velocidades lentas
-        robot.cmd.set_speeds(2000, 2000)
+        robot.cmd.set_velocities(2000, 2000)
         print("✅ Velocidades configuradas para escaneado")
         
         # SECUENCIA DE MOVIMIENTO
@@ -184,7 +184,7 @@ def scan_horizontal_with_live_camera(robot):
             is_scanning[0] = False
             camera_mgr.stop_video_stream()
             cv2.destroyAllWindows()
-            robot.cmd.set_speeds(
+            robot.cmd.set_velocities(
                 RobotConfig.get_normal_speed_x(),
                 RobotConfig.get_normal_speed_y()
             )
