@@ -16,6 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
 
+# Importar detectores de posición (para corrección)
 try:
     print("Intentando importar detectores horizontal y vertical...")
     # Importar funciones horizontales
@@ -35,23 +36,35 @@ try:
     )
     print("✅ Detector vertical importado exitosamente")
     
-    # Importar escáner horizontal simple
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
-    from escaner_horizontal_simple import scan_horizontal_with_live_camera
-    print("✅ Escáner horizontal simple importado exitosamente")
-    
     AI_MODULES_AVAILABLE = True
-    print("✅ Todos los módulos de IA disponibles")
+    print("✅ Módulos de corrección de IA disponibles")
 except ImportError as e:
-    print(f"❌ Error importando módulos de IA: {e}")
+    print(f"❌ Error importando módulos de corrección: {e}")
     import traceback
     traceback.print_exc()
     AI_MODULES_AVAILABLE = False
 except Exception as e:
-    print(f"❌ Error inesperado en imports: {e}")
+    print(f"❌ Error inesperado en imports de corrección: {e}")
     import traceback
     traceback.print_exc()
     AI_MODULES_AVAILABLE = False
+
+# Importar escáner horizontal autónomo (independiente)
+SCANNER_AVAILABLE = False
+scan_horizontal_with_live_camera = None
+
+try:
+    print("Intentando importar escáner horizontal...")
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
+    from escaner_standalone import scan_horizontal_with_live_camera
+    SCANNER_AVAILABLE = True
+    print("✅ Escáner horizontal autónomo importado exitosamente")
+except ImportError as e:
+    print(f"❌ Error importando escáner: {e}")
+    SCANNER_AVAILABLE = False
+except Exception as e:
+    print(f"❌ Error inesperado en import de escáner: {e}")
+    SCANNER_AVAILABLE = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -876,30 +889,37 @@ def menu_interactivo(uart_manager, robot):
             print(f"✅ Estado cambiado: Robot ahora está {estado}")
             print(f"Las trayectorias mover_lechuga -> recoger_lechuga usarán el comportamiento para {estado.lower()}")
         elif opcion == '12':
-            if AI_MODULES_AVAILABLE:
+            if SCANNER_AVAILABLE:
                 print("\n" + "="*60)
-                print("ESCANEADO HORIZONTAL CON CAMARA EN VIVO")
+                print("ESCANEADO HORIZONTAL AUTONOMO")
                 print("="*60)
-                print("• Presiona 'q' en la ventana de video para terminar antes")
-                print("-"*60)
-
-                try:
+                
+                user_input = input("¿Iniciar escaneado horizontal? (s/N): ").lower()
+                if user_input == 's':
                     print("Iniciando escaneado horizontal...")
-                    success = scan_horizontal_with_live_camera(robot)
                     
-                    if success:
-                        print("\nESCANEADO COMPLETADO EXITOSAMENTE")
-                        print("El robot completó el recorrido horizontal completo")
-                    else:
-                        print("\nESCANEADO FALLÓ")
-                        print("Revisa los mensajes de error anteriores")
-                        
-                except Exception as e:
-                    print(f"\nError inesperado en escaneado: {e}")
+                    try:
+                        success = scan_horizontal_with_live_camera(robot)
+                        if success:
+                            print("✅ Escaneado completado exitosamente")
+                        else:
+                            print("❌ El escaneado se completó con errores")
+                    except KeyboardInterrupt:
+                        print("\n🛑 Escaneado interrumpido por el usuario")
+                    except Exception as e:
+                        print(f"❌ Error durante el escaneado: {e}")
+                        import traceback
+                        traceback.print_exc()
+                    
+                    # Mensaje de seguridad
+                    print("\n⚠️ IMPORTANTE: Verificar que el robot esté en posición segura")
+                    print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
+                    
+                else:
                     print("El escaneado se ha detenido por seguridad")
 
             else:
-                print("Módulos de IA no disponibles. No se puede ejecutar escaneado.")
+                print("Escáner horizontal no disponible. Verificar imports.")
         elif opcion == '0':
             print("Saliendo...")
             break
