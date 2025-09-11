@@ -106,11 +106,10 @@ def scan_horizontal_with_live_camera(robot):
                     # Procesar frame básico
                     processed = process_frame_simple(frame)
                     
-                    # Detección ultra-simple
+                    # Detectar cinta
                     if detect_dark_object(processed):
                         # Obtener posición actual
-                        current_pos = robot.get_current_position_relative()
-                        current_x = current_pos['position_mm']['x']
+                        current_x = robot.global_position['x']
                         
                         # Cooldown simple
                         if last_detection_pos[0] is None or abs(current_x - last_detection_pos[0]) > 50:
@@ -211,41 +210,66 @@ def process_frame_simple(frame):
         return frame
 
 def detect_dark_object(frame):
-    """Detección ultra-simple de objetos oscuros"""
+    """Detección mejorada de cintas negras"""
     try:
         if frame is None:
             return False
         
-        # Convertir a gris
+        # Convertir a escala de grises
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         
-        # Threshold para objetos oscuros
-        _, binary = cv2.threshold(gray, 70, 255, cv2.THRESH_BINARY_INV)
+        # Aplicar múltiples thresholds para captar diferentes niveles de negro
+        _, binary1 = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY_INV)  # Muy oscuro
+        _, binary2 = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY_INV)  # Moderadamente oscuro
+        _, binary3 = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV) # Menos oscuro
+        
+        # Combinar los binarios (OR lógico)
+        binary_combined = cv2.bitwise_or(cv2.bitwise_or(binary1, binary2), binary3)
+        
+        # Aplicar operaciones morfológicas para limpiar ruido
+        kernel = np.ones((3,3), np.uint8)
+        binary_cleaned = cv2.morphologyEx(binary_combined, cv2.MORPH_CLOSE, kernel)
+        binary_cleaned = cv2.morphologyEx(binary_cleaned, cv2.MORPH_OPEN, kernel)
         
         # Encontrar contornos
-        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(binary_cleaned, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         if not contours:
             return False
         
-        # Buscar contorno significativo en el centro
+        # Parámetros de detección más permisivos
         frame_center_x = frame.shape[1] // 2
-        center_tolerance = 50
+        frame_center_y = frame.shape[0] // 2
+        center_tolerance = 80  # Más permisivo
+        min_area = 100  # Área mínima reducida
         
         for contour in contours:
             area = cv2.contourArea(contour)
-            if area > 300:  # Área mínima
+            
+            if area > min_area:
                 x, y, w, h = cv2.boundingRect(contour)
                 center_x = x + w // 2
+                center_y = y + h // 2
                 
-                # Verificar si está cerca del centro
-                if abs(center_x - frame_center_x) < center_tolerance:
-                    # Verificar forma vertical (cinta)
-                    if h > w * 1.2:  # Más alto que ancho
-                        return True
+                # Verificar si está en la zona central (más permisivo)
+                if (abs(center_x - frame_center_x) < center_tolerance and 
+                    abs(center_y - frame_center_y) < frame.shape[0] // 2):
+                    
+                    # Criterios más flexibles para forma de cinta
+                    aspect_ratio = h / w if w > 0 else 0
+                    
+                    # Aceptar tanto cintas verticales como horizontales
+                    if (aspect_ratio > 0.8 or  # Vertical o cuadrada
+                        (w > h * 0.8 and w < frame.shape[1] * 0.8)):  # Horizontal pero no muy ancha
+                        
+                        # Verificar que no sea todo el frame
+                        frame_coverage = (w * h) / (frame.shape[0] * frame.shape[1])
+                        if frame_coverage < 0.7:  # No cubrir más del 70% del frame
+                            return True
         
         return False
-    except:
+        
+    except Exception as e:
         return False
 
 def show_results(detections):
