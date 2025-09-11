@@ -14,6 +14,7 @@ from camera_manager import get_camera_manager
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
 
 try:
     print("Intentando importar detectores horizontal y vertical...")
@@ -33,6 +34,10 @@ try:
         detect_tape_position_vertical_debug
     )
     print("✅ Detector vertical importado exitosamente")
+    
+    # Importar escáner horizontal
+    from escaner_horizontal import scan_horizontal_with_live_camera
+    print("✅ Escáner horizontal importado exitosamente")
     
     AI_MODULES_AVAILABLE = True
     print("✅ Todos los módulos de IA disponibles")
@@ -710,11 +715,12 @@ def menu_interactivo(uart_manager, robot):
         print("9.  Menu avanzado del brazo")
         print("10. Prueba correccion IA (Horizontal + Vertical)")
         print(f"11. Toggle Lechuga {'ON' if lettuce_on else 'OFF'} (Estado: {'Con lechuga' if lettuce_on else 'Sin lechuga'})")
+        print("12. Escaneado horizontal con camara en vivo")
         print("-"*60)
         print("0.  Salir")
         print("-"*60)
         
-        opcion = input("Selecciona opción (0-11): ")
+        opcion = input("Selecciona opción (0-12): ")
 
         if opcion == '1':
             x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
@@ -868,6 +874,31 @@ def menu_interactivo(uart_manager, robot):
             estado = 'CON lechuga' if lettuce_on else 'SIN lechuga'
             print(f"✅ Estado cambiado: Robot ahora está {estado}")
             print(f"Las trayectorias mover_lechuga -> recoger_lechuga usarán el comportamiento para {estado.lower()}")
+        elif opcion == '12':
+            if AI_MODULES_AVAILABLE:
+                print("\n" + "="*60)
+                print("ESCANEADO HORIZONTAL CON CAMARA EN VIVO")
+                print("="*60)
+                print("• Presiona 'q' en la ventana de video para terminar antes")
+                print("-"*60)
+
+                try:
+                    print("Iniciando escaneado horizontal...")
+                    success = scan_horizontal_with_live_camera(robot)
+                    
+                    if success:
+                        print("\nESCANEADO COMPLETADO EXITOSAMENTE")
+                        print("El robot completó el recorrido horizontal completo")
+                    else:
+                        print("\nESCANEADO FALLÓ")
+                        print("Revisa los mensajes de error anteriores")
+                        
+                except Exception as e:
+                    print(f"\nError inesperado en escaneado: {e}")
+                    print("El escaneado se ha detenido por seguridad")
+
+            else:
+                print("Módulos de IA no disponibles. No se puede ejecutar escaneado.")
         elif opcion == '0':
             print("Saliendo...")
             break
