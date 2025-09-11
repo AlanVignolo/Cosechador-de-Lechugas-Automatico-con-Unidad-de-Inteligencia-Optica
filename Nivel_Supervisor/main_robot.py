@@ -35,9 +35,10 @@ try:
     )
     print("✅ Detector vertical importado exitosamente")
     
-    # Importar escáner horizontal
-    from escaner_horizontal import scan_horizontal_with_live_camera
-    print("✅ Escáner horizontal importado exitosamente")
+    # Importar escáner horizontal simple
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
+    from escaner_horizontal_simple import scan_horizontal_with_live_camera
+    print("✅ Escáner horizontal simple importado exitosamente")
     
     AI_MODULES_AVAILABLE = True
     print("✅ Todos los módulos de IA disponibles")
