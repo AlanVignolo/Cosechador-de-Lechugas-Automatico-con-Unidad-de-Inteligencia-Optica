@@ -112,8 +112,8 @@ def scan_horizontal_with_live_camera(robot):
                         # Obtener posición actual
                         current_x = robot.global_position['x']
                         
-                        # Cooldown simple
-                        if last_detection_pos[0] is None or abs(current_x - last_detection_pos[0]) > 50:
+                        # Cooldown reducido para permitir más detecciones
+                        if last_detection_pos[0] is None or abs(current_x - last_detection_pos[0]) > 20:
                             detection_count += 1
                             detection = {
                                 'number': detection_count,
@@ -228,13 +228,26 @@ def detect_sophisticated_tape(frame):
             frame_center_x = frame.shape[1] // 2
             distance_from_center = abs(tape_center_x - frame_center_x)
             
-            # Tolerancia más permisiva para el escáner (60 píxeles vs 30 para posicionamiento)
-            if distance_from_center <= 60:
+            # Debug: Imprimir información de candidatos encontrados
+            print(f"🔍 DEBUG: {len(candidates)} candidatos, mejor en x={tape_center_x}, centro={frame_center_x}, dist={distance_from_center}")
+            
+            # Tolerancia más permisiva para el escáner (80 píxeles vs 30 para posicionamiento)
+            if distance_from_center <= 80:
+                print(f"✅ DEBUG: Cinta aceptada (dist={distance_from_center} <= 80)")
+                return True
+            else:
+                print(f"❌ DEBUG: Cinta rechazada (dist={distance_from_center} > 80)")
+        else:
+            # Intentar con detección básica si no hay candidatos sofisticados
+            basic_result = detect_basic_fallback(frame)
+            if basic_result:
+                print("🔄 DEBUG: Detectado con algoritmo básico")
                 return True
         
         return False
         
     except Exception as e:
+        print(f"⚠️ DEBUG: Error en detector sofisticado: {e}")
         # Si falla el detector sofisticado, usar detección básica como respaldo
         return detect_basic_fallback(frame)
 
