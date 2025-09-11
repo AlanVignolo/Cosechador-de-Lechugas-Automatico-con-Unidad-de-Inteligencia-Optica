@@ -153,9 +153,9 @@ class HorizontalScanner:
             
             robot.cmd.uart.set_limit_callback(on_limit_callback)
             
-            # Mover hacia el switch derecho (movimiento hacia la derecha)
+            # Mover hacia el switch derecho (X negativos)
             print("   Moviendo hacia switch derecho...")
-            result = robot.cmd.move_xy(2000, 0)  # Hacia la derecha - debería alcanzar límite antes
+            result = robot.cmd.move_xy(-2000, 0)  # Hacia X negativos (switch derecho)
             
             # Esperar límite derecho
             limit_message = robot.cmd.uart.wait_for_limit(timeout=30.0)
@@ -167,7 +167,7 @@ class HorizontalScanner:
             
             # 3. Retroceder 1cm
             print("Fase 2: Retrocediendo 1cm desde el switch...")
-            result = robot.cmd.move_xy(-10, 0)  # 10mm hacia la izquierda (alejarse del switch derecho)
+            result = robot.cmd.move_xy(10, 0)  # 10mm hacia X positivos (alejarse del switch derecho)
             if not result["success"]:
                 print(f"Error en retroceso: {result}")
                 return False
@@ -184,8 +184,8 @@ class HorizontalScanner:
             limit_reached = {"reached": False, "type": None}
             robot.cmd.uart.set_limit_callback(on_limit_callback)
             
-            # Mover hacia el switch izquierdo (movimiento hacia la izquierda) - DISTANCIA MUY LARGA
-            result = robot.cmd.move_xy(-2000, 0)  # 2000mm hacia la izquierda - debería alcanzar límite antes
+            # Mover hacia el switch izquierdo (X positivos) - DISTANCIA MUY LARGA
+            result = robot.cmd.move_xy(2000, 0)  # 2000mm hacia X positivos (switch izquierdo)
             
             # Esperar límite izquierdo
             print("   Esperando alcanzar límite izquierdo...")
