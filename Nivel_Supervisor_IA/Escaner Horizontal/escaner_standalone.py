@@ -13,6 +13,7 @@ import numpy as np
 # Solo importar lo esencial del sistema
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'config'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Correccion Posicion Horizontal'))
 
 def scan_horizontal_with_live_camera(robot):
     """
@@ -103,11 +104,11 @@ def scan_horizontal_with_live_camera(robot):
                         time.sleep(0.1)
                         continue
                     
-                    # Procesar frame básico
-                    processed = process_frame_simple(frame)
+                    # Procesar frame como el sistema de posicionamiento
+                    processed = process_frame_for_detection(frame)
                     
-                    # Detectar cinta
-                    if detect_dark_object(processed):
+                    # Usar el detector sofisticado del sistema de posicionamiento
+                    if detect_sophisticated_tape(processed):
                         # Obtener posición actual
                         current_x = robot.global_position['x']
                         
@@ -191,26 +192,54 @@ def scan_horizontal_with_live_camera(robot):
         except:
             pass
 
-def process_frame_simple(frame):
-    """Procesar frame de forma ultra-simple"""
+def process_frame_for_detection(frame):
+    """Procesar frame igual que el sistema de posicionamiento"""
     try:
-        # Rotar 90° anti-horario
-        rotated = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        # Rotar 90° anti-horario (igual que tape_detector_horizontal)
+        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
-        # Recortar zona central
-        h, w = rotated.shape[:2]
-        x1 = w // 4
-        x2 = 3 * w // 4
-        y1 = h // 4
-        y2 = 3 * h // 4
+        # Aplicar el mismo recorte que usa el detector de posicionamiento
+        alto, ancho = frame_rotado.shape[:2]
+        x1 = int(ancho * 0.2)
+        x2 = int(ancho * 0.8)
+        y1 = int(alto * 0.3)
+        y2 = int(alto * 0.7)
         
-        cropped = rotated[y1:y2, x1:x2]
-        return cropped
+        frame_recortado = frame_rotado[y1:y2, x1:x2]
+        return frame_recortado
     except:
         return frame
 
-def detect_dark_object(frame):
-    """Detección mejorada de cintas negras"""
+def detect_sophisticated_tape(frame):
+    """Usar el mismo algoritmo sofisticado del sistema de posicionamiento"""
+    try:
+        # Importar el detector sofisticado dentro de la función para evitar errores de import
+        from tape_detector_horizontal import detect_tape_position
+        
+        # Usar el detector sofisticado
+        candidates = detect_tape_position(frame, debug=False)
+        
+        if candidates:
+            # Si hay candidatos válidos, considerar como detección exitosa
+            best_candidate = candidates[0]
+            
+            # Verificar que la cinta esté razonablemente centrada
+            tape_center_x = best_candidate['base_center_x']
+            frame_center_x = frame.shape[1] // 2
+            distance_from_center = abs(tape_center_x - frame_center_x)
+            
+            # Tolerancia más permisiva para el escáner (60 píxeles vs 30 para posicionamiento)
+            if distance_from_center <= 60:
+                return True
+        
+        return False
+        
+    except Exception as e:
+        # Si falla el detector sofisticado, usar detección básica como respaldo
+        return detect_basic_fallback(frame)
+
+def detect_basic_fallback(frame):
+    """Detección básica como respaldo si falla el sistema sofisticado"""
     try:
         if frame is None:
             return False
@@ -218,58 +247,33 @@ def detect_dark_object(frame):
         # Convertir a escala de grises
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         
-        # Aplicar múltiples thresholds para captar diferentes niveles de negro
-        _, binary1 = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY_INV)  # Muy oscuro
-        _, binary2 = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY_INV)  # Moderadamente oscuro
-        _, binary3 = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV) # Menos oscuro
-        
-        # Combinar los binarios (OR lógico)
-        binary_combined = cv2.bitwise_or(cv2.bitwise_or(binary1, binary2), binary3)
-        
-        # Aplicar operaciones morfológicas para limpiar ruido
-        kernel = np.ones((3,3), np.uint8)
-        binary_cleaned = cv2.morphologyEx(binary_combined, cv2.MORPH_CLOSE, kernel)
-        binary_cleaned = cv2.morphologyEx(binary_cleaned, cv2.MORPH_OPEN, kernel)
+        # Threshold para objetos oscuros
+        _, binary = cv2.threshold(gray, 70, 255, cv2.THRESH_BINARY_INV)
         
         # Encontrar contornos
-        contours, _ = cv2.findContours(binary_cleaned, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         if not contours:
             return False
         
-        # Parámetros de detección más permisivos
+        # Buscar contorno significativo en el centro
         frame_center_x = frame.shape[1] // 2
-        frame_center_y = frame.shape[0] // 2
-        center_tolerance = 80  # Más permisivo
-        min_area = 100  # Área mínima reducida
+        center_tolerance = 60
         
         for contour in contours:
             area = cv2.contourArea(contour)
-            
-            if area > min_area:
+            if area > 200:  # Área mínima
                 x, y, w, h = cv2.boundingRect(contour)
                 center_x = x + w // 2
-                center_y = y + h // 2
                 
-                # Verificar si está en la zona central (más permisivo)
-                if (abs(center_x - frame_center_x) < center_tolerance and 
-                    abs(center_y - frame_center_y) < frame.shape[0] // 2):
-                    
-                    # Criterios más flexibles para forma de cinta
-                    aspect_ratio = h / w if w > 0 else 0
-                    
-                    # Aceptar tanto cintas verticales como horizontales
-                    if (aspect_ratio > 0.8 or  # Vertical o cuadrada
-                        (w > h * 0.8 and w < frame.shape[1] * 0.8)):  # Horizontal pero no muy ancha
-                        
-                        # Verificar que no sea todo el frame
-                        frame_coverage = (w * h) / (frame.shape[0] * frame.shape[1])
-                        if frame_coverage < 0.7:  # No cubrir más del 70% del frame
-                            return True
+                # Verificar si está cerca del centro
+                if abs(center_x - frame_center_x) < center_tolerance:
+                    # Verificar forma vertical (cinta)
+                    if h > w * 0.8:  # Más alto que ancho o similar
+                        return True
         
         return False
-        
-    except Exception as e:
+    except:
         return False
 
 def show_results(detections):
