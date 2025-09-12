@@ -86,6 +86,11 @@ def scan_horizontal_with_live_camera(robot):
         time.sleep(2)
         print("✅ Retroceso completado")
         
+        # Resetear posición global para que coincida con x=0 del escáner
+        # Esto hace que las coordenadas relativas funcionen correctamente
+        robot.reset_global_position(0.0, robot.global_position['y'])
+        print("📍 Posición de inicio del escáner establecida en x=0")
+        
         # Iniciar detección básica
         print("📍 FASE 3: Iniciando escaneado con video...")
         print("🎥 Video activo - Mostrando feed de cámara")
@@ -93,8 +98,72 @@ def scan_horizontal_with_live_camera(robot):
         is_scanning[0] = True
         last_detection_pos = [None]
         
+        # Sistema de tracking de estados para flags
+        detection_state = {
+            'current_state': None,  # 'accepted' | 'rejected' | None
+            'position_buffer': [],
+            'tape_segments': [],
+            'flag_count': 0
+        }
+        
+        def send_flag_for_state_change(state_type, position):
+            """Enviar flag al firmware para marcar cambio de estado"""
+            try:
+                detection_state['flag_count'] += 1
+                flag_id = detection_state['flag_count']
+                
+                # Enviar comando RP (snapshot) al firmware
+                result = robot.cmd.get_movement_progress()
+                if result.get("success"):
+                    print(f"🚩 FLAG #{flag_id} enviado - {state_type} en x={position:.1f}mm")
+                    return flag_id
+                else:
+                    print(f"❌ Error enviando flag: {result}")
+                    return None
+            except Exception as e:
+                print(f"❌ Error en send_flag: {e}")
+                return None
+        
+        def process_detection_state(is_accepted, current_pos):
+            """Procesar cambios de estado de detección y enviar flags"""
+            new_state = 'accepted' if is_accepted else 'rejected'
+            
+            # Detectar cambio de estado
+            if detection_state['current_state'] != new_state:
+                if detection_state['current_state'] == 'rejected' and new_state == 'accepted':
+                    # INICIO de cinta
+                    flag_id = send_flag_for_state_change("INICIO_CINTA", current_pos)
+                    detection_state['position_buffer'] = [current_pos]  # Resetear buffer
+                    if flag_id:
+                        detection_state['tape_segments'].append({
+                            'start_flag': flag_id,
+                            'start_pos': current_pos,
+                            'positions': [current_pos]
+                        })
+                
+                elif detection_state['current_state'] == 'accepted' and new_state == 'rejected':
+                    # FIN de cinta
+                    flag_id = send_flag_for_state_change("FIN_CINTA", current_pos)
+                    if flag_id and detection_state['tape_segments']:
+                        # Actualizar último segmento
+                        last_segment = detection_state['tape_segments'][-1]
+                        last_segment['end_flag'] = flag_id
+                        last_segment['end_pos'] = current_pos
+                        
+                        # Calcular posición media del segmento
+                        if detection_state['position_buffer']:
+                            avg_pos = sum(detection_state['position_buffer']) / len(detection_state['position_buffer'])
+                            last_segment['center_pos'] = avg_pos
+                            print(f"📏 CINTA COMPLETADA - Centro: {avg_pos:.1f}mm (de {len(detection_state['position_buffer'])} muestras)")
+                
+                detection_state['current_state'] = new_state
+            
+            # Acumular posiciones durante estado 'accepted'
+            if new_state == 'accepted':
+                detection_state['position_buffer'].append(current_pos)
+        
         def video_loop():
-            """Bucle de video simple"""
+            """Bucle de video con detección de estados"""
             detection_count = 0
             
             while is_scanning[0]:
@@ -107,30 +176,30 @@ def scan_horizontal_with_live_camera(robot):
                     # Procesar frame como el sistema de posicionamiento
                     processed = process_frame_for_detection(frame)
                     
+                    # Obtener posición actual
+                    current_x = robot.global_position['x']
+                    
                     # Usar el detector sofisticado del sistema de posicionamiento
-                    if detect_sophisticated_tape(processed):
-                        # Obtener posición actual
-                        current_x = robot.global_position['x']
-                        
-                        # Cooldown reducido para permitir más detecciones
-                        if last_detection_pos[0] is None or abs(current_x - last_detection_pos[0]) > 20:
-                            detection_count += 1
-                            detection = {
-                                'number': detection_count,
-                                'position_mm': current_x,
-                                'timestamp': time.time()
-                            }
-                            detections.append(detection)
-                            last_detection_pos[0] = current_x
-                            
-                            print(f"🎯 CINTA #{detection_count} - Posición: {current_x:.1f}mm")
-                            
-                            # Marcar en video
-                            cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 15, (0, 255, 0), 3)
+                    is_tape_detected = detect_sophisticated_tape(processed)
+                    
+                    # Procesar cambios de estado y enviar flags
+                    process_detection_state(is_tape_detected, current_x)
+                    
+                    # Marcar detección en video
+                    if is_tape_detected:
+                        cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 15, (0, 255, 0), 3)
+                        cv2.putText(processed, "CINTA DETECTADA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    else:
+                        cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 10, (0, 0, 255), 2)
+                        cv2.putText(processed, "SIN CINTA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                     
                     # Mostrar info en video
-                    cv2.putText(processed, f"ESCANER - Detecciones: {len(detections)}", 
+                    cv2.putText(processed, f"ESCANER - Flags: {detection_state['flag_count']}", 
                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    cv2.putText(processed, f"Segmentos: {len(detection_state['tape_segments'])}", 
+                               (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    cv2.putText(processed, f"Posicion: {current_x:.1f}mm", 
+                               (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                     cv2.putText(processed, "ESC para detener", 
                                (10, processed.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                     
@@ -169,7 +238,7 @@ def scan_horizontal_with_live_camera(robot):
         print("✅ Límite izquierdo alcanzado - Escaneado completo")
         
         # Mostrar resultados
-        show_results(detections)
+        show_results(detections, detection_state)
         
         return True
         
@@ -289,32 +358,50 @@ def detect_basic_fallback(frame):
     except:
         return False
 
-def show_results(detections):
-    """Mostrar resultados del escaneo"""
-    print(f"\n{'='*60}")
-    print("🎯 RESULTADOS DEL ESCANEADO")
-    print(f"{'='*60}")
-    
-    if not detections:
-        print("❌ No se detectaron cintas")
+def show_results(detections, detection_state):
+    """Mostrar resultados del escaneo con información de flags"""
+    # Generar reporte final con sistema de flags
+    print("\n" + "="*60)
+    print("📊 REPORTE FINAL DEL ESCANEADO CON FLAGS")
+    print("="*60)
+    print(f"🚩 Total de flags enviados: {detection_state['flag_count']}")
+    print(f"📏 Segmentos de cinta detectados: {len(detection_state['tape_segments'])}")
+        
+    if detection_state['tape_segments']:
+        print("\n🎯 CINTAS DETECTADAS CON POSICIONES CALCULADAS:")
+        for i, segment in enumerate(detection_state['tape_segments'], 1):
+            start_pos = segment.get('start_pos', 'N/A')
+            end_pos = segment.get('end_pos', 'En progreso')
+            center_pos = segment.get('center_pos', 'Calculando...')
+            start_flag = segment.get('start_flag', 'N/A')
+            end_flag = segment.get('end_flag', 'N/A')
+                
+            print(f"   📏 CINTA #{i}:")
+            print(f"      🚩 Flags: Inicio={start_flag}, Fin={end_flag}")
+            if isinstance(center_pos, (int, float)):
+                print(f"      📍 Posiciones: Inicio={start_pos:.1f}mm, Fin={end_pos}, Centro={center_pos:.1f}mm")
+            else:
+                print(f"      📍 Posiciones: Inicio={start_pos}mm, Fin={end_pos}, Centro={center_pos}")
+            print(f"      📊 Muestras procesadas: {len(segment.get('positions', []))}")
     else:
-        print(f"✅ Se detectaron {len(detections)} cintas:")
-        print(f"{'#':<3} {'Posición (mm)':<15}")
-        print("-" * 25)
+        print("❌ No se detectaron cintas completas")
         
-        for detection in detections:
-            number = detection['number']
-            position = detection['position_mm']
-            print(f"{number:<3} {position:<15.1f}")
+    # Crear reporte compatible con sistema anterior para retrocompatibilidad
+    legacy_detections = []
+    for i, segment in enumerate(detection_state['tape_segments'], 1):
+        if 'center_pos' in segment:
+            legacy_detections.append({
+                'number': i,
+                'position_mm': segment['center_pos'],
+                'timestamp': time.time(),
+                'flags': {
+                    'start': segment.get('start_flag'),
+                    'end': segment.get('end_flag')
+                },
+                'positions_sampled': len(segment.get('positions', []))
+            })
         
-        if len(detections) > 1:
-            distances = []
-            for i in range(1, len(detections)):
-                dist = abs(detections[i]['position_mm'] - detections[i-1]['position_mm'])
-                distances.append(dist)
-            
-            avg_distance = sum(distances) / len(distances)
-            print(f"\n📏 Distancia promedio: {avg_distance:.1f}mm")
+    return legacy_detections
     
     print(f"{'='*60}")
 

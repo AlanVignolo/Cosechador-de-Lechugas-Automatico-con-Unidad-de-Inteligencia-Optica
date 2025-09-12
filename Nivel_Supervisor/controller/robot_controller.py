@@ -14,6 +14,7 @@ class RobotController:
         
         self.current_position = {"x": 0.0, "y": 0.0}
         self.global_position = {"x": 0.0, "y": 0.0}  # Posición global acumulada
+        self.workspace_dimensions = {"width_mm": 0.0, "height_mm": 0.0, "calibrated": False}  # Dimensiones del workspace
         self.arm_servo1_pos = 90
         self.arm_servo2_pos = 90  
         self.gripper_state = "unknown"
@@ -32,6 +33,9 @@ class RobotController:
             if not self._load_current_position():
                 # Si no hay posición guardada, usar la del homing reference
                 pass
+        
+        # Cargar dimensiones del workspace si existen
+        self._load_workspace_dimensions()
         
         # Solicitar estado inicial del sistema
         self._request_system_status()
@@ -130,6 +134,63 @@ class RobotController:
         except Exception as e:
             self.logger.error(f"Error guardando referencia de homing: {e}")
             return False
+    
+    def _save_workspace_dimensions(self, measurements: Dict):
+        """Guardar dimensiones del workspace medidas durante calibración"""
+        workspace_file = os.path.join(os.path.dirname(__file__), '..', 'workspace_dimensions.json')
+        data = {
+            'timestamp': time.time(),
+            'width_mm': measurements.get('horizontal_mm', 0.0),
+            'height_mm': measurements.get('vertical_mm', 0.0),
+            'width_steps': measurements.get('horizontal_steps', 0),
+            'height_steps': measurements.get('vertical_steps', 0),
+            'calibrated': True,
+            'steps_per_mm_h': RobotConfig.STEPS_PER_MM_H,
+            'steps_per_mm_v': RobotConfig.STEPS_PER_MM_V
+        }
+        
+        try:
+            with open(workspace_file, 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            # Actualizar dimensiones en memoria
+            self.workspace_dimensions = {
+                'width_mm': data['width_mm'],
+                'height_mm': data['height_mm'],
+                'calibrated': True
+            }
+            
+            self.logger.info(f"Dimensiones del workspace guardadas: {data['width_mm']:.1f}mm x {data['height_mm']:.1f}mm")
+            return True
+        except Exception as e:
+            self.logger.error(f"Error guardando dimensiones del workspace: {e}")
+            return False
+    
+    def _load_workspace_dimensions(self):
+        """Cargar dimensiones del workspace desde archivo"""
+        workspace_file = os.path.join(os.path.dirname(__file__), '..', 'workspace_dimensions.json')
+        try:
+            if os.path.exists(workspace_file):
+                with open(workspace_file, 'r') as f:
+                    data = json.load(f)
+                
+                if data.get('calibrated', False):
+                    self.workspace_dimensions = {
+                        'width_mm': data.get('width_mm', 0.0),
+                        'height_mm': data.get('height_mm', 0.0),
+                        'calibrated': True
+                    }
+                    self.logger.info(f"✅ Dimensiones del workspace cargadas: {self.workspace_dimensions['width_mm']:.1f}mm x {self.workspace_dimensions['height_mm']:.1f}mm")
+                    print(f"✅ Workspace: {self.workspace_dimensions['width_mm']:.1f}mm x {self.workspace_dimensions['height_mm']:.1f}mm")
+                    return True
+        except Exception as e:
+            self.logger.warning(f"Error cargando dimensiones del workspace: {e}")
+        
+        return False
+    
+    def get_workspace_dimensions(self) -> Dict:
+        """Obtener las dimensiones actuales del workspace"""
+        return self.workspace_dimensions.copy()
     
     def _save_current_position(self):
         """Guardar posición actual después de cada movimiento"""
@@ -468,6 +529,14 @@ class RobotController:
             if "vertical_mm" in measurements:
                 print(f"Workspace Vertical: {measurements['vertical_mm']:.1f}mm ({measurements['vertical_steps']} pasos)")
             print("=" * 35)
+            
+            # Guardar dimensiones del workspace
+            if measurements:
+                print("Guardando dimensiones del workspace...")
+                if self._save_workspace_dimensions(measurements):
+                    print("   Dimensiones guardadas exitosamente")
+                else:
+                    print("   Error guardando dimensiones (continuando)")
             
             return {"success": True, "message": "Calibración completada", "measurements": measurements}
             
