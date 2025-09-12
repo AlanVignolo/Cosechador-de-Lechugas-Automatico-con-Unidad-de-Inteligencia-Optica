@@ -91,27 +91,9 @@ def scan_horizontal_with_live_camera(robot):
         robot.cmd.set_velocities(2000, 2000)
         print("Velocidades configuradas para escaneado")
         
-        # POSICIONAMIENTO EN Y SEGÚN TUBO SELECCIONADO
-        print(f"\nFASE 1: Posicionándose en {selected_tubo['nombre']}...")
-        
-        # Mover a la altura Y del tubo seleccionado
-        current_y = robot.global_position['y']
-        target_y = selected_tubo['y_mm']
-        delta_y = target_y - current_y
-        
-        if abs(delta_y) > 5:  # Solo mover si la diferencia es significativa
-            print(f"   Moviendo de Y={current_y:.1f}mm a Y={target_y}mm...")
-            result = robot.cmd.move_xy(0, delta_y)
-            if not result["success"]:
-                print(f"Error moviendo a posición Y: {result}")
-                return False
-            time.sleep(2)
-            print(f"Posicionado en Y={target_y}mm")
-        else:
-            print(f"Ya en posición correcta Y={target_y}mm")
-        
         # SECUENCIA DE MOVIMIENTO HORIZONTAL
-        print("\nFASE 2: Posicionándose en el inicio horizontal...")
+        print(f"\nFASE 1: Posicionándose en el inicio horizontal...")
+        print(f"Nota: Robot escaneará {selected_tubo['nombre']} en posición Y actual")
         
         # Ir al switch derecho (X negativos)
         print("   Moviendo hacia switch derecho...")
