@@ -306,6 +306,17 @@ def scan_horizontal_with_live_camera(robot):
             else:
                 print("Error guardando cintas en matriz")
         
+        # Restaurar velocidades normales antes de retornar
+        print("Restaurando velocidades normales...")
+        try:
+            robot.cmd.set_velocities(
+                RobotConfig.get_normal_speed_x(),
+                RobotConfig.get_normal_speed_y()
+            )
+            print("Velocidades normales restauradas")
+        except Exception as e:
+            print(f"Error restaurando velocidades: {e}")
+        
         return True
         
     except Exception as e:
@@ -314,18 +325,32 @@ def scan_horizontal_with_live_camera(robot):
         traceback.print_exc()
         return False
     finally:
-        # Limpiar recursos
+        # Limpiar recursos y restaurar velocidades SIEMPRE
+        print("Limpiando recursos finales...")
+        
         try:
             is_scanning[0] = False
+        except:
+            pass
+            
+        try:
             camera_mgr.stop_video_stream()
             cv2.destroyAllWindows()
+        except:
+            pass
+        
+        # CRÍTICO: Siempre restaurar velocidades normales
+        try:
+            print("Restaurando velocidades finales...")
             robot.cmd.set_velocities(
                 RobotConfig.get_normal_speed_x(),
                 RobotConfig.get_normal_speed_y()
             )
-            print("Recursos liberados")
-        except:
-            pass
+            print("Velocidades finales restauradas correctamente")
+        except Exception as e:
+            print(f"ERROR CRÍTICO restaurando velocidades finales: {e}")
+        
+        print("Recursos liberados")
 
 def correlate_flags_with_snapshots(detection_state):
     """Correlacionar flags con snapshots para obtener posiciones reales"""
