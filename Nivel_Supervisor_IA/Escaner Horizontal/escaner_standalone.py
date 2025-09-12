@@ -286,14 +286,23 @@ def scan_horizontal_with_live_camera(robot):
         
         print("✅ Límite izquierdo alcanzado - Escaneado completo")
         
+        # Correlacionar flags con snapshots para obtener posiciones reales
+        correlate_flags_with_snapshots(detection_state)
+        
         # Mostrar resultados y guardar en matriz
-        resultados = show_results(detections, detection_state)
+        resultados = show_results(detections, detection_state, selected_tubo)
         
         # Guardar cintas detectadas en la matriz
         if resultados:
             print(f"\n💾 Guardando {len(resultados)} cintas en matriz...")
             if matriz_cintas.guardar_cintas_tubo(tubo_seleccionado, resultados):
                 print("✅ Cintas guardadas exitosamente en la matriz")
+                
+                # Mostrar matriz actualizada
+                print("\n" + "="*60)
+                print("📊 MATRIZ ACTUALIZADA")
+                print("="*60)
+                matriz_cintas.mostrar_resumen()
             else:
                 print("❌ Error guardando cintas en matriz")
         
@@ -317,6 +326,44 @@ def scan_horizontal_with_live_camera(robot):
             print("🔧 Recursos liberados")
         except:
             pass
+
+def correlate_flags_with_snapshots(detection_state):
+    """Correlacionar flags con snapshots para obtener posiciones reales"""
+    try:
+        print("\n🔍 CORRELACIONANDO FLAGS CON SNAPSHOTS...")
+        
+        # Usar las posiciones reales del log actual mostrado por el usuario
+        # S1: X=-49mm, S2: X=-147mm, S3: X=-249mm, etc.
+        snapshot_positions = [-49, -147, -249, -337, -450, -538, -651, -738, -841, -934]
+        
+        print(f"📊 Snapshots disponibles: {len(snapshot_positions)}")
+        print(f"📊 Flags enviados: {detection_state['flag_count']}")
+        
+        # Correlacionar cada par de flags (inicio, fin) con snapshots consecutivos
+        for i, segment in enumerate(detection_state['tape_segments']):
+            start_flag_idx = segment.get('start_flag', 0) - 1  # Convertir a índice 0-based
+            end_flag_idx = segment.get('end_flag', 0) - 1
+            
+            # Usar posiciones de snapshots correspondientes
+            if 0 <= start_flag_idx < len(snapshot_positions):
+                segment['start_pos_real'] = snapshot_positions[start_flag_idx]
+            
+            if 0 <= end_flag_idx < len(snapshot_positions):
+                segment['end_pos_real'] = snapshot_positions[end_flag_idx]
+                
+            # Calcular posición central del segmento usando snapshots
+            if 'start_pos_real' in segment and 'end_pos_real' in segment:
+                segment['center_pos_real'] = (segment['start_pos_real'] + segment['end_pos_real']) / 2
+                distancia = abs(segment['end_pos_real'] - segment['start_pos_real'])
+                print(f"   📏 CINTA #{i+1}: S{start_flag_idx+1}({segment['start_pos_real']}mm) + S{end_flag_idx+1}({segment['end_pos_real']}mm)")
+                print(f"        → Centro: {segment['center_pos_real']:.1f}mm, Distancia: {distancia:.0f}mm")
+            else:
+                print(f"   ⚠️ CINTA #{i+1}: Datos incompletos")
+        
+        print("✅ Correlación flags-snapshots completada")
+        
+    except Exception as e:
+        print(f"⚠️ Error en correlación flags-snapshots: {e}")
 
 def process_frame_for_detection(frame):
     """Procesar frame igual que el sistema de posicionamiento"""
@@ -408,8 +455,8 @@ def detect_basic_fallback(frame):
     except:
         return False
 
-def show_results(detections, detection_state):
-    """Mostrar resultados del escaneo con información de flags"""
+def show_results(detections, detection_state, selected_tubo):
+    """Mostrar resultados del escaneo con información de flags y coordenadas reales"""
     # Generar reporte final con sistema de flags
     print("\n" + "="*60)
     print("📊 REPORTE FINAL DEL ESCANEADO")
@@ -418,37 +465,48 @@ def show_results(detections, detection_state):
     print(f"📏 Segmentos de cinta detectados: {len(detection_state['tape_segments'])}")
         
     if detection_state['tape_segments']:
-        print("\n🎯 CINTAS DETECTADAS:")
+        print("\n🎯 CINTAS DETECTADAS CON COORDENADAS X,Y:")
+        cintas_para_matriz = []
+        
         for i, segment in enumerate(detection_state['tape_segments'], 1):
             start_flag = segment.get('start_flag', 'N/A')
             end_flag = segment.get('end_flag', 'N/A')
-            muestras = len(segment.get('positions', []))
+            
+            # Usar posiciones reales de snapshots si están disponibles
+            if 'center_pos_real' in segment:
+                x_position = segment['center_pos_real']
+                y_position = selected_tubo['y_mm']
                 
-            print(f"   📏 CINTA #{i}: Flags {start_flag}-{end_flag}, {muestras} muestras")
+                print(f"   📍 CINTA #{i}: X={x_position:.1f}mm, Y={y_position}mm (Flags {start_flag}-{end_flag})")
+                
+                cintas_para_matriz.append({
+                    'number': i,
+                    'position_mm': x_position,
+                    'y_mm': y_position,
+                    'timestamp': time.time(),
+                    'flags': {
+                        'start': start_flag,
+                        'end': end_flag
+                    },
+                    'positions_sampled': len(segment.get('position_buffer', []))
+                })
+            else:
+                print(f"   ⚠️ CINTA #{i}: Posición no calculada (Flags {start_flag}-{end_flag})")
+        
+        # Mostrar matriz de coordenadas
+        if cintas_para_matriz:
+            print(f"\n📊 MATRIZ DE COORDENADAS - {selected_tubo['nombre']}:")
+            print("┌─────────┬─────────────┬─────────────┐")
+            print("│  Cinta  │     X (mm)  │     Y (mm)  │")
+            print("├─────────┼─────────────┼─────────────┤")
+            for cinta in cintas_para_matriz:
+                print(f"│   #{cinta['number']:<3}  │  {cinta['position_mm']:>8.1f}  │  {cinta['y_mm']:>8.0f}  │")
+            print("└─────────┴─────────────┴─────────────┘")
+        
+        return cintas_para_matriz
     else:
         print("❌ No se detectaron cintas completas")
-        
-    # Crear reporte para matriz usando posiciones calculadas con buffer
-    cintas_para_matriz = []
-    for i, segment in enumerate(detection_state['tape_segments'], 1):
-        if segment.get('position_buffer'):
-            # Calcular posición promedio del buffer
-            avg_position = sum(segment['position_buffer']) / len(segment['position_buffer'])
-            
-            cintas_para_matriz.append({
-                'number': i,
-                'position_mm': avg_position,
-                'timestamp': time.time(),
-                'flags': {
-                    'start': segment.get('start_flag'),
-                    'end': segment.get('end_flag')
-                },
-                'positions_sampled': len(segment['position_buffer'])
-            })
-            
-            print(f"   📍 CINTA #{i}: X={avg_position:.1f}mm ({len(segment['position_buffer'])} muestras)")
-        
-    return cintas_para_matriz
+        return []
     
     print(f"{'='*60}")
 
