@@ -348,8 +348,8 @@ def correlate_flags_with_snapshots(detection_state):
         print("\nCORRELACIONANDO FLAGS CON SNAPSHOTS...")
         
         # Usar las posiciones reales del log actual más reciente
-        # S1: X=-24mm, S2: X=-30mm, S3: X=-45mm, S4: X=-138mm, etc.
-        snapshot_positions = [-24, -30, -45, -138, -250, -338, -446, -538, -647, -739]
+        # S1: X=-47mm, S2: X=-139mm, S3: X=-247mm, S4: X=-340mm, etc.
+        snapshot_positions = [-47, -139, -247, -340, -448, -541, -649, -742, -840, -943]
         
         print(f"Snapshots disponibles: {len(snapshot_positions)}")
         print(f"Flags enviados: {detection_state['flag_count']}")
@@ -368,10 +368,12 @@ def correlate_flags_with_snapshots(detection_state):
                 
             # Calcular posición central del segmento usando snapshots
             if 'start_pos_real' in segment and 'end_pos_real' in segment:
-                segment['center_pos_real'] = (segment['start_pos_real'] + segment['end_pos_real']) / 2
+                center_raw = (segment['start_pos_real'] + segment['end_pos_real']) / 2
+                # Convertir coordenadas negativas a positivas para el sistema
+                segment['center_pos_real'] = abs(center_raw)
                 distancia = abs(segment['end_pos_real'] - segment['start_pos_real'])
                 print(f"   CINTA #{i+1}: S{start_flag_idx+1}({segment['start_pos_real']}mm) + S{end_flag_idx+1}({segment['end_pos_real']}mm)")
-                print(f"        → Centro: {segment['center_pos_real']:.1f}mm, Distancia: {distancia:.0f}mm")
+                print(f"        → Centro: {center_raw:.1f}mm → Positivo: {segment['center_pos_real']:.1f}mm, Distancia: {distancia:.0f}mm")
             else:
                 print(f"   CINTA #{i+1}: Datos incompletos")
         
