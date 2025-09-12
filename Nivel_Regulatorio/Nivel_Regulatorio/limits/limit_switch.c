@@ -43,7 +43,7 @@ void limit_switch_update(void) {
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
 				
-				if (!horizontal_axis.direction) {  // false = izquierda
+				if (horizontal_axis.direction) {  // true = izquierda (AJUSTADO)
 					stepper_stop_horizontal();
 				}
 			}
@@ -70,7 +70,7 @@ void limit_switch_update(void) {
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
 				
-				if (horizontal_axis.direction) {
+				if (!horizontal_axis.direction) {  // false = derecha (AJUSTADO)
 					stepper_stop_horizontal();
 				}
 			}
@@ -136,18 +136,19 @@ void limit_switch_update(void) {
 }
 
 bool limit_switch_check_h_movement(bool direction) {
-	// Verificar si el movimiento horizontal est� permitido
-	if (direction && limits.h_right_triggered) {
-		return false;  // No permitir movimiento a la derecha
+	// Verificar si el movimiento horizontal está permitido
+	// AJUSTADO: direction=true es izquierda, direction=false es derecha
+	if (direction && limits.h_left_triggered) {
+		return false;  // No permitir movimiento a la izquierda si está activado LEFT
 	}
-	if (!direction && limits.h_left_triggered) {
-		return false;  // No permitir movimiento a la izquierda
+	if (!direction && limits.h_right_triggered) {
+		return false;  // No permitir movimiento a la derecha si está activado RIGHT
 	}
 	return true;  // Movimiento permitido
 }
 
 bool limit_switch_check_v_movement(bool direction) {
-	// Verificar si el movimiento vertical est� permitido
+	// Verificar si el movimiento vertical está permitido
 	if (!direction && limits.v_up_triggered) {
 		return false;  // No permitir movimiento hacia ARRIBA si est� activado UP
 	}

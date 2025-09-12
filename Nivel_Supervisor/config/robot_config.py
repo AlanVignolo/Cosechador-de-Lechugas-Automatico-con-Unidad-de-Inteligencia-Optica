@@ -5,7 +5,7 @@ class RobotConfig:
     
     # ---- INVERSIÓN DE EJES ----
     # Cambiar estas flags para invertir direcciones sin modificar código
-    X_AXIS_INVERTED = True   # True = invertir eje X (izquierda es positivo)
+    X_AXIS_INVERTED = False  # False = firmware ya actualizado para coincidir con supervisor (X+ izquierda)
     Y_AXIS_INVERTED = False  # False = normal (arriba es negativo)
     
     # ---- PLATAFORMA ----
