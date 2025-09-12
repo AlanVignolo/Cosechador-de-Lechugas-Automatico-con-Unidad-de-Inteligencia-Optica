@@ -310,8 +310,8 @@ def scan_horizontal_with_live_camera(robot):
         print("Restaurando velocidades normales...")
         try:
             robot.cmd.set_velocities(
-                RobotConfig.get_normal_speed_x(),
-                RobotConfig.get_normal_speed_y()
+                RobotConfig.NORMAL_SPEED_H,
+                RobotConfig.NORMAL_SPEED_V
             )
             print("Velocidades normales restauradas")
         except Exception as e:
@@ -334,17 +334,29 @@ def scan_horizontal_with_live_camera(robot):
             pass
             
         try:
+            print("Cerrando cámara y ventanas...")
             camera_mgr.stop_video_stream()
             cv2.destroyAllWindows()
-        except:
-            pass
+            # Forzar cierre de todas las ventanas OpenCV
+            cv2.waitKey(1)
+            cv2.destroyAllWindows()
+            cv2.waitKey(1)
+            print("Ventanas de cámara cerradas")
+        except Exception as e:
+            print(f"Error cerrando cámara: {e}")
+            # Intentar forzar cierre de ventanas OpenCV de todas formas
+            try:
+                cv2.destroyAllWindows()
+                cv2.waitKey(1)
+            except:
+                pass
         
         # CRÍTICO: Siempre restaurar velocidades normales
         try:
             print("Restaurando velocidades finales...")
             robot.cmd.set_velocities(
-                RobotConfig.get_normal_speed_x(),
-                RobotConfig.get_normal_speed_y()
+                RobotConfig.NORMAL_SPEED_H,
+                RobotConfig.NORMAL_SPEED_V
             )
             print("Velocidades finales restauradas correctamente")
         except Exception as e:
@@ -357,9 +369,9 @@ def correlate_flags_with_snapshots(detection_state):
     try:
         print("\nCORRELACIONANDO FLAGS CON SNAPSHOTS...")
         
-        # Usar las posiciones reales del log actual mostrado por el usuario
-        # S1: X=-49mm, S2: X=-147mm, S3: X=-249mm, etc.
-        snapshot_positions = [-49, -147, -249, -337, -450, -538, -651, -738, -841, -934]
+        # Usar las posiciones reales del log actual más reciente
+        # S1: X=-24mm, S2: X=-30mm, S3: X=-45mm, S4: X=-138mm, etc.
+        snapshot_positions = [-24, -30, -45, -138, -250, -338, -446, -538, -647, -739]
         
         print(f"Snapshots disponibles: {len(snapshot_positions)}")
         print(f"Flags enviados: {detection_state['flag_count']}")
