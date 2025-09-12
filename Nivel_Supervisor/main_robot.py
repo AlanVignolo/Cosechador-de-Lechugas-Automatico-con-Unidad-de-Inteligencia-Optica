@@ -890,34 +890,22 @@ def menu_interactivo(uart_manager, robot):
             print(f"Las trayectorias mover_lechuga -> recoger_lechuga usarán el comportamiento para {estado.lower()}")
         elif opcion == '12':
             if SCANNER_AVAILABLE:
-                print("\n" + "="*60)
-                print("ESCANEADO HORIZONTAL AUTONOMO")
-                print("="*60)
+                try:
+                    success = scan_horizontal_with_live_camera(robot)
+                    if success:
+                        print("✅ Escaneado completado exitosamente")
+                    else:
+                        print("❌ El escaneado se completó con errores")
+                except KeyboardInterrupt:
+                    print("\n🛑 Escaneado interrumpido por el usuario")
+                except Exception as e:
+                    print(f"❌ Error durante el escaneado: {e}")
+                    import traceback
+                    traceback.print_exc()
                 
-                user_input = input("¿Iniciar escaneado horizontal? (s/N): ").lower()
-                if user_input == 's':
-                    print("Iniciando escaneado horizontal...")
-                    
-                    try:
-                        success = scan_horizontal_with_live_camera(robot)
-                        if success:
-                            print("✅ Escaneado completado exitosamente")
-                        else:
-                            print("❌ El escaneado se completó con errores")
-                    except KeyboardInterrupt:
-                        print("\n🛑 Escaneado interrumpido por el usuario")
-                    except Exception as e:
-                        print(f"❌ Error durante el escaneado: {e}")
-                        import traceback
-                        traceback.print_exc()
-                    
-                    # Mensaje de seguridad
-                    print("\n⚠️ IMPORTANTE: Verificar que el robot esté en posición segura")
-                    print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
-                    
-                else:
-                    print("El escaneado se ha detenido por seguridad")
-
+                # Mensaje de seguridad
+                print("\n⚠️ IMPORTANTE: Verificar que el robot esté en posición segura")
+                print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
             else:
                 print("Escáner horizontal no disponible. Verificar imports.")
         elif opcion == '0':

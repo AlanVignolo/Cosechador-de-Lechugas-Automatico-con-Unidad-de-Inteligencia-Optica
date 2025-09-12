@@ -17,12 +17,42 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Correccion Posici
 
 def scan_horizontal_with_live_camera(robot):
     """
-    Función principal de escaneo horizontal autónoma
-    Sin dependencias complejas - todo integrado
+    Función principal de escaneo horizontal autónoma con matriz de cintas
     """
     print("\n" + "="*60)
     print("ESCANEADO HORIZONTAL AUTONOMO")
     print("="*60)
+    
+    # Importar sistema de matriz
+    import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Analizar Cultivo'))
+    from matriz_cintas import matriz_cintas
+    
+    # Mostrar resumen actual
+    matriz_cintas.mostrar_resumen()
+    
+    # Selección de tubo
+    print("\n🔴 SELECCIÓN DE TUBO:")
+    print("1. Tubo 1 (Y=300mm)")
+    print("2. Tubo 2 (Y=600mm)")
+    
+    while True:
+        try:
+            tubo_seleccionado = int(input("Seleccione tubo (1-2): "))
+            if tubo_seleccionado in [1, 2]:
+                break
+            else:
+                print("❌ Opción inválida. Seleccione 1 o 2.")
+        except ValueError:
+            print("❌ Por favor ingrese un número válido.")
+    
+    tubo_config = {
+        1: {"y_mm": 300, "nombre": "Tubo 1"},
+        2: {"y_mm": 600, "nombre": "Tubo 2"}
+    }
+    
+    selected_tubo = tubo_config[tubo_seleccionado]
+    print(f"✅ Seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
     
     try:
         # Importar solo lo necesario dentro de la función
@@ -61,8 +91,27 @@ def scan_horizontal_with_live_camera(robot):
         robot.cmd.set_velocities(2000, 2000)
         print("✅ Velocidades configuradas para escaneado")
         
-        # SECUENCIA DE MOVIMIENTO
-        print("\n📍 FASE 1: Posicionándose en el inicio...")
+        # POSICIONAMIENTO EN Y SEGÚN TUBO SELECCIONADO
+        print(f"\n📍 FASE 1: Posicionándose en {selected_tubo['nombre']}...")
+        
+        # Mover a la altura Y del tubo seleccionado
+        current_y = robot.global_position['y']
+        target_y = selected_tubo['y_mm']
+        delta_y = target_y - current_y
+        
+        if abs(delta_y) > 5:  # Solo mover si la diferencia es significativa
+            print(f"   Moviendo de Y={current_y:.1f}mm a Y={target_y}mm...")
+            result = robot.cmd.move_xy(0, delta_y)
+            if not result["success"]:
+                print(f"❌ Error moviendo a posición Y: {result}")
+                return False
+            time.sleep(2)
+            print(f"✅ Posicionado en Y={target_y}mm")
+        else:
+            print(f"✅ Ya en posición correcta Y={target_y}mm")
+        
+        # SECUENCIA DE MOVIMIENTO HORIZONTAL
+        print("\n📍 FASE 2: Posicionándose en el inicio horizontal...")
         
         # Ir al switch derecho (X negativos)
         print("   Moviendo hacia switch derecho...")
@@ -77,7 +126,7 @@ def scan_horizontal_with_live_camera(robot):
         print("✅ Límite derecho alcanzado")
         
         # Retroceder 1cm
-        print("📍 FASE 2: Retrocediendo 1cm...")
+        print("📍 FASE 3: Retrocediendo 1cm...")
         result = robot.cmd.move_xy(10, 0)
         if not result["success"]:
             print(f"❌ Error en retroceso: {result}")
@@ -92,7 +141,7 @@ def scan_horizontal_with_live_camera(robot):
         print("📍 Posición de inicio del escáner establecida en x=0")
         
         # Iniciar detección básica
-        print("📍 FASE 3: Iniciando escaneado con video...")
+        print("📍 FASE 4: Iniciando escaneado con video...")
         print("🎥 Video activo - Mostrando feed de cámara")
         
         is_scanning[0] = True
@@ -237,8 +286,16 @@ def scan_horizontal_with_live_camera(robot):
         
         print("✅ Límite izquierdo alcanzado - Escaneado completo")
         
-        # Mostrar resultados
-        show_results(detections, detection_state)
+        # Mostrar resultados y guardar en matriz
+        resultados = show_results(detections, detection_state)
+        
+        # Guardar cintas detectadas en la matriz
+        if resultados:
+            print(f"\n💾 Guardando {len(resultados)} cintas en matriz...")
+            if matriz_cintas.guardar_cintas_tubo(tubo_seleccionado, resultados):
+                print("✅ Cintas guardadas exitosamente en la matriz")
+            else:
+                print("❌ Error guardando cintas en matriz")
         
         return True
         
@@ -297,26 +354,19 @@ def detect_sophisticated_tape(frame):
             frame_center_x = frame.shape[1] // 2
             distance_from_center = abs(tape_center_x - frame_center_x)
             
-            # Debug: Imprimir información de candidatos encontrados
-            print(f"🔍 DEBUG: {len(candidates)} candidatos, mejor en x={tape_center_x}, centro={frame_center_x}, dist={distance_from_center}")
-            
             # Tolerancia más permisiva para el escáner (80 píxeles vs 30 para posicionamiento)
             if distance_from_center <= 80:
-                print(f"✅ DEBUG: Cinta aceptada (dist={distance_from_center} <= 80)")
                 return True
-            else:
-                print(f"❌ DEBUG: Cinta rechazada (dist={distance_from_center} > 80)")
         else:
             # Intentar con detección básica si no hay candidatos sofisticados
             basic_result = detect_basic_fallback(frame)
             if basic_result:
-                print("🔄 DEBUG: Detectado con algoritmo básico")
                 return True
         
         return False
         
     except Exception as e:
-        print(f"⚠️ DEBUG: Error en detector sofisticado: {e}")
+        print(f"⚠️ Error en detector: {e}")
         # Si falla el detector sofisticado, usar detección básica como respaldo
         return detect_basic_fallback(frame)
 
@@ -362,46 +412,43 @@ def show_results(detections, detection_state):
     """Mostrar resultados del escaneo con información de flags"""
     # Generar reporte final con sistema de flags
     print("\n" + "="*60)
-    print("📊 REPORTE FINAL DEL ESCANEADO CON FLAGS")
+    print("📊 REPORTE FINAL DEL ESCANEADO")
     print("="*60)
     print(f"🚩 Total de flags enviados: {detection_state['flag_count']}")
     print(f"📏 Segmentos de cinta detectados: {len(detection_state['tape_segments'])}")
         
     if detection_state['tape_segments']:
-        print("\n🎯 CINTAS DETECTADAS CON POSICIONES CALCULADAS:")
+        print("\n🎯 CINTAS DETECTADAS:")
         for i, segment in enumerate(detection_state['tape_segments'], 1):
-            start_pos = segment.get('start_pos', 'N/A')
-            end_pos = segment.get('end_pos', 'En progreso')
-            center_pos = segment.get('center_pos', 'Calculando...')
             start_flag = segment.get('start_flag', 'N/A')
             end_flag = segment.get('end_flag', 'N/A')
+            muestras = len(segment.get('positions', []))
                 
-            print(f"   📏 CINTA #{i}:")
-            print(f"      🚩 Flags: Inicio={start_flag}, Fin={end_flag}")
-            if isinstance(center_pos, (int, float)):
-                print(f"      📍 Posiciones: Inicio={start_pos:.1f}mm, Fin={end_pos}, Centro={center_pos:.1f}mm")
-            else:
-                print(f"      📍 Posiciones: Inicio={start_pos}mm, Fin={end_pos}, Centro={center_pos}")
-            print(f"      📊 Muestras procesadas: {len(segment.get('positions', []))}")
+            print(f"   📏 CINTA #{i}: Flags {start_flag}-{end_flag}, {muestras} muestras")
     else:
         print("❌ No se detectaron cintas completas")
         
-    # Crear reporte compatible con sistema anterior para retrocompatibilidad
-    legacy_detections = []
+    # Crear reporte para matriz usando posiciones calculadas con buffer
+    cintas_para_matriz = []
     for i, segment in enumerate(detection_state['tape_segments'], 1):
-        if 'center_pos' in segment:
-            legacy_detections.append({
+        if segment.get('position_buffer'):
+            # Calcular posición promedio del buffer
+            avg_position = sum(segment['position_buffer']) / len(segment['position_buffer'])
+            
+            cintas_para_matriz.append({
                 'number': i,
-                'position_mm': segment['center_pos'],
+                'position_mm': avg_position,
                 'timestamp': time.time(),
                 'flags': {
                     'start': segment.get('start_flag'),
                     'end': segment.get('end_flag')
                 },
-                'positions_sampled': len(segment.get('positions', []))
+                'positions_sampled': len(segment['position_buffer'])
             })
+            
+            print(f"   📍 CINTA #{i}: X={avg_position:.1f}mm ({len(segment['position_buffer'])} muestras)")
         
-    return legacy_detections
+    return cintas_para_matriz
     
     print(f"{'='*60}")
 
