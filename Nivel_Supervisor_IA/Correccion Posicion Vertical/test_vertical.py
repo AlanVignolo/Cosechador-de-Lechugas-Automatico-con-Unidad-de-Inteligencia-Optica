@@ -20,11 +20,11 @@ def create_linear_calibration():
         print(f"✓ Cargados {len(calibration_data)} puntos de calibración")
         
     except FileNotFoundError:
-        print("❌ No se encontró calibracion_vertical.json")
+        print("No se encontró calibracion_vertical.json")
         print("Primero ejecuta manual_vertical_calibration.py para crear los datos")
         return None
     except Exception as e:
-        print(f"❌ Error cargando datos: {e}")
+        print(f"Error cargando datos: {e}")
         return None
     
     # Extraer datos
@@ -88,7 +88,7 @@ def load_calibration():
             calibration = json.load(f)
         return calibration['coefficients']['a'], calibration['coefficients']['b']
     except:
-        print("❌ No se encontró calibracion_vertical_lineal.json")
+        print("No se encontró calibracion_vertical_lineal.json")
         print("Ejecuta create_linear_calibration() primero")
         return None, None
 
@@ -116,13 +116,13 @@ def measure_vertical_distance():
         # Tomar foto con tu código de detección vertical
         image = capture_new_image()
         if image is None:
-            print("❌ Sin imagen")
+            print("Sin imagen")
             continue
         
         # Detectar con tu IA vertical
         candidates = detect_tape_position(image, debug=False)
         if not candidates:
-            print("❌ No se detectó cinta")
+            print("No se detectó cinta")
             continue
         
         # Calcular distancia vertical en píxeles
@@ -135,7 +135,7 @@ def measure_vertical_distance():
         distance_mm = pixels_to_mm_vertical(distance_pixels, a, b)
         
         # Mostrar resultado
-        print(f"\n📏 RESULTADO VERTICAL:")
+        print(f"\nRESULTADO VERTICAL:")
         print(f"  Y detectada:           {detected_y} px")
         print(f"  Y centro cámara:       {img_center_y} px")
         print(f"  Distancia en píxeles:  {distance_pixels:+7.1f} px")
@@ -143,7 +143,7 @@ def measure_vertical_distance():
         print(f"  Confianza IA:          {best['score']:.3f}")
         
         if abs(distance_mm) < 2:
-            print(f"  Estado: ✅ CENTRADO VERTICALMENTE")
+            print(f"  Estado: CENTRADO VERTICALMENTE")
         elif distance_mm > 0:
             print(f"  Estado: ↓ {distance_mm:.1f}mm hacia ABAJO")
         else:

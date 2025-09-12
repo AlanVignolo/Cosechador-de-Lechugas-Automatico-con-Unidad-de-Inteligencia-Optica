@@ -49,7 +49,7 @@ class CommandManager:
     
     def gripper_toggle(self) -> Dict:
         """Accionar gripper - alterna entre abierto y cerrado automáticamente"""
-        print("🔧 Accionando gripper...")
+        print("Accionando gripper...")
         result = self.uart.send_command("GT")
         print(f"   Respuesta: {result.get('response', 'Sin respuesta')}")
         return result

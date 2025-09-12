@@ -10,29 +10,29 @@ def test_imports():
         
         print("   - sqlite3...", end="")
         import sqlite3
-        print(" ✅")
+        print(" OK")
         
         print("   - fastapi...", end="")
         import fastapi
-        print(f" ✅ (v{fastapi.__version__})")
+        print(f" OK (v{fastapi.__version__})")
         
         print("   - uvicorn...", end="")
         import uvicorn
-        print(f" ✅")
+        print(f" OK")
         
         print("   - sqlalchemy...", end="")
         import sqlalchemy
-        print(f" ✅ (v{sqlalchemy.__version__})")
+        print(f" OK (v{sqlalchemy.__version__})")
         
         print("   - pydantic...", end="")
         import pydantic
-        print(f" ✅ (v{pydantic.VERSION})")
+        print(f" OK (v{pydantic.VERSION})")
         
-        print("\n✅ Todos los imports funcionan correctamente!")
+        print("\nTodos los imports funcionan correctamente!")
         return True
         
     except ImportError as e:
-        print(f"\n❌ Error importing: {e}")
+        print(f"\nError importing: {e}")
         return False
 
 def test_database():
@@ -64,14 +64,14 @@ def test_database():
         conn.close()
         
         if result and result[1] == "CLAUDIO":
-            print("✅ SQLite funciona correctamente!")
+            print("SQLite funciona correctamente!")
             return True
         else:
-            print("❌ Error en SQLite")
+            print("Error en SQLite")
             return False
             
     except Exception as e:
-        print(f"❌ Error en SQLite: {e}")
+        print(f"Error en SQLite: {e}")
         return False
 
 def test_basic_api():
@@ -86,15 +86,15 @@ def test_basic_api():
         def root():
             return {"message": "CLAUDIO Test API funciona!"}
         
-        print("✅ FastAPI básico funciona correctamente!")
+        print("FastAPI básico funciona correctamente!")
         return True
         
     except Exception as e:
-        print(f"❌ Error en FastAPI: {e}")
+        print(f"Error en FastAPI: {e}")
         return False
 
 if __name__ == "__main__":
-    print("🚀 CLAUDIO - Test de Dependencias")
+    print("CLAUDIO - Test de Dependencias")
     print("=" * 40)
     
     success = True
@@ -105,10 +105,10 @@ if __name__ == "__main__":
     
     print("\n" + "=" * 40)
     if success:
-        print("🎉 ¡Todo funciona! Puedes ejecutar:")
+        print("¡Todo funciona! Puedes ejecutar:")
         print("   python init_database.py")
         print("   python main.py")
     else:
-        print("❌ Hay problemas. Verifica las dependencias.")
+        print("Hay problemas. Verifica las dependencias.")
     
     print("=" * 40)

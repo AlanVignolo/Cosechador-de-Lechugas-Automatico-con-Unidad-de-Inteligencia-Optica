@@ -19,10 +19,10 @@ def init_database():
         # Verificar si ya hay datos
         estado_existente = db.query(EstadoJardin).first()
         if estado_existente:
-            print("✅ Base de datos ya inicializada")
+            print("Base de datos ya inicializada")
             return
         
-        print("🌱 Creando estado inicial del jardín...")
+        print("Creando estado inicial del jardín...")
         
         # Crear estado inicial
         estado_inicial = EstadoJardin(
@@ -59,7 +59,7 @@ def init_database():
             )
             db.add(historial)
         
-        print("⚙️  Creando configuraciones...")
+        print("Creando configuraciones...")
         
         # Crear configuraciones
         configuraciones_ejemplo = [
@@ -94,13 +94,13 @@ def init_database():
         
         db.commit()
         
-        print("✅ Base de datos inicializada exitosamente!")
-        print(f"📊 Estado del jardín: {estado_inicial.get_seccion1()} | {estado_inicial.get_seccion2()}")
-        print(f"🥬 Lechugas cosechadas: {estado_inicial.lechugas_cosechadas}")
-        print(f"⏱️  Tiempo medio: {estado_inicial.tiempo_medio_crecimiento}")
+        print("Base de datos inicializada exitosamente!")
+        print(f"Estado del jardín: {estado_inicial.get_seccion1()} | {estado_inicial.get_seccion2()}")
+        print(f"Lechugas cosechadas: {estado_inicial.lechugas_cosechadas}")
+        print(f"Tiempo medio: {estado_inicial.tiempo_medio_crecimiento}")
         
     except Exception as e:
-        print(f"❌ Error inicializando base de datos: {e}")
+        print(f"Error inicializando base de datos: {e}")
         db.rollback()
     finally:
         db.close()
@@ -125,7 +125,7 @@ def mostrar_estado_actual():
             print(f"   {accion.timestamp.strftime('%H:%M')} - {accion.accion}: {accion.descripcion} ({accion.resultado})")
             
     except Exception as e:
-        print(f"❌ Error obteniendo estado: {e}")
+        print(f"Error obteniendo estado: {e}")
     finally:
         db.close()
 
@@ -145,21 +145,21 @@ def test_comandos():
         resultado = jardin_service.ejecutar_comando_referenciar(db)
         print(f"   Resultado: {resultado['message']}")
         
-        print("✅ Comandos probados exitosamente!")
+        print("Comandos probados exitosamente!")
         
     except Exception as e:
-        print(f"❌ Error probando comandos: {e}")
+        print(f"Error probando comandos: {e}")
     finally:
         db.close()
 
 if __name__ == "__main__":
-    print("🚀 Inicializando CLAUDIO - Jardín Hidropónico")
+    print("Inicializando CLAUDIO - Jardín Hidropónico")
     print("=" * 50)
     
     init_database()
     mostrar_estado_actual()
     test_comandos()
     
-    print("\n🎉 ¡Listo! Puedes ejecutar la API con:")
+    print("\n¡Listo! Puedes ejecutar la API con:")
     print("   python main.py")
-    print("\n📖 Documentación en: http://localhost:8000/docs")
+    print("\nDocumentación en: http://localhost:8000/docs")

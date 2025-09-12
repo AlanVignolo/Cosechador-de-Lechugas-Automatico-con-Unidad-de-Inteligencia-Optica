@@ -42,6 +42,6 @@ def verificar_y_eliminar_corruptas(dataset_dir, extensiones_validas={'.jpg', '.j
     logging.info(f"Imágenes corruptas eliminadas: {corruptas}")
     logging.info(f"Imágenes válidas restantes: {total - corruptas}")
 
-# ⚠️ Cambiá esta ruta por tu dataset real
+# CAMBIÁ ESTA RUTA POR TU DATASET REAL
 ruta_dataset = "/home/raspberryAlan/proyecto_final/Claudio/Cosechador-de-Lechugas-Automatico-con-Unidad-de-Inteligencia-Optica/Nivel_Supervisor_IA/Analizar Cultivo/Lechugas"
 verificar_y_eliminar_corruptas(ruta_dataset)

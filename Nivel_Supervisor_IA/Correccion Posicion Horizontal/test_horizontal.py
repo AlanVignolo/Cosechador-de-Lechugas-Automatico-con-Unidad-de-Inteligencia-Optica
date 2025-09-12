@@ -46,7 +46,7 @@ def main():
             break
     
     if len(calibration_data) < 3:
-        print("❌ Necesitas al menos 3 puntos")
+        print("Necesitas al menos 3 puntos")
         return
     
     print(f"\n=== DATOS INGRESADOS: {len(calibration_data)} puntos ===")

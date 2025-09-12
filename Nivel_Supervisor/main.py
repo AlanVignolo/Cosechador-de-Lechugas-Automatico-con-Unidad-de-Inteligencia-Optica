@@ -129,13 +129,13 @@ def initialize_robot():
             update_thread = Thread(target=process_updates, daemon=True)
             update_thread.start()
             
-            logger.info("✅ Robot conectado exitosamente")
+            logger.info("Robot conectado exitosamente")
             return True
         else:
-            logger.error("❌ No se pudo conectar al robot")
+            logger.error("No se pudo conectar al robot")
             return False
     except Exception as e:
-        logger.error(f"❌ Error conectando robot: {e}")
+        logger.error(f"Error conectando robot: {e}")
         return False
 
 def get_robot_controller():
@@ -182,7 +182,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("🚀 Iniciando conexión con robot...")
+    logger.info("Iniciando conexión con robot...")
     initialize_robot()
 
 @app.websocket("/ws")
@@ -372,11 +372,11 @@ async def health_check():
     }
 
 if __name__ == "__main__":
-    print("🚀 CLAUDIO - Robot Controller API con WebSockets")
-    print("📱 La API estará disponible en: http://localhost:8000")
-    print("📖 Documentación automática en: http://localhost:8000/docs")
-    print("🔌 WebSocket endpoint: ws://localhost:8000/ws")
-    print("🤖 Conectando robot físico...")
+    print("CLAUDIO - Robot Controller API con WebSockets")
+    print("La API estará disponible en: http://localhost:8000")
+    print("Documentación automática en: http://localhost:8000/docs")
+    print("WebSocket endpoint: ws://localhost:8000/ws")
+    print("Conectando robot físico...")
     
     uvicorn.run(
         "main:app", 

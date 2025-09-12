@@ -76,7 +76,7 @@ def load_calibration():
             calibration = json.load(f)
         return calibration['coefficients']['a'], calibration['coefficients']['b']
     except:
-        print("❌ No se encontró calibracion_horizontal.json")
+        print("No se encontró calibracion_horizontal.json")
         print("Ejecuta create_linear_calibration() primero")
         return None, None
 
@@ -103,13 +103,13 @@ def measure_distance():
         # Tomar foto con tu código
         image = capture_new_image()
         if image is None:
-            print("❌ Sin imagen")
+            print("Sin imagen")
             continue
         
         # Detectar con tu IA
         candidates = find_tape_base_width(image, debug=False)
         if not candidates:
-            print("❌ No se detectó cinta")
+            print("No se detectó cinta")
             continue
         
         # Calcular distancia en píxeles
@@ -121,13 +121,13 @@ def measure_distance():
         distance_mm = pixels_to_mm(distance_pixels, a, b)
         
         # Mostrar resultado
-        print(f"\n📏 RESULTADO:")
+        print(f"\nRESULTADO:")
         print(f"  Distancia en píxeles: {distance_pixels:+7.1f} px")
         print(f"  Distancia REAL:       {distance_mm:+7.1f} mm")
         print(f"  Confianza IA:         {best['score']:.3f}")
         
         if abs(distance_mm) < 2:
-            print(f"  Estado: ✅ CENTRADO")
+            print(f"  Estado: CENTRADO")
         elif distance_mm > 0:
             print(f"  Estado: → {distance_mm:.1f}mm hacia la DERECHA")
         else:

@@ -111,7 +111,7 @@ class HorizontalScanner:
                     self.detections.append(detection)
                     self.last_detection_position = current_x_mm
                     
-                    print(f"🎯 CINTA DETECTADA en posición {current_x_mm:.1f}mm - Confianza: {best_candidate['score']:.2f}")
+                    print(f"CINTA DETECTADA en posición {current_x_mm:.1f}mm - Confianza: {best_candidate['score']:.2f}")
                     
                     # Marcar detección en el frame
                     cv2.circle(frame, (tape_center_x, frame.shape[0]//2), 10, (0, 255, 0), 3)
@@ -150,13 +150,13 @@ class HorizontalScanner:
     def print_detection_summary(self):
         """Muestra un resumen de todas las detecciones realizadas"""
         print(f"\n{'='*60}")
-        print("🎯 RESUMEN DE DETECCIÓN DE CINTAS")
+        print("RESUMEN DE DETECCIÓN DE CINTAS")
         print(f"{'='*60}")
         
         if not self.detections:
-            print("❌ No se detectaron cintas durante el escaneado")
+            print("No se detectaron cintas durante el escaneado")
         else:
-            print(f"✅ Se detectaron {len(self.detections)} cintas:")
+            print(f"Se detectaron {len(self.detections)} cintas:")
             print(f"{'#':<3} {'Posición (mm)':<15} {'Confianza':<12} {'Centro X':<10}")
             print("-" * 50)
             
@@ -175,7 +175,7 @@ class HorizontalScanner:
                     distances.append(dist)
                 
                 avg_distance = sum(distances) / len(distances)
-                print(f"\n📏 Distancia promedio entre cintas: {avg_distance:.1f}mm")
+                print(f"\nDistancia promedio entre cintas: {avg_distance:.1f}mm")
         
         print(f"{'='*60}")
         return self.detections

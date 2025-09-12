@@ -32,18 +32,18 @@ def test_camera_manager():
     print("\n2. Buscando cámara disponible...")
     working_camera = camera_mgr.find_working_camera()
     if working_camera is not None:
-        print(f"   ✅ Cámara encontrada en índice: {working_camera}")
+        print(f"   Cámara encontrada en índice: {working_camera}")
     else:
-        print("   ❌ No se encontró cámara funcional")
+        print("   No se encontró cámara funcional")
         return False
     
     # 3. Inicializar cámara
     print("\n3. Inicializando cámara...")
     success = camera_mgr.initialize_camera(working_camera)
     if success:
-        print("   ✅ Cámara inicializada exitosamente")
+        print("   Cámara inicializada exitosamente")
     else:
-        print("   ❌ Error al inicializar cámara")
+        print("   Error al inicializar cámara")
         return False
     
     # 4. Mostrar información de la cámara inicializada
@@ -58,9 +58,9 @@ def test_camera_manager():
         print(f"   Captura {i+1}/5...", end=" ")
         frame = camera_mgr.capture_frame(timeout=3.0)
         if frame is not None:
-            print(f"✅ {frame.shape[1]}x{frame.shape[0]}")
+            print(f"OK {frame.shape[1]}x{frame.shape[0]}")
         else:
-            print("❌ Error")
+            print("Error")
             return False
         time.sleep(0.5)  # Pausa pequeña entre capturas
     
@@ -68,14 +68,14 @@ def test_camera_manager():
     print("\n6. Probando funciones de conveniencia...")
     frame = capture_frame_safe(timeout=2.0)
     if frame is not None:
-        print(f"   ✅ capture_frame_safe funcionando: {frame.shape[1]}x{frame.shape[0]}")
+        print(f"   capture_frame_safe funcionando: {frame.shape[1]}x{frame.shape[0]}")
     else:
-        print("   ❌ capture_frame_safe falló")
+        print("   capture_frame_safe falló")
     
     # 7. Liberar cámara
     print("\n7. Liberando cámara...")
     camera_mgr.release_camera()
-    print("   ✅ Cámara liberada")
+    print("   Cámara liberada")
     
     # 8. Verificar estado final
     print("\n8. Estado final:")
@@ -84,7 +84,7 @@ def test_camera_manager():
     print(f"   - Último frame: {'Conservado' if status['has_last_frame'] else 'No disponible'}")
     
     print("\n" + "="*60)
-    print("✅ PRUEBA DEL GESTOR DE CÁMARA COMPLETADA EXITOSAMENTE")
+    print("PRUEBA DEL GESTOR DE CÁMARA COMPLETADA EXITOSAMENTE")
     print("="*60)
     return True
 
@@ -102,17 +102,17 @@ def test_ai_integration():
         print("\n1. Probando detector horizontal...")
         frame_h = capture_with_timeout(0, timeout=3.0)
         if frame_h is not None:
-            print(f"   ✅ Detector horizontal funcionando: {frame_h.shape[1]}x{frame_h.shape[0]}")
+            print(f"   Detector horizontal funcionando: {frame_h.shape[1]}x{frame_h.shape[0]}")
         else:
-            print("   ❌ Detector horizontal falló")
+            print("   Detector horizontal falló")
             return False
         
         print("\n2. Probando detector vertical...")
         frame_v = capture_with_timeout_v(0, timeout=3.0)
         if frame_v is not None:
-            print(f"   ✅ Detector vertical funcionando: {frame_v.shape[1]}x{frame_v.shape[0]}")
+            print(f"   Detector vertical funcionando: {frame_v.shape[1]}x{frame_v.shape[0]}")
         else:
-            print("   ❌ Detector vertical falló")
+            print("   Detector vertical falló")
             return False
         
         # Verificar que ambos usan la misma instancia de cámara
@@ -123,15 +123,15 @@ def test_ai_integration():
         print(f"   - Cámara mantenida: {'Sí' if status['has_cap'] and status['cap_opened'] else 'No'}")
         
         print("\n" + "="*60)
-        print("✅ INTEGRACIÓN CON IA FUNCIONANDO CORRECTAMENTE")
+        print("INTEGRACIÓN CON IA FUNCIONANDO CORRECTAMENTE")
         print("="*60)
         return True
         
     except ImportError as e:
-        print(f"   ❌ Error importando módulos de IA: {e}")
+        print(f"   Error importando módulos de IA: {e}")
         return False
     except Exception as e:
-        print(f"   ❌ Error inesperado: {e}")
+        print(f"   Error inesperado: {e}")
         return False
 
 def main():
@@ -146,19 +146,19 @@ def main():
         test2_passed = test_ai_integration()
         
         if test2_passed:
-            print("\n🎉 TODAS LAS PRUEBAS PASARON EXITOSAMENTE")
+            print("\nTODAS LAS PRUEBAS PASARON EXITOSAMENTE")
             print("El gestor centralizado de cámara está funcionando correctamente")
             print("Los módulos de IA están usando el gestor sin problemas")
         else:
-            print("\n❌ PRUEBA DE INTEGRACIÓN CON IA FALLÓ")
+            print("\nPRUEBA DE INTEGRACIÓN CON IA FALLÓ")
     else:
-        print("\n❌ PRUEBA BÁSICA DEL GESTOR FALLÓ")
+        print("\nPRUEBA BÁSICA DEL GESTOR FALLÓ")
     
     # Limpiar recursos finales
     try:
         camera_mgr = get_camera_manager()
         camera_mgr.release_camera()
-        print("\n🧹 Recursos de cámara liberados")
+        print("\nRecursos de cámara liberados")
     except:
         pass
 

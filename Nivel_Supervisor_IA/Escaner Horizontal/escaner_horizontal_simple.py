@@ -37,12 +37,12 @@ class SimpleHorizontalScanner:
         try:
             # Verificar que el robot esté hecho homing
             if not robot.is_homed:
-                print("❌ Error: Robot debe estar hecho homing primero")
+                print("Error: Robot debe estar hecho homing primero")
                 return False
             
             # Verificar posición segura del brazo
             if not robot.arm.is_in_safe_position():
-                print("⚠️ Advertencia: El brazo no está en posición segura")
+                print("Advertencia: El brazo no está en posición segura")
                 user_input = input("¿Continuar de todas formas? (s/N): ").lower()
                 if user_input != 's':
                     print("Operación cancelada por el usuario")
@@ -51,18 +51,18 @@ class SimpleHorizontalScanner:
             # Inicializar cámara
             print("Iniciando cámara...")
             if not self.camera_mgr.initialize_camera():
-                print("❌ Error: No se pudo inicializar la cámara")
+                print("Error: No se pudo inicializar la cámara")
                 return False
             
             if not self.camera_mgr.start_video_stream(fps=8):
-                print("❌ Error: No se pudo iniciar video stream")
+                print("Error: No se pudo iniciar video stream")
                 return False
             
-            print("✅ Cámara iniciada - Resolución y FPS configurados")
+            print("Cámara iniciada - Resolución y FPS configurados")
             
             # Configurar velocidades lentas para el escaneado
             robot.cmd.set_speeds(2000, 2000)  # Velocidad lenta para detectar bien
-            print("✅ Velocidades configuradas para escaneado")
+            print("Velocidades configuradas para escaneado")
             
             # Limpiar detecciones anteriores
             self.detections = []
@@ -77,7 +77,7 @@ class SimpleHorizontalScanner:
             return success
             
         except Exception as e:
-            print(f"❌ Error durante el escaneado: {e}")
+            print(f"Error durante el escaneado: {e}")
             return False
         finally:
             # Limpiar recursos
@@ -89,7 +89,7 @@ class SimpleHorizontalScanner:
                 RobotConfig.get_normal_speed_x(),
                 RobotConfig.get_normal_speed_y()
             )
-            print("🔧 Recursos liberados y velocidades restauradas")
+            print("Recursos liberados y velocidades restauradas")
     
     def _execute_scan_sequence(self, robot):
         """Ejecuta la secuencia completa de escaneado"""
@@ -102,24 +102,24 @@ class SimpleHorizontalScanner:
         # Esperar límite derecho
         limit_message = robot.cmd.uart.wait_for_limit(timeout=30.0)
         if not (limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message):
-            print("❌ Error: No se alcanzó el límite derecho")
+            print("Error: No se alcanzó el límite derecho")
             return False
         
-        print("✅ Límite derecho alcanzado")
+        print("Límite derecho alcanzado")
         
         # Retroceder 1cm
-        print("📍 FASE 2: Retrocediendo 1cm desde el switch...")
+        print("FASE 2: Retrocediendo 1cm desde el switch...")
         result = robot.cmd.move_xy(10, 0)  # 10mm hacia X positivos
         if not result["success"]:
-            print(f"❌ Error en retroceso: {result}")
+            print(f"Error en retroceso: {result}")
             return False
         
         time.sleep(2)
-        print("✅ Retroceso completado")
+        print("Retroceso completado")
         
         # Iniciar detección y movimiento
-        print("📍 FASE 3: Iniciando escaneado con detección...")
-        print("🎥 Cámara activa - Detectando cintas automáticamente")
+        print("FASE 3: Iniciando escaneado con detección...")
+        print("Cámara activa - Detectando cintas automáticamente")
         
         self.is_scanning = True
         
@@ -129,7 +129,7 @@ class SimpleHorizontalScanner:
         video_thread.start()
         
         # Movimiento hacia el switch izquierdo
-        print("🚀 Iniciando movimiento lento hacia switch izquierdo...")
+        print("Iniciando movimiento lento hacia switch izquierdo...")
         result = robot.cmd.move_xy(2000, 0)  # Hacia X positivos
         
         # Esperar límite izquierdo
@@ -140,15 +140,15 @@ class SimpleHorizontalScanner:
         time.sleep(1)  # Dar tiempo para que termine el hilo
         
         if not (limit_message and "LIMIT_H_LEFT_TRIGGERED" in limit_message):
-            print("❌ Error: No se alcanzó el límite izquierdo")
+            print("Error: No se alcanzó el límite izquierdo")
             return False
         
-        print("✅ Límite izquierdo alcanzado - Escaneado completo")
+        print("Límite izquierdo alcanzado - Escaneado completo")
         return True
     
     def _video_detection_loop(self, robot):
         """Bucle de detección en video separado"""
-        print("🎯 Iniciando detección de cintas en tiempo real...")
+        print("Iniciando detección de cintas en tiempo real...")
         
         detection_count = 0
         
@@ -187,7 +187,7 @@ class SimpleHorizontalScanner:
                         self.detections.append(detection_record)
                         self.detector.record_detection(current_x_mm)
                         
-                        print(f"🎯 CINTA #{detection_count} - Posición: {current_x_mm:.1f}mm - Confianza: {detection['confidence']:.2f}")
+                        print(f"CINTA #{detection_count} - Posición: {current_x_mm:.1f}mm - Confianza: {detection['confidence']:.2f}")
                 
                 # Dibujar detección en frame
                 display_frame = self.detector.draw_detection(processed_frame, detection)
@@ -208,11 +208,11 @@ class SimpleHorizontalScanner:
                     break
                 
             except Exception as e:
-                print(f"⚠️ Error en detección: {e}")
+                print(f"Error en detección: {e}")
                 time.sleep(0.1)
         
         cv2.destroyAllWindows()
-        print("🎯 Detección de cintas finalizada")
+        print("Detección de cintas finalizada")
     
     def _process_frame(self, frame):
         """Procesa el frame como el sistema original"""
@@ -231,17 +231,17 @@ class SimpleHorizontalScanner:
     def _print_scan_results(self):
         """Muestra los resultados del escaneo"""
         print(f"\n{'='*60}")
-        print("🎯 RESULTADOS DEL ESCANEADO HORIZONTAL")
+        print("RESULTADOS DEL ESCANEADO HORIZONTAL")
         print(f"{'='*60}")
         
         if not self.detections:
-            print("❌ No se detectaron cintas durante el escaneado")
-            print("💡 Sugerencias:")
+            print("No se detectaron cintas durante el escaneado")
+            print("Sugerencias:")
             print("   - Verificar que hay cintas negras en el tubo")
             print("   - Ajustar iluminación")
             print("   - Verificar posición de la cámara")
         else:
-            print(f"✅ Se detectaron {len(self.detections)} cintas:")
+            print(f"Se detectaron {len(self.detections)} cintas:")
             print(f"{'#':<3} {'Posición (mm)':<15} {'Confianza':<12} {'Centro X':<10}")
             print("-" * 50)
             
@@ -264,9 +264,9 @@ class SimpleHorizontalScanner:
                 min_distance = min(distances)
                 max_distance = max(distances)
                 
-                print(f"\n📏 Distancia promedio entre cintas: {avg_distance:.1f}mm")
-                print(f"📏 Distancia mínima: {min_distance:.1f}mm")
-                print(f"📏 Distancia máxima: {max_distance:.1f}mm")
+                print(f"\nDistancia promedio entre cintas: {avg_distance:.1f}mm")
+                print(f"Distancia mínima: {min_distance:.1f}mm")
+                print(f"Distancia máxima: {max_distance:.1f}mm")
         
         print(f"{'='*60}")
         return self.detections

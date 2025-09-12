@@ -225,7 +225,7 @@ class UARTManager:
             if not snapshots_data:
                 return
                 
-            print("📊 SNAPSHOTS DEL MOVIMIENTO:")
+            print("SNAPSHOTS DEL MOVIMIENTO:")
             print("-" * 40)
             
             snapshot_parts = snapshots_data.split(';')

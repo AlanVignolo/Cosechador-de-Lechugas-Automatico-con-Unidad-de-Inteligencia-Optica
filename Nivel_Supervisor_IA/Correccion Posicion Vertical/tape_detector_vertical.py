@@ -24,18 +24,18 @@ def capture_with_timeout(camera_index, timeout=5.0):
     
     # Inicializar cámara si no está activa
     if not camera_mgr.is_camera_active():
-        print(f"🎥 Inicializando cámara {camera_index}...")
+        print(f"Inicializando cámara {camera_index}...")
         if not camera_mgr.initialize_camera(camera_index):
-            print(f"❌ Error: No se pudo inicializar cámara {camera_index}")
+            print(f"Error: No se pudo inicializar cámara {camera_index}")
             return None
     
     # Capturar frame
     frame = camera_mgr.capture_frame(timeout=timeout, max_retries=3)
     
     if frame is not None:
-        print(f"✅ Frame capturado exitosamente")
+        print(f"Frame capturado exitosamente")
     else:
-        print(f"❌ Error: No se pudo capturar frame")
+        print(f"Error: No se pudo capturar frame")
     
     return frame
 
@@ -43,7 +43,7 @@ def scan_available_cameras():
     """Escanea cámaras disponibles"""
     available_cameras = []
     
-    print("🔍 Escaneando cámaras disponibles...")
+    print("Escaneando cámaras disponibles...")
     
     for i in range(10):
         try:
@@ -57,7 +57,7 @@ def scan_available_cameras():
                         'resolution': f"{w}x{h}",
                         'working': True
                     })
-                    print(f"✅ Cámara {i}: {w}x{h} - FUNCIONAL")
+                    print(f"Cámara {i}: {w}x{h} - FUNCIONAL")
                 cap.release()
         except Exception:
             continue
@@ -283,7 +283,7 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
     
     if not filtered_contours:
         if debug:
-            print("❌ No hay contornos que pasen el pre-filtrado")
+            print("No hay contornos que pasen el pre-filtrado")
         return None
     
     if debug:
@@ -305,7 +305,7 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
     
     if not rectangle_filtered_contours:
         if debug:
-            print("  ❌ Ningún contorno pasó el filtro de rectangularidad")
+            print("  Ningún contorno pasó el filtro de rectangularidad")
         return None
     
     if debug:
@@ -395,7 +395,7 @@ def smart_contour_selection(contours, img_width, img_height, debug=True):
     
     if debug:
         x, y, w, h = best_candidate['bbox']
-        print(f"\n✅ MEJOR CANDIDATO seleccionado:")
+        print(f"\nMEJOR CANDIDATO seleccionado:")
         print(f"    Posición: ({x}, {y}, {w}, {h})")
         print(f"    Score: {best_candidate['score']:.3f}")
     
@@ -423,7 +423,7 @@ def detect_tape_position(image, debug=True):
     
     if not contours:
         if debug:
-            print("❌ No se encontraron contornos")
+            print("No se encontraron contornos")
         return []
     
     # ALGORITMO BASADO EN CALIDAD DE BASE: Evaluar 10% inferior de cada contorno
@@ -519,13 +519,13 @@ def detect_tape_position(image, debug=True):
     
     if best_contour is None:
         if debug:
-            print("❌ No se encontró contorno válido")
+            print("No se encontró contorno válido")
         return []
     
     main_contour = best_contour
     if debug:
         x, y, w, h = cv2.boundingRect(main_contour)
-        print(f"✅ ELEGIDO: {w}x{h} con MEJOR CALIDAD DE BASE (score: {best_score:.3f})")
+        print(f"ELEGIDO: {w}x{h} con MEJOR CALIDAD DE BASE (score: {best_score:.3f})")
     
     # Calcular información del contorno seleccionado
     x, y, w, h = cv2.boundingRect(main_contour)
@@ -565,16 +565,16 @@ def detect_tape_position(image, debug=True):
         base_y = y + h  # Línea base (parte inferior)
         
         if debug:
-            print(f"📏 Contorno completo: {w}x{h}")
-            print(f"📏 Base real (10% inferior): ancho={real_base_width}px, centro={real_center_x}px")
-            print(f"📏 Reducción: {w}px → {real_base_width}px")
+            print(f"Contorno completo: {w}x{h}")
+            print(f"Base real (10% inferior): ancho={real_base_width}px, centro={real_center_x}px")
+            print(f"Reducción: {w}px -> {real_base_width}px")
     else:
         # Fallback: usar contorno completo si falla extracción de base
         real_base_width = w
         real_center_x = x + w // 2
         base_y = y + h
         if debug:
-            print("⚠️ No se pudo extraer base, usando contorno completo")
+            print("No se pudo extraer base, usando contorno completo")
     
     center_x = real_center_x
     base_width = real_base_width
@@ -594,8 +594,8 @@ def detect_tape_position(image, debug=True):
     }
     
     if debug:
-        print(f"✅ Centro detectado en X = {center_x} px")
-        print(f"✅ Base detectada en Y = {base_y} px")
+        print(f"Centro detectado en X = {center_x} px")
+        print(f"Base detectada en Y = {base_y} px")
         print(f"Distancia del centro: {tape_result['distance_from_center_x']} px")
     
     return [tape_result]
@@ -696,12 +696,12 @@ def visualize_vertical_detection(image, candidates):
     
     cv2.imshow('COMPARACIÓN VERTICAL: Nueva Imagen vs Y Detectada', comparison)
     
-    print(f"\n🔍 VENTANAS ABIERTAS (DETECCIÓN VERTICAL):")
+    print(f"\nVENTANAS ABIERTAS (DETECCIÓN VERTICAL):")
     print(f"   1. 'RESULTADO - Detección Vertical Y' (principal)")
     print(f"   2. 'Comparación: Nueva Imagen vs Y Detectada'")
-    print(f"   📏 LÍNEA ROJA = Coordenada Y de la base detectada")
-    print(f"   📍 LÍNEA GRIS = Centro Y de la imagen")
-    print(f"\n👀 Presiona cualquier tecla para continuar...")
+    print(f"   LÍNEA ROJA = Coordenada Y de la base detectada")
+    print(f"   LÍNEA GRIS = Centro Y de la imagen")
+    print(f"\nPresiona cualquier tecla para continuar...")
     
     return result_img
 
@@ -741,7 +741,7 @@ def main():
         distance_vertical = detected_y - img_center_y
         
         print(f"\n=== RESULTADO FINAL DETECCIÓN VERTICAL ===")
-        print(f"✅ BASE de cinta detectada verticalmente!")
+        print(f"BASE de cinta detectada verticalmente!")
         print(f"Y detectada: {detected_y} px")
         print(f"Y centro imagen: {img_center_y} px")
         print(f"Distancia vertical: {distance_vertical:+d} px ({'abajo' if distance_vertical > 0 else 'arriba' if distance_vertical < 0 else 'centrado'})")
@@ -758,7 +758,7 @@ def main():
         }
         
     else:
-        print(f"\n❌ NO SE DETECTÓ BASE DE CINTA VERTICAL")
+        print(f"\nNO SE DETECTÓ BASE DE CINTA VERTICAL")
         print("Posibles causas:")
         print("- La base horizontal no está visible claramente")
         print("- La cinta está muy tapada en la parte inferior")
@@ -792,12 +792,12 @@ def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
     }
     
     # Captura directa - cámara siempre en índice fijo
-    print(f"🎥 Intento 1/3 - Cámara vertical {camera_index}...")
+    print(f"Intento 1/3 - Cámara vertical {camera_index}...")
     
     frame = capture_with_timeout(camera_index, timeout=4.0)
     
     if frame is not None:
-        print(f"✅ Imagen vertical capturada exitosamente desde cámara {camera_index}")
+        print(f"Imagen vertical capturada exitosamente desde cámara {camera_index}")
         
         frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
@@ -837,7 +837,7 @@ def capture_image_for_correction_vertical_debug(camera_index=0, max_retries=1):
         
         return frame_recortado
     else:
-        print("❌ Error: No se pudo capturar imagen vertical")
+        print("Error: No se pudo capturar imagen vertical")
         return None
 
 def detect_tape_position_vertical_debug(image, debug=True):
@@ -848,11 +848,11 @@ def detect_tape_position_vertical_debug(image, debug=True):
     h_img, w_img = image.shape[:2]
     img_center_y = h_img // 2
     
-    print(f"🔍 Analizando imagen vertical: {w_img}x{h_img}, centro Y: {img_center_y}")
+    print(f"Analizando imagen vertical: {w_img}x{h_img}, centro Y: {img_center_y}")
     
     # Mostrar imagen original
     cv2.imshow("DEBUG VERTICAL: Imagen Original", image)
-    print("📷 Imagen para análisis vertical - Presiona 'c' para continuar...")
+    print("Imagen para análisis vertical - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -879,7 +879,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
     # Mostrar threshold
     cv2.imshow("DEBUG VERTICAL: 4. Imagen Binaria", thresh)
     cv2.resizeWindow("DEBUG VERTICAL: 4. Imagen Binaria", 800, 600)
-    print("🎭 4. Threshold aplicado (zonas oscuras) vertical - Presiona 'c' para continuar...")
+    print("4. Threshold aplicado (zonas oscuras) vertical - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -890,14 +890,14 @@ def detect_tape_position_vertical_debug(image, debug=True):
     candidates = detect_tape_position(image, debug=False)  # No debug para evitar duplicar imágenes
     
     if not candidates:
-        print("❌ No se detectó cinta con algoritmo inteligente")
+        print("No se detectó cinta con algoritmo inteligente")
         # Mostrar imagen de no detección
         no_detection_img = image.copy()
         cv2.putText(no_detection_img, "NO SE DETECTÓ CINTA VERTICAL", (50, 50),
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
         cv2.imshow("DEBUG VERTICAL: 5. SIN DETECCION", no_detection_img)
         cv2.resizeWindow("DEBUG VERTICAL: 5. SIN DETECCION", 800, 600)
-        print("❌ 5. No se detectó cinta - Presiona 'c' para continuar...")
+        print("5. No se detectó cinta - Presiona 'c' para continuar...")
         while True:
             key = cv2.waitKey(1) & 0xFF
             if key == ord('c'):
@@ -930,7 +930,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
     # Mostrar detección final
     cv2.imshow("DEBUG VERTICAL: 5. DETECCION FINAL", detection_image)
     cv2.resizeWindow("DEBUG VERTICAL: 5. DETECCION FINAL", 800, 600)
-    print(f"✅ 5. Base detectada en Y={base_y}px (centro imagen={img_center_y}px) - Presiona 'c' para continuar...")
+    print(f"5. Base detectada en Y={base_y}px (centro imagen={img_center_y}px) - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -940,7 +940,7 @@ def detect_tape_position_vertical_debug(image, debug=True):
     # Calcular distancia desde el centro
     distance_pixels = img_center_y - base_y
     
-    print(f"📊 Resultado vertical: base Y={base_y}px, distancia del centro={distance_pixels}px")
+    print(f"Resultado vertical: base Y={base_y}px, distancia del centro={distance_pixels}px")
     
     # Convertir resultado para compatibilidad con main_robot.py
     tape_result = {
@@ -974,7 +974,7 @@ def get_vertical_correction_mm(camera_index=0, offset_y_mm=0.0):
         pixel_result = get_vertical_correction_distance(camera_index)
         
         if not pixel_result['success']:
-            print(f"❌ Error obteniendo corrección vertical: {pixel_result.get('error', 'Desconocido')}")
+            print(f"Error obteniendo corrección vertical: {pixel_result.get('error', 'Desconocido')}")
             return None
             
         distance_pixels = pixel_result['distance_pixels']
@@ -985,7 +985,7 @@ def get_vertical_correction_mm(camera_index=0, offset_y_mm=0.0):
         # Aplicar offset si se proporciona
         final_correction_mm = correction_mm + offset_y_mm
         
-        print(f"🔧 Corrección vertical: {distance_pixels}px -> {correction_mm:.2f}mm (final: {final_correction_mm:.2f}mm)")
+        print(f"Corrección vertical: {distance_pixels}px -> {correction_mm:.2f}mm (final: {final_correction_mm:.2f}mm)")
         
         return final_correction_mm
         

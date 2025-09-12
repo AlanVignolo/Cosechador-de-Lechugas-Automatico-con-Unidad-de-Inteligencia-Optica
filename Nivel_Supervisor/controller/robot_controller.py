@@ -108,8 +108,8 @@ class RobotController:
                     self.current_position = data['position'].copy()
                     self.global_position = data['position'].copy()
                     self.is_homed = True
-                    self.logger.info(f"✅ Referencia de homing cargada: X={self.current_position['x']:.1f}mm, Y={self.current_position['y']:.1f}mm")
-                    print(f"✅ Referencia de homing restaurada desde sesión anterior")
+                    self.logger.info(f"Referencia de homing cargada: X={self.current_position['x']:.1f}mm, Y={self.current_position['y']:.1f}mm")
+                    print(f"Referencia de homing restaurada desde sesión anterior")
                     print(f"   Posición: X={self.current_position['x']:.1f}mm, Y={self.current_position['y']:.1f}mm")
                 else:
                     self.logger.info("Referencia de homing inválida")
@@ -180,8 +180,8 @@ class RobotController:
                         'height_mm': data.get('height_mm', 0.0),
                         'calibrated': True
                     }
-                    self.logger.info(f"✅ Dimensiones del workspace cargadas: {self.workspace_dimensions['width_mm']:.1f}mm x {self.workspace_dimensions['height_mm']:.1f}mm")
-                    print(f"✅ Workspace: {self.workspace_dimensions['width_mm']:.1f}mm x {self.workspace_dimensions['height_mm']:.1f}mm")
+                    self.logger.info(f"Dimensiones del workspace cargadas: {self.workspace_dimensions['width_mm']:.1f}mm x {self.workspace_dimensions['height_mm']:.1f}mm")
+                    print(f"Workspace: {self.workspace_dimensions['width_mm']:.1f}mm x {self.workspace_dimensions['height_mm']:.1f}mm")
                     return True
         except Exception as e:
             self.logger.warning(f"Error cargando dimensiones del workspace: {e}")
@@ -222,8 +222,8 @@ class RobotController:
                     self.global_position = data['position'].copy()
                     display_x = RobotConfig.display_x_position(self.global_position['x'])
                     display_y = RobotConfig.display_y_position(self.global_position['y'])
-                    self.logger.info(f"✅ Posición anterior restaurada: X={display_x}mm, Y={display_y}mm")
-                    print(f"✅ Posición anterior restaurada: X={display_x}mm, Y={display_y}mm")
+                    self.logger.info(f"Posición anterior restaurada: X={display_x}mm, Y={display_y}mm")
+                    print(f"Posición anterior restaurada: X={display_x}mm, Y={display_y}mm")
                     return True
         except Exception as e:
             self.logger.warning(f"Error cargando posición anterior: {e}")
@@ -337,11 +337,11 @@ class RobotController:
     def move_to_absolute(self, x: float, y: float) -> Dict:
         """Mover a posición absoluta (verifica posición segura del brazo)"""
         if not self.is_homed:
-            return {"success": False, "message": "⚠️  Robot no está homed"}
+            return {"success": False, "message": "Robot no está homed"}
         
         # VERIFICAR QUE EL BRAZO ESTÉ EN POSICIÓN SEGURA
         if not self.arm.is_in_safe_position():
-            self.logger.warning("⚠️  Brazo no está en posición segura. Moviendo...")
+            self.logger.warning("Brazo no está en posición segura. Moviendo...")
             result = self.arm.ensure_safe_position()
             if not result["success"]:
                 return {"success": False, "message": "No se pudo mover brazo a posición segura"}

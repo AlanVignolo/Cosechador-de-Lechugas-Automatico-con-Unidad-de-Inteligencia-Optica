@@ -26,7 +26,7 @@ try:
         capture_image_for_correction_debug,
         detect_tape_position_debug
     )
-    print("✅ Detector horizontal importado exitosamente")
+    print("Detector horizontal importado exitosamente")
     
     # Importar funciones verticales
     from tape_detector_vertical import (
@@ -34,17 +34,17 @@ try:
         capture_image_for_correction_vertical_debug,
         detect_tape_position_vertical_debug
     )
-    print("✅ Detector vertical importado exitosamente")
+    print("Detector vertical importado exitosamente")
     
     AI_MODULES_AVAILABLE = True
-    print("✅ Módulos de corrección de IA disponibles")
+    print("Módulos de corrección de IA disponibles")
 except ImportError as e:
-    print(f"❌ Error importando módulos de corrección: {e}")
+    print(f"Error importando módulos de corrección: {e}")
     import traceback
     traceback.print_exc()
     AI_MODULES_AVAILABLE = False
 except Exception as e:
-    print(f"❌ Error inesperado en imports de corrección: {e}")
+    print(f"Error inesperado en imports de corrección: {e}")
     import traceback
     traceback.print_exc()
     AI_MODULES_AVAILABLE = False
@@ -58,12 +58,12 @@ try:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
     from escaner_standalone import scan_horizontal_with_live_camera
     SCANNER_AVAILABLE = True
-    print("✅ Escáner horizontal autónomo importado exitosamente")
+    print("Escáner horizontal autónomo importado exitosamente")
 except ImportError as e:
-    print(f"❌ Error importando escáner: {e}")
+    print(f"Error importando escáner: {e}")
     SCANNER_AVAILABLE = False
 except Exception as e:
-    print(f"❌ Error inesperado en import de escáner: {e}")
+    print(f"Error inesperado en import de escáner: {e}")
     SCANNER_AVAILABLE = False
 
 logging.basicConfig(
@@ -570,7 +570,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     from tape_detector_horizontal import get_horizontal_correction_mm
     from tape_detector_vertical import get_vertical_correction_mm
     
-    print("\n🎯 INICIANDO CORRECCIÓN HORIZONTAL (DEBUG)...")
+    print("\nINICIANDO CORRECCIÓN HORIZONTAL (DEBUG)...")
     
     # Fase 1: Corrección horizontal con debug
     for iteration in range(1, max_iterations + 1):
@@ -619,7 +619,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
             print(f"Movimiento requerido: {move_mm:.2f}mm")
             
             if abs(move_mm) <= tolerance_mm:
-                print(f"✅ Corrección horizontal completada (tolerancia: {tolerance_mm}mm)")
+                print(f"Corrección horizontal completada (tolerancia: {tolerance_mm}mm)")
                 break
             
             print(f"Moviendo robot: X={move_mm:.2f}mm")
@@ -635,7 +635,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     else:
         return {'success': False, 'message': "No se logró corrección horizontal en el número máximo de iteraciones"}
     
-    print("\n🎯 INICIANDO CORRECCIÓN VERTICAL (DEBUG)...")
+    print("\nINICIANDO CORRECCIÓN VERTICAL (DEBUG)...")
     
     # Fase 2: Corrección vertical con debug
     for iteration in range(1, max_iterations + 1):
@@ -687,7 +687,7 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
             print(f"Movimiento requerido: {move_mm_v:.2f}mm")
             
             if abs(move_mm_v) <= tolerance_mm:
-                print(f"✅ Corrección vertical completada (tolerancia: {tolerance_mm}mm)")
+                print(f"Corrección vertical completada (tolerancia: {tolerance_mm}mm)")
                 break
             
             print(f"Moviendo robot: Y={move_mm_v:.2f}mm")
@@ -764,7 +764,7 @@ def menu_interactivo(uart_manager, robot):
             # Tomar snapshot del progreso del movimiento actual (no bloqueante)
             result = cmd_manager.get_movement_progress()
             if result["success"]:
-                print("📸 Snapshot solicitado...")
+                print("Snapshot solicitado...")
             else:
                 print(f"Error: {result.get('error', 'Error desconocido')}")
             
@@ -886,25 +886,25 @@ def menu_interactivo(uart_manager, robot):
             # Sincronizar con el ArmController
             robot.arm.set_lettuce_state(lettuce_on)
             estado = 'CON lechuga' if lettuce_on else 'SIN lechuga'
-            print(f"✅ Estado cambiado: Robot ahora está {estado}")
+            print(f"Estado cambiado: Robot ahora está {estado}")
             print(f"Las trayectorias mover_lechuga -> recoger_lechuga usarán el comportamiento para {estado.lower()}")
         elif opcion == '12':
             if SCANNER_AVAILABLE:
                 try:
                     success = scan_horizontal_with_live_camera(robot)
                     if success:
-                        print("✅ Escaneado completado exitosamente")
+                        print("Escaneado completado exitosamente")
                     else:
-                        print("❌ El escaneado se completó con errores")
+                        print("El escaneado se completó con errores")
                 except KeyboardInterrupt:
-                    print("\n🛑 Escaneado interrumpido por el usuario")
+                    print("\nEscaneado interrumpido por el usuario")
                 except Exception as e:
-                    print(f"❌ Error durante el escaneado: {e}")
+                    print(f"Error durante el escaneado: {e}")
                     import traceback
                     traceback.print_exc()
                 
                 # Mensaje de seguridad
-                print("\n⚠️ IMPORTANTE: Verificar que el robot esté en posición segura")
+                print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
                 print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
             else:
                 print("Escáner horizontal no disponible. Verificar imports.")
@@ -931,9 +931,9 @@ if __name__ == "__main__":
     print("Inicializando gestor de cámara...")
     camera_mgr = get_camera_manager()
     if camera_mgr.initialize_camera():
-        print("✅ Cámara inicializada exitosamente")
+        print("Cámara inicializada exitosamente")
     else:
-        print("⚠️ Advertencia: No se pudo inicializar cámara (funciones de IA pueden fallar)")
+        print("Advertencia: No se pudo inicializar cámara (funciones de IA pueden fallar)")
     
     # Auto-detectar plataforma o usar configuración manual
     detected_platform = RobotConfig.auto_detect_platform()

@@ -42,9 +42,9 @@ def scan_horizontal_with_live_camera(robot):
             if tubo_seleccionado in [1, 2]:
                 break
             else:
-                print("❌ Opción inválida. Seleccione 1 o 2.")
+                print("Opción inválida. Seleccione 1 o 2.")
         except ValueError:
-            print("❌ Por favor ingrese un número válido.")
+            print("Por favor ingrese un número válido.")
     
     tubo_config = {
         1: {"y_mm": 300, "nombre": "Tubo 1"},
@@ -52,7 +52,7 @@ def scan_horizontal_with_live_camera(robot):
     }
     
     selected_tubo = tubo_config[tubo_seleccionado]
-    print(f"✅ Seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
+    print(f"Seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
     
     try:
         # Importar solo lo necesario dentro de la función
@@ -65,11 +65,11 @@ def scan_horizontal_with_live_camera(robot):
         
         # Verificaciones básicas
         if not robot.is_homed:
-            print("❌ Error: Robot debe estar hecho homing primero")
+            print("Error: Robot debe estar hecho homing primero")
             return False
         
         if not robot.arm.is_in_safe_position():
-            print("⚠️ Advertencia: El brazo no está en posición segura")
+            print("Advertencia: El brazo no está en posición segura")
             user_input = input("¿Continuar de todas formas? (s/N): ").lower()
             if user_input != 's':
                 print("Operación cancelada por el usuario")
@@ -78,21 +78,21 @@ def scan_horizontal_with_live_camera(robot):
         # Inicializar cámara
         print("Iniciando cámara...")
         if not camera_mgr.initialize_camera():
-            print("❌ Error: No se pudo inicializar la cámara")
+            print("Error: No se pudo inicializar la cámara")
             return False
         
         if not camera_mgr.start_video_stream(fps=6):
-            print("❌ Error: No se pudo iniciar video stream")
+            print("Error: No se pudo iniciar video stream")
             return False
         
-        print("✅ Cámara iniciada")
+        print("Cámara iniciada")
         
         # Velocidades lentas
         robot.cmd.set_velocities(2000, 2000)
-        print("✅ Velocidades configuradas para escaneado")
+        print("Velocidades configuradas para escaneado")
         
         # POSICIONAMIENTO EN Y SEGÚN TUBO SELECCIONADO
-        print(f"\n📍 FASE 1: Posicionándose en {selected_tubo['nombre']}...")
+        print(f"\nFASE 1: Posicionándose en {selected_tubo['nombre']}...")
         
         # Mover a la altura Y del tubo seleccionado
         current_y = robot.global_position['y']
@@ -103,15 +103,15 @@ def scan_horizontal_with_live_camera(robot):
             print(f"   Moviendo de Y={current_y:.1f}mm a Y={target_y}mm...")
             result = robot.cmd.move_xy(0, delta_y)
             if not result["success"]:
-                print(f"❌ Error moviendo a posición Y: {result}")
+                print(f"Error moviendo a posición Y: {result}")
                 return False
             time.sleep(2)
-            print(f"✅ Posicionado en Y={target_y}mm")
+            print(f"Posicionado en Y={target_y}mm")
         else:
-            print(f"✅ Ya en posición correcta Y={target_y}mm")
+            print(f"Ya en posición correcta Y={target_y}mm")
         
         # SECUENCIA DE MOVIMIENTO HORIZONTAL
-        print("\n📍 FASE 2: Posicionándose en el inicio horizontal...")
+        print("\nFASE 2: Posicionándose en el inicio horizontal...")
         
         # Ir al switch derecho (X negativos)
         print("   Moviendo hacia switch derecho...")
@@ -120,20 +120,20 @@ def scan_horizontal_with_live_camera(robot):
         # Esperar límite derecho
         limit_message = robot.cmd.uart.wait_for_limit(timeout=30.0)
         if not (limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message):
-            print("❌ Error: No se alcanzó el límite derecho")
+            print("Error: No se alcanzó el límite derecho")
             return False
         
-        print("✅ Límite derecho alcanzado")
+        print("Límite derecho alcanzado")
         
         # Retroceder 1cm
-        print("📍 FASE 3: Retrocediendo 1cm...")
+        print("FASE 3: Retrocediendo 1cm...")
         result = robot.cmd.move_xy(10, 0)
         if not result["success"]:
-            print(f"❌ Error en retroceso: {result}")
+            print(f"Error en retroceso: {result}")
             return False
         
         time.sleep(2)
-        print("✅ Retroceso completado")
+        print("Retroceso completado")
         
         # Resetear posición global para que coincida con x=0 del escáner
         # Esto hace que las coordenadas relativas funcionen correctamente
@@ -141,8 +141,8 @@ def scan_horizontal_with_live_camera(robot):
         print("📍 Posición de inicio del escáner establecida en x=0")
         
         # Iniciar detección básica
-        print("📍 FASE 4: Iniciando escaneado con video...")
-        print("🎥 Video activo - Mostrando feed de cámara")
+        print("FASE 4: Iniciando escaneado con video...")
+        print("Video activo - Mostrando feed de cámara")
         
         is_scanning[0] = True
         last_detection_pos = [None]
@@ -164,13 +164,13 @@ def scan_horizontal_with_live_camera(robot):
                 # Enviar comando RP (snapshot) al firmware
                 result = robot.cmd.get_movement_progress()
                 if result.get("success"):
-                    print(f"🚩 FLAG #{flag_id} enviado - {state_type} en x={position:.1f}mm")
+                    print(f"FLAG #{flag_id} enviado - {state_type} en x={position:.1f}mm")
                     return flag_id
                 else:
-                    print(f"❌ Error enviando flag: {result}")
+                    print(f"Error enviando flag: {result}")
                     return None
             except Exception as e:
-                print(f"❌ Error en send_flag: {e}")
+                print(f"Error en send_flag: {e}")
                 return None
         
         def process_detection_state(is_accepted, current_pos):
@@ -203,7 +203,7 @@ def scan_horizontal_with_live_camera(robot):
                         if detection_state['position_buffer']:
                             avg_pos = sum(detection_state['position_buffer']) / len(detection_state['position_buffer'])
                             last_segment['center_pos'] = avg_pos
-                            print(f"📏 CINTA COMPLETADA - Centro: {avg_pos:.1f}mm (de {len(detection_state['position_buffer'])} muestras)")
+                            print(f"CINTA COMPLETADA - Centro: {avg_pos:.1f}mm (de {len(detection_state['position_buffer'])} muestras)")
                 
                 detection_state['current_state'] = new_state
             
@@ -261,7 +261,7 @@ def scan_horizontal_with_live_camera(robot):
                         break
                         
                 except Exception as e:
-                    print(f"⚠️ Error en video: {e}")
+                    print(f"Error en video: {e}")
                     time.sleep(0.1)
         
         # Iniciar hilo de video
@@ -270,7 +270,7 @@ def scan_horizontal_with_live_camera(robot):
         video_thread.start()
         
         # Movimiento hacia switch izquierdo
-        print("🚀 Iniciando movimiento hacia switch izquierdo...")
+        print("Iniciando movimiento hacia switch izquierdo...")
         result = robot.cmd.move_xy(2000, 0)
         
         # Esperar límite izquierdo
@@ -281,10 +281,10 @@ def scan_horizontal_with_live_camera(robot):
         time.sleep(1)
         
         if not (limit_message and "LIMIT_H_LEFT_TRIGGERED" in limit_message):
-            print("❌ Error: No se alcanzó el límite izquierdo")
+            print("Error: No se alcanzó el límite izquierdo")
             return False
         
-        print("✅ Límite izquierdo alcanzado - Escaneado completo")
+        print("Límite izquierdo alcanzado - Escaneado completo")
         
         # Correlacionar flags con snapshots para obtener posiciones reales
         correlate_flags_with_snapshots(detection_state)
@@ -294,22 +294,22 @@ def scan_horizontal_with_live_camera(robot):
         
         # Guardar cintas detectadas en la matriz
         if resultados:
-            print(f"\n💾 Guardando {len(resultados)} cintas en matriz...")
+            print(f"\nGuardando {len(resultados)} cintas en matriz...")
             if matriz_cintas.guardar_cintas_tubo(tubo_seleccionado, resultados):
-                print("✅ Cintas guardadas exitosamente en la matriz")
+                print("Cintas guardadas exitosamente en la matriz")
                 
                 # Mostrar matriz actualizada
                 print("\n" + "="*60)
-                print("📊 MATRIZ ACTUALIZADA")
+                print("MATRIZ ACTUALIZADA")
                 print("="*60)
                 matriz_cintas.mostrar_resumen()
             else:
-                print("❌ Error guardando cintas en matriz")
+                print("Error guardando cintas en matriz")
         
         return True
         
     except Exception as e:
-        print(f"❌ Error durante el escaneado: {e}")
+        print(f"Error durante el escaneado: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -323,21 +323,21 @@ def scan_horizontal_with_live_camera(robot):
                 RobotConfig.get_normal_speed_x(),
                 RobotConfig.get_normal_speed_y()
             )
-            print("🔧 Recursos liberados")
+            print("Recursos liberados")
         except:
             pass
 
 def correlate_flags_with_snapshots(detection_state):
     """Correlacionar flags con snapshots para obtener posiciones reales"""
     try:
-        print("\n🔍 CORRELACIONANDO FLAGS CON SNAPSHOTS...")
+        print("\nCORRELACIONANDO FLAGS CON SNAPSHOTS...")
         
         # Usar las posiciones reales del log actual mostrado por el usuario
         # S1: X=-49mm, S2: X=-147mm, S3: X=-249mm, etc.
         snapshot_positions = [-49, -147, -249, -337, -450, -538, -651, -738, -841, -934]
         
-        print(f"📊 Snapshots disponibles: {len(snapshot_positions)}")
-        print(f"📊 Flags enviados: {detection_state['flag_count']}")
+        print(f"Snapshots disponibles: {len(snapshot_positions)}")
+        print(f"Flags enviados: {detection_state['flag_count']}")
         
         # Correlacionar cada par de flags (inicio, fin) con snapshots consecutivos
         for i, segment in enumerate(detection_state['tape_segments']):
@@ -355,15 +355,15 @@ def correlate_flags_with_snapshots(detection_state):
             if 'start_pos_real' in segment and 'end_pos_real' in segment:
                 segment['center_pos_real'] = (segment['start_pos_real'] + segment['end_pos_real']) / 2
                 distancia = abs(segment['end_pos_real'] - segment['start_pos_real'])
-                print(f"   📏 CINTA #{i+1}: S{start_flag_idx+1}({segment['start_pos_real']}mm) + S{end_flag_idx+1}({segment['end_pos_real']}mm)")
+                print(f"   CINTA #{i+1}: S{start_flag_idx+1}({segment['start_pos_real']}mm) + S{end_flag_idx+1}({segment['end_pos_real']}mm)")
                 print(f"        → Centro: {segment['center_pos_real']:.1f}mm, Distancia: {distancia:.0f}mm")
             else:
-                print(f"   ⚠️ CINTA #{i+1}: Datos incompletos")
+                print(f"   CINTA #{i+1}: Datos incompletos")
         
-        print("✅ Correlación flags-snapshots completada")
+        print("Correlación flags-snapshots completada")
         
     except Exception as e:
-        print(f"⚠️ Error en correlación flags-snapshots: {e}")
+        print(f"Error en correlación flags-snapshots: {e}")
 
 def process_frame_for_detection(frame):
     """Procesar frame igual que el sistema de posicionamiento"""
@@ -413,7 +413,7 @@ def detect_sophisticated_tape(frame):
         return False
         
     except Exception as e:
-        print(f"⚠️ Error en detector: {e}")
+        print(f"Error en detector: {e}")
         # Si falla el detector sofisticado, usar detección básica como respaldo
         return detect_basic_fallback(frame)
 
@@ -459,13 +459,13 @@ def show_results(detections, detection_state, selected_tubo):
     """Mostrar resultados del escaneo con información de flags y coordenadas reales"""
     # Generar reporte final con sistema de flags
     print("\n" + "="*60)
-    print("📊 REPORTE FINAL DEL ESCANEADO")
+    print("REPORTE FINAL DEL ESCANEADO")
     print("="*60)
-    print(f"🚩 Total de flags enviados: {detection_state['flag_count']}")
-    print(f"📏 Segmentos de cinta detectados: {len(detection_state['tape_segments'])}")
+    print(f"Total de flags enviados: {detection_state['flag_count']}")
+    print(f"Segmentos de cinta detectados: {len(detection_state['tape_segments'])}")
         
     if detection_state['tape_segments']:
-        print("\n🎯 CINTAS DETECTADAS CON COORDENADAS X,Y:")
+        print("\nCINTAS DETECTADAS CON COORDENADAS X,Y:")
         cintas_para_matriz = []
         
         for i, segment in enumerate(detection_state['tape_segments'], 1):
@@ -491,11 +491,11 @@ def show_results(detections, detection_state, selected_tubo):
                     'positions_sampled': len(segment.get('position_buffer', []))
                 })
             else:
-                print(f"   ⚠️ CINTA #{i}: Posición no calculada (Flags {start_flag}-{end_flag})")
+                print(f"   CINTA #{i}: Posición no calculada (Flags {start_flag}-{end_flag})")
         
         # Mostrar matriz de coordenadas
         if cintas_para_matriz:
-            print(f"\n📊 MATRIZ DE COORDENADAS - {selected_tubo['nombre']}:")
+            print(f"\nMATRIZ DE COORDENADAS - {selected_tubo['nombre']}:")
             print("┌─────────┬─────────────┬─────────────┐")
             print("│  Cinta  │     X (mm)  │     Y (mm)  │")
             print("├─────────┼─────────────┼─────────────┤")
@@ -505,7 +505,7 @@ def show_results(detections, detection_state, selected_tubo):
         
         return cintas_para_matriz
     else:
-        print("❌ No se detectaron cintas completas")
+        print("No se detectaron cintas completas")
         return []
     
     print(f"{'='*60}")

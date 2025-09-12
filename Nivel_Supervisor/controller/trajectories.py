@@ -86,7 +86,7 @@ class TrajectoryDefinitions:
                 {
                     "type": "gripper",
                     "action": "close",
-                    "description": "🔥 CERRAR gripper para agarrar lechuga (AL FINAL)"
+                    "description": "CERRAR gripper para agarrar lechuga (AL FINAL)"
                 }
             ]
         }
@@ -111,7 +111,7 @@ class TrajectoryDefinitions:
                 {
                     "type": "gripper",
                     "action": "open",
-                    "description": "🔥 ABRIR gripper al llegar a posición segura"
+                    "description": "ABRIR gripper al llegar a posición segura"
                 }
             ]
         }
@@ -156,7 +156,7 @@ class TrajectoryDefinitions:
                 {
                     "type": "gripper",
                     "action": "close",
-                    "description": "🔥 Cerrar gripper por las dudas"
+                    "description": "Cerrar gripper por las dudas"
                 },
                 {
                     "type": "arm_move",
@@ -220,7 +220,7 @@ class TrajectoryDefinitions:
                 {
                     "type": "gripper",
                     "action": "open",
-                    "description": "🔥 ABRIR gripper para soltar lechuga"
+                    "description": "ABRIR gripper para soltar lechuga"
                 }
             ]
         }
@@ -252,7 +252,7 @@ class TrajectoryDefinitions:
                 {
                     "type": "gripper",
                     "action": "open",
-                    "description": "🔥 ABRIR gripper para soltar lechuga"
+                    "description": "ABRIR gripper para soltar lechuga"
                 }
             ]
         }
@@ -289,7 +289,7 @@ class TrajectoryDefinitions:
                 {
                     "type": "gripper",
                     "action": "close",
-                    "description": "🔥 CERRAR gripper para agarrar lechuga"
+                    "description": "CERRAR gripper para agarrar lechuga"
                 }
             ]
         }
@@ -325,8 +325,8 @@ class TrajectoryDefinitions:
                 },
                 {
                     "type": "arm_move", 
-                    "servo1": target_state["servo1"],  # ⭐ DINÁMICO
-                    "servo2": target_state["servo2"],  # ⭐ DINÁMICO
+                    "servo1": target_state["servo1"],  # DINÁMICO
+                    "servo2": target_state["servo2"],  # DINÁMICO
                     "time_ms": 1500,
                     "description": "Extender a posición de recolección"
                 },

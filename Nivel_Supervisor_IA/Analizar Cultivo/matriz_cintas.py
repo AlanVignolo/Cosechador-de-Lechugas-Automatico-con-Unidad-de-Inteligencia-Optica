@@ -28,7 +28,7 @@ class MatrizCintas:
             else:
                 return self._crear_matriz_vacia()
         except Exception as e:
-            print(f"⚠️ Error cargando matriz: {e}")
+            print(f"Error cargando matriz: {e}")
             return self._crear_matriz_vacia()
     
     def _crear_matriz_vacia(self) -> Dict:
@@ -53,10 +53,10 @@ class MatrizCintas:
             with open(self.archivo_matriz, 'w', encoding='utf-8') as f:
                 json.dump(self.tubos, f, indent=2, ensure_ascii=False)
             
-            print(f"✅ Matriz guardada en: {self.archivo_matriz}")
+            print(f"Matriz guardada en: {self.archivo_matriz}")
             return True
         except Exception as e:
-            print(f"❌ Error guardando matriz: {e}")
+            print(f"Error guardando matriz: {e}")
             return False
     
     def guardar_cintas_tubo(self, tubo_id: int, cintas_detectadas: List[Dict]):
@@ -64,7 +64,7 @@ class MatrizCintas:
         tubo_str = str(tubo_id)
         
         if tubo_str not in self.tubos["tubos"]:
-            print(f"❌ Error: Tubo {tubo_id} no existe")
+            print(f"Error: Tubo {tubo_id} no existe")
             return False
         
         # Preparar datos de cintas
@@ -86,7 +86,7 @@ class MatrizCintas:
         
         # Guardar archivo
         if self.guardar_matriz():
-            print(f"📊 {len(cintas_procesadas)} cintas guardadas para {self.configuracion_tubos[tubo_id]['nombre']}")
+            print(f"{len(cintas_procesadas)} cintas guardadas para {self.configuracion_tubos[tubo_id]['nombre']}")
             return True
         
         return False
@@ -118,23 +118,23 @@ class MatrizCintas:
     def mostrar_resumen(self):
         """Mostrar resumen de la matriz completa"""
         print("\n" + "="*60)
-        print("📊 RESUMEN DE MATRIZ DE CINTAS")
+        print("RESUMEN DE MATRIZ DE CINTAS")
         print("="*60)
         
         todas_cintas = self.obtener_todas_cintas()
         total_general = 0
         
         for tubo_id, data in todas_cintas.items():
-            print(f"\n🔴 {data['nombre']} (Y={data['y_mm']}mm):")
+            print(f"\n{data['nombre']} (Y={data['y_mm']}mm):")
             if data['cintas']:
                 for cinta in data['cintas']:
-                    print(f"   📏 Cinta #{cinta['id']}: X={cinta['x_mm']}mm, Y={cinta['y_mm']}mm")
-                print(f"   📊 Total: {data['total']} cintas")
+                    print(f"   Cinta #{cinta['id']}: X={cinta['x_mm']}mm, Y={cinta['y_mm']}mm")
+                print(f"   Total: {data['total']} cintas")
                 total_general += data['total']
             else:
-                print("   ❌ Sin cintas escaneadas")
+                print("   Sin cintas escaneadas")
         
-        print(f"\n🎯 TOTAL GENERAL: {total_general} cintas detectadas")
+        print(f"\nTOTAL GENERAL: {total_general} cintas detectadas")
         
         # Información de archivo
         if os.path.exists(self.archivo_matriz):
