@@ -332,24 +332,20 @@ def scan_horizontal_with_live_camera(robot):
             is_scanning[0] = False
         except:
             pass
-            
+        
+        # Cierre rápido y seguro de cámara para evitar Qt threading issues    
         try:
-            print("Cerrando cámara y ventanas...")
+            print("Cerrando cámara...")
             camera_mgr.stop_video_stream()
+            print("Cámara cerrada")
+        except:
+            pass
+            
+        # Cerrar ventanas sin operaciones Qt que puedan causar cuelgue
+        try:
             cv2.destroyAllWindows()
-            # Forzar cierre de todas las ventanas OpenCV
-            cv2.waitKey(1)
-            cv2.destroyAllWindows()
-            cv2.waitKey(1)
-            print("Ventanas de cámara cerradas")
-        except Exception as e:
-            print(f"Error cerrando cámara: {e}")
-            # Intentar forzar cierre de ventanas OpenCV de todas formas
-            try:
-                cv2.destroyAllWindows()
-                cv2.waitKey(1)
-            except:
-                pass
+        except:
+            pass
         
         # CRÍTICO: Siempre restaurar velocidades normales
         try:
