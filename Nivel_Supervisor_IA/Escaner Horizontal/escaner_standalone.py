@@ -134,7 +134,14 @@ def scan_horizontal_with_live_camera(robot):
         print("FASE 4: Iniciando escaneado con video...")
         print("Video activo - Mostrando feed de cámara")
         
-        is_scanning[0] = True
+        # Variables de control para el video thread - ÚNICO POR ESCANEO
+        import uuid
+        scan_id = str(uuid.uuid4())[:8]
+        is_scanning = [True]
+        video_thread = None
+        
+        print(f"🔍 Iniciando escaneo ID: {scan_id}")
+        
         last_detection_pos = [None]
         
         # Sistema de tracking de estados para flags
@@ -190,61 +197,68 @@ def scan_horizontal_with_live_camera(robot):
         
         def video_loop():
             """Bucle de video con detección simple sin tracking de posición"""
-            while is_scanning[0]:
-                try:
-                    frame = camera_mgr.get_latest_video_frame()
-                    if frame is None:
+            thread_name = threading.current_thread().name
+            print(f"[{thread_name}] Video thread iniciado")
+            
+            try:
+                while is_scanning[0]:
+                    try:
+                        frame = camera_mgr.get_latest_video_frame()
+                        if frame is None:
+                            time.sleep(0.05)  # Más responsive
+                            continue
+                        
+                        # Procesar frame para detección
+                        processed = process_frame_for_detection(frame)
+                        
+                        # Usar detector sofisticado
+                        is_tape_detected = detect_sophisticated_tape(processed)
+                        
+                        # Procesar cambios de estado y enviar flags (sin posición)
+                        process_detection_state(is_tape_detected)
+                        
+                        # Marcar detección en video
+                        if is_tape_detected:
+                            cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 15, (0, 255, 0), 3)
+                            cv2.putText(processed, "CINTA DETECTADA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                        else:
+                            cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 10, (0, 0, 255), 2)
+                            cv2.putText(processed, "SIN CINTA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                        
+                        # Info básica en video
+                        cv2.putText(processed, f"Flags: {detection_state['flag_count']}", 
+                                   (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                        cv2.putText(processed, f"Segmentos: {len(detection_state['tape_segments'])}", 
+                                   (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                        cv2.putText(processed, "ESC para detener", 
+                                   (10, processed.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                        
+                        cv2.imshow("Escaner Horizontal", processed)
+                        
+                        key = cv2.waitKey(1) & 0xFF
+                        if key == 27:  # ESC
+                            print("🛑 Usuario presionó ESC")
+                            is_scanning[0] = False
+                            break
+                            
+                    except Exception as e:
+                        print(f"[{thread_name}] Error en video: {e}")
                         time.sleep(0.1)
-                        continue
-                    
-                    # Procesar frame para detección
-                    processed = process_frame_for_detection(frame)
-                    
-                    # Usar detector sofisticado
-                    is_tape_detected = detect_sophisticated_tape(processed)
-                    
-                    # Procesar cambios de estado y enviar flags (sin posición)
-                    process_detection_state(is_tape_detected)
-                    
-                    # Marcar detección en video
-                    if is_tape_detected:
-                        cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 15, (0, 255, 0), 3)
-                        cv2.putText(processed, "CINTA DETECTADA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                    else:
-                        cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 10, (0, 0, 255), 2)
-                        cv2.putText(processed, "SIN CINTA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    
-                    # Info básica en video
-                    cv2.putText(processed, f"Flags: {detection_state['flag_count']}", 
-                               (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                    cv2.putText(processed, f"Segmentos: {len(detection_state['tape_segments'])}", 
-                               (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                    cv2.putText(processed, "ESC para detener", 
-                               (10, processed.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                    
-                    cv2.imshow("Escaner Horizontal", processed)
-                    
-                    key = cv2.waitKey(1) & 0xFF
-                    if key == 27:  # ESC
-                        print("🛑 Usuario presionó ESC")
+                        
+                    except KeyboardInterrupt:
+                        print("🛑 Interrupción por teclado")
                         is_scanning[0] = False
                         break
                         
-                except Exception as e:
-                    print(f"Error en video: {e}")
-                    time.sleep(0.1)
-                    
-                except KeyboardInterrupt:
-                    print("🛑 Interrupción por teclado")
-                    is_scanning[0] = False
-                    break
-            
-            print("Video thread terminando...")
-            # Minimal cleanup para evitar deadlock
-            try:
-                cv2.destroyWindow("Escaner Horizontal")
-            except:
-                pass
+            finally:
+                print(f"[{thread_name}] Video thread finalizando...")
+                # Limpieza garantizada
+                try:
+                    cv2.destroyWindow("Escaner Horizontal")
+                    cv2.waitKey(1)  # Procesar eventos pendientes
+                except:
+                    pass
+                print(f"[{thread_name}] Video thread terminado completamente")
         
         # Iniciar hilo de video con nombre para debugging
         video_thread = threading.Thread(target=video_loop, name="VideoScanThread")
@@ -263,14 +277,25 @@ def scan_horizontal_with_live_camera(robot):
         is_scanning[0] = False
         
         # Dar tiempo al thread para salir del loop
-        time.sleep(0.5)
+        time.sleep(0.2)
         
-        # Esperar terminación sin bloquear indefinidamente
-        if video_thread.is_alive():
-            print("Esperando terminación del video thread...")
-            video_thread.join(timeout=2.0)  # Timeout más corto
-            if video_thread.is_alive():
-                print("Advertencia: Video thread sigue activo, continuando...")
+        # Esperar terminación con intentos múltiples
+        for attempt in range(3):
+            if not video_thread.is_alive():
+                print("Video thread terminó correctamente")
+                break
+            
+            print(f"Esperando terminación del video thread (intento {attempt + 1}/3)...")
+            video_thread.join(timeout=1.0)
+            
+            if not video_thread.is_alive():
+                print("Video thread terminó correctamente")
+                break
+            elif attempt == 2:
+                print("ERROR: Video thread no terminó - esto causará problemas en próximos escaneos")
+                # Force cleanup OpenCV windows
+                cv2.destroyAllWindows()
+                cv2.waitKey(1)
         
         # Limpiar ventanas OpenCV de forma segura
         try:
@@ -316,58 +341,66 @@ def scan_horizontal_with_live_camera(robot):
         return False
     finally:
         # LIMPIEZA COMPLETA DE RECURSOS
-        print("\nLIMPIEZA: Finalizando escaneo...")
+        print(f"\n[{scan_id}] LIMPIEZA: Finalizando escaneo...")
 
-        # Parar video y cerrar ventana ANTES del reset de velocidades
+        # FORZAR PARADA DE VIDEO THREAD
         is_scanning[0] = False
         
-        # Asegurar terminación del video thread si existe
-        try:
-            if 'video_thread' in locals() and video_thread.is_alive():
-                print("LIMPIEZA: Esperando terminación del video thread...")
-                video_thread.join(timeout=3.0)
-                if video_thread.is_alive():
-                    print("LIMPIEZA: Advertencia - Video thread no terminó")
-                else:
-                    print("LIMPIEZA: Video thread terminado correctamente")
-        except Exception as e:
-            print(f"LIMPIEZA: Error terminando video thread: {e}")
+        # LIMPIEZA: Verificar y terminar video thread
+        if 'video_thread' in locals() and video_thread is not None:
+            print(f"[{scan_id}] LIMPIEZA: Terminando video thread...")
+            
+            # Esperar terminación con timeout agresivo
+            for cleanup_attempt in range(10):
+                if not video_thread.is_alive():
+                    print(f"[{scan_id}] LIMPIEZA: ✅ Video thread terminó correctamente")
+                    break
+                
+                print(f"[{scan_id}] LIMPIEZA: Esperando terminación {cleanup_attempt + 1}/10...")
+                video_thread.join(timeout=0.2)
+                
+                if cleanup_attempt == 9:
+                    print(f"[{scan_id}] LIMPIEZA: ❌ CRÍTICO - Video thread NO TERMINÓ")
+                    print(f"[{scan_id}] LIMPIEZA: Esto BLOQUEARÁ próximos escaneos")
+        else:
+            print(f"[{scan_id}] LIMPIEZA: Video thread no encontrado o ya terminado")
 
+        # PARAR VIDEO STREAM COMPLETAMENTE
         try:
-            # Parar video streaming del camera manager PRIMERO
             if camera_mgr.is_active:
-                print("LIMPIEZA: Parando video stream...")
+                print(f"[{scan_id}] LIMPIEZA: Parando video stream...")
                 camera_mgr.stop_video_stream()
-                time.sleep(0.5)  # Dar tiempo para que pare completamente
-            
-            # Destruir ventanas OpenCV agresivamente y múltiples veces
-            print("LIMPIEZA: Cerrando ventanas OpenCV...")
-            for attempt in range(5):  # Más intentos
-                cv2.destroyAllWindows()
-                cv2.waitKey(1)  # Procesar eventos pendientes
-                time.sleep(0.2)
-            
-            # Verificar que no queden ventanas abiertas
-            print("LIMPIEZA: Verificando cierre de ventanas...")
-            
+                time.sleep(0.3)
+            print(f"[{scan_id}] LIMPIEZA: Video stream detenido")
         except Exception as e:
-            print(f"Error cerrando video: {e}")
+            print(f"[{scan_id}] LIMPIEZA: Error parando video: {e}")
+
+        # DESTRUIR VENTANAS OPENCV AGRESIVAMENTE
+        try:
+            print(f"[{scan_id}] LIMPIEZA: Cerrando ventanas OpenCV...")
+            for attempt in range(5):
+                cv2.destroyAllWindows()
+                cv2.waitKey(1)
+                time.sleep(0.1)
+            print(f"[{scan_id}] LIMPIEZA: Ventanas OpenCV cerradas")
+        except Exception as e:
+            print(f"[{scan_id}] LIMPIEZA: Error cerrando ventanas: {e}")
 
         # RESETEAR VELOCIDADES SIEMPRE (crítico para siguientes movimientos)
         try:
-            print("LIMPIEZA: Reseteando velocidades del robot...")
+            print(f"[{scan_id}] LIMPIEZA: Reseteando velocidades del robot...")
             robot.cmd.set_velocities(
                 RobotConfig.NORMAL_SPEED_H,
                 RobotConfig.NORMAL_SPEED_V
             )
             time.sleep(1.0)
-            print("Velocidades reseteadas correctamente")
+            print(f"[{scan_id}] LIMPIEZA: Velocidades reseteadas correctamente")
         except Exception as e:
-            print(f"Error reseteando velocidades: {e}")
+            print(f"[{scan_id}] LIMPIEZA: Error reseteando velocidades: {e}")
 
         # RESET COMPLETO del UART manager para limpiar callbacks y estado de firmware
         try:
-            print("LIMPIEZA: Reset completo del UART manager...")
+            print(f"[{scan_id}] LIMPIEZA: Reset completo del UART manager...")
             robot.cmd.uart.reset_scanning_state()
         except Exception as e:
             print(f"Error en reset del UART manager: {e}")
