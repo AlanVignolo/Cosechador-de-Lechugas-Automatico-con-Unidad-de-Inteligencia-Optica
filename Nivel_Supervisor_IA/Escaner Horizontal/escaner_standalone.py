@@ -357,8 +357,8 @@ def scan_horizontal_with_live_camera(robot):
         try:
             print("LIMPIEZA: Reseteando velocidades del robot...")
             robot.cmd.set_velocities(
-                RobotConfig.DEFAULT_H_SPEED,
-                RobotConfig.DEFAULT_V_SPEED
+                RobotConfig.NORMAL_SPEED_H,
+                RobotConfig.NORMAL_SPEED_V
             )
             time.sleep(1.0)
             print("Velocidades reseteadas correctamente")
