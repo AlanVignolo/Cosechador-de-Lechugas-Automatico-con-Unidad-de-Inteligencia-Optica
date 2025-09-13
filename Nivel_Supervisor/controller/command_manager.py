@@ -123,3 +123,7 @@ class CommandManager:
             return {"success": True, "message": "Gripper cerrado confirmado"}
         else:
             return {"success": False, "message": "Timeout esperando confirmación de cierre"}
+    
+    def get_current_position_mm(self) -> Dict:
+        """Consultar posición actual en mm (durante movimiento)"""
+        return self.uart.send_command("XY?")

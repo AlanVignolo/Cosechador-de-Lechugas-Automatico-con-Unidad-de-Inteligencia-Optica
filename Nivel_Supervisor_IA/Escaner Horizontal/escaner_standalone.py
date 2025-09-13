@@ -145,7 +145,7 @@ def scan_horizontal_with_live_camera(robot):
             'flag_count': 0
         }
         
-        def send_flag_for_state_change(state_type, position):
+        def send_flag_for_state_change(state_type):
             """Enviar flag al firmware para marcar cambio de estado"""
             try:
                 detection_state['flag_count'] += 1
@@ -154,7 +154,7 @@ def scan_horizontal_with_live_camera(robot):
                 # Enviar comando RP (snapshot) al firmware
                 result = robot.cmd.get_movement_progress()
                 if result.get("success"):
-                    print(f"FLAG #{flag_id} enviado - {state_type} en x={position:.1f}mm")
+                    print(f"FLAG #{flag_id} enviado - {state_type}")
                     return flag_id
                 else:
                     print(f"Error enviando flag: {result}")
@@ -163,7 +163,7 @@ def scan_horizontal_with_live_camera(robot):
                 print(f"Error en send_flag: {e}")
                 return None
         
-        def process_detection_state(is_accepted, current_pos):
+        def process_detection_state(is_accepted):
             """Procesar cambios de estado de detección y enviar flags"""
             new_state = 'accepted' if is_accepted else 'rejected'
             
@@ -171,40 +171,25 @@ def scan_horizontal_with_live_camera(robot):
             if detection_state['current_state'] != new_state:
                 if detection_state['current_state'] == 'rejected' and new_state == 'accepted':
                     # INICIO de cinta
-                    flag_id = send_flag_for_state_change("INICIO_CINTA", current_pos)
-                    detection_state['position_buffer'] = [current_pos]  # Resetear buffer
+                    flag_id = send_flag_for_state_change("INICIO_CINTA")
                     if flag_id:
                         detection_state['tape_segments'].append({
                             'start_flag': flag_id,
-                            'start_pos': current_pos,
-                            'positions': [current_pos]
                         })
                 
                 elif detection_state['current_state'] == 'accepted' and new_state == 'rejected':
                     # FIN de cinta
-                    flag_id = send_flag_for_state_change("FIN_CINTA", current_pos)
+                    flag_id = send_flag_for_state_change("FIN_CINTA")
                     if flag_id and detection_state['tape_segments']:
                         # Actualizar último segmento
                         last_segment = detection_state['tape_segments'][-1]
                         last_segment['end_flag'] = flag_id
-                        last_segment['end_pos'] = current_pos
-                        
-                        # Calcular posición media del segmento
-                        if detection_state['position_buffer']:
-                            avg_pos = sum(detection_state['position_buffer']) / len(detection_state['position_buffer'])
-                            last_segment['center_pos'] = avg_pos
-                            print(f"CINTA COMPLETADA - Centro: {avg_pos:.1f}mm (de {len(detection_state['position_buffer'])} muestras)")
+                        print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
                 
                 detection_state['current_state'] = new_state
-            
-            # Acumular posiciones durante estado 'accepted'
-            if new_state == 'accepted':
-                detection_state['position_buffer'].append(current_pos)
         
         def video_loop():
-            """Bucle de video con detección de estados"""
-            detection_count = 0
-            
+            """Bucle de video con detección simple sin tracking de posición"""
             while is_scanning[0]:
                 try:
                     frame = camera_mgr.get_latest_video_frame()
@@ -212,17 +197,14 @@ def scan_horizontal_with_live_camera(robot):
                         time.sleep(0.1)
                         continue
                     
-                    # Procesar frame como el sistema de posicionamiento
+                    # Procesar frame para detección
                     processed = process_frame_for_detection(frame)
                     
-                    # Obtener posición actual
-                    current_x = robot.global_position['x']
-                    
-                    # Usar el detector sofisticado del sistema de posicionamiento
+                    # Usar detector sofisticado
                     is_tape_detected = detect_sophisticated_tape(processed)
                     
-                    # Procesar cambios de estado y enviar flags
-                    process_detection_state(is_tape_detected, current_x)
+                    # Procesar cambios de estado y enviar flags (sin posición)
+                    process_detection_state(is_tape_detected)
                     
                     # Marcar detección en video
                     if is_tape_detected:
@@ -232,17 +214,15 @@ def scan_horizontal_with_live_camera(robot):
                         cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 10, (0, 0, 255), 2)
                         cv2.putText(processed, "SIN CINTA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                     
-                    # Mostrar info en video
-                    cv2.putText(processed, f"ESCANER - Flags: {detection_state['flag_count']}", 
+                    # Info básica en video
+                    cv2.putText(processed, f"Flags: {detection_state['flag_count']}", 
                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                     cv2.putText(processed, f"Segmentos: {len(detection_state['tape_segments'])}", 
                                (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                    cv2.putText(processed, f"Posicion: {current_x:.1f}mm", 
-                               (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                     cv2.putText(processed, "ESC para detener", 
                                (10, processed.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                     
-                    cv2.imshow("Escaner Horizontal Autonomo", processed)
+                    cv2.imshow("Escaner Horizontal", processed)
                     
                     key = cv2.waitKey(1) & 0xFF
                     if key == 27:  # ESC
@@ -253,10 +233,22 @@ def scan_horizontal_with_live_camera(robot):
                 except Exception as e:
                     print(f"Error en video: {e}")
                     time.sleep(0.1)
+                    
+                except KeyboardInterrupt:
+                    print("🛑 Interrupción por teclado")
+                    is_scanning[0] = False
+                    break
+            
+            print("Video thread terminando...")
+            # Minimal cleanup para evitar deadlock
+            try:
+                cv2.destroyWindow("Escaner Horizontal")
+            except:
+                pass
         
-        # Iniciar hilo de video
-        video_thread = threading.Thread(target=video_loop)
-        video_thread.daemon = True
+        # Iniciar hilo de video con nombre para debugging
+        video_thread = threading.Thread(target=video_loop, name="VideoScanThread")
+        video_thread.daemon = False  # No daemon para control explícito
         video_thread.start()
         
         # Movimiento hacia switch izquierdo
@@ -266,23 +258,28 @@ def scan_horizontal_with_live_camera(robot):
         # Esperar límite izquierdo
         limit_message = robot.cmd.uart.wait_for_limit(timeout=120.0)
         
-        # Detener video y esperar que termine el thread
+        # Detener video de forma controlada
         print("Deteniendo escaneo de video...")
         is_scanning[0] = False
         
-        # Esperar que el video thread termine completamente
+        # Dar tiempo al thread para salir del loop
+        time.sleep(0.5)
+        
+        # Esperar terminación sin bloquear indefinidamente
         if video_thread.is_alive():
             print("Esperando terminación del video thread...")
-            video_thread.join(timeout=5.0)  # Esperar máximo 5 segundos
+            video_thread.join(timeout=2.0)  # Timeout más corto
             if video_thread.is_alive():
-                print("Advertencia: Video thread no terminó completamente")
-            else:
-                print("Video thread terminado correctamente")
+                print("Advertencia: Video thread sigue activo, continuando...")
         
-        # Cerrar ventanas de video inmediatamente después del escaneo
-        cv2.destroyAllWindows()
-        cv2.waitKey(1)
-        time.sleep(0.5)
+        # Limpiar ventanas OpenCV de forma segura
+        try:
+            cv2.destroyAllWindows()
+            for _ in range(3):  # Múltiples intentos
+                cv2.waitKey(1)
+                time.sleep(0.1)
+        except Exception as e:
+            print(f"Advertencia limpiando ventanas: {e}")
         
         if not (limit_message and "LIMIT_H_LEFT_TRIGGERED" in limit_message):
             print("Error: No se alcanzó el límite izquierdo")
