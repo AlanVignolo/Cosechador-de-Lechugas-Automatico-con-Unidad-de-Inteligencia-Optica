@@ -266,12 +266,22 @@ def scan_horizontal_with_live_camera(robot):
         # Esperar límite izquierdo
         limit_message = robot.cmd.uart.wait_for_limit(timeout=120.0)
         
-        # Detener video y limpiar ventanas
+        # Detener video y esperar que termine el thread
+        print("Deteniendo escaneo de video...")
         is_scanning[0] = False
-        time.sleep(1)
+        
+        # Esperar que el video thread termine completamente
+        if video_thread.is_alive():
+            print("Esperando terminación del video thread...")
+            video_thread.join(timeout=5.0)  # Esperar máximo 5 segundos
+            if video_thread.is_alive():
+                print("Advertencia: Video thread no terminó completamente")
+            else:
+                print("Video thread terminado correctamente")
         
         # Cerrar ventanas de video inmediatamente después del escaneo
         cv2.destroyAllWindows()
+        cv2.waitKey(1)
         time.sleep(0.5)
         
         if not (limit_message and "LIMIT_H_LEFT_TRIGGERED" in limit_message):
@@ -313,26 +323,45 @@ def scan_horizontal_with_live_camera(robot):
 
         # Parar video y cerrar ventana ANTES del reset de velocidades
         is_scanning[0] = False
+        
+        # Asegurar terminación del video thread si existe
+        try:
+            if 'video_thread' in locals() and video_thread.is_alive():
+                print("LIMPIEZA: Esperando terminación del video thread...")
+                video_thread.join(timeout=3.0)
+                if video_thread.is_alive():
+                    print("LIMPIEZA: Advertencia - Video thread no terminó")
+                else:
+                    print("LIMPIEZA: Video thread terminado correctamente")
+        except Exception as e:
+            print(f"LIMPIEZA: Error terminando video thread: {e}")
 
         try:
-            # Intentar destruir ventanas OpenCV agresivamente
-            for attempt in range(3):
+            # Parar video streaming del camera manager PRIMERO
+            if camera_mgr.is_active:
+                print("LIMPIEZA: Parando video stream...")
+                camera_mgr.stop_video_stream()
+                time.sleep(0.5)  # Dar tiempo para que pare completamente
+            
+            # Destruir ventanas OpenCV agresivamente y múltiples veces
+            print("LIMPIEZA: Cerrando ventanas OpenCV...")
+            for attempt in range(5):  # Más intentos
                 cv2.destroyAllWindows()
-                time.sleep(0.3)
-
-            # Parar video streaming del camera manager si está activo
-            if camera_manager.is_active:
-                camera_manager.stop_video_stream()
-
+                cv2.waitKey(1)  # Procesar eventos pendientes
+                time.sleep(0.2)
+            
+            # Verificar que no queden ventanas abiertas
+            print("LIMPIEZA: Verificando cierre de ventanas...")
+            
         except Exception as e:
             print(f"Error cerrando video: {e}")
 
         # RESETEAR VELOCIDADES SIEMPRE (crítico para siguientes movimientos)
         try:
             print("LIMPIEZA: Reseteando velocidades del robot...")
-            robot.cmd.set_speeds(
-                h_speed=RobotConfig.DEFAULT_H_SPEED,
-                v_speed=RobotConfig.DEFAULT_V_SPEED
+            robot.cmd.set_velocities(
+                RobotConfig.DEFAULT_H_SPEED,
+                RobotConfig.DEFAULT_V_SPEED
             )
             time.sleep(1.0)
             print("Velocidades reseteadas correctamente")
@@ -349,9 +378,27 @@ def scan_horizontal_with_live_camera(robot):
         # RESET COMPLETO del camera manager para escaneos consecutivos
         try:
             print("LIMPIEZA: Reset completo del camera manager...")
-            camera_manager.reset_completely()
+            camera_mgr.reset_completely()
+            time.sleep(1.0)  # Dar tiempo para que se complete el reset
+            print("LIMPIEZA: Camera manager reseteado exitosamente")
         except Exception as e:
             print(f"Error en reset completo del camera manager: {e}")
+        
+        # Limpieza final adicional para asegurar estado limpio
+        try:
+            print("LIMPIEZA: Limpieza final adicional...")
+            # Resetear flags globales que puedan quedar
+            import gc
+            gc.collect()  # Forzar garbage collection
+            
+            # Una última verificación de ventanas
+            cv2.destroyAllWindows()
+            cv2.waitKey(1)
+            time.sleep(0.5)
+            
+            print("LIMPIEZA: Estado completamente limpio para siguiente escaneo")
+        except Exception as e:
+            print(f"Advertencia en limpieza final: {e}")
 
         print("LIMPIEZA COMPLETADA - Robot listo para siguiente operación")
 

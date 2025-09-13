@@ -364,14 +364,9 @@ class UARTManager:
             self.waiting_for_completion.clear()
             self.completed_actions_recent.clear()
             
-        # Enviar comando al firmware para resetear su estado interno de snapshots
-        try:
-            # Comando para limpiar snapshots del firmware
-            result = self.send_command("RS")  # Reset snapshots command
-            if not result.get("success"):
-                print("Advertencia: No se pudo resetear estado del firmware")
-        except Exception as e:
-            print(f"Advertencia: Error reseteando firmware: {e}")
+        # El firmware no tiene comando RS específico, pero se auto-resetea con nuevos movimientos
+        # Los snapshots se limpian automáticamente cuando se inician nuevos movimientos
+        print("UART manager state resetted (firmware auto-clears snapshots on new movements)")
         
         print("Reset del UART manager completado")
     
