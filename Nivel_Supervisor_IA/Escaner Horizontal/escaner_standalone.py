@@ -75,6 +75,10 @@ def scan_horizontal_with_live_camera(robot):
                 print("Operación cancelada por el usuario")
                 return False
         
+        # Limpiar ventanas previas que puedan estar abiertas
+        cv2.destroyAllWindows()
+        time.sleep(0.5)  # Dar tiempo para que se cierren
+        
         # Inicializar cámara
         print("Iniciando cámara...")
         if not camera_mgr.initialize_camera():
@@ -91,24 +95,10 @@ def scan_horizontal_with_live_camera(robot):
         robot.cmd.set_velocities(2000, 2000)
         print("Velocidades configuradas para escaneado")
         
-        # POSICIONAMIENTO EN Y SEGÚN TUBO SELECCIONADO
-        print(f"\nFASE 1: Posicionándose en {selected_tubo['nombre']}...")
-        
-        # Mover a la altura Y del tubo seleccionado
-        current_y = robot.global_position['y']
-        target_y = selected_tubo['y_mm']
-        delta_y = target_y - current_y
-        
-        if abs(delta_y) > 5:  # Solo mover si la diferencia es significativa
-            print(f"   Moviendo de Y={current_y:.1f}mm a Y={target_y}mm...")
-            result = robot.cmd.move_xy(0, delta_y)
-            if not result["success"]:
-                print(f"Error moviendo a posición Y: {result}")
-                return False
-            time.sleep(2)
-            print(f"Posicionado en Y={target_y}mm")
-        else:
-            print(f"Ya en posición correcta Y={target_y}mm")
+        # NOTA: El posicionamiento Y ahora se hace desde otro código externo
+        # Solo informamos qué tubo se va a escanear para la matriz de coordenadas
+        print(f"\nFASE 1: Escaneando {selected_tubo['nombre']} (coordenada Y={selected_tubo['y_mm']}mm)")
+        print("NOTA: El posicionamiento Y debe hacerse externamente antes de ejecutar este escáner")
         
         # SECUENCIA DE MOVIMIENTO HORIZONTAL
         print("\nFASE 2: Posicionándose en el inicio horizontal...")
@@ -276,9 +266,13 @@ def scan_horizontal_with_live_camera(robot):
         # Esperar límite izquierdo
         limit_message = robot.cmd.uart.wait_for_limit(timeout=120.0)
         
-        # Detener video
+        # Detener video y limpiar ventanas
         is_scanning[0] = False
         time.sleep(1)
+        
+        # Cerrar ventanas de video inmediatamente después del escaneo
+        cv2.destroyAllWindows()
+        time.sleep(0.5)
         
         if not (limit_message and "LIMIT_H_LEFT_TRIGGERED" in limit_message):
             print("Error: No se alcanzó el límite izquierdo")
@@ -314,18 +308,37 @@ def scan_horizontal_with_live_camera(robot):
         traceback.print_exc()
         return False
     finally:
-        # Limpiar recursos
+        # Limpiar recursos de forma más robusta
         try:
+            # Parar el escaneo
             is_scanning[0] = False
-            camera_mgr.stop_video_stream()
-            cv2.destroyAllWindows()
-            robot.cmd.set_velocities(
-                RobotConfig.get_normal_speed_x(),
-                RobotConfig.get_normal_speed_y()
-            )
-            print("Recursos liberados")
-        except:
-            pass
+            time.sleep(0.5)  # Dar tiempo al thread para terminar
+            
+            # Parar cámara y video stream
+            if 'camera_mgr' in locals():
+                camera_mgr.stop_video_stream()
+            
+            # Cerrar TODAS las ventanas de OpenCV múltiples veces para asegurar limpieza
+            for _ in range(3):
+                cv2.destroyAllWindows()
+                time.sleep(0.2)
+            
+            # Resetear velocidades normales
+            if 'robot' in locals():
+                robot.cmd.set_velocities(
+                    RobotConfig.NORMAL_SPEED_H,
+                    RobotConfig.NORMAL_SPEED_V
+                )
+                print("Velocidades reseteadas a valores normales")
+            
+            print("Recursos liberados completamente")
+            
+        except Exception as cleanup_error:
+            print(f"Error durante limpieza: {cleanup_error}")
+            # Forzar cierre de ventanas aunque haya error
+            for _ in range(5):
+                cv2.destroyAllWindows()
+                time.sleep(0.1)
 
 def correlate_flags_with_snapshots(detection_state):
     """Correlacionar flags con snapshots para obtener posiciones reales"""
