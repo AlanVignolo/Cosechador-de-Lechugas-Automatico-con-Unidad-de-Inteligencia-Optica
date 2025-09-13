@@ -335,6 +335,46 @@ class UARTManager:
         
         return None
     
+    def reset_scanning_state(self):
+        """Resetear estado completo para nuevo escáner"""
+        print("Reseteando estado del UART manager...")
+        
+        with self.lock:
+            # Limpiar cola de mensajes
+            while not self.message_queue.empty():
+                try:
+                    self.message_queue.get_nowait()
+                except:
+                    break
+            
+            # Resetear callbacks (mantener solo los esenciales del sistema)
+            essential_callbacks = {}
+            # Mantener callbacks del sistema si existen
+            for key in ["status_callback", "servo_start_callback", "servo_complete_callback", 
+                       "gripper_start_callback", "gripper_complete_callback"]:
+                if key in self.message_callbacks:
+                    essential_callbacks[key] = self.message_callbacks[key]
+            
+            # Limpiar todos los callbacks y restaurar solo los esenciales
+            self.message_callbacks.clear()
+            self.message_callbacks.update(essential_callbacks)
+            
+            # Resetear eventos de acción y completado
+            self.action_events.clear()
+            self.waiting_for_completion.clear()
+            self.completed_actions_recent.clear()
+            
+        # Enviar comando al firmware para resetear su estado interno de snapshots
+        try:
+            # Comando para limpiar snapshots del firmware
+            result = self.send_command("RS")  # Reset snapshots command
+            if not result.get("success"):
+                print("Advertencia: No se pudo resetear estado del firmware")
+        except Exception as e:
+            print(f"Advertencia: Error reseteando firmware: {e}")
+        
+        print("Reset del UART manager completado")
+    
     def wait_for_message(self, expected_message: str, timeout: float = 10.0) -> bool:
         start_time = time.time()
         

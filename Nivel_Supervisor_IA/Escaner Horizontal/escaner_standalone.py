@@ -308,42 +308,58 @@ def scan_horizontal_with_live_camera(robot):
         traceback.print_exc()
         return False
     finally:
-        # Limpiar recursos de forma más robusta
+        # LIMPIEZA COMPLETA DE RECURSOS
+        print("\nLIMPIEZA: Finalizando escaneo...")
+
+        # Parar video y cerrar ventana ANTES del reset de velocidades
+        is_scanning[0] = False
+
         try:
-            # Parar el escaneo
-            is_scanning[0] = False
-            time.sleep(0.5)  # Dar tiempo al thread para terminar
-            
-            # Parar cámara y video stream
-            if 'camera_mgr' in locals():
-                camera_mgr.stop_video_stream()
-            
-            # Cerrar TODAS las ventanas de OpenCV múltiples veces para asegurar limpieza
-            for _ in range(3):
+            # Intentar destruir ventanas OpenCV agresivamente
+            for attempt in range(3):
                 cv2.destroyAllWindows()
-                time.sleep(0.2)
-            
-            # Resetear velocidades normales
-            if 'robot' in locals():
-                robot.cmd.set_velocities(
-                    RobotConfig.NORMAL_SPEED_H,
-                    RobotConfig.NORMAL_SPEED_V
-                )
-                print("Velocidades reseteadas a valores normales")
-            
-            print("Recursos liberados completamente")
-            
-        except Exception as cleanup_error:
-            print(f"Error durante limpieza: {cleanup_error}")
-            # Forzar cierre de ventanas aunque haya error
-            for _ in range(5):
-                cv2.destroyAllWindows()
-                time.sleep(0.1)
+                time.sleep(0.3)
+
+            # Parar video streaming del camera manager si está activo
+            if camera_manager.is_active:
+                camera_manager.stop_video_stream()
+
+        except Exception as e:
+            print(f"Error cerrando video: {e}")
+
+        # RESETEAR VELOCIDADES SIEMPRE (crítico para siguientes movimientos)
+        try:
+            print("LIMPIEZA: Reseteando velocidades del robot...")
+            robot.cmd.set_speeds(
+                h_speed=RobotConfig.DEFAULT_H_SPEED,
+                v_speed=RobotConfig.DEFAULT_V_SPEED
+            )
+            time.sleep(1.0)
+            print("Velocidades reseteadas correctamente")
+        except Exception as e:
+            print(f"Error reseteando velocidades: {e}")
+
+        # RESET COMPLETO del UART manager para limpiar callbacks y estado de firmware
+        try:
+            print("LIMPIEZA: Reset completo del UART manager...")
+            robot.cmd.uart.reset_scanning_state()
+        except Exception as e:
+            print(f"Error en reset del UART manager: {e}")
+
+        # RESET COMPLETO del camera manager para escaneos consecutivos
+        try:
+            print("LIMPIEZA: Reset completo del camera manager...")
+            camera_manager.reset_completely()
+        except Exception as e:
+            print(f"Error en reset completo del camera manager: {e}")
+
+        print("LIMPIEZA COMPLETADA - Robot listo para siguiente operación")
 
 def correlate_flags_with_snapshots(detection_state):
     """Correlacionar flags con snapshots para obtener posiciones reales"""
     try:
         print("\nCORRELACIONANDO FLAGS CON SNAPSHOTS...")
+
         
         # Usar las posiciones reales del log actual mostrado por el usuario
         # S1: X=-49mm, S2: X=-147mm, S3: X=-249mm, etc.

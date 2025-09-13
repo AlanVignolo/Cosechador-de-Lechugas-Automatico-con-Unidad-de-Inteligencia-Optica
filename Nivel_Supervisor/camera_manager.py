@@ -264,6 +264,52 @@ class CameraManager:
                     self.camera_index = None
                     self.last_frame = None
     
+    def reset_completely(self):
+        """Reset completo del camera manager - limpia todo estado y recursos"""
+        print("Iniciando reset completo del camera manager...")
+        
+        # 1. Detener video stream si está activo
+        self.stop_video_stream()
+        
+        # 2. Liberar cámara completamente
+        self.release_camera()
+        
+        # 3. Reset completo de estado
+        with self._lock:
+            # Limpiar todas las variables de estado
+            self.cap = None
+            self.camera_index = None
+            self.is_active = False
+            self.last_frame = None
+            self._working_camera_cache = None
+            
+            # Reset video state
+            self.video_mode = False
+            self.video_thread = None
+            self.video_callbacks.clear()
+            
+            # Limpiar queue
+            while not self.video_queue.empty():
+                try:
+                    self.video_queue.get_nowait()
+                except:
+                    break
+            
+            # Reset events
+            if hasattr(self, 'video_stop_event'):
+                self.video_stop_event.set()
+                self.video_stop_event.clear()
+        
+        # 4. Limpieza agresiva de OpenCV
+        for _ in range(5):
+            cv2.destroyAllWindows()
+            time.sleep(0.1)
+        
+        # 5. Espera adicional para liberación de recursos
+        time.sleep(1.0)
+        
+        print("Reset completo del camera manager finalizado")
+    
     def _video_capture_loop(self):
         """Loop interno de captura de video en hilo separado"""
         frame_interval = 1.0 / self.video_fps
