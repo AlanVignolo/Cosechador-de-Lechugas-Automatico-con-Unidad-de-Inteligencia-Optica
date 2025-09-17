@@ -149,7 +149,8 @@ def scan_horizontal_with_live_camera(robot):
             'current_state': None,  # 'accepted' | 'rejected' | None
             'position_buffer': [],
             'tape_segments': [],
-            'flag_count': 0
+            'flag_count': 0,
+            'uart_ref': robot.cmd.uart
         }
         
         def send_flag_for_state_change(state_type):
@@ -198,15 +199,23 @@ def scan_horizontal_with_live_camera(robot):
         def video_loop():
             """Bucle de video con detección simple sin tracking de posición"""
             thread_name = threading.current_thread().name
-            print(f"[{thread_name}] Video thread iniciado")
+            print(f"[{scan_id}][{thread_name}] Video thread iniciado")
             
             try:
+                frame_count = 0
                 while is_scanning[0]:
                     try:
                         frame = camera_mgr.get_latest_video_frame()
                         if frame is None:
-                            time.sleep(0.05)  # Más responsive
+                            print(f"[{scan_id}][{thread_name}] Frame {frame_count}: NONE - cámara no disponible")
+                            time.sleep(0.05)
                             continue
+                        
+                        frame_count += 1
+                        
+                        # Debug cada 30 frames
+                        if frame_count % 30 == 0:
+                            print(f"[{scan_id}][{thread_name}] Frame {frame_count} - Flags: {detection_state['flag_count']}")
                         
                         # Procesar frame para detección
                         processed = process_frame_for_detection(frame)
@@ -226,44 +235,69 @@ def scan_horizontal_with_live_camera(robot):
                             cv2.putText(processed, "SIN CINTA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                         
                         # Info básica en video
+                        cv2.putText(processed, f"ID: {scan_id}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                         cv2.putText(processed, f"Flags: {detection_state['flag_count']}", 
-                                   (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                                   (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                         cv2.putText(processed, f"Segmentos: {len(detection_state['tape_segments'])}", 
-                                   (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                        cv2.putText(processed, "ESC para detener", 
-                                   (10, processed.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                                   (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                        cv2.putText(processed, f"Frame: {frame_count}", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                         
-                        cv2.imshow("Escaner Horizontal", processed)
-                        
-                        key = cv2.waitKey(1) & 0xFF
-                        if key == 27:  # ESC
-                            print("🛑 Usuario presionó ESC")
-                            is_scanning[0] = False
-                            break
+                        # Mostrar video solo si no hay ventanas bloqueadas
+                        try:
+                            cv2.imshow(f"Escaner Horizontal [{scan_id}]", processed)
+                            key = cv2.waitKey(1) & 0xFF
+                            if key == 27:  # ESC
+                                print(f"[{scan_id}] 🛑 Usuario presionó ESC")
+                                is_scanning[0] = False
+                                break
+                        except Exception as cv_err:
+                            print(f"[{scan_id}][{thread_name}] Error OpenCV: {cv_err}")
+                            time.sleep(0.1)
                             
                     except Exception as e:
-                        print(f"[{thread_name}] Error en video: {e}")
+                        print(f"[{scan_id}][{thread_name}] Error en video: {e}")
                         time.sleep(0.1)
                         
                     except KeyboardInterrupt:
-                        print("🛑 Interrupción por teclado")
+                        print(f"[{scan_id}] 🛑 Interrupción por teclado")
                         is_scanning[0] = False
                         break
                         
             finally:
-                print(f"[{thread_name}] Video thread finalizando...")
+                print(f"[{scan_id}][{thread_name}] Video thread finalizando... (Total frames: {frame_count})")
                 # Limpieza garantizada
                 try:
-                    cv2.destroyWindow("Escaner Horizontal")
-                    cv2.waitKey(1)  # Procesar eventos pendientes
-                except:
-                    pass
-                print(f"[{thread_name}] Video thread terminado completamente")
+                    cv2.destroyWindow(f"Escaner Horizontal [{scan_id}]")
+                    cv2.destroyAllWindows()  # Forzar cierre de todas las ventanas
+                    cv2.waitKey(1)
+                except Exception as cleanup_err:
+                    print(f"[{scan_id}][{thread_name}] Error en limpieza: {cleanup_err}")
+                print(f"[{scan_id}][{thread_name}] Video thread terminado completamente")
         
-        # Iniciar hilo de video con nombre para debugging
-        video_thread = threading.Thread(target=video_loop, name="VideoScanThread")
+        # KILLER DE THREADS ZOMBIE ANTES DE INICIAR NUEVO ESCANEO
+        print(f"[{scan_id}] PRE-ESCANEO: Limpiando threads zombie...")
+        zombie_count = 0
+        for thread in threading.enumerate():
+            if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
+                if thread.is_alive():
+                    zombie_count += 1
+                    print(f"[{scan_id}] PRE-ESCANEO: ⚠️ Thread zombie detectado: {thread.name}")
+        
+        if zombie_count > 0:
+            print(f"[{scan_id}] PRE-ESCANEO: 🧟 Detectados {zombie_count} threads zombie!")
+            print(f"[{scan_id}] PRE-ESCANEO: Destruyendo TODAS las ventanas OpenCV...")
+            cv2.destroyAllWindows()
+            for _ in range(50):  # Más agresivo
+                cv2.waitKey(1)
+                time.sleep(0.02)
+            time.sleep(1.0)  # Pausa para que mueran los threads
+        
+        # Iniciar hilo de video con nombre único
+        video_thread_name = f"VideoScanThread_{scan_id}"
+        video_thread = threading.Thread(target=video_loop, name=video_thread_name)
         video_thread.daemon = False  # No daemon para control explícito
         video_thread.start()
+        print(f"[{scan_id}] Nuevo video thread iniciado: {video_thread_name}")
         
         # Movimiento hacia switch izquierdo
         print("Iniciando movimiento hacia switch izquierdo...")
@@ -346,9 +380,19 @@ def scan_horizontal_with_live_camera(robot):
         # FORZAR PARADA DE VIDEO THREAD
         is_scanning[0] = False
         
+        # FORZAR TERMINACIÓN DE TODOS LOS THREADS ACTIVOS
+        import threading
+        active_threads = threading.active_count()
+        print(f"[{scan_id}] LIMPIEZA: Threads activos: {active_threads}")
+        
+        # Listar todos los threads
+        for thread in threading.enumerate():
+            if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
+                print(f"[{scan_id}] LIMPIEZA: Thread encontrado: {thread.name} - Alive: {thread.is_alive()}")
+        
         # LIMPIEZA: Verificar y terminar video thread
         if 'video_thread' in locals() and video_thread is not None:
-            print(f"[{scan_id}] LIMPIEZA: Terminando video thread...")
+            print(f"[{scan_id}] LIMPIEZA: Terminando video thread {video_thread.name}...")
             
             # Esperar terminación con timeout agresivo
             for cleanup_attempt in range(10):
@@ -362,8 +406,32 @@ def scan_horizontal_with_live_camera(robot):
                 if cleanup_attempt == 9:
                     print(f"[{scan_id}] LIMPIEZA: ❌ CRÍTICO - Video thread NO TERMINÓ")
                     print(f"[{scan_id}] LIMPIEZA: Esto BLOQUEARÁ próximos escaneos")
+                    # FORZAR DESTRUCCIÓN DE VENTANAS OPENCV
+                    try:
+                        cv2.destroyAllWindows()
+                        for _ in range(10):
+                            cv2.waitKey(1)
+                            time.sleep(0.01)
+                    except:
+                        pass
         else:
             print(f"[{scan_id}] LIMPIEZA: Video thread no encontrado o ya terminado")
+        
+        # BUSCAR Y TERMINAR THREADS ZOMBIE
+        zombie_threads = []
+        for thread in threading.enumerate():
+            if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
+                if thread.is_alive():
+                    zombie_threads.append(thread)
+                    print(f"[{scan_id}] LIMPIEZA: ⚠️ Thread zombie encontrado: {thread.name}")
+        
+        if zombie_threads:
+            print(f"[{scan_id}] LIMPIEZA: Encontrados {len(zombie_threads)} threads zombie")
+            # Intentar cerrar ventanas asociadas a threads zombie
+            cv2.destroyAllWindows()
+            for _ in range(20):
+                cv2.waitKey(1)
+                time.sleep(0.01)
 
         # PARAR VIDEO STREAM COMPLETAMENTE
         try:
@@ -436,27 +504,56 @@ def correlate_flags_with_snapshots(detection_state):
     """Correlacionar flags con snapshots para obtener posiciones reales"""
     try:
         print("\nCORRELACIONANDO FLAGS CON SNAPSHOTS...")
+        # Obtener snapshots reales del último movimiento desde el UART manager
+        # Nota: el escáner corre dentro de main_robot con un objeto 'robot'
+        # accesible por cierre de ámbito no está aquí. Por eso, obtenemos el
+        # UART manager a través de los flags de detección: guardamos una
+        # referencia cuando enviamos flags. Como alternativa simple aquí,
+        # accedemos al singleton de camera_manager no es adecuado; usamos
+        # el truco de localizar un UARTManager en runtime a través de la
+        # instancia global if disponible. Para mantenerlo simple y robusto,
+        # pedimos al módulo command_manager expuesto por robot vía closures.
+        # En este archivo, robot.cmd.uart fue usado en otras funciones, por
+        # lo tanto, almacenamos un puntero dentro de detection_state.
+        uart = detection_state.get('uart_ref')
+        if uart is None:
+            try:
+                # Fallback: intentar acceder mediante un import tardío del main_robot
+                from Nivel_Supervisor.controller.uart_manager import UARTManager  # tipo
+            except Exception:
+                pass
+        
+        snapshot_pairs = []
+        try:
+            if uart is not None and hasattr(uart, 'get_last_snapshots'):
+                snapshot_pairs = uart.get_last_snapshots()  # [(x_mm, y_mm), ...]
+        except Exception:
+            snapshot_pairs = []
 
-        
-        # Usar las posiciones reales del log actual mostrado por el usuario
-        # S1: X=-49mm, S2: X=-147mm, S3: X=-249mm, etc.
-        snapshot_positions = [-49, -147, -249, -337, -450, -538, -651, -738, -841, -934]
-        
+        if not snapshot_pairs:
+            print("⚠️ No se recibieron snapshots del robot para este movimiento."
+                  " Verifique que el firmware esté enviando 'MOVEMENT_SNAPSHOTS'"
+                  " al finalizar o al tocar límites. No se calcularán posiciones.")
+            print(f"Flags enviados: {detection_state['flag_count']}")
+            return
+
+        # Usar solo X para correlación horizontal
+        snapshot_positions = [xy[0] for xy in snapshot_pairs]
         print(f"Snapshots disponibles: {len(snapshot_positions)}")
         print(f"Flags enviados: {detection_state['flag_count']}")
-        
+
         # Correlacionar cada par de flags (inicio, fin) con snapshots consecutivos
         for i, segment in enumerate(detection_state['tape_segments']):
             start_flag_idx = segment.get('start_flag', 0) - 1  # Convertir a índice 0-based
             end_flag_idx = segment.get('end_flag', 0) - 1
-            
+
             # Usar posiciones de snapshots correspondientes
             if 0 <= start_flag_idx < len(snapshot_positions):
                 segment['start_pos_real'] = snapshot_positions[start_flag_idx]
-            
+
             if 0 <= end_flag_idx < len(snapshot_positions):
                 segment['end_pos_real'] = snapshot_positions[end_flag_idx]
-                
+
             # Calcular posición central del segmento usando snapshots
             if 'start_pos_real' in segment and 'end_pos_real' in segment:
                 segment['center_pos_real'] = (segment['start_pos_real'] + segment['end_pos_real']) / 2
@@ -465,7 +562,7 @@ def correlate_flags_with_snapshots(detection_state):
                 print(f"        → Centro: {segment['center_pos_real']:.1f}mm, Distancia: {distancia:.0f}mm")
             else:
                 print(f"   CINTA #{i+1}: Datos incompletos")
-        
+
         print("Correlación flags-snapshots completada")
         
     except Exception as e:

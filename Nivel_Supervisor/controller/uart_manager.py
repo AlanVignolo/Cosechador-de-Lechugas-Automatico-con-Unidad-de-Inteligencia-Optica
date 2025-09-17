@@ -25,6 +25,8 @@ class UARTManager:
         self.waiting_for_completion = {}
         # Cache de completados recientes para evitar condiciones de carrera
         self.completed_actions_recent = {}
+        # Buffer de snapshots de último movimiento (lista de tuplas [(x_mm, y_mm), ...])
+        self._last_movement_snapshots = []
         
     def connect(self) -> bool:
         try:
@@ -142,6 +144,11 @@ class UARTManager:
                 pass
             if "stepper_start_callback" in self.message_callbacks:
                 self.message_callbacks["stepper_start_callback"](message)
+            # Al iniciar un nuevo movimiento, limpiar snapshots previos
+            try:
+                self._last_movement_snapshots.clear()
+            except Exception:
+                pass
                 
         elif "STEPPER_MOVE_COMPLETED:" in message:
             # Evitar procesamiento duplicado
@@ -229,6 +236,8 @@ class UARTManager:
             print("-" * 40)
             
             snapshot_parts = snapshots_data.split(';')
+            # Reiniciar buffer antes de cargar nuevos
+            self._last_movement_snapshots = []
             for snapshot in snapshot_parts:
                 if '=' in snapshot and ',' in snapshot:
                     try:
@@ -238,12 +247,27 @@ class UARTManager:
                             x_mm = int(coords[0])
                             y_mm = int(coords[1])
                             print(f"{flag}: X={x_mm}mm, Y={y_mm}mm")
+                            self._last_movement_snapshots.append((x_mm, y_mm))
                     except Exception:
                         continue
                         
         except Exception as e:
             if RobotConfig.VERBOSE_LOGGING:
                 self.logger.warning(f"Error procesando snapshots: {e}")
+
+    def get_last_snapshots(self):
+        """Devuelve la lista de snapshots del último movimiento como lista de (x_mm, y_mm)."""
+        try:
+            return list(self._last_movement_snapshots)
+        except Exception:
+            return []
+
+    def clear_last_snapshots(self):
+        """Limpia la lista de snapshots almacenados."""
+        try:
+            self._last_movement_snapshots.clear()
+        except Exception:
+            pass
     
     
     def send_command(self, command: str) -> Dict:
@@ -363,7 +387,9 @@ class UARTManager:
             self.action_events.clear()
             self.waiting_for_completion.clear()
             self.completed_actions_recent.clear()
-            
+            # Limpiar snapshots almacenados
+            self._last_movement_snapshots.clear()
+        
         # El firmware no tiene comando RS específico, pero se auto-resetea con nuevos movimientos
         # Los snapshots se limpian automáticamente cuando se inician nuevos movimientos
         print("UART manager state resetted (firmware auto-clears snapshots on new movements)")

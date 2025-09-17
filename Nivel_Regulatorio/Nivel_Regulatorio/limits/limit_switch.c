@@ -42,10 +42,24 @@ void limit_switch_update(void) {
 				
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
-				
-				if (horizontal_axis.direction) {  // true = izquierda (AJUSTADO)
-					stepper_stop_horizontal();
-				}
+                
+                if (horizontal_axis.direction) {  // true = izquierda (AJUSTADO)
+                    // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
+                    extern uint8_t snapshot_count;
+                    extern progress_snapshot_t snapshots[];
+                    if (snapshot_count > 0) {
+                        char snapshot_msg[256];
+                        int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+                        for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+                            offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+                                               "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+                        }
+                        uart_send_response(snapshot_msg);
+                        // Resetear snapshots despu�s de enviar
+                        snapshot_count = 0;
+                    }
+                    stepper_stop_horizontal();
+                }
 			}
 		}
 		} else {
@@ -69,10 +83,24 @@ void limit_switch_update(void) {
 				
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
-				
-				if (!horizontal_axis.direction) {  // false = derecha (AJUSTADO)
-					stepper_stop_horizontal();
-				}
+                
+                if (!horizontal_axis.direction) {  // false = derecha (AJUSTADO)
+                    // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
+                    extern uint8_t snapshot_count;
+                    extern progress_snapshot_t snapshots[];
+                    if (snapshot_count > 0) {
+                        char snapshot_msg[256];
+                        int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+                        for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+                            offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+                                               "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+                        }
+                        uart_send_response(snapshot_msg);
+                        // Resetear snapshots despu�s de enviar
+                        snapshot_count = 0;
+                    }
+                    stepper_stop_horizontal();
+                }
 			}
 		}
 		} else {
@@ -96,10 +124,24 @@ void limit_switch_update(void) {
 				
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
-				
-				if (vertical_axis.direction) {
-					stepper_stop_vertical();
-				}
+                
+                if (vertical_axis.direction) {
+                    // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
+                    extern uint8_t snapshot_count;
+                    extern progress_snapshot_t snapshots[];
+                    if (snapshot_count > 0) {
+                        char snapshot_msg[256];
+                        int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+                        for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+                            offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+                                               "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+                        }
+                        uart_send_response(snapshot_msg);
+                        // Resetear snapshots despu�s de enviar
+                        snapshot_count = 0;
+                    }
+                    stepper_stop_vertical();
+                }
 			}
 		}
 		} else {
@@ -123,10 +165,24 @@ void limit_switch_update(void) {
 				
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
-				
-				if (!vertical_axis.direction) {
-					stepper_stop_vertical();
-				}
+                
+                if (!vertical_axis.direction) {
+                    // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
+                    extern uint8_t snapshot_count;
+                    extern progress_snapshot_t snapshots[];
+                    if (snapshot_count > 0) {
+                        char snapshot_msg[256];
+                        int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+                        for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+                            offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+                                               "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+                        }
+                        uart_send_response(snapshot_msg);
+                        // Resetear snapshots despu�s de enviar
+                        snapshot_count = 0;
+                    }
+                    stepper_stop_vertical();
+                }
 			}
 		}
 		} else {
