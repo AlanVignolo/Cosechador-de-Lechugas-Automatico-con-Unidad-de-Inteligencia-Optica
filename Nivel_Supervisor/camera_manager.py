@@ -427,6 +427,14 @@ class CameraManager:
                     latest_frame = self.video_queue.get_nowait()
                 except Empty:
                     break
+            # Fallbacks para evitar devolver None durante warm-up
+            if latest_frame is None:
+                # Intentar devolver el último frame válido conocido
+                if self.last_frame is not None:
+                    return self.last_frame.copy()
+                # Como último recurso, intentar una captura directa rápida
+                frame = self.capture_frame(timeout=0.5, max_retries=1)
+                return frame
             return latest_frame
         except:
             return None

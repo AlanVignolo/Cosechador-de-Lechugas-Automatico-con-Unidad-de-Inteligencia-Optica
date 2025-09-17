@@ -299,6 +299,21 @@ def scan_horizontal_with_live_camera(robot):
         video_thread.start()
         print(f"[{scan_id}] Nuevo video thread iniciado: {video_thread_name}")
         
+        # Pequeño warm-up: esperar a que llegue el primer frame válido
+        warmup_start = time.time()
+        first_frame_ok = False
+        while time.time() - warmup_start < 2.0:
+            try:
+                test_frame = camera_mgr.get_latest_video_frame(timeout=0.2)
+                if test_frame is not None:
+                    first_frame_ok = True
+                    break
+            except Exception:
+                pass
+            time.sleep(0.05)
+        if not first_frame_ok:
+            print(f"[{scan_id}] Aviso: Cámara aún sin frames tras warm-up breve; continúo igualmente")
+        
         # Movimiento hacia switch izquierdo
         print("Iniciando movimiento hacia switch izquierdo...")
         result = robot.cmd.move_xy(2000, 0)
