@@ -145,17 +145,31 @@ def scan_horizontal_with_live_camera(robot):
         last_detection_pos = [None]
         
         # Sistema de tracking de estados para flags
+        # Parámetros de debouncing y límites
+        from config.robot_config import RobotConfig
+        MAX_FLAGS = RobotConfig.MAX_SNAPSHOTS * 2
+        DETECT_ON_FRAMES = 3    # N cuadros consecutivos con detección para marcar INICIO
+        DETECT_OFF_FRAMES = 3   # N cuadros consecutivos sin detección para marcar FIN
+
         detection_state = {
             'current_state': None,  # 'accepted' | 'rejected' | None
             'position_buffer': [],
             'tape_segments': [],
             'flag_count': 0,
-            'uart_ref': robot.cmd.uart
+            'uart_ref': robot.cmd.uart,
+            'detect_streak': 0,
+            'nodetect_streak': 0,
+            'max_flags': MAX_FLAGS
         }
         
         def send_flag_for_state_change(state_type):
             """Enviar flag al firmware para marcar cambio de estado"""
             try:
+                # No enviar más flags si alcanzamos el límite de snapshots del firmware
+                if detection_state['flag_count'] >= detection_state['max_flags']:
+                    print(f"Límite de flags alcanzado ({detection_state['max_flags']}). No se enviarán más RP en este movimiento.")
+                    return None
+
                 detection_state['flag_count'] += 1
                 flag_id = detection_state['flag_count']
                 
@@ -172,29 +186,31 @@ def scan_horizontal_with_live_camera(robot):
                 return None
         
         def process_detection_state(is_accepted):
-            """Procesar cambios de estado de detección y enviar flags"""
-            new_state = 'accepted' if is_accepted else 'rejected'
-            
-            # Detectar cambio de estado
-            if detection_state['current_state'] != new_state:
-                if detection_state['current_state'] == 'rejected' and new_state == 'accepted':
-                    # INICIO de cinta
-                    flag_id = send_flag_for_state_change("INICIO_CINTA")
-                    if flag_id:
-                        detection_state['tape_segments'].append({
-                            'start_flag': flag_id,
-                        })
-                
-                elif detection_state['current_state'] == 'accepted' and new_state == 'rejected':
-                    # FIN de cinta
-                    flag_id = send_flag_for_state_change("FIN_CINTA")
-                    if flag_id and detection_state['tape_segments']:
-                        # Actualizar último segmento
-                        last_segment = detection_state['tape_segments'][-1]
-                        last_segment['end_flag'] = flag_id
-                        print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
-                
-                detection_state['current_state'] = new_state
+            """Procesar cambios de estado con debouncing y enviar flags solo en transiciones"""
+            # Actualizar rachas de detección / no detección
+            if is_accepted:
+                detection_state['detect_streak'] += 1
+                detection_state['nodetect_streak'] = 0
+            else:
+                detection_state['nodetect_streak'] += 1
+                detection_state['detect_streak'] = 0
+
+            # Evaluar transición a 'accepted' (INICIO) con debouncing
+            if detection_state['current_state'] != 'accepted' and detection_state['detect_streak'] >= DETECT_ON_FRAMES:
+                detection_state['current_state'] = 'accepted'
+                flag_id = send_flag_for_state_change("INICIO_CINTA")
+                if flag_id:
+                    detection_state['tape_segments'].append({'start_flag': flag_id})
+                return
+
+            # Evaluar transición a 'rejected' (FIN) con debouncing
+            if detection_state['current_state'] == 'accepted' and detection_state['nodetect_streak'] >= DETECT_OFF_FRAMES:
+                detection_state['current_state'] = 'rejected'
+                flag_id = send_flag_for_state_change("FIN_CINTA")
+                if flag_id and detection_state['tape_segments']:
+                    last_segment = detection_state['tape_segments'][-1]
+                    last_segment['end_flag'] = flag_id
+                    print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
         
         def video_loop():
             """Bucle de video con detección simple sin tracking de posición"""
@@ -365,6 +381,8 @@ def scan_horizontal_with_live_camera(robot):
         correlate_flags_with_snapshots(detection_state)
         
         # Mostrar resultados y guardar en matriz
+        # Filtrar segmentos incompletos (sin fin o sin inicio) antes de mostrar/guardar
+        detection_state['tape_segments'] = [seg for seg in detection_state['tape_segments'] if 'start_flag' in seg and 'end_flag' in seg]
         resultados = show_results(detections, detection_state, selected_tubo)
         
         # Guardar cintas detectadas en la matriz

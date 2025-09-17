@@ -33,7 +33,7 @@ extern volatile int32_t relative_h_counter;
 extern volatile int32_t relative_v_counter;
 
 // Sistema de snapshots de progreso
-#define MAX_SNAPSHOTS 10
+#define MAX_SNAPSHOTS 30
 typedef struct {
 	int32_t h_mm;
 	int32_t v_mm;

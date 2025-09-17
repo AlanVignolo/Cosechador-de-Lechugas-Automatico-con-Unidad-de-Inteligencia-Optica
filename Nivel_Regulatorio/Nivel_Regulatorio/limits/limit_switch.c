@@ -48,7 +48,7 @@ void limit_switch_update(void) {
                     extern uint8_t snapshot_count;
                     extern progress_snapshot_t snapshots[];
                     if (snapshot_count > 0) {
-                        char snapshot_msg[256];
+                        char snapshot_msg[512];
                         int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
                         for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
                             offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,

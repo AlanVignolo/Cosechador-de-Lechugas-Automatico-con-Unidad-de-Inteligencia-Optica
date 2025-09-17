@@ -47,6 +47,10 @@ class RobotConfig:
     SHOW_UART_EVENTS = False  # Mostrar eventos UART detallados
     SHOW_MOVEMENT_COMPLETE = True  # Mostrar completado de movimientos
     
+    # ---- SNAPSHOTS (capacidad firmware) ----
+    # Debe coincidir con MAX_SNAPSHOTS del firmware. Usado para calcular límite de flags por movimiento.
+    MAX_SNAPSHOTS = 30
+    
     # =================================
     # MÉTODOS AUXILIARES PARA DIRECCIONES
     # =================================

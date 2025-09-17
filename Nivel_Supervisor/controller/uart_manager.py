@@ -236,8 +236,7 @@ class UARTManager:
             print("-" * 40)
             
             snapshot_parts = snapshots_data.split(';')
-            # Reiniciar buffer antes de cargar nuevos
-            self._last_movement_snapshots = []
+            # No reiniciar el buffer aquí; permitimos múltiples mensajes chunked por movimiento
             for snapshot in snapshot_parts:
                 if '=' in snapshot and ',' in snapshot:
                     try:

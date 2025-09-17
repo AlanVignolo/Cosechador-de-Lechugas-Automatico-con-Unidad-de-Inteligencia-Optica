@@ -150,7 +150,7 @@ ISR(TIMER1_COMPA_vect) {
 				
 				// Enviar snapshots si los hay
 				if (snapshot_count > 0) {
-					char snapshot_msg[256];
+					char snapshot_msg[512];
 					int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
 					
 					for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
