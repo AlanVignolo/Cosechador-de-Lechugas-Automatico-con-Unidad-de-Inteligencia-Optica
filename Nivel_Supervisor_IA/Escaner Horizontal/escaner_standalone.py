@@ -148,8 +148,8 @@ def scan_horizontal_with_live_camera(robot):
         # Parámetros de debouncing y límites
         from config.robot_config import RobotConfig
         MAX_FLAGS = RobotConfig.MAX_SNAPSHOTS * 2
-        DETECT_ON_FRAMES = 3    # N cuadros consecutivos con detección para marcar INICIO
-        DETECT_OFF_FRAMES = 3   # N cuadros consecutivos sin detección para marcar FIN
+        DETECT_ON_FRAMES = 1    # 1 frame para marcar INICIO (diagnóstico)
+        DETECT_OFF_FRAMES = 1   # 1 frame para marcar FIN (diagnóstico)
         # Umbrales de calidad para filtrar falsos positivos/negativos
         MIN_NEG_STREAK_FOR_START = 5  # mínimos negativos previos a INICIO
         MIN_POS_STREAK_FOR_END = 5    # mínimos positivos previos a FIN
@@ -206,6 +206,7 @@ def scan_horizontal_with_live_camera(robot):
 
             # Evaluar transición a 'accepted' (INICIO) con debouncing
             if detection_state['current_state'] != 'accepted' and detection_state['detect_streak'] >= DETECT_ON_FRAMES:
+                print(f"[TRANSICION] INICIO detectado (detect_streak={detection_state['detect_streak']}, prev_neg={prev_nodetect_streak})")
                 detection_state['current_state'] = 'accepted'
                 flag_id = send_flag_for_state_change("INICIO_CINTA")
                 if flag_id:
@@ -218,6 +219,7 @@ def scan_horizontal_with_live_camera(robot):
 
             # Evaluar transición a 'rejected' (FIN) con debouncing
             if detection_state['current_state'] == 'accepted' and detection_state['nodetect_streak'] >= DETECT_OFF_FRAMES:
+                print(f"[TRANSICION] FIN detectado (nodetect_streak={detection_state['nodetect_streak']}, prev_pos={prev_detect_streak})")
                 detection_state['current_state'] = 'rejected'
                 flag_id = send_flag_for_state_change("FIN_CINTA")
                 if flag_id and detection_state['tape_segments']:
@@ -246,7 +248,7 @@ def scan_horizontal_with_live_camera(robot):
                         
                         # Debug cada 30 frames
                         if frame_count % 30 == 0:
-                            print(f"[{scan_id}][{thread_name}] Frame {frame_count} - Flags: {detection_state['flag_count']}")
+                            print(f"[{scan_id}][{thread_name}] Frame {frame_count} - Flags: {detection_state['flag_count']} - state={detection_state['current_state']} ds={detection_state['detect_streak']} nds={detection_state['nodetect_streak']}")
                         
                         # Procesar frame para detección
                         processed = process_frame_for_detection(frame)
