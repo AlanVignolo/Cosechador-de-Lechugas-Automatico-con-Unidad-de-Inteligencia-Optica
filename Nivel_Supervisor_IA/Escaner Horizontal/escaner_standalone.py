@@ -148,12 +148,12 @@ def scan_horizontal_with_live_camera(robot):
         # Parámetros de debouncing y límites
         from config.robot_config import RobotConfig
         MAX_FLAGS = RobotConfig.MAX_SNAPSHOTS * 2
-        DETECT_ON_FRAMES = 1    # 1 frame para marcar INICIO (diagnóstico)
-        DETECT_OFF_FRAMES = 1   # 1 frame para marcar FIN (diagnóstico)
+        DETECT_ON_FRAMES = 3    # Debounce moderado para INICIO
+        DETECT_OFF_FRAMES = 3   # Debounce moderado para FIN
         # Umbrales de calidad para filtrar falsos positivos/negativos
-        MIN_NEG_STREAK_FOR_START = 5  # mínimos negativos previos a INICIO
-        MIN_POS_STREAK_FOR_END = 5    # mínimos positivos previos a FIN
-        MIN_WIDTH_MM = 15             # ancho mínimo entre INICIO/FIN (mm) para considerar cinta válida
+        MIN_NEG_STREAK_FOR_START = 8  # mínimos negativos previos a INICIO (más estricto)
+        MIN_POS_STREAK_FOR_END = 8    # mínimos positivos previos a FIN (más estricto)
+        MIN_WIDTH_MM = 60             # ancho mínimo entre INICIO/FIN (mm) para considerar cinta válida
 
         detection_state = {
             'current_state': None,  # 'accepted' | 'rejected' | None
