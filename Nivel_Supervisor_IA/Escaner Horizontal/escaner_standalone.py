@@ -381,7 +381,6 @@ def scan_horizontal_with_live_camera(robot):
         is_scanning[0] = False
         
         # FORZAR TERMINACIÓN DE TODOS LOS THREADS ACTIVOS
-        import threading
         active_threads = threading.active_count()
         print(f"[{scan_id}] LIMPIEZA: Threads activos: {active_threads}")
         
