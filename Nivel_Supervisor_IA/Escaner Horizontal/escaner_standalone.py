@@ -163,7 +163,10 @@ def scan_horizontal_with_live_camera(robot):
             'uart_ref': robot.cmd.uart,
             'detect_streak': 0,
             'nodetect_streak': 0,
-            'max_flags': MAX_FLAGS
+            'max_flags': MAX_FLAGS,
+            # Valores pendientes para registrar rachas previas reales en el instante de cambio
+            'pending_pre_start_neg_streak': 0,
+            'pending_pre_end_pos_streak': 0
         }
         
         def send_flag_for_state_change(state_type):
@@ -198,9 +201,17 @@ def scan_horizontal_with_live_camera(robot):
 
             # Actualizar rachas de detección / no detección
             if is_accepted:
+                # Si acabamos de entrar a detección (streak pasa de 0 a 1),
+                # guardar los negativos justo antes de entrar
+                if prev_detect_streak == 0:
+                    detection_state['pending_pre_start_neg_streak'] = prev_nodetect_streak
                 detection_state['detect_streak'] = prev_detect_streak + 1
                 detection_state['nodetect_streak'] = 0
             else:
+                # Si acabamos de salir a no detección (streak pasa de 0 a 1),
+                # guardar los positivos justo antes de salir
+                if prev_nodetect_streak == 0:
+                    detection_state['pending_pre_end_pos_streak'] = prev_detect_streak
                 detection_state['nodetect_streak'] = prev_nodetect_streak + 1
                 detection_state['detect_streak'] = 0
 
@@ -212,8 +223,8 @@ def scan_horizontal_with_live_camera(robot):
                 if flag_id:
                     detection_state['tape_segments'].append({
                         'start_flag': flag_id,
-                        # Guardar cuántos negativos llevaba acumulados justo antes de entrar en detección
-                        'pre_start_neg_streak': prev_nodetect_streak
+                        # Usar la racha negativa registrada justo cuando se inició la detección
+                        'pre_start_neg_streak': detection_state.get('pending_pre_start_neg_streak', 0)
                     })
                 return
 
@@ -225,8 +236,8 @@ def scan_horizontal_with_live_camera(robot):
                 if flag_id and detection_state['tape_segments']:
                     last_segment = detection_state['tape_segments'][-1]
                     last_segment['end_flag'] = flag_id
-                    # Guardar cuántos positivos llevaba acumulados justo antes de salir de detección
-                    last_segment['pre_end_pos_streak'] = prev_detect_streak
+                    # Usar la racha positiva registrada justo cuando se inició la no detección
+                    last_segment['pre_end_pos_streak'] = detection_state.get('pending_pre_end_pos_streak', 0)
                     print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
         
         def video_loop():
