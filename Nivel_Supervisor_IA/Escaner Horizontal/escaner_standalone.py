@@ -150,6 +150,10 @@ def scan_horizontal_with_live_camera(robot):
         MAX_FLAGS = RobotConfig.MAX_SNAPSHOTS * 2
         DETECT_ON_FRAMES = 3    # N cuadros consecutivos con detección para marcar INICIO
         DETECT_OFF_FRAMES = 3   # N cuadros consecutivos sin detección para marcar FIN
+        # Umbrales de calidad para filtrar falsos positivos/negativos
+        MIN_NEG_STREAK_FOR_START = 5  # mínimos negativos previos a INICIO
+        MIN_POS_STREAK_FOR_END = 5    # mínimos positivos previos a FIN
+        MIN_WIDTH_MM = 15             # ancho mínimo entre INICIO/FIN (mm) para considerar cinta válida
 
         detection_state = {
             'current_state': None,  # 'accepted' | 'rejected' | None
@@ -186,13 +190,18 @@ def scan_horizontal_with_live_camera(robot):
                 return None
         
         def process_detection_state(is_accepted):
-            """Procesar cambios de estado con debouncing y enviar flags solo en transiciones"""
+            """Procesar cambios de estado con debouncing y enviar flags solo en transiciones.
+            Además registra cuántos frames negativos/positivos precedieron a cada flag."""
+            # Guardar rachas previas antes de actualizar
+            prev_detect_streak = detection_state['detect_streak']
+            prev_nodetect_streak = detection_state['nodetect_streak']
+
             # Actualizar rachas de detección / no detección
             if is_accepted:
-                detection_state['detect_streak'] += 1
+                detection_state['detect_streak'] = prev_detect_streak + 1
                 detection_state['nodetect_streak'] = 0
             else:
-                detection_state['nodetect_streak'] += 1
+                detection_state['nodetect_streak'] = prev_nodetect_streak + 1
                 detection_state['detect_streak'] = 0
 
             # Evaluar transición a 'accepted' (INICIO) con debouncing
@@ -200,7 +209,11 @@ def scan_horizontal_with_live_camera(robot):
                 detection_state['current_state'] = 'accepted'
                 flag_id = send_flag_for_state_change("INICIO_CINTA")
                 if flag_id:
-                    detection_state['tape_segments'].append({'start_flag': flag_id})
+                    detection_state['tape_segments'].append({
+                        'start_flag': flag_id,
+                        # Guardar cuántos negativos llevaba acumulados justo antes de entrar en detección
+                        'pre_start_neg_streak': prev_nodetect_streak
+                    })
                 return
 
             # Evaluar transición a 'rejected' (FIN) con debouncing
@@ -210,6 +223,8 @@ def scan_horizontal_with_live_camera(robot):
                 if flag_id and detection_state['tape_segments']:
                     last_segment = detection_state['tape_segments'][-1]
                     last_segment['end_flag'] = flag_id
+                    # Guardar cuántos positivos llevaba acumulados justo antes de salir de detección
+                    last_segment['pre_end_pos_streak'] = prev_detect_streak
                     print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
         
         def video_loop():
@@ -380,9 +395,30 @@ def scan_horizontal_with_live_camera(robot):
         # Correlacionar flags con snapshots para obtener posiciones reales
         correlate_flags_with_snapshots(detection_state)
         
+        # Filtrar segmentos incompletos y de baja calidad
+        filtered_segments = []
+        for idx, seg in enumerate(detection_state['tape_segments'], 1):
+            # Requiere inicio y fin
+            if 'start_flag' not in seg or 'end_flag' not in seg:
+                print(f"   Segmento #{idx}: descartado por incompleto (falta inicio/fin)")
+                continue
+            # Rachas mínimas antes de cada transición
+            pre_neg = seg.get('pre_start_neg_streak', 0)
+            pre_pos = seg.get('pre_end_pos_streak', 0)
+            if pre_neg < MIN_NEG_STREAK_FOR_START or pre_pos < MIN_POS_STREAK_FOR_END:
+                print(f"   Segmento #{idx}: descartado por rachas insuficientes (neg={pre_neg}, pos={pre_pos})")
+                continue
+            # Si tenemos posiciones reales, filtrar por ancho mínimo
+            if 'start_pos_real' in seg and 'end_pos_real' in seg:
+                width_mm = abs(seg['end_pos_real'] - seg['start_pos_real'])
+                if width_mm < MIN_WIDTH_MM:
+                    print(f"   Segmento #{idx}: descartado por ancho insuficiente ({width_mm:.1f}mm < {MIN_WIDTH_MM}mm)")
+                    continue
+            filtered_segments.append(seg)
+        # Reemplazar por lista filtrada
+        detection_state['tape_segments'] = filtered_segments
+
         # Mostrar resultados y guardar en matriz
-        # Filtrar segmentos incompletos (sin fin o sin inicio) antes de mostrar/guardar
-        detection_state['tape_segments'] = [seg for seg in detection_state['tape_segments'] if 'start_flag' in seg and 'end_flag' in seg]
         resultados = show_results(detections, detection_state, selected_tubo)
         
         # Guardar cintas detectadas en la matriz
