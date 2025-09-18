@@ -139,7 +139,7 @@ def scan_horizontal_with_live_camera(robot):
         # Iniciar detección básica
         print("FASE 4: Iniciando escaneado con video...")
         print("Video activo - Mostrando feed de cámara")
-        print(f"🔍 Iniciando escaneo ID: {scan_id}")
+        # (silenciado) ID se imprimirá más abajo solo una vez
         
         # PRE-ESCANEO: limpiar hilos zombie
         # utilizar/actualizar ID de escaneo ahora que comienza el proceso principal
@@ -343,6 +343,7 @@ def scan_horizontal_with_live_camera(robot):
                 print(f"[{scan_id}][{thread_name}] Video thread terminado completamente")
         
         # KILLER DE THREADS ZOMBIE ANTES DE INICIAR NUEVO ESCANEO
+        # Pre-escaneo: limpieza mínima de threads zombie
         print(f"[{scan_id}] PRE-ESCANEO: Limpiando threads zombie...")
         zombie_count = 0
         for thread in threading.enumerate():
@@ -352,13 +353,12 @@ def scan_horizontal_with_live_camera(robot):
                     print(f"[{scan_id}] PRE-ESCANEO: ⚠️ Thread zombie detectado: {thread.name}")
         
         if zombie_count > 0:
-            print(f"[{scan_id}] PRE-ESCANEO: 🧟 Detectados {zombie_count} threads zombie!")
-            print(f"[{scan_id}] PRE-ESCANEO: Destruyendo TODAS las ventanas OpenCV...")
+            print(f"[{scan_id}] PRE-ESCANEO: 🧟 {zombie_count} threads zombie. Limpiando ventanas...")
             cv2.destroyAllWindows()
-            for _ in range(50):  # Más agresivo
+            for _ in range(10):
                 cv2.waitKey(1)
                 time.sleep(0.02)
-            time.sleep(1.0)  # Pausa para que mueran los threads
+            time.sleep(0.2)
         
         # Iniciar hilo de video con nombre único
         video_thread_name = f"VideoScanThread_{scan_id}"
@@ -400,7 +400,21 @@ def scan_horizontal_with_live_camera(robot):
             except Exception as re_err:
                 print(f"[{scan_id}] Error reiniciando stream: {re_err}")
             if not first_frame_ok:
-                print(f"[{scan_id}] Aviso: Sin frames tras reintento de stream; se continuará igualmente")
+                print(f"[{scan_id}] Error: Sin frames tras reintento de stream. Abortando escaneo para evitar hilos colgados.")
+                # Detener video de forma controlada y liberar
+                is_scanning[0] = False
+                try:
+                    cv2.destroyAllWindows()
+                    cv2.waitKey(1)
+                except:
+                    pass
+                try:
+                    camera_mgr.stop_stream_ref()
+                    time.sleep(0.2)
+                    camera_mgr.release("escaner_standalone")
+                except:
+                    pass
+                return False
         
         # Movimiento hacia switch izquierdo
         print("Iniciando movimiento hacia switch izquierdo...")
