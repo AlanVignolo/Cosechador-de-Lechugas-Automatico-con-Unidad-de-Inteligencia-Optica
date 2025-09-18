@@ -53,12 +53,22 @@ class UARTManager:
             self._start_listening()
             
             self.logger.info(f"Conectado a {self.port}")
+            # Habilitar heartbeat de límites (reporte periódico) para evitar perder estado
+            try:
+                self.send_command("HB:1")
+            except Exception:
+                pass
             return True
         except Exception as e:
             self.logger.error(f"Error conectando: {e}")
             return False
     
     def disconnect(self):
+        # Deshabilitar heartbeat antes de cerrar
+        try:
+            self.send_command("HB:0")
+        except Exception:
+            pass
         self.stop_listening.set()
         if self.listening_thread:
             self.listening_thread.join(timeout=2)
@@ -426,6 +436,44 @@ class UARTManager:
                         return f"LIMIT_POLLED:{','.join(active)}"
                 continue
         
+        return None
+
+    def wait_for_limit_specific(self, target: str, timeout: float = 30.0) -> Optional[str]:
+        """Espera un límite específico.
+        target en { 'H_LEFT','H_RIGHT','V_UP','V_DOWN' }
+        Acepta mensajes TRIGGERED o estado polleado para ese target.
+        """
+        start_time = time.time()
+        last_poll = 0.0
+        trigger_map = {
+            'H_LEFT': 'LIMIT_H_LEFT_TRIGGERED',
+            'H_RIGHT': 'LIMIT_H_RIGHT_TRIGGERED',
+            'V_UP': 'LIMIT_V_UP_TRIGGERED',
+            'V_DOWN': 'LIMIT_V_DOWN_TRIGGERED',
+        }
+        wanted_trigger = trigger_map.get(target, '')
+        while time.time() - start_time < timeout:
+            try:
+                message = self.message_queue.get(timeout=0.5)
+                try:
+                    self._process_automatic_message(message)
+                except Exception:
+                    pass
+                if wanted_trigger and wanted_trigger in message:
+                    return message
+            except queue.Empty:
+                now = time.time()
+                if now - last_poll >= 0.5:
+                    last_poll = now
+                    resp = self.check_limits()
+                    try:
+                        resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+                    except Exception:
+                        resp_str = ""
+                    self._update_limit_status_from_response(resp_str)
+                    if self._limit_status.get(target, False):
+                        return f"LIMIT_POLLED:{target}"
+                continue
         return None
     
     def reset_scanning_state(self):

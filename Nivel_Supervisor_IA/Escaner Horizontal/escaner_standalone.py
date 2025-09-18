@@ -114,7 +114,7 @@ def scan_horizontal_with_live_camera(robot):
         result = robot.cmd.move_xy(-2000, 0)
         
         # Esperar límite derecho (aceptar evento o estado polleado)
-        limit_message = robot.cmd.uart.wait_for_limit(timeout=30.0)
+        limit_message = robot.cmd.uart.wait_for_limit_specific('H_RIGHT', timeout=30.0)
         if not (limit_message and ("LIMIT_H_RIGHT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_RIGHT" in limit_message))):
             print("Error: No se alcanzó el límite derecho")
             return False
@@ -139,9 +139,10 @@ def scan_horizontal_with_live_camera(robot):
         # Iniciar detección básica
         print("FASE 4: Iniciando escaneado con video...")
         print("Video activo - Mostrando feed de cámara")
+        print(f"🔍 Iniciando escaneo ID: {scan_id}")
         
-        # Variables de control para el video thread - ÚNICO POR ESCANEO
-        # Reutilizar/actualizar ID de escaneo ahora que comienza el proceso principal
+        # PRE-ESCANEO: limpiar hilos zombie
+        # utilizar/actualizar ID de escaneo ahora que comienza el proceso principal
         scan_id = str(uuid.uuid4())[:8]
         is_scanning = [True]
         video_thread = None
@@ -258,19 +259,31 @@ def scan_horizontal_with_live_camera(robot):
                 except Exception as win_err:
                     print(f"[{scan_id}][{thread_name}] Aviso: no se pudo crear ventana explícita: {win_err}")
                 frame_count = 0
+                start_ts = time.time()
+                printed_none_once = False
                 while is_scanning[0]:
                     try:
                         frame = camera_mgr.get_latest_video_frame()
                         if frame is None:
-                            print(f"[{scan_id}][{thread_name}] Frame {frame_count}: NONE - cámara no disponible")
+                            if not printed_none_once:
+                                print(f"[{scan_id}][{thread_name}] Aviso: cámara sin frames (esperando)")
+                                printed_none_once = True
                             time.sleep(0.05)
+                            # Watchdog: si en los primeros 2s no llegaron frames, reiniciar stream una vez
+                            if (time.time() - start_ts) > 2.0 and frame_count == 0:
+                                try:
+                                    print(f"[{scan_id}][{thread_name}] Watchdog: reiniciando stream de video por falta de frames")
+                                    camera_mgr.stop_stream_ref()
+                                    time.sleep(0.2)
+                                    camera_mgr.start_stream_ref(fps=6)
+                                    # reiniciar temporizador de watchdog
+                                    start_ts = time.time()
+                                except Exception as wd_err:
+                                    print(f"[{scan_id}][{thread_name}] Error reiniciando stream (watchdog): {wd_err}")
                             continue
                         
                         frame_count += 1
-                        
-                        # Debug cada 30 frames
-                        if frame_count % 30 == 0:
-                            print(f"[{scan_id}][{thread_name}] Frame {frame_count} - Flags: {detection_state['flag_count']} - state={detection_state['current_state']} ds={detection_state['detect_streak']} nds={detection_state['nodetect_streak']}")
+                        printed_none_once = False
                         
                         # Procesar frame para detección
                         processed = process_frame_for_detection(frame)
@@ -354,6 +367,8 @@ def scan_horizontal_with_live_camera(robot):
         video_thread.start()
         print(f"[{scan_id}] Nuevo video thread iniciado: {video_thread_name}")
         
+        # (una sola vez) CameraInfo ya logueada arriba
+
         # Pequeño warm-up: esperar a que llegue el primer frame válido
         warmup_start = time.time()
         first_frame_ok = False
@@ -392,7 +407,7 @@ def scan_horizontal_with_live_camera(robot):
         result = robot.cmd.move_xy(2000, 0)
         
         # Esperar límite izquierdo (aceptar evento o estado polleado)
-        limit_message = robot.cmd.uart.wait_for_limit(timeout=120.0)
+        limit_message = robot.cmd.uart.wait_for_limit_specific('H_LEFT', timeout=120.0)
         
         # Detener video de forma controlada
         print("Deteniendo escaneo de video...")
