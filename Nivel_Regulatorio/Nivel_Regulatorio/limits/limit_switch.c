@@ -4,6 +4,11 @@
 #include "../drivers/stepper_driver.h"
 
 static limit_status_t limits = {false, false, false, false};
+// Contador para reporte periódico del estado de límites (se incrementa en cada update)
+static uint16_t limit_status_counter = 0;
+// Periodicidad del reporte en ticks de limit_switch_update(); ajustar según frecuencia de llamada
+// Por ejemplo, si limit_switch_update() se llama cada ~10ms, 50 -> ~500ms
+#define LIMIT_STATUS_PERIOD_TICKS 50
 
 void limit_switch_init(void) {
 	// Configurar pines como entradas con pull-up interno
@@ -189,6 +194,24 @@ void limit_switch_update(void) {
 		debounce_counter[3] = 0;
 		limits.v_up_triggered = false;
 	}
+
+    // Reporte periódico del estado de límites mientras permanezcan presionados
+    // Esto asegura que el supervisor conozca el estado actual aunque se haya perdido el evento de borde
+    limit_status_counter++;
+    if (limit_status_counter >= LIMIT_STATUS_PERIOD_TICKS) {
+        limit_status_counter = 0;
+        if (limits.h_left_triggered || limits.h_right_triggered || limits.v_up_triggered || limits.v_down_triggered) {
+            char status_msg[64];
+            // Usar claves claras para el supervisor
+            snprintf(status_msg, sizeof(status_msg),
+                     "LIMIT_STATUS:H_LEFT=%d,H_RIGHT=%d,V_UP=%d,V_DOWN=%d",
+                     limits.h_left_triggered ? 1 : 0,
+                     limits.h_right_triggered ? 1 : 0,
+                     limits.v_up_triggered ? 1 : 0,
+                     limits.v_down_triggered ? 1 : 0);
+            uart_send_response(status_msg);
+        }
+    }
 }
 
 bool limit_switch_check_h_movement(bool direction) {

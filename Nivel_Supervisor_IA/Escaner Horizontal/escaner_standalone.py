@@ -113,9 +113,9 @@ def scan_horizontal_with_live_camera(robot):
         print("   Moviendo hacia switch derecho...")
         result = robot.cmd.move_xy(-2000, 0)
         
-        # Esperar límite derecho
+        # Esperar límite derecho (aceptar evento o estado polleado)
         limit_message = robot.cmd.uart.wait_for_limit(timeout=30.0)
-        if not (limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message):
+        if not (limit_message and ("LIMIT_H_RIGHT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_RIGHT" in limit_message))):
             print("Error: No se alcanzó el límite derecho")
             return False
         
@@ -391,7 +391,7 @@ def scan_horizontal_with_live_camera(robot):
         print("Iniciando movimiento hacia switch izquierdo...")
         result = robot.cmd.move_xy(2000, 0)
         
-        # Esperar límite izquierdo
+        # Esperar límite izquierdo (aceptar evento o estado polleado)
         limit_message = robot.cmd.uart.wait_for_limit(timeout=120.0)
         
         # Detener video de forma controlada
@@ -428,7 +428,7 @@ def scan_horizontal_with_live_camera(robot):
         except Exception as e:
             print(f"Advertencia limpiando ventanas: {e}")
         
-        if not (limit_message and "LIMIT_H_LEFT_TRIGGERED" in limit_message):
+        if not (limit_message and ("LIMIT_H_LEFT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_LEFT" in limit_message))):
             print("Error: No se alcanzó el límite izquierdo")
             return False
         

@@ -27,6 +27,14 @@ class UARTManager:
         self.completed_actions_recent = {}
         # Buffer de snapshots de último movimiento (lista de tuplas [(x_mm, y_mm), ...])
         self._last_movement_snapshots = []
+        # Estado persistente de límites
+        self._limit_status = {
+            'H_LEFT': False,
+            'H_RIGHT': False,
+            'V_UP': False,
+            'V_DOWN': False,
+        }
+        self._limit_status_last_update = 0.0
         
     def connect(self) -> bool:
         try:
@@ -110,12 +118,32 @@ class UARTManager:
                 
         # Procesar callbacks específicos
         if "LIMIT_" in message:
+            # Actualizar estado persistente de límites si es un mensaje TRIGGERED
+            try:
+                if "LIMIT_H_LEFT_TRIGGERED" in message:
+                    self._limit_status['H_LEFT'] = True
+                elif "LIMIT_H_RIGHT_TRIGGERED" in message:
+                    self._limit_status['H_RIGHT'] = True
+                elif "LIMIT_V_UP_TRIGGERED" in message:
+                    self._limit_status['V_UP'] = True
+                elif "LIMIT_V_DOWN_TRIGGERED" in message:
+                    self._limit_status['V_DOWN'] = True
+                self._limit_status_last_update = time.time()
+            except Exception:
+                pass
             if "limit_callback" in self.message_callbacks:
                 self.message_callbacks["limit_callback"](message)
         
         elif "SYSTEM_STATUS:" in message:
             if "status_callback" in self.message_callbacks:
                 self.message_callbacks["status_callback"](message)
+        elif "LIMIT_STATUS:" in message:
+            # Mensaje de broadcast periódico de firmware con estado de límites
+            try:
+                payload = message.split('LIMIT_STATUS:')[-1]
+                self._update_limit_status_from_response(payload)
+            except Exception:
+                pass
         
         elif "SERVO_MOVE_STARTED:" in message:
             try:
@@ -339,10 +367,37 @@ class UARTManager:
     
     def check_limits(self) -> Dict:
         return self.send_command("L")
+
+    def _update_limit_status_from_response(self, response: str):
+        """Parsea una respuesta al comando 'L' para actualizar _limit_status.
+        Acepta formatos tipo 'H_LEFT=1' o 'H_LEFT:true' en cualquier combinación.
+        """
+        try:
+            s = response or ""
+            def has_true(key: str) -> bool:
+                # Busca patrones comunes: KEY=1, KEY:true, KEY=ON
+                tokens = [f"{key}=1", f"{key}:1", f"{key}=true", f"{key}:true", f"{key}=ON", f"{key}:ON"]
+                s_low = s.lower()
+                return any(tok.lower() in s_low for tok in tokens)
+            # Aceptar claves largas (LIMIT_STATUS) y cortas (respuesta de 'L')
+            self._limit_status['H_LEFT'] = has_true('H_LEFT') or has_true('H_L')
+            self._limit_status['H_RIGHT'] = has_true('H_RIGHT') or has_true('H_R')
+            self._limit_status['V_UP'] = has_true('V_UP') or has_true('V_U')
+            self._limit_status['V_DOWN'] = has_true('V_DOWN') or has_true('V_D')
+            self._limit_status_last_update = time.time()
+        except Exception:
+            pass
+
+    def get_limit_status(self) -> Dict:
+        """Devuelve copia del estado persistente de límites y timestamp de actualización."""
+        return {
+            'status': dict(self._limit_status),
+            'last_update': self._limit_status_last_update,
+        }
     
     def wait_for_limit(self, timeout: float = 30.0) -> Optional[str]:
         start_time = time.time()
-        
+        last_poll = 0.0
         while time.time() - start_time < timeout:
             try:
                 message = self.message_queue.get(timeout=0.5)
@@ -354,6 +409,21 @@ class UARTManager:
                 if "LIMIT_" in message and "TRIGGERED" in message:
                     return message
             except queue.Empty:
+                # Si no llegó evento, hacer polling periódico del estado de límites
+                now = time.time()
+                if now - last_poll >= 0.5:  # cada 500ms
+                    last_poll = now
+                    resp = self.check_limits()
+                    try:
+                        resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+                    except Exception:
+                        resp_str = ""
+                    self._update_limit_status_from_response(resp_str)
+                    # Si algún límite está activo, retornar como detección por polling
+                    if any(self._limit_status.values()):
+                        # Componer un mensaje compatible
+                        active = [k for k, v in self._limit_status.items() if v]
+                        return f"LIMIT_POLLED:{','.join(active)}"
                 continue
         
         return None
