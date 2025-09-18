@@ -28,6 +28,9 @@ class UARTManager:
         # Buffer de snapshots de último movimiento (lista de tuplas [(x_mm, y_mm), ...])
         self._last_movement_snapshots = []
         self._snap_header_printed = False
+        # Deduplicación por movimiento: id -> (x_mm, y_mm)
+        self._movement_snapshots_by_id = {}
+        self._movement_seen_ids = set()
         # Estado persistente de límites
         self._limit_status = {
             'H_LEFT': False,
@@ -186,7 +189,8 @@ class UARTManager:
             # Al iniciar un nuevo movimiento, limpiar snapshots previos
             try:
                 self._last_movement_snapshots.clear()
-                self._snap_header_printed = False
+                self._movement_snapshots_by_id.clear()
+                self._movement_seen_ids.clear()
             except Exception:
                 pass
                 
@@ -198,6 +202,8 @@ class UARTManager:
             
             if "stepper_complete_callback" in self.message_callbacks:
                 self.message_callbacks["stepper_complete_callback"](message)
+            # Al completar el movimiento, permitir que el próximo movimiento imprima encabezado
+            self._snap_header_printed = False
                 
         elif "MOVEMENT_SNAPSHOTS:" in message:
             self._process_movement_snapshots(message)
@@ -281,15 +287,38 @@ class UARTManager:
             for snapshot in snapshot_parts:
                 if '=' in snapshot and ',' in snapshot:
                     try:
-                        flag = snapshot.split('=')[0]
+                        flag = snapshot.split('=')[0].strip()  # e.g., S1
                         coords = snapshot.split('=')[1].split(',')
                         if len(coords) >= 2:
                             x_mm = int(coords[0])
                             y_mm = int(coords[1])
-                            print(f"{flag}: X={x_mm}mm, Y={y_mm}mm")
-                            self._last_movement_snapshots.append((x_mm, y_mm))
+                            # Extraer id numérico si es posible
+                            snap_id = None
+                            if flag and (flag[0] in ('S', 's')):
+                                try:
+                                    snap_id = int(''.join(ch for ch in flag[1:] if ch.isdigit()))
+                                except Exception:
+                                    snap_id = None
+                            # Deduplicar por id dentro del mismo movimiento
+                            if snap_id is not None:
+                                if snap_id not in self._movement_seen_ids:
+                                    self._movement_seen_ids.add(snap_id)
+                                    self._movement_snapshots_by_id[snap_id] = (x_mm, y_mm)
+                                    print(f"{flag}: X={x_mm}mm, Y={y_mm}mm")
+                                else:
+                                    # Ignorar duplicados exactos S# en mensajes repetidos
+                                    continue
+                            else:
+                                # Si no se pudo extraer id, agregar secuencialmente evitando duplicados exactos consecutivos
+                                if not self._last_movement_snapshots or self._last_movement_snapshots[-1] != (x_mm, y_mm):
+                                    self._last_movement_snapshots.append((x_mm, y_mm))
+                                    print(f"{flag}: X={x_mm}mm, Y={y_mm}mm")
                     except Exception:
                         continue
+            # Reconstruir lista ordenada por id si tenemos ids
+            if self._movement_snapshots_by_id:
+                ordered = [self._movement_snapshots_by_id[k] for k in sorted(self._movement_snapshots_by_id.keys())]
+                self._last_movement_snapshots = ordered
                         
         except Exception as e:
             if RobotConfig.VERBOSE_LOGGING:
@@ -307,6 +336,8 @@ class UARTManager:
         try:
             self._last_movement_snapshots.clear()
             self._snap_header_printed = False
+            self._movement_snapshots_by_id.clear()
+            self._movement_seen_ids.clear()
         except Exception:
             pass
     
