@@ -36,6 +36,11 @@ def scan_horizontal_with_live_camera(robot):
     print("1. Tubo 1 (Y=300mm)")
     print("2. Tubo 2 (Y=600mm)")
     
+    # Definir un ID de escaneo por defecto y estado de escaneo por si hay errores tempranos
+    import uuid
+    scan_id = str(uuid.uuid4())[:8]
+    is_scanning = [False]
+
     while True:
         try:
             tubo_seleccionado = int(input("Seleccione tubo (1-2): "))
@@ -136,7 +141,7 @@ def scan_horizontal_with_live_camera(robot):
         print("Video activo - Mostrando feed de cámara")
         
         # Variables de control para el video thread - ÚNICO POR ESCANEO
-        import uuid
+        # Reutilizar/actualizar ID de escaneo ahora que comienza el proceso principal
         scan_id = str(uuid.uuid4())[:8]
         is_scanning = [True]
         video_thread = None

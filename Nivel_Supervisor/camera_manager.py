@@ -161,6 +161,14 @@ class CameraManager:
                     self.cap = None
                 return False
     
+    def ensure_initialized(self) -> bool:
+        """Asegura que la cámara esté inicializada sin reiniciar si ya está activa."""
+        if self.is_camera_active():
+            return True
+        # Elegir índice actual o cacheado si existe; si no, auto-detectar dentro de initialize_camera
+        idx = self.camera_index if self.camera_index is not None else self._working_camera_cache
+        return self.initialize_camera(idx)
+    
     def capture_frame(self, timeout: float = 5.0, max_retries: int = 3) -> Optional[np.ndarray]:
         """
         Captura un frame de la cámara
