@@ -147,6 +147,12 @@ void uart_parse_command(const char* cmd) {
 		status.v_down_triggered ? 1 : 0);
 	}
 	
+	else if (cmd[0] == 'H' && cmd[1] == 'B' && cmd[2] == ':') {  // HB:<0|1> - Heartbeat LIMIT_STATUS enable/disable
+		int enable = atoi(cmd + 3);
+		limit_switch_set_heartbeat(enable ? 1 : 0);
+		snprintf(response, sizeof(response), "OK:HB:%d", enable ? 1 : 0);
+	}
+	
 	else if (cmd[0] == 'Q') {  // Query - consultar estado actual
 		// Obtener posiciones actuales de los servos
 		uint8_t servo1_pos = servo_get_current_position(1);
