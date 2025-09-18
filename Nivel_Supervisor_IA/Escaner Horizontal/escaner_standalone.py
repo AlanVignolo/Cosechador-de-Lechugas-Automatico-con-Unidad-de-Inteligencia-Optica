@@ -252,6 +252,11 @@ def scan_horizontal_with_live_camera(robot):
             print(f"[{scan_id}][{thread_name}] Video thread iniciado")
             
             try:
+                # Crear ventana explícita para evitar problemas con algunos backends
+                try:
+                    cv2.namedWindow(f"Escaner Horizontal [{scan_id}]", cv2.WINDOW_NORMAL)
+                except Exception as win_err:
+                    print(f"[{scan_id}][{thread_name}] Aviso: no se pudo crear ventana explícita: {win_err}")
                 frame_count = 0
                 while is_scanning[0]:
                     try:
@@ -362,7 +367,25 @@ def scan_horizontal_with_live_camera(robot):
                 pass
             time.sleep(0.05)
         if not first_frame_ok:
-            print(f"[{scan_id}] Aviso: Cámara aún sin frames tras warm-up breve; continúo igualmente")
+            print(f"[{scan_id}] Aviso: Cámara sin frames tras warm-up. Reiniciando stream de video...")
+            try:
+                camera_mgr.stop_stream_ref()
+                time.sleep(0.3)
+                if not camera_mgr.start_stream_ref(fps=6):
+                    print(f"[{scan_id}] Error: No se pudo reiniciar stream de video")
+                else:
+                    # Segundo warm-up
+                    warmup_start2 = time.time()
+                    while time.time() - warmup_start2 < 2.0:
+                        test_frame = camera_mgr.get_latest_video_frame(timeout=0.2)
+                        if test_frame is not None:
+                            first_frame_ok = True
+                            break
+                        time.sleep(0.05)
+            except Exception as re_err:
+                print(f"[{scan_id}] Error reiniciando stream: {re_err}")
+            if not first_frame_ok:
+                print(f"[{scan_id}] Aviso: Sin frames tras reintento de stream; se continuará igualmente")
         
         # Movimiento hacia switch izquierdo
         print("Iniciando movimiento hacia switch izquierdo...")
