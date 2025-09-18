@@ -19,20 +19,13 @@ def scan_horizontal_with_live_camera(robot):
     """
     Función principal de escaneo horizontal autónoma con matriz de cintas
     """
-    print("\n" + "="*60)
-    print("ESCANEADO HORIZONTAL AUTONOMO")
-    print("="*60)
-    
     # Importar sistema de matriz
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Analizar Cultivo'))
     from matriz_cintas import matriz_cintas
     
-    # Mostrar resumen actual
-    matriz_cintas.mostrar_resumen()
-    
     # Selección de tubo
-    print("\n🔴 SELECCIÓN DE TUBO:")
+    print(f"\nSelección de tubo:")
     print("1. Tubo 1 (Y=300mm)")
     print("2. Tubo 2 (Y=600mm)")
     
@@ -57,7 +50,7 @@ def scan_horizontal_with_live_camera(robot):
     }
     
     selected_tubo = tubo_config[tubo_seleccionado]
-    print(f"Seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
+    print(f"Tubo seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
     
     try:
         # Importar solo lo necesario dentro de la función
@@ -82,10 +75,10 @@ def scan_horizontal_with_live_camera(robot):
         
         # Limpiar ventanas previas que puedan estar abiertas
         cv2.destroyAllWindows()
-        time.sleep(0.5)  # Dar tiempo para que se cierren
+        time.sleep(0.2)
         
         # Adquirir y preparar cámara (uso compartido administrado por CameraManager)
-        print("Adquiriendo cámara...")
+        # Adquirir cámara
         if not camera_mgr.acquire("escaner_standalone"):
             print("Error: No se pudo adquirir la cámara")
             return False
@@ -95,22 +88,14 @@ def scan_horizontal_with_live_camera(robot):
             camera_mgr.release("escaner_standalone")
             return False
         
-        print("Cámara lista")
-        
         # Velocidades lentas
         robot.cmd.set_velocities(2000, 2000)
-        print("Velocidades configuradas para escaneado")
         
         # NOTA: El posicionamiento Y ahora se hace desde otro código externo
         # Solo informamos qué tubo se va a escanear para la matriz de coordenadas
-        print(f"\nFASE 1: Escaneando {selected_tubo['nombre']} (coordenada Y={selected_tubo['y_mm']}mm)")
-        print("NOTA: El posicionamiento Y debe hacerse externamente antes de ejecutar este escáner")
         
         # SECUENCIA DE MOVIMIENTO HORIZONTAL
-        print("\nFASE 2: Posicionándose en el inicio horizontal...")
-        
         # Ir al switch derecho (X negativos)
-        print("   Moviendo hacia switch derecho...")
         result = robot.cmd.move_xy(-2000, 0)
         
         # Esperar límite derecho (aceptar evento o estado polleado)
@@ -119,27 +104,19 @@ def scan_horizontal_with_live_camera(robot):
             print("Error: No se alcanzó el límite derecho")
             return False
         
-        print("Límite derecho alcanzado")
-        
         # Retroceder 1cm
-        print("FASE 3: Retrocediendo 1cm...")
         result = robot.cmd.move_xy(10, 0)
         if not result["success"]:
             print(f"Error en retroceso: {result}")
             return False
         
         time.sleep(2)
-        print("Retroceso completado")
         
         # Resetear posición global para que coincida con x=0 del escáner
         # Esto hace que las coordenadas relativas funcionen correctamente
         robot.reset_global_position(0.0, robot.global_position['y'])
-        print("📍 Posición de inicio del escáner establecida en x=0")
         
         # Iniciar detección básica
-        print("FASE 4: Iniciando escaneado con video...")
-        print("Video activo - Mostrando feed de cámara")
-        # (silenciado) ID se imprimirá más abajo solo una vez
         
         # PRE-ESCANEO: limpiar hilos zombie
         # utilizar/actualizar ID de escaneo ahora que comienza el proceso principal
@@ -147,7 +124,7 @@ def scan_horizontal_with_live_camera(robot):
         is_scanning = [True]
         video_thread = None
         
-        print(f"🔍 Iniciando escaneo ID: {scan_id}")
+        print(f"Escaneo ID: {scan_id}")
         
         last_detection_pos = [None]
         
@@ -248,16 +225,11 @@ def scan_horizontal_with_live_camera(robot):
                     print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
         
         def video_loop():
-            """Bucle de video con detección simple sin tracking de posición"""
+            """Bucle de video sin UI; solo procesa y emite flags"""
             thread_name = threading.current_thread().name
-            print(f"[{scan_id}][{thread_name}] Video thread iniciado")
             
             try:
-                # Crear ventana explícita para evitar problemas con algunos backends
-                try:
-                    cv2.namedWindow(f"Escaner Horizontal [{scan_id}]", cv2.WINDOW_NORMAL)
-                except Exception as win_err:
-                    print(f"[{scan_id}][{thread_name}] Aviso: no se pudo crear ventana explícita: {win_err}")
+                # Sin ventanas UI (evita bloqueos en 2ª corrida)
                 frame_count = 0
                 start_ts = time.time()
                 printed_none_once = False
@@ -266,20 +238,20 @@ def scan_horizontal_with_live_camera(robot):
                         frame = camera_mgr.get_latest_video_frame()
                         if frame is None:
                             if not printed_none_once:
-                                print(f"[{scan_id}][{thread_name}] Aviso: cámara sin frames (esperando)")
+                                print(f"[{scan_id}] Aviso: cámara sin frames (esperando)")
                                 printed_none_once = True
                             time.sleep(0.05)
                             # Watchdog: si en los primeros 2s no llegaron frames, reiniciar stream una vez
                             if (time.time() - start_ts) > 2.0 and frame_count == 0:
                                 try:
-                                    print(f"[{scan_id}][{thread_name}] Watchdog: reiniciando stream de video por falta de frames")
+                                    print(f"[{scan_id}] Watchdog: reiniciando stream de video por falta de frames")
                                     camera_mgr.stop_stream_ref()
                                     time.sleep(0.2)
                                     camera_mgr.start_stream_ref(fps=6)
                                     # reiniciar temporizador de watchdog
                                     start_ts = time.time()
                                 except Exception as wd_err:
-                                    print(f"[{scan_id}][{thread_name}] Error reiniciando stream (watchdog): {wd_err}")
+                                    print(f"[{scan_id}] Error reiniciando stream (watchdog): {wd_err}")
                             continue
                         
                         frame_count += 1
@@ -293,82 +265,35 @@ def scan_horizontal_with_live_camera(robot):
                         
                         # Procesar cambios de estado y enviar flags (sin posición)
                         process_detection_state(is_tape_detected)
-                        
-                        # Marcar detección en video
-                        if is_tape_detected:
-                            cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 15, (0, 255, 0), 3)
-                            cv2.putText(processed, "CINTA DETECTADA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                        else:
-                            cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 10, (0, 0, 255), 2)
-                            cv2.putText(processed, "SIN CINTA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                        
-                        # Info básica en video
-                        cv2.putText(processed, f"ID: {scan_id}", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                        cv2.putText(processed, f"Flags: {detection_state['flag_count']}", 
-                                   (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                        cv2.putText(processed, f"Segmentos: {len(detection_state['tape_segments'])}", 
-                                   (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                        cv2.putText(processed, f"Frame: {frame_count}", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                        
-                        # Mostrar video solo si no hay ventanas bloqueadas
-                        try:
-                            cv2.imshow(f"Escaner Horizontal [{scan_id}]", processed)
-                            key = cv2.waitKey(1) & 0xFF
-                            if key == 27:  # ESC
-                                print(f"[{scan_id}] 🛑 Usuario presionó ESC")
-                                is_scanning[0] = False
-                                break
-                        except Exception as cv_err:
-                            print(f"[{scan_id}][{thread_name}] Error OpenCV: {cv_err}")
-                            time.sleep(0.1)
-                            
+                        # Sin UI / imshow
+
                     except Exception as e:
-                        print(f"[{scan_id}][{thread_name}] Error en video: {e}")
+                        print(f"[{scan_id}] Error en video: {e}")
                         time.sleep(0.1)
                         
                     except KeyboardInterrupt:
-                        print(f"[{scan_id}] 🛑 Interrupción por teclado")
+                        print(f"[{scan_id}] Interrupción por teclado")
                         is_scanning[0] = False
                         break
                         
             finally:
-                print(f"[{scan_id}][{thread_name}] Video thread finalizando... (Total frames: {frame_count})")
-                # Limpieza garantizada
-                try:
-                    cv2.destroyWindow(f"Escaner Horizontal [{scan_id}]")
-                    cv2.destroyAllWindows()  # Forzar cierre de todas las ventanas
-                    cv2.waitKey(1)
-                except Exception as cleanup_err:
-                    print(f"[{scan_id}][{thread_name}] Error en limpieza: {cleanup_err}")
-                print(f"[{scan_id}][{thread_name}] Video thread terminado completamente")
+                # Fin del hilo de video
+                pass
         
         # KILLER DE THREADS ZOMBIE ANTES DE INICIAR NUEVO ESCANEO
         # Pre-escaneo: limpieza mínima de threads zombie
-        print(f"[{scan_id}] PRE-ESCANEO: Limpiando threads zombie...")
         zombie_count = 0
         for thread in threading.enumerate():
             if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
                 if thread.is_alive():
                     zombie_count += 1
-                    print(f"[{scan_id}] PRE-ESCANEO: ⚠️ Thread zombie detectado: {thread.name}")
-        
-        if zombie_count > 0:
-            print(f"[{scan_id}] PRE-ESCANEO: 🧟 {zombie_count} threads zombie. Limpiando ventanas...")
-            cv2.destroyAllWindows()
-            for _ in range(10):
-                cv2.waitKey(1)
-                time.sleep(0.02)
-            time.sleep(0.2)
         
         # Iniciar hilo de video con nombre único
         video_thread_name = f"VideoScanThread_{scan_id}"
         video_thread = threading.Thread(target=video_loop, name=video_thread_name)
-        video_thread.daemon = False  # No daemon para control explícito
+        video_thread.daemon = True  # Evitar bloqueos si el hilo no termina
         video_thread.start()
-        print(f"[{scan_id}] Nuevo video thread iniciado: {video_thread_name}")
         
-        # (una sola vez) CameraInfo ya logueada arriba
-
         # Pequeño warm-up: esperar a que llegue el primer frame válido
         warmup_start = time.time()
         first_frame_ok = False
@@ -417,14 +342,12 @@ def scan_horizontal_with_live_camera(robot):
                 return False
         
         # Movimiento hacia switch izquierdo
-        print("Iniciando movimiento hacia switch izquierdo...")
         result = robot.cmd.move_xy(2000, 0)
         
         # Esperar límite izquierdo (aceptar evento o estado polleado)
         limit_message = robot.cmd.uart.wait_for_limit_specific('H_LEFT', timeout=120.0)
         
         # Detener video de forma controlada
-        print("Deteniendo escaneo de video...")
         is_scanning[0] = False
         
         # Dar tiempo al thread para salir del loop
@@ -433,35 +356,21 @@ def scan_horizontal_with_live_camera(robot):
         # Esperar terminación con intentos múltiples
         for attempt in range(3):
             if not video_thread.is_alive():
-                print("Video thread terminó correctamente")
                 break
-            
-            print(f"Esperando terminación del video thread (intento {attempt + 1}/3)...")
             video_thread.join(timeout=1.0)
-            
             if not video_thread.is_alive():
-                print("Video thread terminó correctamente")
                 break
-            elif attempt == 2:
-                print("ERROR: Video thread no terminó - esto causará problemas en próximos escaneos")
-                # Force cleanup OpenCV windows
-                cv2.destroyAllWindows()
-                cv2.waitKey(1)
         
         # Limpiar ventanas OpenCV de forma segura
         try:
             cv2.destroyAllWindows()
-            for _ in range(3):  # Múltiples intentos
-                cv2.waitKey(1)
-                time.sleep(0.1)
-        except Exception as e:
-            print(f"Advertencia limpiando ventanas: {e}")
+            cv2.waitKey(1)
+        except Exception:
+            pass
         
         if not (limit_message and ("LIMIT_H_LEFT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_LEFT" in limit_message))):
             print("Error: No se alcanzó el límite izquierdo")
             return False
-        
-        print("Límite izquierdo alcanzado - Escaneado completo")
         
         # Correlacionar flags con snapshots para obtener posiciones reales
         correlate_flags_with_snapshots(detection_state)
@@ -494,15 +403,9 @@ def scan_horizontal_with_live_camera(robot):
         
         # Guardar cintas detectadas en la matriz
         if resultados:
-            print(f"\nGuardando {len(resultados)} cintas en matriz...")
+            # Guardar en matriz (silenciar mensajes intermedios)
             if matriz_cintas.guardar_cintas_tubo(tubo_seleccionado, resultados):
-                print("Cintas guardadas exitosamente en la matriz")
-                
-                # Mostrar matriz actualizada
-                print("\n" + "="*60)
-                print("MATRIZ ACTUALIZADA")
-                print("="*60)
-                matriz_cintas.mostrar_resumen()
+                pass
             else:
                 print("Error guardando cintas en matriz")
         
@@ -515,36 +418,21 @@ def scan_horizontal_with_live_camera(robot):
         return False
     finally:
         # LIMPIEZA COMPLETA DE RECURSOS
-        print(f"\n[{scan_id}] LIMPIEZA: Finalizando escaneo...")
-
         # FORZAR PARADA DE VIDEO THREAD
         is_scanning[0] = False
         
         # FORZAR TERMINACIÓN DE TODOS LOS THREADS ACTIVOS
-        active_threads = threading.active_count()
-        print(f"[{scan_id}] LIMPIEZA: Threads activos: {active_threads}")
-        
-        # Listar todos los threads
-        for thread in threading.enumerate():
-            if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
-                print(f"[{scan_id}] LIMPIEZA: Thread encontrado: {thread.name} - Alive: {thread.is_alive()}")
         
         # LIMPIEZA: Verificar y terminar video thread
         if 'video_thread' in locals() and video_thread is not None:
-            print(f"[{scan_id}] LIMPIEZA: Terminando video thread {video_thread.name}...")
-            
             # Esperar terminación con timeout agresivo
             for cleanup_attempt in range(10):
                 if not video_thread.is_alive():
-                    print(f"[{scan_id}] LIMPIEZA: ✅ Video thread terminó correctamente")
                     break
                 
-                print(f"[{scan_id}] LIMPIEZA: Esperando terminación {cleanup_attempt + 1}/10...")
                 video_thread.join(timeout=0.2)
                 
                 if cleanup_attempt == 9:
-                    print(f"[{scan_id}] LIMPIEZA: ❌ CRÍTICO - Video thread NO TERMINÓ")
-                    print(f"[{scan_id}] LIMPIEZA: Esto BLOQUEARÁ próximos escaneos")
                     # FORZAR DESTRUCCIÓN DE VENTANAS OPENCV
                     try:
                         cv2.destroyAllWindows()
@@ -554,7 +442,7 @@ def scan_horizontal_with_live_camera(robot):
                     except:
                         pass
         else:
-            print(f"[{scan_id}] LIMPIEZA: Video thread no encontrado o ya terminado")
+            pass
         
         # BUSCAR Y TERMINAR THREADS ZOMBIE
         zombie_threads = []
@@ -565,7 +453,6 @@ def scan_horizontal_with_live_camera(robot):
                     print(f"[{scan_id}] LIMPIEZA: ⚠️ Thread zombie encontrado: {thread.name}")
         
         if zombie_threads:
-            print(f"[{scan_id}] LIMPIEZA: Encontrados {len(zombie_threads)} threads zombie")
             # Intentar cerrar ventanas asociadas a threads zombie
             cv2.destroyAllWindows()
             for _ in range(20):
@@ -574,24 +461,20 @@ def scan_horizontal_with_live_camera(robot):
 
         # PARAR VIDEO STREAM (referenciado) Y LIBERAR USO
         try:
-            print(f"[{scan_id}] LIMPIEZA: Parando referencia de video stream...")
             camera_mgr.stop_stream_ref()
             time.sleep(0.2)
             camera_mgr.release("escaner_standalone")
-            print(f"[{scan_id}] LIMPIEZA: Cámara liberada para otros módulos")
-        except Exception as e:
-            print(f"[{scan_id}] LIMPIEZA: Error liberando cámara: {e}")
+        except Exception:
+            pass
 
         # DESTRUIR VENTANAS OPENCV AGRESIVAMENTE
         try:
-            print(f"[{scan_id}] LIMPIEZA: Cerrando ventanas OpenCV...")
-            for attempt in range(5):
+            for attempt in range(3):
                 cv2.destroyAllWindows()
                 cv2.waitKey(1)
-                time.sleep(0.1)
-            print(f"[{scan_id}] LIMPIEZA: Ventanas OpenCV cerradas")
-        except Exception as e:
-            print(f"[{scan_id}] LIMPIEZA: Error cerrando ventanas: {e}")
+                time.sleep(0.05)
+        except Exception:
+            pass
 
         # RESETEAR VELOCIDADES SIEMPRE (crítico para siguientes movimientos)
         try:

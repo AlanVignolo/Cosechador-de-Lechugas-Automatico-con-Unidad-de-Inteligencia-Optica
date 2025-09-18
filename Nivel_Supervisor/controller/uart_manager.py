@@ -27,6 +27,7 @@ class UARTManager:
         self.completed_actions_recent = {}
         # Buffer de snapshots de último movimiento (lista de tuplas [(x_mm, y_mm), ...])
         self._last_movement_snapshots = []
+        self._snap_header_printed = False
         # Estado persistente de límites
         self._limit_status = {
             'H_LEFT': False,
@@ -185,6 +186,7 @@ class UARTManager:
             # Al iniciar un nuevo movimiento, limpiar snapshots previos
             try:
                 self._last_movement_snapshots.clear()
+                self._snap_header_printed = False
             except Exception:
                 pass
                 
@@ -269,9 +271,10 @@ class UARTManager:
             snapshots_data = clean_message.replace("MOVEMENT_SNAPSHOTS:", "")
             if not snapshots_data:
                 return
-                
-            print("SNAPSHOTS DEL MOVIMIENTO:")
-            print("-" * 40)
+            if not self._snap_header_printed:
+                print("SNAPSHOTS DEL MOVIMIENTO:")
+                print("-" * 40)
+                self._snap_header_printed = True
             
             snapshot_parts = snapshots_data.split(';')
             # No reiniciar el buffer aquí; permitimos múltiples mensajes chunked por movimiento
@@ -303,6 +306,7 @@ class UARTManager:
         """Limpia la lista de snapshots almacenados."""
         try:
             self._last_movement_snapshots.clear()
+            self._snap_header_printed = False
         except Exception:
             pass
     
