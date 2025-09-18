@@ -132,8 +132,9 @@ def scan_horizontal_with_live_camera(robot):
         # Parámetros de debouncing y límites
         from config.robot_config import RobotConfig
         MAX_FLAGS = RobotConfig.MAX_SNAPSHOTS * 2
-        DETECT_ON_FRAMES = 3    # Debounce moderado para INICIO
-        DETECT_OFF_FRAMES = 3   # Debounce moderado para FIN
+        DETECT_ON_FRAMES = 5    # Debounce más robusto para INICIO
+        DETECT_OFF_FRAMES = 5   # Debounce más robusto para FIN
+        MIN_TRANSITION_COOLDOWN_S = 0.25  # Evita chatter rápido entre transiciones
         # Umbrales de calidad para filtrar falsos positivos/negativos
         MIN_NEG_STREAK_FOR_START = 8  # mínimos negativos previos a INICIO (más estricto)
         MIN_POS_STREAK_FOR_END = 8    # mínimos positivos previos a FIN (más estricto)
@@ -150,7 +151,8 @@ def scan_horizontal_with_live_camera(robot):
             'max_flags': MAX_FLAGS,
             # Valores pendientes para registrar rachas previas reales en el instante de cambio
             'pending_pre_start_neg_streak': 0,
-            'pending_pre_end_pos_streak': 0
+            'pending_pre_end_pos_streak': 0,
+            'last_transition_ts': 0.0,
         }
         
         def send_flag_for_state_change(state_type):
@@ -199,8 +201,11 @@ def scan_horizontal_with_live_camera(robot):
                 detection_state['nodetect_streak'] = prev_nodetect_streak + 1
                 detection_state['detect_streak'] = 0
 
-            # Evaluar transición a 'accepted' (INICIO) con debouncing
+            # Evaluar transición a 'accepted' (INICIO) con debouncing y cooldown
             if detection_state['current_state'] != 'accepted' and detection_state['detect_streak'] >= DETECT_ON_FRAMES:
+                now_ts = time.time()
+                if now_ts - detection_state.get('last_transition_ts', 0.0) < MIN_TRANSITION_COOLDOWN_S:
+                    return
                 print(f"[TRANSICION] INICIO detectado (detect_streak={detection_state['detect_streak']}, prev_neg={prev_nodetect_streak})")
                 detection_state['current_state'] = 'accepted'
                 flag_id = send_flag_for_state_change("INICIO_CINTA")
@@ -210,10 +215,14 @@ def scan_horizontal_with_live_camera(robot):
                         # Usar la racha negativa registrada justo cuando se inició la detección
                         'pre_start_neg_streak': detection_state.get('pending_pre_start_neg_streak', 0)
                     })
+                detection_state['last_transition_ts'] = now_ts
                 return
 
-            # Evaluar transición a 'rejected' (FIN) con debouncing
+            # Evaluar transición a 'rejected' (FIN) con debouncing y cooldown
             if detection_state['current_state'] == 'accepted' and detection_state['nodetect_streak'] >= DETECT_OFF_FRAMES:
+                now_ts = time.time()
+                if now_ts - detection_state.get('last_transition_ts', 0.0) < MIN_TRANSITION_COOLDOWN_S:
+                    return
                 print(f"[TRANSICION] FIN detectado (nodetect_streak={detection_state['nodetect_streak']}, prev_pos={prev_detect_streak})")
                 detection_state['current_state'] = 'rejected'
                 flag_id = send_flag_for_state_change("FIN_CINTA")
@@ -223,6 +232,7 @@ def scan_horizontal_with_live_camera(robot):
                     # Usar la racha positiva registrada justo cuando se inició la no detección
                     last_segment['pre_end_pos_streak'] = detection_state.get('pending_pre_end_pos_streak', 0)
                     print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
+                detection_state['last_transition_ts'] = now_ts
         
         def video_loop():
             """Bucle de video sin UI; solo procesa y emite flags"""
