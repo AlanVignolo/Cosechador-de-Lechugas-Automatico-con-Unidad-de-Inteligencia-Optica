@@ -22,22 +22,20 @@ def capture_with_timeout(camera_index, timeout=5.0):
     """Captura frame usando el gestor centralizado de cámara"""
     camera_mgr = get_camera_manager()
     
-    # Inicializar cámara si no está activa
-    if not camera_mgr.is_camera_active():
-        print(f"Inicializando cámara {camera_index}...")
-        if not camera_mgr.initialize_camera(camera_index):
-            print(f"Error: No se pudo inicializar cámara {camera_index}")
-            return None
-    
-    # Capturar frame
-    frame = camera_mgr.capture_frame(timeout=timeout, max_retries=3)
-    
-    if frame is not None:
-        print(f"Frame capturado exitosamente")
-    else:
-        print(f"Error: No se pudo capturar frame")
-    
-    return frame
+    # Adquirir uso temporal de cámara para captura puntual
+    if not camera_mgr.acquire("tape_detector_vertical"):
+        print(f"Error: No se pudo adquirir cámara {camera_index}")
+        return None
+    try:
+        # Capturar frame (sin iniciar stream)
+        frame = camera_mgr.capture_frame(timeout=timeout, max_retries=3)
+        if frame is not None:
+            print(f"Frame capturado exitosamente")
+        else:
+            print(f"Error: No se pudo capturar frame")
+        return frame
+    finally:
+        camera_mgr.release("tape_detector_vertical")
 
 def scan_available_cameras():
     """Escanea cámaras disponibles"""

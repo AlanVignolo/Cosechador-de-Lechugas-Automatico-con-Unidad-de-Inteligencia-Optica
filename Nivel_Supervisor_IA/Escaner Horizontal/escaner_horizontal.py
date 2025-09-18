@@ -31,25 +31,27 @@ class HorizontalScanner:
         
     def start_live_camera(self):
         """Inicia la cámara en modo video streaming"""
-        print("Iniciando cámara en modo video streaming...")
-        
-        if not self.camera_mgr.initialize_camera():
-            print("Error: No se pudo inicializar la cámara")
+        print("Iniciando cámara en modo video streaming (uso compartido)...")
+        # Adquirir uso y arrancar stream con referencia
+        if not self.camera_mgr.acquire("escaner_horizontal"):
+            print("Error: No se pudo adquirir la cámara")
             return False
-        
         # Iniciar video stream a 10 FPS para no saturar (movimiento lento)
-        if not self.camera_mgr.start_video_stream(fps=10):
+        if not self.camera_mgr.start_stream_ref(fps=10):
             print("Error: No se pudo iniciar video stream")
+            self.camera_mgr.release("escaner_horizontal")
             return False
-            
-        print("Cámara iniciada en modo streaming a 10 FPS")
+        print("Cámara lista (stream 10 FPS)")
         return True
     
     def stop_live_camera(self):
         """Detiene la cámara y el video streaming"""
-        print("Deteniendo video streaming...")
-        self.camera_mgr.stop_video_stream()
-        print("Video streaming detenido")
+        print("Deteniendo referencia de video streaming y liberando cámara...")
+        try:
+            self.camera_mgr.stop_stream_ref()
+        finally:
+            self.camera_mgr.release("escaner_horizontal")
+        print("Stream liberado y cámara disponible para otros módulos")
     
     def video_callback(self, frame, robot=None):
         """Callback para procesar cada frame del video durante el escaneo"""

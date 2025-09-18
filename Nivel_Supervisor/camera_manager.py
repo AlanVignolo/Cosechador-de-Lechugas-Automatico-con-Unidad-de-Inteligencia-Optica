@@ -32,6 +32,9 @@ class CameraManager:
             self.last_frame = None
             self.initialized = True
             self._working_camera_cache = None
+            # Reference counters
+            self._use_count = 0          # How many components are using the camera
+            self._stream_users = 0       # How many components requested video stream
             
             # Video streaming functionality
             self.video_mode = False
@@ -117,7 +120,6 @@ class CameraManager:
                 if camera_index is None:
                     print("Error: No se pudo encontrar una cámara funcional")
                     return False
-            
             # Inicializar cámara
             try:
                 print(f"Inicializando cámara en índice {camera_index}")
@@ -250,6 +252,10 @@ class CameraManager:
     def release_camera(self):
         """Libera la cámara completamente"""
         with self._lock:
+            # Solo permitir liberar si nadie la está usando
+            if getattr(self, '_use_count', 0) > 0:
+                print(f"No se libera cámara: en uso por {_format_count(self._use_count)} consumidor(es)")
+                return
             if self.cap is not None:
                 try:
                     print("Liberando cámara...")
@@ -263,6 +269,51 @@ class CameraManager:
                     self.is_active = False
                     self.camera_index = None
                     self.last_frame = None
+
+    def acquire(self, owner: Optional[str] = None) -> bool:
+        """Indica que un componente comenzará a usar la cámara."""
+        with self._lock:
+            self._use_count += 1
+        # Inicializar si no está lista
+        ok = self.ensure_initialized()
+        if not ok:
+            # revertir contador si falla
+            with self._lock:
+                self._use_count = max(0, self._use_count - 1)
+        else:
+            if owner:
+                print(f"CameraManager: uso adquirido por '{owner}' (total={self._use_count})")
+        return ok
+
+    def release(self, owner: Optional[str] = None):
+        """Indica que un componente ya no necesita la cámara. No libera el dispositivo a menos que el conteo llegue a 0 y no haya streaming."""
+        with self._lock:
+            self._use_count = max(0, self._use_count - 1)
+            remaining = self._use_count
+        if owner:
+            print(f"CameraManager: uso liberado por '{owner}' (restantes={remaining})")
+        # No apagamos la cámara aquí; se hace al cerrar app
+
+    def start_stream_ref(self, fps: int = 30) -> bool:
+        """Solicita el stream de video con referencia. Inicia el hilo solo cuando pasa de 0 -> 1 usuarios."""
+        if not self.ensure_initialized():
+            return False
+        with self._lock:
+            self._stream_users += 1
+            need_start = (self._stream_users == 1)
+        if need_start:
+            return self.start_video_stream(fps=fps)
+        else:
+            # Ajustar FPS si se solicita distinto por nuevos usuarios (opcional: mantener el existente)
+            return True
+
+    def stop_stream_ref(self):
+        """Libera una referencia de streaming. Detiene el hilo solo cuando el conteo llega a 0."""
+        with self._lock:
+            self._stream_users = max(0, self._stream_users - 1)
+            need_stop = (self._stream_users == 0)
+        if need_stop:
+            self.stop_video_stream()
     
     def reset_completely(self):
         """Reset completo del camera manager - limpia todo estado y recursos"""
@@ -450,6 +501,13 @@ class CameraManager:
             self.release_camera()
         except:
             pass
+
+# Helper interno para mensajes
+def _format_count(n: int) -> int:
+    try:
+        return int(n)
+    except Exception:
+        return 0
 
 
 # Instancia global del gestor

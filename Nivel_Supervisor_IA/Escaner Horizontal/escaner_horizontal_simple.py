@@ -48,17 +48,16 @@ class SimpleHorizontalScanner:
                     print("Operación cancelada por el usuario")
                     return False
             
-            # Inicializar cámara
-            print("Iniciando cámara...")
-            if not self.camera_mgr.initialize_camera():
-                print("Error: No se pudo inicializar la cámara")
+            # Adquirir cámara y arrancar stream referenciado
+            print("Adquiriendo cámara...")
+            if not self.camera_mgr.acquire("escaner_horizontal_simple"):
+                print("Error: No se pudo adquirir la cámara")
                 return False
-            
-            if not self.camera_mgr.start_video_stream(fps=8):
+            if not self.camera_mgr.start_stream_ref(fps=8):
                 print("Error: No se pudo iniciar video stream")
+                self.camera_mgr.release("escaner_horizontal_simple")
                 return False
-            
-            print("Cámara iniciada - Resolución y FPS configurados")
+            print("Cámara lista - Resolución y FPS configurados")
             
             # Configurar velocidades lentas para el escaneado
             robot.cmd.set_speeds(2000, 2000)  # Velocidad lenta para detectar bien
@@ -82,7 +81,10 @@ class SimpleHorizontalScanner:
         finally:
             # Limpiar recursos
             self.is_scanning = False
-            self.camera_mgr.stop_video_stream()
+            try:
+                self.camera_mgr.stop_stream_ref()
+            finally:
+                self.camera_mgr.release("escaner_horizontal_simple")
             cv2.destroyAllWindows()
             # Restaurar velocidades normales
             robot.cmd.set_speeds(

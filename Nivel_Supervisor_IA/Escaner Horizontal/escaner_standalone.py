@@ -79,17 +79,18 @@ def scan_horizontal_with_live_camera(robot):
         cv2.destroyAllWindows()
         time.sleep(0.5)  # Dar tiempo para que se cierren
         
-        # Inicializar cámara
-        print("Iniciando cámara...")
-        if not camera_mgr.initialize_camera():
-            print("Error: No se pudo inicializar la cámara")
+        # Adquirir y preparar cámara (uso compartido administrado por CameraManager)
+        print("Adquiriendo cámara...")
+        if not camera_mgr.acquire("escaner_standalone"):
+            print("Error: No se pudo adquirir la cámara")
             return False
         
-        if not camera_mgr.start_video_stream(fps=6):
+        if not camera_mgr.start_stream_ref(fps=6):
             print("Error: No se pudo iniciar video stream")
+            camera_mgr.release("escaner_standalone")
             return False
         
-        print("Cámara iniciada")
+        print("Cámara lista")
         
         # Velocidades lentas
         robot.cmd.set_velocities(2000, 2000)
@@ -514,15 +515,15 @@ def scan_horizontal_with_live_camera(robot):
                 cv2.waitKey(1)
                 time.sleep(0.01)
 
-        # PARAR VIDEO STREAM COMPLETAMENTE
+        # PARAR VIDEO STREAM (referenciado) Y LIBERAR USO
         try:
-            if camera_mgr.is_active:
-                print(f"[{scan_id}] LIMPIEZA: Parando video stream...")
-                camera_mgr.stop_video_stream()
-                time.sleep(0.3)
-            print(f"[{scan_id}] LIMPIEZA: Video stream detenido")
+            print(f"[{scan_id}] LIMPIEZA: Parando referencia de video stream...")
+            camera_mgr.stop_stream_ref()
+            time.sleep(0.2)
+            camera_mgr.release("escaner_standalone")
+            print(f"[{scan_id}] LIMPIEZA: Cámara liberada para otros módulos")
         except Exception as e:
-            print(f"[{scan_id}] LIMPIEZA: Error parando video: {e}")
+            print(f"[{scan_id}] LIMPIEZA: Error liberando cámara: {e}")
 
         # DESTRUIR VENTANAS OPENCV AGRESIVAMENTE
         try:
@@ -554,14 +555,7 @@ def scan_horizontal_with_live_camera(robot):
         except Exception as e:
             print(f"Error en reset del UART manager: {e}")
 
-        # RESET COMPLETO del camera manager para escaneos consecutivos
-        try:
-            print("LIMPIEZA: Reset completo del camera manager...")
-            camera_mgr.reset_completely()
-            time.sleep(1.0)  # Dar tiempo para que se complete el reset
-            print("LIMPIEZA: Camera manager reseteado exitosamente")
-        except Exception as e:
-            print(f"Error en reset completo del camera manager: {e}")
+        # No resetear completamente el camera manager: se conserva para otros módulos
         
         # Limpieza final adicional para asegurar estado limpio
         try:
