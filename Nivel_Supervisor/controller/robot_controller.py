@@ -387,11 +387,43 @@ class RobotController:
             "gripper": self.gripper_state
         }
     def calibrate_workspace(self) -> Dict:
-        """Calibración del workspace usando distancias del config"""
+        """Calibración del workspace usando mensajes STEPPER_EMERGENCY_STOP del firmware"""
         print("Iniciando calibración del workspace...")
         
+        # Variables para capturar distancias reales
+        captured_distances = {"horizontal_mm": None, "vertical_mm": None}
+        
+        def capture_emergency_distances(message):
+            """Callback para capturar distancias del STEPPER_EMERGENCY_STOP"""
+            try:
+                if "STEPPER_EMERGENCY_STOP:" in message and "MM:" in message:
+                    mm_part = message.split("MM:")[1]
+                    mm_values = mm_part.split(",")
+                    if len(mm_values) >= 2:
+                        h_mm = abs(float(mm_values[0]))
+                        v_mm = abs(float(mm_values[1]))
+                        print(f"   📏 Distancias capturadas: H={h_mm:.1f}mm, V={v_mm:.1f}mm")
+                        
+                        # Guardar la distancia del eje que se está moviendo
+                        if h_mm > 0 and captured_distances["horizontal_mm"] is None:
+                            captured_distances["horizontal_mm"] = h_mm
+                        if v_mm > 0 and captured_distances["vertical_mm"] is None:
+                            captured_distances["vertical_mm"] = v_mm
+            except Exception as e:
+                print(f"   Error capturando distancias: {e}")
+        
+        # Configurar callback temporal
+        original_callback = self.cmd.uart.movement_completed_callback
+        self.cmd.uart.set_movement_completed_callback(capture_emergency_distances)
+        
         try:
-            # 0. Verificar que brazo esté en posición segura
+            print("Paso 1: Homing inicial...")
+            
+            # 1. Homing inicial para establecer origen
+            homing_result = self.home_robot()
+            if not homing_result["success"]:
+                return {"success": False, "message": f"Error en homing inicial: {homing_result['message']}"}
+            
             print("Verificando posición del brazo...")
             if not self.arm.is_in_safe_position():
                 print("   Brazo no está en posición segura. Moviendo...")
@@ -402,15 +434,6 @@ class RobotController:
             else:
                 print("   Brazo ya está en posición segura")
             
-            # 1. Homing inicial
-            print("Paso 1: Homing inicial...")
-            result = self.home_robot()
-            if not result["success"]:
-                return {"success": False, "message": "Error en homing inicial"}
-            time.sleep(2)
-            
-            measurements = {}
-            
             # 2. Calibrar horizontal (izquierda)
             print("Paso 2: Calibrando horizontal (izquierda)...")
             
@@ -418,28 +441,30 @@ class RobotController:
             self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
             time.sleep(0.5)
             
-            # Usar distancia del config
             direction_x = RobotConfig.get_workspace_measure_direction_x()
             print(f"   Moviendo X={direction_x}mm hacia límite izquierdo")
             result = self.cmd.move_xy(direction_x, 0)
             
-            # Esperar límite específico
+            # Esperar límite
             limit_message = self.cmd.uart.wait_for_limit_specific('H_LEFT', timeout=30.0)
             if limit_message:
                 print("   Límite izquierdo alcanzado")
+                time.sleep(1.0)  # Dar tiempo a que se capture la distancia
                 
-                # OBTENER DISTANCIA REAL DESDE FIRMWARE
-                real_distance = self._wait_for_movement_distance("HORIZONTAL")
-                if real_distance is not None:
-                    steps = int(real_distance * RobotConfig.STEPS_PER_MM_H)
-                    measurements["horizontal_steps"] = steps
-                    measurements["horizontal_mm"] = round(real_distance, 1)
-                    print(f"      Workspace horizontal: {real_distance:.1f}mm ({steps} pasos)")
+                if captured_distances["horizontal_mm"] is not None:
+                    h_distance = captured_distances["horizontal_mm"]
+                    steps = int(h_distance * RobotConfig.STEPS_PER_MM_H)
+                    print(f"      Workspace horizontal: {h_distance:.1f}mm ({steps} pasos)")
                 else:
-                    print("   ❌ Firmware no reportó distancia horizontal")
+                    print("   ❌ No se capturó distancia horizontal")
             
             # 3. Calibrar vertical (abajo)
             print("Paso 3: Calibrando vertical (abajo)...")
+            
+            # IMPORTANTE: Alejarse un poco del límite horizontal antes de mover verticalmente
+            print("   Alejándose del límite horizontal...")
+            self.cmd.move_xy(RobotConfig.apply_x_direction(-20), 0)  # 20mm hacia el centro
+            time.sleep(1.0)
             
             # Configurar velocidades de homing
             self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
@@ -450,22 +475,32 @@ class RobotController:
             print(f"   Moviendo Y={direction_y}mm hacia límite inferior")
             result = self.cmd.move_xy(0, direction_y)
             
-            # Esperar límite específico
+            # Esperar límite
             limit_message = self.cmd.uart.wait_for_limit_specific('V_DOWN', timeout=60.0)
             if limit_message:
                 print("   Límite inferior alcanzado")
+                time.sleep(1.0)  # Dar tiempo a que se capture la distancia
                 
-                # OBTENER DISTANCIA REAL DESDE FIRMWARE
-                real_distance = self._wait_for_movement_distance("VERTICAL")
-                if real_distance is not None:
-                    steps = int(real_distance * RobotConfig.STEPS_PER_MM_V)
-                    measurements["vertical_steps"] = steps
-                    measurements["vertical_mm"] = round(real_distance, 1)
-                    print(f"      Workspace vertical: {real_distance:.1f}mm ({steps} pasos)")
+                if captured_distances["vertical_mm"] is not None:
+                    v_distance = captured_distances["vertical_mm"]
+                    steps = int(v_distance * RobotConfig.STEPS_PER_MM_V)
+                    print(f"      Workspace vertical: {v_distance:.1f}mm ({steps} pasos)")
                 else:
-                    print("   ❌ Firmware no reportó distancia vertical")
+                    print("   ❌ No se capturó distancia vertical")
             else:
                 print("   ❌ No se alcanzó límite inferior - revisar cableado o configuración Y")
+            
+            # Crear medidas finales
+            measurements = {}
+            if captured_distances["horizontal_mm"] is not None:
+                h_dist = captured_distances["horizontal_mm"]
+                measurements["horizontal_steps"] = int(h_dist * RobotConfig.STEPS_PER_MM_H)
+                measurements["horizontal_mm"] = round(h_dist, 1)
+            
+            if captured_distances["vertical_mm"] is not None:
+                v_dist = captured_distances["vertical_mm"]
+                measurements["vertical_steps"] = int(v_dist * RobotConfig.STEPS_PER_MM_V)
+                measurements["vertical_mm"] = round(v_dist, 1)
             
             # 4. Homing final
             print("Paso 4: Homing final...")
@@ -554,44 +589,6 @@ class RobotController:
             
         except Exception as e:
             return {"success": False, "message": f"Error: {str(e)}"}
-
-    def _wait_for_movement_distance(self, axis: str, timeout: float = 5.0) -> Optional[float]:
-        """Esperar mensaje de distancia real recorrida desde el firmware.
-        Busca STEPPER_MOVE_COMPLETED o STEPPER_EMERGENCY_STOP con info de distancia."""
-        
-        print(f"   Esperando distancia real recorrida {axis} desde firmware...")
-        start_time = time.time()
-        
-        while time.time() - start_time < timeout:
-            try:
-                message = self.cmd.uart.message_queue.get(timeout=0.5)
-                
-                # Buscar mensaje de movimiento completado o parada de emergencia
-                if "STEPPER_MOVE_COMPLETED:" in message or "STEPPER_EMERGENCY_STOP:" in message:
-                    try:
-                        # Formato: STEPPER_MOVE_COMPLETED:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
-                        if "MM:" in message:
-                            mm_part = message.split("MM:")[1]
-                            mm_values = mm_part.split(",")
-                            if len(mm_values) >= 2:
-                                mm_h = float(mm_values[0])
-                                mm_v = float(mm_values[1])
-                                
-                                if axis == "HORIZONTAL":
-                                    distance = abs(mm_h)
-                                else:  # VERTICAL
-                                    distance = abs(mm_v)
-                                
-                                print(f"   ✅ Distancia real {axis}: {distance:.1f}mm")
-                                return distance
-                    except Exception as e:
-                        print(f"   Error parseando distancia: {e}")
-                        continue
-                        
-            except queue.Empty:
-                continue
-            except Exception as e:
-                continue
-        
-        print(f"   ❌ TIMEOUT: No se recibió distancia real del firmware en {timeout}s")
-        return None
+        finally:
+            # Restaurar callback original
+            self.cmd.uart.set_movement_completed_callback(original_callback)
