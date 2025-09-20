@@ -469,8 +469,7 @@ class RobotController:
                 
                 if captured_distances["horizontal_mm"] is not None:
                     h_distance = captured_distances["horizontal_mm"]
-                    steps = int(h_distance * RobotConfig.STEPS_PER_MM_H)
-                    print(f"      Workspace horizontal: {h_distance:.1f}mm ({steps} pasos)")
+                    print(f"      Distancia total horizontal: {h_distance:.1f}mm")
                 else:
                     print("   ❌ No se capturó distancia horizontal")
             
@@ -501,24 +500,29 @@ class RobotController:
                 
                 if captured_distances["vertical_mm"] is not None:
                     v_distance = captured_distances["vertical_mm"]
-                    steps = int(v_distance * RobotConfig.STEPS_PER_MM_V)
-                    print(f"      Workspace vertical: {v_distance:.1f}mm ({steps} pasos)")
+                    print(f"      Distancia total vertical: {v_distance:.1f}mm")
                 else:
                     print("   ❌ No se capturó distancia vertical")
             else:
                 print("   ❌ No se alcanzó límite inferior - revisar cableado o configuración Y")
             
-            # Crear medidas finales
+            # Crear medidas finales (restar 10mm para límites izquierdo e inferior)
+            SAFETY_MARGIN_MM = 10.0
             measurements = {}
+            
             if captured_distances["horizontal_mm"] is not None:
-                h_dist = captured_distances["horizontal_mm"]
-                measurements["horizontal_steps"] = int(h_dist * RobotConfig.STEPS_PER_MM_H)
-                measurements["horizontal_mm"] = round(h_dist, 1)
+                raw_h_dist = captured_distances["horizontal_mm"]
+                workspace_h_dist = max(0, raw_h_dist - SAFETY_MARGIN_MM)  # Restar margen para límite izquierdo
+                measurements["horizontal_steps"] = int(workspace_h_dist * RobotConfig.STEPS_PER_MM_H)
+                measurements["horizontal_mm"] = round(workspace_h_dist, 1)
+                print(f"   ℹ️  Workspace horizontal: {raw_h_dist:.1f}mm medidos - {SAFETY_MARGIN_MM}mm margen = {workspace_h_dist:.1f}mm útiles")
             
             if captured_distances["vertical_mm"] is not None:
-                v_dist = captured_distances["vertical_mm"]
-                measurements["vertical_steps"] = int(v_dist * RobotConfig.STEPS_PER_MM_V)
-                measurements["vertical_mm"] = round(v_dist, 1)
+                raw_v_dist = captured_distances["vertical_mm"]
+                workspace_v_dist = max(0, raw_v_dist - SAFETY_MARGIN_MM)  # Restar margen para límite inferior
+                measurements["vertical_steps"] = int(workspace_v_dist * RobotConfig.STEPS_PER_MM_V)
+                measurements["vertical_mm"] = round(workspace_v_dist, 1)
+                print(f"   ℹ️  Workspace vertical: {raw_v_dist:.1f}mm medidos - {SAFETY_MARGIN_MM}mm margen = {workspace_v_dist:.1f}mm útiles")
             
             # 4. Homing final
             print("Paso 4: Homing final...")
