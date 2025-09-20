@@ -386,41 +386,6 @@ class RobotController:
             },
             "gripper": self.gripper_state
         }
-    def _wait_for_emergency_distance(self, axis: str, timeout: float = 5.0) -> Optional[float]:
-        """Esperar STEPPER_EMERGENCY_STOP y extraer distancia específica"""
-        print(f"   Esperando distancia {axis} del firmware...")
-        start_time = time.time()
-        
-        while time.time() - start_time < timeout:
-            try:
-                message = self.cmd.uart.message_queue.get(timeout=0.5)
-                
-                if "STEPPER_EMERGENCY_STOP:" in message and "MM:" in message:
-                    try:
-                        # Formato: STEPPER_EMERGENCY_STOP:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
-                        mm_part = message.split("MM:")[1]
-                        mm_values = mm_part.split(",")
-                        if len(mm_values) >= 2:
-                            h_mm = abs(float(mm_values[0]))
-                            v_mm = abs(float(mm_values[1]))
-                            
-                            if axis == "HORIZONTAL" and h_mm > 0:
-                                print(f"   📏 Distancia horizontal capturada: {h_mm:.1f}mm")
-                                return h_mm
-                            elif axis == "VERTICAL" and v_mm > 0:
-                                print(f"   📏 Distancia vertical capturada: {v_mm:.1f}mm")
-                                return v_mm
-                    except Exception as e:
-                        print(f"   Error parseando distancia: {e}")
-                        continue
-                        
-            except queue.Empty:
-                continue
-            except Exception as e:
-                continue
-        
-        print(f"   ❌ No se capturó distancia {axis} en {timeout}s")
-        return None
 
     def calibrate_workspace(self) -> Dict:
         """Calibración del workspace usando mensajes STEPPER_EMERGENCY_STOP del firmware"""
@@ -428,6 +393,38 @@ class RobotController:
         
         # Variables para capturar distancias reales
         captured_distances = {"horizontal_mm": None, "vertical_mm": None}
+        
+        # Guardar el método original
+        original_process_emergency_stop = self.cmd.uart._process_emergency_stop
+        
+        def enhanced_process_emergency_stop(message: str):
+            """Procesamiento mejorado que también captura distancias"""
+            try:
+                # Llamar al procesamiento original
+                original_process_emergency_stop(message)
+                
+                # Extraer distancias para calibración
+                if "STEPPER_EMERGENCY_STOP:" in message and "MM:" in message:
+                    mm_part = message.split("MM:")[1]
+                    mm_values = mm_part.split(",")
+                    if len(mm_values) >= 2:
+                        h_mm = abs(float(mm_values[0]))
+                        v_mm = abs(float(mm_values[1]))
+                        
+                        # Guardar distancias significativas
+                        if h_mm > 0 and captured_distances["horizontal_mm"] is None:
+                            captured_distances["horizontal_mm"] = h_mm
+                            print(f"   📏 Distancia horizontal capturada: {h_mm:.1f}mm")
+                        if v_mm > 0 and captured_distances["vertical_mm"] is None:
+                            captured_distances["vertical_mm"] = v_mm
+                            print(f"   📏 Distancia vertical capturada: {v_mm:.1f}mm")
+            except Exception as e:
+                print(f"   Error en captura mejorada: {e}")
+                # Asegurar que el procesamiento original siempre funcione
+                original_process_emergency_stop(message)
+        
+        # Reemplazar temporalmente el método
+        self.cmd.uart._process_emergency_stop = enhanced_process_emergency_stop
         
         try:
             print("Paso 1: Homing inicial...")
@@ -463,10 +460,11 @@ class RobotController:
             if limit_message:
                 print("   Límite izquierdo alcanzado")
                 
-                # Capturar distancia horizontal del firmware
-                h_distance = self._wait_for_emergency_distance("HORIZONTAL", 10.0)
-                if h_distance is not None:
-                    captured_distances["horizontal_mm"] = h_distance
+                # Dar un momento para que se procese el mensaje STEPPER_EMERGENCY_STOP
+                time.sleep(1.0)
+                
+                if captured_distances["horizontal_mm"] is not None:
+                    h_distance = captured_distances["horizontal_mm"]
                     steps = int(h_distance * RobotConfig.STEPS_PER_MM_H)
                     print(f"      Workspace horizontal: {h_distance:.1f}mm ({steps} pasos)")
                 else:
@@ -494,10 +492,11 @@ class RobotController:
             if limit_message:
                 print("   Límite inferior alcanzado")
                 
-                # Capturar distancia vertical del firmware
-                v_distance = self._wait_for_emergency_distance("VERTICAL", 10.0)
-                if v_distance is not None:
-                    captured_distances["vertical_mm"] = v_distance
+                # Dar un momento para que se procese el mensaje STEPPER_EMERGENCY_STOP
+                time.sleep(1.0)
+                
+                if captured_distances["vertical_mm"] is not None:
+                    v_distance = captured_distances["vertical_mm"]
                     steps = int(v_distance * RobotConfig.STEPS_PER_MM_V)
                     print(f"      Workspace vertical: {v_distance:.1f}mm ({steps} pasos)")
                 else:
@@ -605,4 +604,5 @@ class RobotController:
         except Exception as e:
             return {"success": False, "message": f"Error: {str(e)}"}
         finally:
-            pass  # No necesitamos restaurar callbacks ya que no los modificamos
+            # Restaurar el método original del UARTManager
+            self.cmd.uart._process_emergency_stop = original_process_emergency_stop
