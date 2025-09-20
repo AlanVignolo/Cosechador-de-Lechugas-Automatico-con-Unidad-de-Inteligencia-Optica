@@ -38,13 +38,30 @@ class ArmController:
         servo_result = self.cmd.get_servo_positions()
         if servo_result["success"] and "SERVO_POS:" in servo_result["response"]:
             try:
-                pos_str = servo_result["response"].split("SERVO_POS:")[1]
-                servo1, servo2 = map(int, pos_str.split(","))
+                # Limpiar respuesta mezclada con heartbeat
+                response_clean = servo_result["response"].split('\n')[0].strip()
+                pos_str = response_clean.split("SERVO_POS:")[1].strip()
+                # Limpiar cualquier texto adicional después de la coma
+                pos_parts = pos_str.split(",")
+                servo1 = int(pos_parts[0].strip())
+                servo2 = int(pos_parts[1].strip())
                 self.current_position = (servo1, servo2)
                 self.current_state = self._determine_state_from_position(servo1, servo2)
                 self.logger.info(f"Estado inicial: {self.current_state} pos=({servo1},{servo2})")
             except Exception as e:
                 self.logger.error(f"Error parseando posición de servos: {e}")
+                # Intentar método alternativo más robusto
+                try:
+                    import re
+                    response = servo_result["response"]
+                    match = re.search(r'SERVO_POS:(\d+),(\d+)', response)
+                    if match:
+                        servo1, servo2 = int(match.group(1)), int(match.group(2))
+                        self.current_position = (servo1, servo2)
+                        self.current_state = self._determine_state_from_position(servo1, servo2)
+                        self.logger.info(f"Estado inicial (método alternativo): {self.current_state} pos=({servo1},{servo2})")
+                except Exception as e2:
+                    self.logger.error(f"Error en método alternativo: {e2}")
         
         # Solicitar estado del gripper
         gripper_result = self.cmd.get_gripper_status()
@@ -59,12 +76,14 @@ class ArmController:
     
     def _on_system_status_received(self, message: str):
         try:
-            status_part = message.split("SYSTEM_STATUS:")[1]
+            # Limpiar mensaje mezclado con heartbeat
+            clean_message = message.split('\n')[0].strip()
+            status_part = clean_message.split("SYSTEM_STATUS:")[1]
             parts = status_part.split(",")
             
-            servo1 = int(parts[0].split("=")[1])
-            servo2 = int(parts[1].split("=")[1])
-            gripper_state = parts[2].split("=")[1].lower()
+            servo1 = int(parts[0].split("=")[1].strip())
+            servo2 = int(parts[1].split("=")[1].strip())
+            gripper_state = parts[2].split("=")[1].strip().lower()
             
             self.current_position = (servo1, servo2)
             self.gripper_state = gripper_state

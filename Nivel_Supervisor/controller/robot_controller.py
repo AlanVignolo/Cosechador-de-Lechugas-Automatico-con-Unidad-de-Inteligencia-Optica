@@ -40,6 +40,9 @@ class RobotController:
         # Solicitar estado inicial del sistema
         self._request_system_status()
         
+        # Habilitar heartbeat después de la inicialización
+        self.cmd.uart.send_command("HB:1")
+        
     def _request_system_status(self):
         """Solicitar estado inicial del sistema completo"""
         self.logger.info("Solicitando estado inicial del sistema...")

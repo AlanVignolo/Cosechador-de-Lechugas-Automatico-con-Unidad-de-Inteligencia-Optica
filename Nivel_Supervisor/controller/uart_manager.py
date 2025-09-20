@@ -57,9 +57,9 @@ class UARTManager:
             self._start_listening()
             
             self.logger.info(f"Conectado a {self.port}")
-            # Habilitar heartbeat de límites (reporte periódico) para evitar perder estado
+            # Deshabilitar heartbeat inicialmente para evitar mensajes molestos durante inicialización
             try:
-                self.send_command("HB:1")
+                self.send_command("HB:0")
             except Exception:
                 pass
             return True
