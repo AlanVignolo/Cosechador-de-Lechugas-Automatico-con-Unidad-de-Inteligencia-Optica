@@ -213,6 +213,12 @@ def menu_control_brazo(arm_controller):
                     
                     if result["success"]:
                         print(f"{result['message']}")
+                        # Pequeña pausa para que se complete la trayectoria
+                        time.sleep(0.5)
+                        # Forzar actualización del estado
+                        arm_controller._detect_initial_state()
+                        print("✅ Estado actualizado - menú se refrescará automáticamente")
+                        time.sleep(1)
                     else:
                         print(f"No se puede ir a '{target_state}': {result['message']}")
             else:
@@ -220,7 +226,7 @@ def menu_control_brazo(arm_controller):
         else:
             print("Opción inválida")
 
-        # input("\nPresiona Enter para continuar...")  # Confirmación removida
+        # El menú se actualiza automáticamente en el próximo ciclo
 
 def test_position_correction_direct(robot, camera_index=0, max_iterations=10, tolerance_mm=1.0):
     """

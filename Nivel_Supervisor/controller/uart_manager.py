@@ -480,7 +480,6 @@ class UARTManager:
         Acepta mensajes TRIGGERED o estado polleado para ese target.
         """
         start_time = time.time()
-        last_poll = 0.0
         trigger_map = {
             'H_LEFT': 'LIMIT_H_LEFT_TRIGGERED',
             'H_RIGHT': 'LIMIT_H_RIGHT_TRIGGERED',
@@ -488,27 +487,30 @@ class UARTManager:
             'V_DOWN': 'LIMIT_V_DOWN_TRIGGERED',
         }
         wanted_trigger = trigger_map.get(target, '')
+        
         while time.time() - start_time < timeout:
             try:
-                message = self.message_queue.get(timeout=0.5)
+                # Timeout más corto para ser más responsivo
+                message = self.message_queue.get(timeout=0.1)
                 try:
                     self._process_automatic_message(message)
                 except Exception:
                     pass
+                # Detección inmediata del trigger específico
                 if wanted_trigger and wanted_trigger in message:
                     return message
             except queue.Empty:
-                now = time.time()
-                if now - last_poll >= 0.5:
-                    last_poll = now
-                    resp = self.check_limits()
-                    try:
-                        resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
-                    except Exception:
-                        resp_str = ""
-                    self._update_limit_status_from_response(resp_str)
-                    if self._limit_status.get(target, False):
-                        return f"LIMIT_POLLED:{target}"
+                # Polling menos frecuente solo si no hay mensajes
+                resp = self.check_limits()
+                try:
+                    resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+                except Exception:
+                    resp_str = ""
+                self._update_limit_status_from_response(resp_str)
+                if self._limit_status.get(target, False):
+                    return f"LIMIT_POLLED:{target}"
+                # Pequeña pausa para no saturar
+                time.sleep(0.05)
                 continue
         return None
     

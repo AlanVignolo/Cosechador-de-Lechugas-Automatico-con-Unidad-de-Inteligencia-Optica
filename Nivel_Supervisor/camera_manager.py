@@ -44,14 +44,22 @@ class CameraManager:
             self.video_fps = 30
             self.video_stop_event = threading.Event()
     
-    def find_working_camera(self) -> Optional[int]:
-        """Encuentra una cámara que funcione, probando índices de 0 a 9"""
+    def find_working_camera(self, timeout_per_camera: float = 3.0) -> Optional[int]:
+        """Encuentra una cámara que funcione, probando índices de 0 a 9 con timeout"""
         if self._working_camera_cache is not None:
             # Verificar si la cámara cached sigue funcionando
             try:
                 test_cap = cv2.VideoCapture(self._working_camera_cache)
                 if test_cap.isOpened():
-                    ret, frame = test_cap.read()
+                    # Timeout para lectura
+                    start_time = time.time()
+                    ret, frame = None, None
+                    while time.time() - start_time < 2.0:
+                        ret, frame = test_cap.read()
+                        if ret and frame is not None:
+                            break
+                        time.sleep(0.1)
+                    
                     test_cap.release()
                     if ret and frame is not None:
                         return self._working_camera_cache
@@ -66,23 +74,43 @@ class CameraManager:
         # Buscar una cámara que funcione
         print("Buscando cámara disponible...")
         for i in range(10):
+            print(f"Probando cámara índice {i}...")
             try:
+                start_time = time.time()
                 cap = cv2.VideoCapture(i)
+                
+                # Timeout para apertura
+                if time.time() - start_time > timeout_per_camera:
+                    print(f"Timeout abriendo cámara {i}")
+                    cap.release()
+                    continue
+                    
                 if cap.isOpened():
-                    ret, frame = cap.read()
+                    # Timeout para lectura de frame
+                    frame_start = time.time()
+                    ret, frame = None, None
+                    while time.time() - frame_start < timeout_per_camera:
+                        ret, frame = cap.read()
+                        if ret and frame is not None:
+                            break
+                        time.sleep(0.1)
+                        
                     if ret and frame is not None:
-                        print(f"Cámara encontrada en índice {i}")
+                        print(f"✅ Cámara encontrada en índice {i}")
                         cap.release()
                         self._working_camera_cache = i
                         return i
                     else:
+                        print(f"❌ No se pudo leer frame de cámara {i}")
                         cap.release()
                 else:
+                    print(f"❌ No se pudo abrir cámara {i}")
                     cap.release()
             except Exception as e:
+                print(f"❌ Error probando cámara {i}: {e}")
                 continue
         
-        print("No se encontró ninguna cámara funcional")
+        print("❌ No se encontró ninguna cámara funcional")
         return None
     
     def initialize_camera(self, camera_index: Optional[int] = None, force_reinit: bool = False) -> bool:

@@ -6,6 +6,7 @@ import logging
 import time
 import json
 import os
+import queue
 
 class RobotController:
     def __init__(self, command_manager: CommandManager):
@@ -432,13 +433,15 @@ class RobotController:
                 print("   Límite izquierdo alcanzado")
                 
                 # CAPTURAR PASOS DE CALIBRACION
-                steps_value = self._wait_for_calibration_steps()
+                steps_value = self._wait_for_calibration_steps("HORIZONTAL")
                 if steps_value is not None:
                     steps = steps_value
                     horizontal_mm = steps / RobotConfig.STEPS_PER_MM_H
                     measurements["horizontal_steps"] = steps
                     measurements["horizontal_mm"] = round(horizontal_mm, 1)
                     print(f"      Distancia horizontal: {horizontal_mm:.1f}mm ({steps} pasos)")
+                else:
+                    print("   ❌ No se recibieron pasos de calibración horizontal")
             
             # 3. Calibrar vertical (abajo)
             print("Paso 3: Calibrando vertical (abajo)...")
@@ -458,7 +461,7 @@ class RobotController:
                 print("   Límite inferior alcanzado")
                 
                 # CAPTURAR PASOS DE CALIBRACION
-                steps_value = self._wait_for_calibration_steps()
+                steps_value = self._wait_for_calibration_steps("VERTICAL")
                 if steps_value is not None:
                     steps = steps_value
                     vertical_mm = steps / RobotConfig.STEPS_PER_MM_V
@@ -562,21 +565,35 @@ class RobotController:
         except Exception as e:
             return {"success": False, "message": f"Error: {str(e)}"}
 
-    def _wait_for_calibration_steps(self, timeout: float = 5.0) -> Optional[int]:
+    def _wait_for_calibration_steps(self, axis: str, timeout: float = 10.0) -> Optional[int]:
         """Esperar mensaje de pasos de calibración del micro.
         Acepta 'CALIBRATION_STEPS:<n>' o 'CALIBRATION_COMPLETED:<n>' y devuelve <n> como int."""
+        print(f"   Esperando pasos de calibración {axis}...")
         start_time = time.time()
         
         while time.time() - start_time < timeout:
             try:
                 message = self.cmd.uart.message_queue.get(timeout=0.5)
+                print(f"   DEBUG: Mensaje recibido: {message}")
+                
                 if "CALIBRATION_STEPS:" in message or "CALIBRATION_COMPLETED:" in message:
                     try:
-                        value = int(message.split(":")[1])
+                        # Limpiar mensaje de posibles caracteres extra
+                        clean_msg = message.strip().split('\n')[0]
+                        value_str = clean_msg.split(":")[1].strip()
+                        value = int(value_str)
+                        print(f"   ✅ Pasos de calibración {axis}: {value}")
                         return value
-                    except Exception:
+                    except Exception as e:
+                        print(f"   ❌ Error parseando pasos: {e} | Mensaje: '{message}'")
                         continue
-            except:
+                        
+            except queue.Empty:
+                print(f"   Esperando... ({timeout - (time.time() - start_time):.1f}s restantes)")
+                continue
+            except Exception as e:
+                print(f"   Error en cola: {e}")
                 continue
         
+        print(f"   ❌ TIMEOUT: No se recibieron pasos de calibración {axis} en {timeout}s")
         return None
