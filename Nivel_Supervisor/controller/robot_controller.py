@@ -412,9 +412,20 @@ class RobotController:
             except Exception as e:
                 print(f"   Error capturando distancias: {e}")
         
-        # Configurar callback temporal
-        original_callback = self.cmd.uart.movement_completed_callback
-        self.cmd.uart.set_movement_completed_callback(capture_emergency_distances)
+        # Configurar callback temporal para capturar distancias
+        original_callbacks = self.cmd.uart.message_callbacks.copy()
+        
+        # Agregar nuestro callback manteniendo los existentes
+        current_stepper_callback = self.cmd.uart.message_callbacks.get("stepper_complete_callback", None)
+        
+        def combined_callback(message):
+            # Llamar callback original si existe
+            if current_stepper_callback:
+                current_stepper_callback(message)
+            # Llamar nuestro callback de captura
+            capture_emergency_distances(message)
+        
+        self.cmd.uart.message_callbacks["stepper_complete_callback"] = combined_callback
         
         try:
             print("Paso 1: Homing inicial...")
@@ -590,5 +601,6 @@ class RobotController:
         except Exception as e:
             return {"success": False, "message": f"Error: {str(e)}"}
         finally:
-            # Restaurar callback original
-            self.cmd.uart.set_movement_completed_callback(original_callback)
+            # Restaurar callbacks originales
+            self.cmd.uart.message_callbacks.clear()
+            self.cmd.uart.message_callbacks.update(original_callbacks)
