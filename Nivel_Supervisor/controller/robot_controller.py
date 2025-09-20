@@ -411,11 +411,11 @@ class RobotController:
                         h_mm = abs(float(mm_values[0]))
                         v_mm = abs(float(mm_values[1]))
                         
-                        # Guardar distancias significativas
-                        if h_mm > 0 and captured_distances["horizontal_mm"] is None:
+                        # Guardar distancias significativas (solo la distancia mayor)
+                        if h_mm > v_mm and h_mm > 50 and captured_distances["horizontal_mm"] is None:
                             captured_distances["horizontal_mm"] = h_mm
                             print(f"   📏 Distancia horizontal capturada: {h_mm:.1f}mm")
-                        if v_mm > 0 and captured_distances["vertical_mm"] is None:
+                        elif v_mm > h_mm and v_mm > 50 and captured_distances["vertical_mm"] is None:
                             captured_distances["vertical_mm"] = v_mm
                             print(f"   📏 Distancia vertical capturada: {v_mm:.1f}mm")
             except Exception as e:
@@ -446,6 +446,10 @@ class RobotController:
             
             # 2. Calibrar horizontal (izquierda)
             print("Paso 2: Calibrando horizontal (izquierda)...")
+            
+            # RESETEAR distancias capturadas antes de calibración horizontal
+            captured_distances["horizontal_mm"] = None
+            captured_distances["vertical_mm"] = None
             
             # Configurar velocidades de homing
             self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
