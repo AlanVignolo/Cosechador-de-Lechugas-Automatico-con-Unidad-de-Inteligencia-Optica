@@ -67,10 +67,10 @@ void limit_switch_update(void) {
                                                "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
                         }
                         uart_send_response(snapshot_msg);
-                        // Resetear snapshots despu�s de enviar
+                        // Resetear snapshots después de enviar
                         snapshot_count = 0;
                     }
-                    stepper_stop_horizontal();
+                    stepper_stop_all();  // CORREGIDO: usar stepper_stop_all() para enviar distancias
                 }
 			}
 		}
@@ -111,7 +111,7 @@ void limit_switch_update(void) {
                         // Resetear snapshots despu�s de enviar
                         snapshot_count = 0;
                     }
-                    stepper_stop_horizontal();
+                    stepper_stop_all();  // CORREGIDO: usar stepper_stop_all() para enviar distancias
                 }
 			}
 		}
@@ -149,10 +149,10 @@ void limit_switch_update(void) {
                                                "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
                         }
                         uart_send_response(snapshot_msg);
-                        // Resetear snapshots despu�s de enviar
+                        // Resetear snapshots después de enviar
                         snapshot_count = 0;
                     }
-                    stepper_stop_vertical();
+                    stepper_stop_all();  // CORREGIDO: usar stepper_stop_all() para enviar distancias
                 }
 			}
 		}
@@ -193,7 +193,7 @@ void limit_switch_update(void) {
                         // Resetear snapshots despu�s de enviar
                         snapshot_count = 0;
                     }
-                    stepper_stop_vertical();
+                    stepper_stop_all();  // CORREGIDO: usar stepper_stop_all() para enviar distancias
                 }
 			}
 		}

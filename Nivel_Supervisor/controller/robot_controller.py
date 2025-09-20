@@ -418,30 +418,25 @@ class RobotController:
             self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
             time.sleep(0.5)
             
-            # Activar modo calibración
-            self.cmd.uart.send_command("CS")
-            time.sleep(0.5)
-            
             # Usar distancia del config
             direction_x = RobotConfig.get_workspace_measure_direction_x()
             print(f"   Moviendo X={direction_x}mm hacia límite izquierdo")
             result = self.cmd.move_xy(direction_x, 0)
             
-            # Esperar límite específico y capturar pasos
+            # Esperar límite específico
             limit_message = self.cmd.uart.wait_for_limit_specific('H_LEFT', timeout=30.0)
             if limit_message:
                 print("   Límite izquierdo alcanzado")
                 
-                # CAPTURAR PASOS DE CALIBRACION
-                steps_value = self._wait_for_calibration_steps("HORIZONTAL")
-                if steps_value is not None:
-                    steps = steps_value
-                    horizontal_mm = steps / RobotConfig.STEPS_PER_MM_H
+                # OBTENER DISTANCIA REAL DESDE FIRMWARE
+                real_distance = self._wait_for_movement_distance("HORIZONTAL")
+                if real_distance is not None:
+                    steps = int(real_distance * RobotConfig.STEPS_PER_MM_H)
                     measurements["horizontal_steps"] = steps
-                    measurements["horizontal_mm"] = round(horizontal_mm, 1)
-                    print(f"      Distancia horizontal: {horizontal_mm:.1f}mm ({steps} pasos)")
+                    measurements["horizontal_mm"] = round(real_distance, 1)
+                    print(f"      Workspace horizontal: {real_distance:.1f}mm ({steps} pasos)")
                 else:
-                    print("   ❌ No se recibieron pasos de calibración horizontal")
+                    print("   ❌ Firmware no reportó distancia horizontal")
             
             # 3. Calibrar vertical (abajo)
             print("Paso 3: Calibrando vertical (abajo)...")
@@ -455,30 +450,25 @@ class RobotController:
             print(f"   Moviendo Y={direction_y}mm hacia límite inferior")
             result = self.cmd.move_xy(0, direction_y)
             
-            # Esperar límite específico y capturar pasos
+            # Esperar límite específico
             limit_message = self.cmd.uart.wait_for_limit_specific('V_DOWN', timeout=60.0)
             if limit_message:
                 print("   Límite inferior alcanzado")
                 
-                # CAPTURAR PASOS DE CALIBRACION
-                steps_value = self._wait_for_calibration_steps("VERTICAL")
-                if steps_value is not None:
-                    steps = steps_value
-                    vertical_mm = steps / RobotConfig.STEPS_PER_MM_V
+                # OBTENER DISTANCIA REAL DESDE FIRMWARE
+                real_distance = self._wait_for_movement_distance("VERTICAL")
+                if real_distance is not None:
+                    steps = int(real_distance * RobotConfig.STEPS_PER_MM_V)
                     measurements["vertical_steps"] = steps
-                    measurements["vertical_mm"] = round(vertical_mm, 1)
-                    print(f"      Distancia vertical: {vertical_mm:.1f}mm ({steps} pasos)")
+                    measurements["vertical_mm"] = round(real_distance, 1)
+                    print(f"      Workspace vertical: {real_distance:.1f}mm ({steps} pasos)")
                 else:
-                    print("   ❌ No se recibieron pasos de calibración vertical")
+                    print("   ❌ Firmware no reportó distancia vertical")
             else:
                 print("   ❌ No se alcanzó límite inferior - revisar cableado o configuración Y")
             
             # 4. Homing final
             print("Paso 4: Homing final...")
-            
-            # Desactivar modo calibración antes del homing
-            self.cmd.uart.send_command("CE")
-            time.sleep(0.5)
             
             # Alejarse de los límites para dar espacio al homing
             print("   Alejandose de limites...")
@@ -565,35 +555,43 @@ class RobotController:
         except Exception as e:
             return {"success": False, "message": f"Error: {str(e)}"}
 
-    def _wait_for_calibration_steps(self, axis: str, timeout: float = 10.0) -> Optional[int]:
-        """Esperar mensaje de pasos de calibración del micro.
-        Acepta 'CALIBRATION_STEPS:<n>' o 'CALIBRATION_COMPLETED:<n>' y devuelve <n> como int."""
-        print(f"   Esperando pasos de calibración {axis}...")
+    def _wait_for_movement_distance(self, axis: str, timeout: float = 5.0) -> Optional[float]:
+        """Esperar mensaje de distancia real recorrida desde el firmware.
+        Busca STEPPER_MOVE_COMPLETED o STEPPER_EMERGENCY_STOP con info de distancia."""
+        
+        print(f"   Esperando distancia real recorrida {axis} desde firmware...")
         start_time = time.time()
         
         while time.time() - start_time < timeout:
             try:
                 message = self.cmd.uart.message_queue.get(timeout=0.5)
-                print(f"   DEBUG: Mensaje recibido: {message}")
                 
-                if "CALIBRATION_STEPS:" in message or "CALIBRATION_COMPLETED:" in message:
+                # Buscar mensaje de movimiento completado o parada de emergencia
+                if "STEPPER_MOVE_COMPLETED:" in message or "STEPPER_EMERGENCY_STOP:" in message:
                     try:
-                        # Limpiar mensaje de posibles caracteres extra
-                        clean_msg = message.strip().split('\n')[0]
-                        value_str = clean_msg.split(":")[1].strip()
-                        value = int(value_str)
-                        print(f"   ✅ Pasos de calibración {axis}: {value}")
-                        return value
+                        # Formato: STEPPER_MOVE_COMPLETED:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
+                        if "MM:" in message:
+                            mm_part = message.split("MM:")[1]
+                            mm_values = mm_part.split(",")
+                            if len(mm_values) >= 2:
+                                mm_h = float(mm_values[0])
+                                mm_v = float(mm_values[1])
+                                
+                                if axis == "HORIZONTAL":
+                                    distance = abs(mm_h)
+                                else:  # VERTICAL
+                                    distance = abs(mm_v)
+                                
+                                print(f"   ✅ Distancia real {axis}: {distance:.1f}mm")
+                                return distance
                     except Exception as e:
-                        print(f"   ❌ Error parseando pasos: {e} | Mensaje: '{message}'")
+                        print(f"   Error parseando distancia: {e}")
                         continue
                         
             except queue.Empty:
-                print(f"   Esperando... ({timeout - (time.time() - start_time):.1f}s restantes)")
                 continue
             except Exception as e:
-                print(f"   Error en cola: {e}")
                 continue
         
-        print(f"   ❌ TIMEOUT: No se recibieron pasos de calibración {axis} en {timeout}s")
+        print(f"   ❌ TIMEOUT: No se recibió distancia real del firmware en {timeout}s")
         return None
