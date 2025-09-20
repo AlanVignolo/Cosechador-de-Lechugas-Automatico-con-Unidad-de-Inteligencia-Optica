@@ -123,6 +123,14 @@ class ArmController:
         safe_states = ["movimiento", "mover_lechuga"]
         return self.current_state in safe_states
     
+    def is_in_movement_position(self) -> bool:
+        """Verifica si el brazo está específicamente en posición 'movimiento' (servo1=10°, servo2=10°)"""
+        if self.current_state == "unknown":
+            return False
+        
+        # Solo aceptar la posición exacta de movimiento para homing
+        return self.current_state == "movimiento"
+    
     def ensure_safe_position(self) -> Dict:
         if self.is_in_safe_position():
             self.logger.info("Brazo ya está en posición segura")

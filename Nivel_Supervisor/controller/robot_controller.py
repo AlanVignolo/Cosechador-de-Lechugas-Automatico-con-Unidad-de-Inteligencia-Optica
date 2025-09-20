@@ -235,12 +235,11 @@ class RobotController:
         
         try:
             print("Verificando posición del brazo...")
-            if not self.arm.is_in_safe_position():
-                print("Brazo no está en posición segura. Moviendo...")
-                result = self.arm.ensure_safe_position()
-                if not result["success"]:
-                    return {"success": False, "message": "No se pudo mover brazo a posición segura"}
-                print("Brazo en posición segura")
+            if not self.arm.is_in_movement_position():
+                print("  BRAZO NO ESTÁ EN POSICIÓN DE MOVIMIENTO (servo1=10°, servo2=10°)")
+                print("  Por seguridad, mueve el brazo manualmente antes de hacer homing")
+                return {"success": False, "message": "Brazo no está en posición de movimiento. Configura servo1=10°, servo2=10° antes de hacer homing."}
+            print(" Brazo en posición de movimiento")
             
             limit_touched = {"type": None}
             
@@ -258,27 +257,27 @@ class RobotController:
             if not result["success"]:
                 return {"success": False, "message": "Error configurando velocidades"}
             
-            print("Moviendo hacia la IZQUIERDA hasta tocar límite...")
-            result = self.cmd.move_xy(-RobotConfig.HOMING_DISTANCE_H, 0)
+            print("Moviendo hacia la DERECHA hasta tocar límite...")
+            result = self.cmd.move_xy(RobotConfig.get_homing_direction_x(), 0)
             
             limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
             if limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message:
-                print("Límite derecho alcanzado")
+                print(" Límite derecho alcanzado")
             else:
-                return {"success": False, "message": "No se alcanzó límite derecho"}
+                return {"success": False, "message": " No se alcanzó límite derecho"}
             
-            print("Moviendo hacia arriba hasta tocar límite...")
-            result = self.cmd.move_xy(0, -RobotConfig.HOMING_DISTANCE_V)
+            print("Moviendo hacia ARRIBA hasta tocar límite...")
+            result = self.cmd.move_xy(0, RobotConfig.get_homing_direction_y())
             
             limit_message = self.cmd.uart.wait_for_limit(timeout=180.0)
             if limit_message and "LIMIT_V_UP_TRIGGERED" in limit_message:
-                print("Límite superior alcanzado")
+                print(" Límite superior alcanzado")
             else:
-                return {"success": False, "message": "No se alcanzó límite superior"}
+                return {"success": False, "message": " No se alcanzó límite superior"}
             
             print(f"Estableciendo origen ({RobotConfig.HOME_OFFSET_H}mm, {RobotConfig.HOME_OFFSET_V}mm desde límites)...")
             
-            result = self.cmd.move_xy(RobotConfig.HOME_OFFSET_H, RobotConfig.HOME_OFFSET_V)
+            result = self.cmd.move_xy(RobotConfig.get_home_offset_x(), RobotConfig.get_home_offset_y())
             if not result["success"]:
                 return {"success": False, "message": "Error en offset"}
             
