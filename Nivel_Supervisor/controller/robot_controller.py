@@ -249,6 +249,10 @@ class RobotController:
             
             self.cmd.uart.set_limit_callback(on_limit_touched)
             
+            # Deshabilitar heartbeat molesto durante homing
+            self.cmd.uart.send_command("HB:0")
+            time.sleep(0.2)
+            
             print("Configurando velocidades de homing...")
             result = self.cmd.set_velocities(
                 RobotConfig.HOMING_SPEED_H, 
@@ -260,20 +264,20 @@ class RobotController:
             print("Moviendo hacia la DERECHA hasta tocar límite...")
             result = self.cmd.move_xy(RobotConfig.get_homing_direction_x(), 0)
             
-            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message:
-                print(" Límite derecho alcanzado")
+            limit_message = self.cmd.uart.wait_for_limit_specific('H_RIGHT', timeout=30.0)
+            if limit_message:
+                print("✅ Límite derecho alcanzado")
             else:
-                return {"success": False, "message": " No se alcanzó límite derecho"}
+                return {"success": False, "message": "❌ No se alcanzó límite derecho"}
             
             print("Moviendo hacia ARRIBA hasta tocar límite...")
             result = self.cmd.move_xy(0, RobotConfig.get_homing_direction_y())
             
-            limit_message = self.cmd.uart.wait_for_limit(timeout=180.0)
-            if limit_message and "LIMIT_V_UP_TRIGGERED" in limit_message:
-                print(" Límite superior alcanzado")
+            limit_message = self.cmd.uart.wait_for_limit_specific('V_UP', timeout=180.0)
+            if limit_message:
+                print("✅ Límite superior alcanzado")
             else:
-                return {"success": False, "message": " No se alcanzó límite superior"}
+                return {"success": False, "message": "❌ No se alcanzó límite superior"}
             
             print(f"Estableciendo origen ({RobotConfig.HOME_OFFSET_H}mm, {RobotConfig.HOME_OFFSET_V}mm desde límites)...")
             
@@ -318,6 +322,9 @@ class RobotController:
             else:
                 print(f"Error restaurando velocidades: {result}")
             
+            # Rehabilitar heartbeat
+            self.cmd.uart.send_command("HB:1")
+            
             self.logger.info("Homing reactivo completado exitosamente")
             return {
                 "success": True, 
@@ -329,6 +336,8 @@ class RobotController:
             self.logger.error(f"Error durante homing: {e}")
             try:
                 self.cmd.set_velocities(RobotConfig.NORMAL_SPEED_H, RobotConfig.NORMAL_SPEED_V)
+                # Rehabilitar heartbeat en caso de error también
+                self.cmd.uart.send_command("HB:1")
             except:
                 pass
             return {"success": False, "message": f"Error durante homing: {str(e)}"}

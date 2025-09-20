@@ -145,7 +145,8 @@ class UARTManager:
                 self._limit_status_last_update = time.time()
             except Exception:
                 pass
-            if "limit_callback" in self.message_callbacks:
+            # Solo llamar callback para mensajes TRIGGERED, no para LIMIT_STATUS (heartbeat molesto)
+            if "limit_callback" in self.message_callbacks and "TRIGGERED" in message:
                 self.message_callbacks["limit_callback"](message)
         
         elif "SYSTEM_STATUS:" in message:
