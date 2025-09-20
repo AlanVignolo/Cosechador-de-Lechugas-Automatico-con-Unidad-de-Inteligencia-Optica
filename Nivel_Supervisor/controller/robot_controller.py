@@ -422,12 +422,14 @@ class RobotController:
             time.sleep(0.5)
             
             # Usar distancia del config
-            result = self.cmd.move_xy(RobotConfig.get_workspace_measure_direction_x(), 0)
+            direction_x = RobotConfig.get_workspace_measure_direction_x()
+            print(f"   Moviendo X={direction_x}mm hacia límite izquierdo")
+            result = self.cmd.move_xy(direction_x, 0)
             
-            # Esperar límite y capturar pasos
-            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if "LIMIT_H_RIGHT_TRIGGERED" in limit_message:
-                print("   Limite derecho alcanzado")
+            # Esperar límite específico y capturar pasos
+            limit_message = self.cmd.uart.wait_for_limit_specific('H_LEFT', timeout=30.0)
+            if limit_message:
+                print("   Límite izquierdo alcanzado")
                 
                 # CAPTURAR PASOS DE CALIBRACION
                 steps_value = self._wait_for_calibration_steps()
@@ -446,12 +448,14 @@ class RobotController:
             time.sleep(0.5)
             
             # Usar distancia del config
-            result = self.cmd.move_xy(0, RobotConfig.get_workspace_measure_direction_y())
+            direction_y = RobotConfig.get_workspace_measure_direction_y()
+            print(f"   Moviendo Y={direction_y}mm hacia límite inferior")
+            result = self.cmd.move_xy(0, direction_y)
             
-            # Esperar límite y capturar pasos
-            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if "LIMIT_V_DOWN_TRIGGERED" in limit_message:
-                print("   Limite inferior alcanzado")
+            # Esperar límite específico y capturar pasos
+            limit_message = self.cmd.uart.wait_for_limit_specific('V_DOWN', timeout=60.0)
+            if limit_message:
+                print("   Límite inferior alcanzado")
                 
                 # CAPTURAR PASOS DE CALIBRACION
                 steps_value = self._wait_for_calibration_steps()
@@ -461,6 +465,10 @@ class RobotController:
                     measurements["vertical_steps"] = steps
                     measurements["vertical_mm"] = round(vertical_mm, 1)
                     print(f"      Distancia vertical: {vertical_mm:.1f}mm ({steps} pasos)")
+                else:
+                    print("   ❌ No se recibieron pasos de calibración vertical")
+            else:
+                print("   ❌ No se alcanzó límite inferior - revisar cableado o configuración Y")
             
             # 4. Homing final
             print("Paso 4: Homing final...")
@@ -499,18 +507,18 @@ class RobotController:
             
             self.cmd.uart.set_limit_callback(on_limit_touched_final)
             
-            # Ir a límite derecho (movimiento hacia izquierda)
+            # Ir a límite derecho
             print("      -> Moviendo hacia límite derecho...")
             result = self.cmd.move_xy(RobotConfig.get_homing_direction_x(), 0)
-            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if not (limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message):
+            limit_message = self.cmd.uart.wait_for_limit_specific('H_RIGHT', timeout=30.0)
+            if not limit_message:
                 return {"success": False, "message": "No se alcanzó límite derecho en homing final"}
             
             # Ir a límite superior
             print("      → Moviendo hacia límite superior...")
             result = self.cmd.move_xy(0, RobotConfig.get_homing_direction_y())
-            limit_message = self.cmd.uart.wait_for_limit(timeout=30.0)
-            if not (limit_message and "LIMIT_V_UP_TRIGGERED" in limit_message):
+            limit_message = self.cmd.uart.wait_for_limit_specific('V_UP', timeout=30.0)
+            if not limit_message:
                 return {"success": False, "message": "No se alcanzó límite superior en homing final"}
             
             # APLICAR OFFSET CRÍTICO
