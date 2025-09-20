@@ -386,46 +386,48 @@ class RobotController:
             },
             "gripper": self.gripper_state
         }
+    def _wait_for_emergency_distance(self, axis: str, timeout: float = 5.0) -> Optional[float]:
+        """Esperar STEPPER_EMERGENCY_STOP y extraer distancia específica"""
+        print(f"   Esperando distancia {axis} del firmware...")
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            try:
+                message = self.cmd.uart.message_queue.get(timeout=0.5)
+                
+                if "STEPPER_EMERGENCY_STOP:" in message and "MM:" in message:
+                    try:
+                        # Formato: STEPPER_EMERGENCY_STOP:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
+                        mm_part = message.split("MM:")[1]
+                        mm_values = mm_part.split(",")
+                        if len(mm_values) >= 2:
+                            h_mm = abs(float(mm_values[0]))
+                            v_mm = abs(float(mm_values[1]))
+                            
+                            if axis == "HORIZONTAL" and h_mm > 0:
+                                print(f"   📏 Distancia horizontal capturada: {h_mm:.1f}mm")
+                                return h_mm
+                            elif axis == "VERTICAL" and v_mm > 0:
+                                print(f"   📏 Distancia vertical capturada: {v_mm:.1f}mm")
+                                return v_mm
+                    except Exception as e:
+                        print(f"   Error parseando distancia: {e}")
+                        continue
+                        
+            except queue.Empty:
+                continue
+            except Exception as e:
+                continue
+        
+        print(f"   ❌ No se capturó distancia {axis} en {timeout}s")
+        return None
+
     def calibrate_workspace(self) -> Dict:
         """Calibración del workspace usando mensajes STEPPER_EMERGENCY_STOP del firmware"""
         print("Iniciando calibración del workspace...")
         
         # Variables para capturar distancias reales
         captured_distances = {"horizontal_mm": None, "vertical_mm": None}
-        
-        def capture_emergency_distances(message):
-            """Callback para capturar distancias del STEPPER_EMERGENCY_STOP"""
-            try:
-                if "STEPPER_EMERGENCY_STOP:" in message and "MM:" in message:
-                    mm_part = message.split("MM:")[1]
-                    mm_values = mm_part.split(",")
-                    if len(mm_values) >= 2:
-                        h_mm = abs(float(mm_values[0]))
-                        v_mm = abs(float(mm_values[1]))
-                        print(f"   📏 Distancias capturadas: H={h_mm:.1f}mm, V={v_mm:.1f}mm")
-                        
-                        # Guardar la distancia del eje que se está moviendo
-                        if h_mm > 0 and captured_distances["horizontal_mm"] is None:
-                            captured_distances["horizontal_mm"] = h_mm
-                        if v_mm > 0 and captured_distances["vertical_mm"] is None:
-                            captured_distances["vertical_mm"] = v_mm
-            except Exception as e:
-                print(f"   Error capturando distancias: {e}")
-        
-        # Configurar callback temporal para capturar distancias
-        original_callbacks = self.cmd.uart.message_callbacks.copy()
-        
-        # Agregar nuestro callback manteniendo los existentes
-        current_stepper_callback = self.cmd.uart.message_callbacks.get("stepper_complete_callback", None)
-        
-        def combined_callback(message):
-            # Llamar callback original si existe
-            if current_stepper_callback:
-                current_stepper_callback(message)
-            # Llamar nuestro callback de captura
-            capture_emergency_distances(message)
-        
-        self.cmd.uart.message_callbacks["stepper_complete_callback"] = combined_callback
         
         try:
             print("Paso 1: Homing inicial...")
@@ -460,10 +462,11 @@ class RobotController:
             limit_message = self.cmd.uart.wait_for_limit_specific('H_LEFT', timeout=30.0)
             if limit_message:
                 print("   Límite izquierdo alcanzado")
-                time.sleep(1.0)  # Dar tiempo a que se capture la distancia
                 
-                if captured_distances["horizontal_mm"] is not None:
-                    h_distance = captured_distances["horizontal_mm"]
+                # Capturar distancia horizontal del firmware
+                h_distance = self._wait_for_emergency_distance("HORIZONTAL", 10.0)
+                if h_distance is not None:
+                    captured_distances["horizontal_mm"] = h_distance
                     steps = int(h_distance * RobotConfig.STEPS_PER_MM_H)
                     print(f"      Workspace horizontal: {h_distance:.1f}mm ({steps} pasos)")
                 else:
@@ -490,10 +493,11 @@ class RobotController:
             limit_message = self.cmd.uart.wait_for_limit_specific('V_DOWN', timeout=60.0)
             if limit_message:
                 print("   Límite inferior alcanzado")
-                time.sleep(1.0)  # Dar tiempo a que se capture la distancia
                 
-                if captured_distances["vertical_mm"] is not None:
-                    v_distance = captured_distances["vertical_mm"]
+                # Capturar distancia vertical del firmware
+                v_distance = self._wait_for_emergency_distance("VERTICAL", 10.0)
+                if v_distance is not None:
+                    captured_distances["vertical_mm"] = v_distance
                     steps = int(v_distance * RobotConfig.STEPS_PER_MM_V)
                     print(f"      Workspace vertical: {v_distance:.1f}mm ({steps} pasos)")
                 else:
@@ -601,6 +605,4 @@ class RobotController:
         except Exception as e:
             return {"success": False, "message": f"Error: {str(e)}"}
         finally:
-            # Restaurar callbacks originales
-            self.cmd.uart.message_callbacks.clear()
-            self.cmd.uart.message_callbacks.update(original_callbacks)
+            pass  # No necesitamos restaurar callbacks ya que no los modificamos
