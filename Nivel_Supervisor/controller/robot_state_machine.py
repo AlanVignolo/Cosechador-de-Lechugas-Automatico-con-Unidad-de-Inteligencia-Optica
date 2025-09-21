@@ -460,17 +460,13 @@ class RobotStateMachine:
             
             print("✅ Homing completo realizado")
             
-            # Forzar actualización del workspace desde el robot
-            workspace = getattr(self.robot, 'workspace_limits', {})
-            if not workspace:
-                # Si no está disponible, intentar obtenerlo directamente
-                self.robot._update_workspace_limits()
-                workspace = getattr(self.robot, 'workspace_limits', {})
+            # Obtener dimensiones reales del workspace
+            workspace_dims = self.robot.get_workspace_dimensions()
             
-            print(f"📐 Workspace medido: H={workspace.get('horizontal_mm', 'N/A')}mm, V={workspace.get('vertical_mm', 'N/A')}mm")
+            print(f"📐 Workspace medido: H={workspace_dims.get('width_mm', 'N/A')}mm, V={workspace_dims.get('height_mm', 'N/A')}mm")
             
             # Verificar que el workspace se calibró correctamente
-            if not workspace or workspace.get('horizontal_mm', 0) <= 0:
+            if not workspace_dims.get('calibrated', False) or workspace_dims.get('width_mm', 0) <= 0:
                 print("❌ Error: El workspace no se calibró correctamente")
                 return False
             
@@ -567,22 +563,13 @@ class RobotStateMachine:
     def _scan_horizontal_with_workspace(self, tubo_id: int) -> bool:
         """Escáner horizontal usando distancia completa del workspace"""
         try:
-            # Obtener límites del workspace con varios intentos
-            workspace = getattr(self.robot, 'workspace_limits', {})
+            # Obtener dimensiones reales del workspace
+            workspace_dims = self.robot.get_workspace_dimensions()
+            horizontal_mm = workspace_dims.get('width_mm', 0)
             
-            # Si no está disponible, intentar forzar actualización
-            if not workspace:
-                try:
-                    self.robot._update_workspace_limits()
-                    workspace = getattr(self.robot, 'workspace_limits', {})
-                except:
-                    pass
-            
-            horizontal_mm = workspace.get('horizontal_mm', 0)
-            
-            if horizontal_mm <= 0:
+            if not workspace_dims.get('calibrated', False) or horizontal_mm <= 0:
                 print("❌ No hay información del workspace - ejecutar homing completo primero")
-                print(f"   Debug: workspace = {workspace}")
+                print(f"   Debug: workspace_dims = {workspace_dims}")
                 return False
             
             print(f"   📐 Usando workspace: {horizontal_mm}mm horizontal")
