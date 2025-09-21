@@ -507,7 +507,7 @@ class RobotStateMachine:
                 move_y = target_y - current_pos['y']
                 
                 print(f"   📍 Moviendo a {config['nombre']}: relativo ({move_x:.1f}, {move_y:.1f})mm")
-                result = self.robot.cmd.move_relative(move_x, move_y)
+                result = self.robot.cmd.move_xy(move_x, move_y)
                 if not result["success"]:
                     print(f"❌ Error moviendo a {config['nombre']}: {result}")
                     return False
@@ -554,7 +554,7 @@ class RobotStateMachine:
             
             # Mover toda la distancia horizontal usando movimiento relativo
             print(f"   ➡️ Moviendo {horizontal_mm}mm hacia la izquierda...")
-            result = self.robot.cmd.move_relative(-horizontal_mm, 0)  # Negativo = izquierda
+            result = self.robot.cmd.move_xy(-horizontal_mm, 0)  # Negativo = izquierda
             if not result["success"]:
                 print(f"❌ Error en movimiento horizontal: {result}")
                 return False
@@ -572,7 +572,7 @@ class RobotStateMachine:
             
             # Volver al inicio del tubo (X=0) usando movimiento relativo
             print(f"   ⬅️ Regresando al inicio del tubo...")
-            result = self.robot.cmd.move_relative(horizontal_mm, 0)  # Positivo = derecha
+            result = self.robot.cmd.move_xy(horizontal_mm, 0)  # Positivo = derecha
             if not result["success"]:
                 print(f"❌ Error regresando al inicio: {result}")
                 return False
