@@ -524,42 +524,60 @@ class RobotStateMachine:
             for tubo_id, config in tubos_config.items():
                 print(f"\n🔍 PASO 3.{tubo_id}: Escaneando {config['nombre']}...")
                 
-                # Mover al tubo usando movimiento relativo
-                current_pos = self.robot.get_status()['position']
-                target_x = 0  # Siempre ir a X=0 para cada tubo
+                # SIEMPRE ir desde origen (0,0) a (0, Y_tubo) - movimiento absoluto
+                target_x = 0  # Siempre X=0
                 target_y = config['y_mm']
                 
-                # Calcular movimiento relativo
-                move_x = target_x - current_pos['x']
-                move_y = target_y - current_pos['y']
+                # Primer hacer homing rápido para asegurar posición (0,0)
+                print(f"   🏠 Asegurando posición en origen (0,0)...")
+                home_result = self.robot.home_robot()
+                if not home_result["success"]:
+                    print(f"❌ Error en homing antes de {config['nombre']}: {home_result}")
+                    continue
+                print("   ✅ Robot confirmado en origen (0,0)")
                 
-                print(f"   📍 Moviendo a {config['nombre']}: relativo ({move_x:.1f}, {move_y:.1f})mm")
+                # Movimiento SOLO vertical (Y) desde origen
+                move_x = 0  # Sin movimiento horizontal
+                move_y = target_y  # Solo Y del tubo
                 
-                # DEBUG: Solo mover si hay movimiento real
-                if abs(move_x) < 0.1 and abs(move_y) < 0.1:
-                    print(f"   ℹ️ Sin movimiento necesario - ya en posición correcta")
-                else:
-                    result = self.robot.cmd.move_xy(move_x, move_y)
-                    print(f"   🔍 DEBUG: Resultado del comando move_xy: {result}")
-                    
-                    if not result["success"]:
-                        print(f"❌ Error moviendo a {config['nombre']}: {result}")
-                        return False
-                    
-                    # CRÍTICO: Esperar que termine completamente el movimiento de posicionamiento
-                    print(f"   ⏳ Esperando completar movimiento a {config['nombre']}...")
-                    completion = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
-                    print(f"   🔍 DEBUG: Completado del movimiento: {completion}")
-                    
-                    if not completion:
-                        print(f"❌ Timeout moviendo a {config['nombre']}")
-                        return False
-                    
-                    # DEBUG: Verificar posición después del movimiento
-                    pos_after = self.robot.get_status()['position']
-                    print(f"   🔍 DEBUG: Posición después del movimiento: X={pos_after['x']:.1f}mm, Y={pos_after['y']:.1f}mm")
-                    
+                print(f"   📍 Moviendo a {config['nombre']}: SOLO vertical Y={move_y:.1f}mm")
+                
+                # SIEMPRE mover verticalmente (nunca saltear)
+                if move_y < 10:  # Si es muy pequeño, algo está mal
+                    print(f"❌ Movimiento Y muy pequeño ({move_y}mm) - verificar configuración")
+                    continue
+                
+                # Usar solo movimiento vertical
+                result = self.robot.cmd.move_xy(0, move_y)  # Explícito: X=0, Y=target
+                print(f"   🔍 DEBUG: Resultado del comando move_xy: {result}")
+                
+                if not result["success"]:
+                    print(f"❌ Error moviendo a {config['nombre']}: {result}")
+                    continue
+                
+                # CRÍTICO: Esperar que termine completamente el movimiento de posicionamiento
+                print(f"   ⏳ Esperando completar movimiento a {config['nombre']}...")
+                completion = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
+                print(f"   🔍 DEBUG: Completado del movimiento: {completion}")
+                
+                if not completion:
+                    print(f"❌ Timeout moviendo a {config['nombre']}")
+                    continue
+                
+                # DEBUG: Verificar posición después del movimiento
+                pos_after = self.robot.get_status()['position']
+                print(f"   🔍 DEBUG: Posición después del movimiento: X={pos_after['x']:.1f}mm, Y={pos_after['y']:.1f}mm")
+                
                 print(f"   ✅ Llegada a {config['nombre']} completada")
+                
+                # PAUSA CRÍTICA: Dar tiempo al robot para estabilizarse
+                print(f"   ⏳ Esperando estabilización del robot...")
+                import time
+                time.sleep(2.0)  # 2 segundos para que se estabilice
+                
+                # Verificar posición real antes del escáner
+                pos_real = self.robot.get_status()['position']
+                print(f"   🔍 Posición real antes del escáner: X={pos_real['x']:.1f}mm, Y={pos_real['y']:.1f}mm")
                 
                 # Hacer escáner horizontal con workspace completo
                 print(f"   🔍 Iniciando escáner horizontal en {config['nombre']}...")
