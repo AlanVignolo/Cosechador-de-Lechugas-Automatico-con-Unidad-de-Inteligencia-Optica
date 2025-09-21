@@ -449,26 +449,18 @@ class RobotStateMachine:
     def _execute_homing(self) -> bool:
         """Ejecutar homing COMPLETO con calibración del workspace"""
         self.transition_to(RobotState.HOMING)
-        print("\n🏠 EJECUTANDO HOMING Y CALIBRACIÓN COMPLETA DEL WORKSPACE...")
+        print("\n🏠 EJECUTANDO HOMING COMPLETO (CON CALIBRACIÓN DEL WORKSPACE)...")
         
         try:
-            # 1. Homing básico (ir a origen)
-            print("📍 Paso 1: Homing básico (establecer origen)...")
-            result = self.robot.home_robot()
-            if not result["success"]:
-                print(f"❌ Error en homing básico: {result['message']}")
-                return False
-            print("✅ Origen establecido")
-            
-            # 2. Calibración completa del workspace
-            print("📐 Paso 2: Calibrando workspace completo (medir límites)...")
+            # Solo hacer homing completo (incluye básico + calibración)
             result = self.robot.calibrate_workspace()
             if not result["success"]:
-                print(f"❌ Error en calibración del workspace: {result['message']}")
+                print(f"❌ Error en homing completo: {result['message']}")
                 return False
             
-            print("✅ Homing y calibración completos")
-            print(f"📐 Workspace disponible: {getattr(self.robot, 'workspace_limits', 'No disponible')}")
+            print("✅ Homing completo realizado")
+            workspace = getattr(self.robot, 'workspace_limits', {})
+            print(f"📐 Workspace medido: H={workspace.get('horizontal_mm', 'N/A')}mm, V={workspace.get('vertical_mm', 'N/A')}mm")
             return True
             
         except Exception as e:
@@ -482,26 +474,119 @@ class RobotStateMachine:
         
         try:
             # 1. Detección de tubos (escáner vertical)
-            print("📍 Detectando posiciones de tubos...")
+            print("📍 PASO 1: Detectando posiciones de tubos con IA vertical...")
             success = scan_vertical_manual(self.robot)
             if not success:
+                print("❌ Error en escáner vertical")
                 return False
+            print("✅ Tubos detectados y configuración actualizada")
             
-            # 2. Detección de lechugas por tubo
+            # 2. Homing normal después del escáner vertical
+            print("📍 PASO 2: Homing normal post-escáner...")
+            result = self.robot.home_robot()
+            if not result["success"]:
+                print(f"❌ Error en homing post-escáner: {result['message']}")
+                return False
+            print("✅ Robot en origen (0,0)")
+            
+            # 3. Obtener configuración de tubos actualizada
             tubos_config = config_tubos.obtener_configuracion_tubos()
+            print(f"📋 Tubos detectados: {len(tubos_config)}")
             
+            # 4. Escaneado horizontal en cada tubo
             for tubo_id, config in tubos_config.items():
-                print(f"\n🔍 Escaneando {config['nombre']}...")
-                success = scan_horizontal_with_live_camera(self.robot)
+                print(f"\n🔍 PASO 3.{tubo_id}: Escaneando {config['nombre']}...")
+                
+                # Mover al tubo usando movimiento relativo
+                current_pos = self.robot.get_status()['position']
+                target_x = 0  # Siempre ir a X=0 para cada tubo
+                target_y = config['y_mm']
+                
+                # Calcular movimiento relativo
+                move_x = target_x - current_pos['x']
+                move_y = target_y - current_pos['y']
+                
+                print(f"   📍 Moviendo a {config['nombre']}: relativo ({move_x:.1f}, {move_y:.1f})mm")
+                result = self.robot.cmd.move_relative(move_x, move_y)
+                if not result["success"]:
+                    print(f"❌ Error moviendo a {config['nombre']}: {result}")
+                    return False
+                
+                # Esperar que llegue
+                if not self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0):
+                    print(f"❌ Timeout moviendo a {config['nombre']}")
+                    return False
+                
+                # Hacer escáner horizontal con workspace completo
+                print(f"   🔍 Iniciando escáner horizontal en {config['nombre']}...")
+                success = self._scan_horizontal_with_workspace(tubo_id)
                 if not success:
                     print(f"⚠️ Error escaneando {config['nombre']}")
                     continue
+                
+                print(f"✅ {config['nombre']} completado")
             
             print("✅ Mapeo de cultivo completado")
             return True
             
         except Exception as e:
             self.logger.error(f"Error en mapeo de cultivo: {e}")
+            return False
+    
+    def _scan_horizontal_with_workspace(self, tubo_id: int) -> bool:
+        """Escáner horizontal usando distancia completa del workspace"""
+        try:
+            # Obtener límites del workspace
+            workspace = getattr(self.robot, 'workspace_limits', {})
+            horizontal_mm = workspace.get('horizontal_mm', 0)
+            
+            if horizontal_mm <= 0:
+                print("❌ No hay información del workspace - ejecutar homing completo primero")
+                return False
+            
+            print(f"   📐 Usando workspace: {horizontal_mm}mm horizontal")
+            
+            # Configurar para escáner (velocidad reducida)
+            print("   ⚙️ Configurando velocidades para escáner...")
+            result = self.robot.cmd.set_velocities(2000, 3000)  # Velocidad reducida
+            if not result["success"]:
+                print(f"   ⚠️ Error configurando velocidades: {result}")
+            
+            # Mover toda la distancia horizontal usando movimiento relativo
+            print(f"   ➡️ Moviendo {horizontal_mm}mm hacia la izquierda...")
+            result = self.robot.cmd.move_relative(-horizontal_mm, 0)  # Negativo = izquierda
+            if not result["success"]:
+                print(f"❌ Error en movimiento horizontal: {result}")
+                return False
+            
+            # Esperar que complete el movimiento
+            if not self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=60.0):
+                print("❌ Timeout en movimiento horizontal")
+                return False
+            
+            # Restaurar velocidades normales
+            print("   ⚙️ Restaurando velocidades normales...")
+            result = self.robot.cmd.set_velocities(8000, 12000)
+            if not result["success"]:
+                print(f"   ⚠️ Error restaurando velocidades: {result}")
+            
+            # Volver al inicio del tubo (X=0) usando movimiento relativo
+            print(f"   ⬅️ Regresando al inicio del tubo...")
+            result = self.robot.cmd.move_relative(horizontal_mm, 0)  # Positivo = derecha
+            if not result["success"]:
+                print(f"❌ Error regresando al inicio: {result}")
+                return False
+            
+            # Esperar que complete el regreso
+            if not self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=60.0):
+                print("❌ Timeout regresando al inicio")
+                return False
+            
+            print(f"   ✅ Escáner horizontal completado en tubo {tubo_id}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error en escáner horizontal: {e}")
             return False
     
     def _execute_mapeo_recursos(self) -> bool:
