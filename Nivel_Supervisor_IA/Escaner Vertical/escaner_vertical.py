@@ -162,6 +162,19 @@ def scan_vertical_manual(robot):
         # Mostrar resultados
         show_results_vertical(detection_state)
         
+        # Actualizar configuración de tubos con las posiciones Y detectadas
+        if detection_state['flag_positions']:
+            try:
+                # Importar sistema de configuración de tubos
+                sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Analizar Cultivo'))
+                from configuracion_tubos import config_tubos
+                
+                # Actualizar configuración con las posiciones Y detectadas
+                config_tubos.actualizar_desde_escaner_vertical(detection_state['flag_positions'])
+                print("\nConfiguración de tubos actualizada para el escáner horizontal")
+            except Exception as e:
+                print(f"Error actualizando configuración de tubos: {e}")
+        
         return True
         
     except Exception as e:

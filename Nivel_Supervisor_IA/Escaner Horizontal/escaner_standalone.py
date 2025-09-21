@@ -19,15 +19,29 @@ def scan_horizontal_with_live_camera(robot):
     """
     Función principal de escaneo horizontal autónoma con matriz de cintas
     """
-    # Importar sistema de matriz
+    # Importar sistema de matriz y configuración dinámica de tubos
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Analizar Cultivo'))
     from matriz_cintas import matriz_cintas
+    from configuracion_tubos import config_tubos
     
-    # Selección de tubo
+    # Obtener configuración dinámica de tubos
+    tubo_config = config_tubos.obtener_configuracion_tubos()
+    num_tubos = config_tubos.obtener_numero_tubos()
+    
+    # Mostrar configuración actual
+    print(f"\nConfiguración actual de tubos:")
+    if config_tubos.hay_configuracion_desde_escaner():
+        print("(Actualizada desde escáner vertical)")
+    else:
+        print("(Configuración por defecto - se recomienda ejecutar escáner vertical primero)")
+    
+    config_tubos.mostrar_configuracion_actual()
+    
+    # Selección de tubo dinámica
     print(f"\nSelección de tubo:")
-    print("1. Tubo 1 (Y=300mm)")
-    print("2. Tubo 2 (Y=600mm)")
+    for tubo_id, config in tubo_config.items():
+        print(f"{tubo_id}. {config['nombre']} (Y={config['y_mm']}mm)")
     
     # Definir un ID de escaneo por defecto y estado de escaneo por si hay errores tempranos
     import uuid
@@ -36,18 +50,13 @@ def scan_horizontal_with_live_camera(robot):
 
     while True:
         try:
-            tubo_seleccionado = int(input("Seleccione tubo (1-2): "))
-            if tubo_seleccionado in [1, 2]:
+            tubo_seleccionado = int(input(f"Seleccione tubo (1-{num_tubos}): "))
+            if tubo_seleccionado in tubo_config.keys():
                 break
             else:
-                print("Opción inválida. Seleccione 1 o 2.")
+                print(f"Opción inválida. Seleccione entre 1 y {num_tubos}.")
         except ValueError:
             print("Por favor ingrese un número válido.")
-    
-    tubo_config = {
-        1: {"y_mm": 300, "nombre": "Tubo 1"},
-        2: {"y_mm": 600, "nombre": "Tubo 2"}
-    }
     
     selected_tubo = tubo_config[tubo_seleccionado]
     print(f"Tubo seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
