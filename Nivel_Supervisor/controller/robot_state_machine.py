@@ -539,10 +539,12 @@ class RobotStateMachine:
                     print(f"❌ Error moviendo a {config['nombre']}: {result}")
                     return False
                 
-                # Esperar que llegue
+                # CRÍTICO: Esperar que termine completamente el movimiento de posicionamiento
+                print(f"   ⏳ Esperando completar movimiento a {config['nombre']}...")
                 if not self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0):
                     print(f"❌ Timeout moviendo a {config['nombre']}")
                     return False
+                print(f"   ✅ Llegada a {config['nombre']} completada")
                 
                 # Hacer escáner horizontal con workspace completo
                 print(f"   🔍 Iniciando escáner horizontal en {config['nombre']}...")
