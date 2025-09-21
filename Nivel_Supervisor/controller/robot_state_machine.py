@@ -576,6 +576,10 @@ class RobotStateMachine:
             
             print(f"   📐 Usando workspace: {horizontal_mm}mm horizontal")
             
+            # DEBUG: Verificar posición antes del escáner
+            current_pos = self.robot.get_status()['position']
+            print(f"   🔍 DEBUG: Posición antes del escáner: X={current_pos['x']:.1f}mm, Y={current_pos['y']:.1f}mm")
+            
             # Configurar para escáner (velocidad reducida)
             print("   ⚙️ Configurando velocidades para escáner...")
             result = self.robot.cmd.set_velocities(2000, 3000)  # Velocidad reducida
@@ -584,7 +588,7 @@ class RobotStateMachine:
             
             # Mover toda la distancia horizontal usando movimiento relativo
             print(f"   ➡️ Moviendo {horizontal_mm}mm hacia la izquierda...")
-            result = self.robot.cmd.move_xy(-horizontal_mm, 0)  # Negativo = izquierda
+            result = self.robot.cmd.move_xy(horizontal_mm, 0)  # Positivo = izquierda
             if not result["success"]:
                 print(f"❌ Error en movimiento horizontal: {result}")
                 return False
@@ -602,7 +606,7 @@ class RobotStateMachine:
             
             # Volver al inicio del tubo (X=0) usando movimiento relativo
             print(f"   ⬅️ Regresando al inicio del tubo...")
-            result = self.robot.cmd.move_xy(horizontal_mm, 0)  # Positivo = derecha
+            result = self.robot.cmd.move_xy(-horizontal_mm, 0)  # Negativo = derecha (regresar)
             if not result["success"]:
                 print(f"❌ Error regresando al inicio: {result}")
                 return False
