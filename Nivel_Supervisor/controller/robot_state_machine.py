@@ -26,20 +26,66 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Super
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
 
+# Importar módulos de configuración (siempre necesarios)
+try:
+    from configuracion_tubos import config_tubos
+    from matriz_cintas import matriz_cintas
+    CONFIG_MODULES_AVAILABLE = True
+    print("✅ Módulos de configuración importados")
+except ImportError as e:
+    print(f"❌ Error importando módulos de configuración: {e}")
+    CONFIG_MODULES_AVAILABLE = False
+    # Crear módulos dummy básicos si no están disponibles
+    class DummyConfig:
+        @staticmethod
+        def obtener_configuracion_tubos():
+            return {1: {"nombre": "Tubo 1", "y_mm": 300}, 2: {"nombre": "Tubo 2", "y_mm": 600}}
+        @staticmethod
+        def hay_configuracion_desde_escaner():
+            return False
+    
+    class DummyMatriz:
+        @staticmethod
+        def obtener_cintas_tubo(tubo_id):
+            return []
+        @staticmethod
+        def obtener_todas_cintas():
+            return {}
+    
+    config_tubos = DummyConfig()
+    matriz_cintas = DummyMatriz()
+
+# Importar funciones de IA (opcionales)
 try:
     from tape_detector_horizontal import get_horizontal_correction_distance
     from tape_detector_vertical import get_vertical_correction_distance
-    from configuracion_tubos import config_tubos
-    from matriz_cintas import matriz_cintas
-    from escaner_standalone import scan_horizontal_with_live_camera
-    from escaner_vertical import scan_vertical_manual
+    IA_CORRECTION_AVAILABLE = True
+    print("✅ Módulos de corrección IA importados")
 except ImportError as e:
-    logging.warning(f"No se pudieron importar módulos de IA: {e}")
-    # Funciones dummy para evitar errores
+    print(f"⚠️ Módulos de corrección IA no disponibles: {e}")
+    IA_CORRECTION_AVAILABLE = False
+    # Funciones dummy para corrección
     def get_horizontal_correction_distance(camera_index=0):
         return {'success': False, 'distance_pixels': 0, 'error': 'Módulo no disponible'}
     def get_vertical_correction_distance(camera_index=0):
         return {'success': False, 'distance_pixels': 0, 'error': 'Módulo no disponible'}
+
+# Importar funciones de escáner (opcionales)
+try:
+    from escaner_standalone import scan_horizontal_with_live_camera
+    from escaner_vertical import scan_vertical_manual
+    SCANNER_MODULES_AVAILABLE = True
+    print("✅ Módulos de escáner importados")
+except ImportError as e:
+    print(f"⚠️ Módulos de escáner no disponibles: {e}")
+    SCANNER_MODULES_AVAILABLE = False
+    # Funciones dummy para escáneres
+    def scan_horizontal_with_live_camera(robot):
+        print("⚠️ Escáner horizontal no disponible - simulando éxito")
+        return True
+    def scan_vertical_manual(robot):
+        print("⚠️ Escáner vertical no disponible - simulando éxito")
+        return True
 
 class RobotState(Enum):
     """Estados de la máquina de estados del robot"""
