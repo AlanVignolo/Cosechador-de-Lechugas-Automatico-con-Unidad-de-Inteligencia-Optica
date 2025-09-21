@@ -9,6 +9,12 @@ from enum import Enum
 from typing import Callable, Dict, List, Optional, Tuple
 from datetime import datetime
 
+# Agregar directorios al path para importaciones
+current_dir = os.path.dirname(os.path.abspath(__file__))
+nivel_supervisor_dir = os.path.dirname(current_dir)
+if nivel_supervisor_dir not in sys.path:
+    sys.path.insert(0, nivel_supervisor_dir)
+
 from controller.robot_controller import RobotController
 from controller.command_manager import CommandManager
 from config.robot_config import RobotConfig
@@ -520,3 +526,25 @@ class RobotStateMachine:
     def reset_stop_request(self):
         """Resetear solicitud de parada"""
         self.stop_requested.clear()
+
+
+def main():
+    """Función main para pruebas directas del archivo"""
+    print("🤖 MÁQUINA DE ESTADOS CLAUDIO - MODO PRUEBA")
+    print("="*50)
+    print("Este archivo está diseñado para ser importado,")
+    print("no para ejecutarse directamente.")
+    print("\nPara usar la máquina de estados:")
+    print("1. Importar en main_robot.py:")
+    print("   from controller.robot_state_machine import RobotStateMachine")
+    print("2. Crear instancia:")
+    print("   state_machine = RobotStateMachine(robot)")
+    print("3. Usar métodos:")
+    print("   - state_machine.inicio_total()")
+    print("   - state_machine.escaner_diario()")
+    print("   - state_machine.mostrar_datos()")
+    print("="*50)
+
+
+if __name__ == "__main__":
+    main()
