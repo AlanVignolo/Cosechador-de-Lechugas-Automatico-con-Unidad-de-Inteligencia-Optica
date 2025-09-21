@@ -75,9 +75,9 @@ def scan_vertical_manual(robot):
                 print(f"Error en send_manual_flag: {e}")
                 return None
         
-        # Velocidades lentas para el escaneo
-        print("Configurando velocidades lentas...")
-        robot.cmd.set_velocities(2000, 1500)  # Vertical aún más lenta
+        # Velocidades para el escaneo (usar velocidades de homing que son apropiadas)
+        print("Configurando velocidades de escaneo...")
+        robot.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)  # 3000, 8000
         
         # PASO 1: Ir al límite superior (V_UP)
         print("\nPASO 1: Moviendo hacia límite superior...")
