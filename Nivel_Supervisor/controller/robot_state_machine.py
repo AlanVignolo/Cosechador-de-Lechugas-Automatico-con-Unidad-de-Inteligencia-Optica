@@ -459,8 +459,21 @@ class RobotStateMachine:
                 return False
             
             print("✅ Homing completo realizado")
+            
+            # Forzar actualización del workspace desde el robot
             workspace = getattr(self.robot, 'workspace_limits', {})
+            if not workspace:
+                # Si no está disponible, intentar obtenerlo directamente
+                self.robot._update_workspace_limits()
+                workspace = getattr(self.robot, 'workspace_limits', {})
+            
             print(f"📐 Workspace medido: H={workspace.get('horizontal_mm', 'N/A')}mm, V={workspace.get('vertical_mm', 'N/A')}mm")
+            
+            # Verificar que el workspace se calibró correctamente
+            if not workspace or workspace.get('horizontal_mm', 0) <= 0:
+                print("❌ Error: El workspace no se calibró correctamente")
+                return False
+            
             return True
             
         except Exception as e:
@@ -492,6 +505,24 @@ class RobotStateMachine:
             # 3. Obtener configuración de tubos actualizada
             tubos_config = config_tubos.obtener_configuracion_tubos()
             print(f"📋 Tubos detectados: {len(tubos_config)}")
+            
+            # Verificar que se detectaron tubos
+            if len(tubos_config) == 0:
+                print("❌ No se detectaron tubos en el escáner vertical")
+                print("🏠 Regresando al origen (0,0) y terminando secuencia...")
+                
+                # Regresar al origen
+                current_pos = self.robot.get_status()['position']
+                move_x = 0 - current_pos['x']
+                move_y = 0 - current_pos['y']
+                
+                if abs(move_x) > 0.1 or abs(move_y) > 0.1:  # Solo mover si no estamos ya en origen
+                    result = self.robot.cmd.move_xy(move_x, move_y)
+                    if result["success"]:
+                        self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
+                
+                print("❌ MAPEO DE CULTIVO FALLÓ - NO HAY TUBOS DETECTADOS")
+                return False
             
             # 4. Escaneado horizontal en cada tubo
             for tubo_id, config in tubos_config.items():
@@ -536,12 +567,22 @@ class RobotStateMachine:
     def _scan_horizontal_with_workspace(self, tubo_id: int) -> bool:
         """Escáner horizontal usando distancia completa del workspace"""
         try:
-            # Obtener límites del workspace
+            # Obtener límites del workspace con varios intentos
             workspace = getattr(self.robot, 'workspace_limits', {})
+            
+            # Si no está disponible, intentar forzar actualización
+            if not workspace:
+                try:
+                    self.robot._update_workspace_limits()
+                    workspace = getattr(self.robot, 'workspace_limits', {})
+                except:
+                    pass
+            
             horizontal_mm = workspace.get('horizontal_mm', 0)
             
             if horizontal_mm <= 0:
                 print("❌ No hay información del workspace - ejecutar homing completo primero")
+                print(f"   Debug: workspace = {workspace}")
                 return False
             
             print(f"   📐 Usando workspace: {horizontal_mm}mm horizontal")
