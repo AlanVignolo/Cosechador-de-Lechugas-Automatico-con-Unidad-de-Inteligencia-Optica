@@ -447,21 +447,32 @@ class RobotStateMachine:
     # =============================================================================
     
     def _execute_homing(self) -> bool:
-        """Ejecutar homing completo"""
+        """Ejecutar homing COMPLETO con calibración del workspace"""
         self.transition_to(RobotState.HOMING)
-        print("\n🏠 EJECUTANDO HOMING Y CALIBRACIÓN...")
+        print("\n🏠 EJECUTANDO HOMING Y CALIBRACIÓN COMPLETA DEL WORKSPACE...")
         
         try:
+            # 1. Homing básico (ir a origen)
+            print("📍 Paso 1: Homing básico (establecer origen)...")
             result = self.robot.home_robot()
             if not result["success"]:
-                print(f"❌ Error en homing: {result['message']}")
+                print(f"❌ Error en homing básico: {result['message']}")
+                return False
+            print("✅ Origen establecido")
+            
+            # 2. Calibración completa del workspace
+            print("📐 Paso 2: Calibrando workspace completo (medir límites)...")
+            result = self.robot.calibrate_workspace()
+            if not result["success"]:
+                print(f"❌ Error en calibración del workspace: {result['message']}")
                 return False
             
-            print("✅ Homing completado")
+            print("✅ Homing y calibración completos")
+            print(f"📐 Workspace disponible: {getattr(self.robot, 'workspace_limits', 'No disponible')}")
             return True
             
         except Exception as e:
-            self.logger.error(f"Error en homing: {e}")
+            self.logger.error(f"Error en homing completo: {e}")
             return False
     
     def _execute_mapeo_cultivo(self) -> bool:
