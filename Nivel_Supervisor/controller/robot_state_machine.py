@@ -534,16 +534,31 @@ class RobotStateMachine:
                 move_y = target_y - current_pos['y']
                 
                 print(f"   📍 Moviendo a {config['nombre']}: relativo ({move_x:.1f}, {move_y:.1f})mm")
-                result = self.robot.cmd.move_xy(move_x, move_y)
-                if not result["success"]:
-                    print(f"❌ Error moviendo a {config['nombre']}: {result}")
-                    return False
                 
-                # CRÍTICO: Esperar que termine completamente el movimiento de posicionamiento
-                print(f"   ⏳ Esperando completar movimiento a {config['nombre']}...")
-                if not self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0):
-                    print(f"❌ Timeout moviendo a {config['nombre']}")
-                    return False
+                # DEBUG: Solo mover si hay movimiento real
+                if abs(move_x) < 0.1 and abs(move_y) < 0.1:
+                    print(f"   ℹ️ Sin movimiento necesario - ya en posición correcta")
+                else:
+                    result = self.robot.cmd.move_xy(move_x, move_y)
+                    print(f"   🔍 DEBUG: Resultado del comando move_xy: {result}")
+                    
+                    if not result["success"]:
+                        print(f"❌ Error moviendo a {config['nombre']}: {result}")
+                        return False
+                    
+                    # CRÍTICO: Esperar que termine completamente el movimiento de posicionamiento
+                    print(f"   ⏳ Esperando completar movimiento a {config['nombre']}...")
+                    completion = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
+                    print(f"   🔍 DEBUG: Completado del movimiento: {completion}")
+                    
+                    if not completion:
+                        print(f"❌ Timeout moviendo a {config['nombre']}")
+                        return False
+                    
+                    # DEBUG: Verificar posición después del movimiento
+                    pos_after = self.robot.get_status()['position']
+                    print(f"   🔍 DEBUG: Posición después del movimiento: X={pos_after['x']:.1f}mm, Y={pos_after['y']:.1f}mm")
+                    
                 print(f"   ✅ Llegada a {config['nombre']} completada")
                 
                 # Hacer escáner horizontal con workspace completo
