@@ -83,21 +83,6 @@ except Exception as e:
     print(f"Error inesperado en import de escáner vertical: {e}")
     SCANNER_VERTICAL_AVAILABLE = False
 
-# Importar máquina de estados
-STATE_MACHINE_AVAILABLE = False
-RobotStateMachine = None
-
-try:
-    print("Intentando importar máquina de estados...")
-    from controller.robot_state_machine import RobotStateMachine
-    STATE_MACHINE_AVAILABLE = True
-    print("Máquina de estados importada exitosamente")
-except ImportError as e:
-    print(f"Error importando máquina de estados: {e}")
-    STATE_MACHINE_AVAILABLE = False
-except Exception as e:
-    print(f"Error inesperado en import de máquina de estados: {e}")
-    STATE_MACHINE_AVAILABLE = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -771,15 +756,10 @@ def menu_interactivo(uart_manager, robot):
         print("12. Escaneado horizontal con camara en vivo")
         print("13. Escaneado vertical manual (flags por usuario)")
         print("-"*60)
-        print("MÁQUINA DE ESTADOS AUTOMATIZADA:")
-        print("14. Inicio Total (secuencia completa)")
-        print("15. Escáner Diario (solo cosecha)")
-        print("16. Datos del Sistema (debug completo)")
-        print("-"*60)
         print("0.  Salir")
         print("-"*60)
         
-        opcion = input("Selecciona opción (0-16): ")
+        opcion = input("Selecciona opción (0-13): ")
 
         if opcion == '1':
             x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
@@ -973,54 +953,6 @@ def menu_interactivo(uart_manager, robot):
                 print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
             else:
                 print("Escáner vertical no disponible. Verificar imports.")
-        elif opcion == '14':
-            if STATE_MACHINE_AVAILABLE:
-                try:
-                    print("\n🚀 INICIANDO SECUENCIA COMPLETA...")
-                    state_machine = RobotStateMachine(robot)
-                    success = state_machine.inicio_total()
-                    if success:
-                        print("\n✅ INICIO TOTAL COMPLETADO EXITOSAMENTE")
-                    else:
-                        print("\n❌ INICIO TOTAL FALLÓ")
-                except KeyboardInterrupt:
-                    print("\n⏹️ Inicio total interrumpido por el usuario")
-                except Exception as e:
-                    print(f"\n❌ Error en inicio total: {e}")
-                    import traceback
-                    traceback.print_exc()
-            else:
-                print("Máquina de estados no disponible. Verificar imports.")
-        elif opcion == '15':
-            if STATE_MACHINE_AVAILABLE:
-                try:
-                    print("\n🔄 INICIANDO ESCÁNER DIARIO...")
-                    state_machine = RobotStateMachine(robot)
-                    success = state_machine.escaner_diario()
-                    if success:
-                        print("\n✅ ESCÁNER DIARIO COMPLETADO EXITOSAMENTE")
-                    else:
-                        print("\n❌ ESCÁNER DIARIO FALLÓ")
-                except KeyboardInterrupt:
-                    print("\n⏹️ Escáner diario interrumpido por el usuario")
-                except Exception as e:
-                    print(f"\n❌ Error en escáner diario: {e}")
-                    import traceback
-                    traceback.print_exc()
-            else:
-                print("Máquina de estados no disponible. Verificar imports.")
-        elif opcion == '16':
-            if STATE_MACHINE_AVAILABLE:
-                try:
-                    print("\n📊 MOSTRANDO DATOS COMPLETOS DEL SISTEMA...")
-                    state_machine = RobotStateMachine(robot)
-                    state_machine.mostrar_datos()
-                except Exception as e:
-                    print(f"\n❌ Error mostrando datos: {e}")
-                    import traceback
-                    traceback.print_exc()
-            else:
-                print("Máquina de estados no disponible. Verificar imports.")
         elif opcion == '0':
             print("Saliendo...")
             break
