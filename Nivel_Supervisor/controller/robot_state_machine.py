@@ -528,13 +528,10 @@ class RobotStateMachine:
                 target_x = 0  # Siempre X=0
                 target_y = config['y_mm']
                 
-                # Primer hacer homing rápido para asegurar posición (0,0)
-                print(f"   🏠 Asegurando posición en origen (0,0)...")
-                home_result = self.robot.home_robot()
-                if not home_result["success"]:
-                    print(f"❌ Error en homing antes de {config['nombre']}: {home_result}")
-                    continue
-                print("   ✅ Robot confirmado en origen (0,0)")
+                # NO hacer homing innecesario - el robot ya está en origen después del homing post-escáner
+                print(f"   📍 Robot debería estar en origen (0,0) después del homing post-escáner")
+                current_pos = self.robot.get_status()['position']
+                print(f"   🔍 Posición actual: X={current_pos['x']:.1f}mm, Y={current_pos['y']:.1f}mm")
                 
                 # Movimiento SOLO vertical (Y) desde origen
                 move_x = 0  # Sin movimiento horizontal
@@ -564,6 +561,10 @@ class RobotStateMachine:
                     print(f"❌ Timeout moviendo a {config['nombre']}")
                     continue
                 
+                # PAUSA CRÍTICA: Dar tiempo al callback de actualización de posición global
+                import time
+                time.sleep(0.5)  # 500ms para que se procese el callback
+                
                 # DEBUG: Verificar posición después del movimiento
                 pos_after = self.robot.get_status()['position']
                 print(f"   🔍 DEBUG: Posición después del movimiento: X={pos_after['x']:.1f}mm, Y={pos_after['y']:.1f}mm")
@@ -579,9 +580,15 @@ class RobotStateMachine:
                 pos_real = self.robot.get_status()['position']
                 print(f"   🔍 Posición real antes del escáner: X={pos_real['x']:.1f}mm, Y={pos_real['y']:.1f}mm")
                 
-                # Hacer escáner horizontal con workspace completo
-                print(f"   🔍 Iniciando escáner horizontal en {config['nombre']}...")
-                success = self._scan_horizontal_with_workspace(tubo_id)
+                # Hacer escáner horizontal usando el módulo standalone
+                print(f"   🔍 Iniciando escáner horizontal autónomo en {config['nombre']}...")
+                
+                try:
+                    # Usar directamente el método simple de escaneado que ya funciona
+                    success = self._scan_horizontal_with_workspace(tubo_id)
+                except Exception as e:
+                    print(f"❌ Error ejecutando escáner horizontal: {e}")
+                    success = False
                 if not success:
                     print(f"⚠️ Error escaneando {config['nombre']}")
                     continue
