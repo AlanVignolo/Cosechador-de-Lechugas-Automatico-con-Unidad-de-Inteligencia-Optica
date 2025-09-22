@@ -550,6 +550,13 @@ class RobotStateMachine:
                 
                 print(f"   📍 Movimiento calculado: X={move_x:.1f}mm, Y={move_y:.1f}mm")
                 
+                # Asegurar velocidades NORMALES para el movimiento inter-tubos (un solo movimiento XY)
+                try:
+                    from config.robot_config import RobotConfig as _RC
+                    self.robot.cmd.set_velocities(_RC.NORMAL_SPEED_H, _RC.NORMAL_SPEED_V)
+                except Exception:
+                    pass
+                
                 # Verificar si ya está en posición (tolerancia de 5mm)
                 if abs(move_x) < 5.0 and abs(move_y) < 5.0:
                     print(f"   ✅ Robot ya está en {config['nombre']} (tolerancia 5mm)")
@@ -672,7 +679,9 @@ class RobotStateMachine:
             # Si tenemos el módulo de escáner con IA, delegar a él (preferido)
             if 'scan_horizontal_with_live_camera' in globals() and SCANNER_MODULES_AVAILABLE:
                 print(f"   🤖 Ejecutando escáner IA horizontal (scan_horizontal_with_live_camera) para tubo {tubo_id}...")
-                return scan_horizontal_with_live_camera(self.robot, tubo_id=tubo_id)
+                # Ya llegamos con un solo movimiento a X=0 (offset desde límite derecho) y Y=tubo
+                # Pasamos prepared_at_right=True para que el escáner omita el baseline a la derecha
+                return scan_horizontal_with_live_camera(self.robot, tubo_id=tubo_id, prepared_at_right=True)
             
             # Obtener dimensiones reales del workspace
             workspace_dims = self.robot.get_workspace_dimensions()

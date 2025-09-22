@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Super
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'config'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Correccion Posicion Horizontal'))
 
-def scan_horizontal_with_live_camera(robot, tubo_id=None):
+def scan_horizontal_with_live_camera(robot, tubo_id=None, prepared_at_right: bool = False):
     """
     Función principal de escaneo horizontal autónoma con matriz de cintas
     """
@@ -112,27 +112,28 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         # NOTA: El posicionamiento Y ahora se hace desde otro código externo
         # Solo informamos qué tubo se va a escanear para la matriz de coordenadas
         
-        # SECUENCIA DE MOVIMIENTO HORIZONTAL
-        # Ir al switch derecho (X negativos)
-        result = robot.cmd.move_xy(-2000, 0)
-        
-        # Esperar límite derecho (aceptar evento o estado polleado)
-        limit_message = robot.cmd.uart.wait_for_limit_specific('H_RIGHT', timeout=30.0)
-        if not (limit_message and ("LIMIT_H_RIGHT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_RIGHT" in limit_message))):
-            print("Error: No se alcanzó el límite derecho")
-            return False
-        
-        # Retroceder 1cm
-        result = robot.cmd.move_xy(10, 0)
-        if not result["success"]:
-            print(f"Error en retroceso: {result}")
-            return False
-        
-        time.sleep(2)
-        
-        # Resetear posición global para que coincida con x=0 del escáner
-        # Esto hace que las coordenadas relativas funcionen correctamente
-        robot.reset_global_position(0.0, robot.global_position['y'])
+        # SECUENCIA DE MOVIMIENTO HORIZONTAL (baseline) a derecha solo si NO se preparó desde afuera
+        if not prepared_at_right:
+            # Ir al switch derecho (X negativos)
+            result = robot.cmd.move_xy(-2000, 0)
+            
+            # Esperar límite derecho (aceptar evento o estado polleado)
+            limit_message = robot.cmd.uart.wait_for_limit_specific('H_RIGHT', timeout=30.0)
+            if not (limit_message and ("LIMIT_H_RIGHT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_RIGHT" in limit_message))):
+                print("Error: No se alcanzó el límite derecho")
+                return False
+            
+            # Retroceder 1cm
+            result = robot.cmd.move_xy(10, 0)
+            if not result["success"]:
+                print(f"Error en retroceso: {result}")
+                return False
+            
+            time.sleep(2)
+            
+            # Resetear posición global para que coincida con x=0 del escáner
+            # Esto hace que las coordenadas relativas funcionen correctamente
+            robot.reset_global_position(0.0, robot.global_position['y'])
         
         # Iniciar detección básica
         
@@ -609,7 +610,13 @@ def correlate_flags_with_snapshots(detection_state):
         snapshot_pairs = []
         try:
             if uart is not None and hasattr(uart, 'get_last_snapshots'):
-                snapshot_pairs = uart.get_last_snapshots()  # [(x_mm, y_mm), ...]
+                # Esperar brevemente si aún no llegaron los snapshots del firmware
+                t0 = time.time()
+                while True:
+                    snapshot_pairs = uart.get_last_snapshots()  # [(x_mm, y_mm), ...]
+                    if snapshot_pairs or (time.time() - t0) > 1.0:
+                        break
+                    time.sleep(0.05)
         except Exception:
             snapshot_pairs = []
 
