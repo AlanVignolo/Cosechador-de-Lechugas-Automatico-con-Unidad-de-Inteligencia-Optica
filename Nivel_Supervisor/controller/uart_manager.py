@@ -229,25 +229,44 @@ class UARTManager:
             
     
     def wait_for_action_completion(self, action_type: str, timeout: float = 30.0) -> bool:
-        # Ruta robusta para STEPPER_MOVE: evitar que completados antiguos o
-        # mensajes pendientes disparen el evento por error. Nos basamos en
-        # timestamps de START/COMPLETED para confirmar que el COMPLETED
-        # corresponde al movimiento actual.
+        # Ruta robusta para STEPPER_MOVE: sincronizar con START, registrar evento,
+        # chequear completado reciente >= START y luego esperar evento con fallback.
         if action_type == "STEPPER_MOVE":
-            start_wait = time.time()
-            started_ts = self.last_started_ts.get("STEPPER_MOVE")
-            # Bucle de espera activo con sondeo de completado reciente
-            while time.time() - start_wait < timeout:
-                try:
-                    completed_ts = self.completed_actions_recent.get("STEPPER_MOVE")
-                    if started_ts is not None and completed_ts is not None:
-                        if completed_ts >= started_ts:
-                            # Consumir marca y confirmar completado
-                            self.completed_actions_recent.pop("STEPPER_MOVE", None)
-                            return True
-                except Exception:
-                    pass
+            # 1) Asegurar que tengamos registrado un START (evita started_ts=None)
+            start_detect_deadline = time.time() + 1.5  # hasta 1.5s para detectar START
+            while self.last_started_ts.get("STEPPER_MOVE") is None and time.time() < start_detect_deadline:
                 time.sleep(0.01)
+            started_ts = self.last_started_ts.get("STEPPER_MOVE")
+
+            # 2) Registrar evento de espera
+            event = threading.Event()
+            self.waiting_for_completion[action_type] = event
+
+            # 3) Fast-path: si ya tenemos COMPLETED posterior al START, salir ya
+            try:
+                completed_ts = self.completed_actions_recent.get("STEPPER_MOVE")
+                if started_ts is not None and completed_ts is not None and completed_ts >= started_ts:
+                    self.completed_actions_recent.pop("STEPPER_MOVE", None)
+                    del self.waiting_for_completion[action_type]
+                    return True
+            except Exception:
+                pass
+
+            # 4) Esperar evento normal
+            done = event.wait(timeout)
+            if action_type in self.waiting_for_completion:
+                del self.waiting_for_completion[action_type]
+            if done:
+                return True
+
+            # 5) Fallback post-wait: por si el evento se perdió pero el COMPLETED llegó
+            try:
+                completed_ts2 = self.completed_actions_recent.get("STEPPER_MOVE")
+                if started_ts is not None and completed_ts2 is not None and completed_ts2 >= started_ts:
+                    self.completed_actions_recent.pop("STEPPER_MOVE", None)
+                    return True
+            except Exception:
+                pass
             return False
 
         # Para otras acciones, mantener la lógica basada en eventos con una

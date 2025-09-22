@@ -574,8 +574,22 @@ class RobotStateMachine:
                     print(f"   🔍 DEBUG: Completado del movimiento: {completed}")
                     
                     if not completed:
-                        print(f"❌ Timeout moviendo a {config['nombre']}")
-                        continue
+                        # Si el wait falló, verificar posición actual: puede que sí haya llegado
+                        pos_check0 = self.robot.get_status()['position']
+                        err_x0 = abs(pos_check0['x'] - target_x)
+                        err_y0 = abs(pos_check0['y'] - target_y)
+                        if err_x0 <= 5.0 and err_y0 <= 5.0:
+                            print(f"   ⚠️ Wait devolvió False pero posición está en objetivo (X±{err_x0:.1f}, Y±{err_y0:.1f}) → Continuando")
+                        else:
+                            print(f"❌ Timeout moviendo a {config['nombre']} (err X=±{err_x0:.1f}mm, Y=±{err_y0:.1f}mm). Reintentando espera extendida...")
+                            completed_retry = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=60.0)
+                            print(f"   🔍 DEBUG: Completado tras reintento: {completed_retry}")
+                            pos_check1 = self.robot.get_status()['position']
+                            err_x1 = abs(pos_check1['x'] - target_x)
+                            err_y1 = abs(pos_check1['y'] - target_y)
+                            if err_x1 > 10.0 or err_y1 > 10.0:
+                                print(f"   ❌ Aún lejos del objetivo tras reintento (X±{err_x1:.1f}, Y±{err_y1:.1f}) → Saltando tubo")
+                                continue
                     
                     # Verificación adicional: si la posición reportada aún está lejos del objetivo,
                     # hacer una segunda espera más larga por si el evento llegó con retraso.
