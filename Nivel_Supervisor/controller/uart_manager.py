@@ -202,7 +202,11 @@ class UARTManager:
             self._last_completed_message = message
             
             if "stepper_complete_callback" in self.message_callbacks:
+                self.logger.info(f"🔧 Llamando callback stepper_complete_callback...")
                 self.message_callbacks["stepper_complete_callback"](message)
+                self.logger.info(f"🔧 Callback stepper_complete_callback ejecutado")
+            else:
+                self.logger.warning(f"🔧 NO HAY CALLBACK stepper_complete_callback registrado")
             # Al completar el movimiento, permitir que el próximo movimiento imprima encabezado
             self._snap_header_printed = False
                 

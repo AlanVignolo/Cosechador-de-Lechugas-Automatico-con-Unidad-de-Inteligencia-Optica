@@ -58,7 +58,9 @@ class RobotController:
     
     def _setup_position_tracking(self):
         """Configurar callback para tracking automático de posición global"""
+        self.logger.info("🔧 Configurando callback de posición...")
         self.cmd.uart.set_stepper_callbacks(None, self._on_movement_completed)
+        self.logger.info("🔧 Callback registrado correctamente")
     
     def _on_movement_completed(self, message: str):
         """Callback para actualizar posición global cuando se completa un movimiento"""
