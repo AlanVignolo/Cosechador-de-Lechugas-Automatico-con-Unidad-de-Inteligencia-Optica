@@ -496,7 +496,13 @@ class RobotStateMachine:
             if not result["success"]:
                 print(f"❌ Error en homing post-escáner: {result['message']}")
                 return False
-            print("✅ Robot en origen (0,0)")
+            
+            # DEBUG: Verificar posición después del homing
+            pos_after_homing = self.robot.get_status()['position']
+            print(f"✅ Robot en origen - Posición reportada: X={pos_after_homing['x']:.1f}mm, Y={pos_after_homing['y']:.1f}mm")
+            
+            if abs(pos_after_homing['x']) > 0.1 or abs(pos_after_homing['y']) > 0.1:
+                print(f"⚠️ ADVERTENCIA: Posición no está exactamente en (0,0) después del homing")
             
             # 3. Obtener configuración de tubos actualizada
             tubos_config = config_tubos.obtener_configuracion_tubos()
@@ -528,46 +534,58 @@ class RobotStateMachine:
                 target_x = 0  # Siempre X=0
                 target_y = config['y_mm']
                 
-                # NO hacer homing innecesario - el robot ya está en origen después del homing post-escáner
-                print(f"   📍 Robot debería estar en origen (0,0) después del homing post-escáner")
+                # NO hacer homing - confiar en el tracking de posición global
                 current_pos = self.robot.get_status()['position']
-                print(f"   🔍 Posición actual: X={current_pos['x']:.1f}mm, Y={current_pos['y']:.1f}mm")
+                print(f"   📍 Posición actual antes del movimiento: X={current_pos['x']:.1f}mm, Y={current_pos['y']:.1f}mm")
+                print(f"   🎯 Objetivo: X=0mm, Y={target_y:.1f}mm ({config['nombre']})")
                 
-                # Movimiento SOLO vertical (Y) desde origen
-                move_x = 0  # Sin movimiento horizontal
-                move_y = target_y  # Solo Y del tubo
+                # Calcular movimiento relativo desde posición actual
+                move_x = target_x - current_pos['x']  # Diferencia en X
+                move_y = target_y - current_pos['y']  # Diferencia en Y
                 
-                print(f"   📍 Moviendo a {config['nombre']}: SOLO vertical Y={move_y:.1f}mm")
+                print(f"   📍 Movimiento calculado: X={move_x:.1f}mm, Y={move_y:.1f}mm")
                 
-                # SIEMPRE mover verticalmente (nunca saltear)
-                if move_y < 10:  # Si es muy pequeño, algo está mal
-                    print(f"❌ Movimiento Y muy pequeño ({move_y}mm) - verificar configuración")
-                    continue
+                # Verificar si ya está en posición (tolerancia de 5mm)
+                if abs(move_x) < 5.0 and abs(move_y) < 5.0:
+                    print(f"   ✅ Robot ya está en {config['nombre']} (tolerancia 5mm)")
+                else:
+                    print(f"   ➡️ Moviendo a {config['nombre']}: X={move_x:.1f}mm, Y={move_y:.1f}mm")
+                    
+                    # Ejecutar movimiento relativo
+                    result = self.robot.cmd.move_xy(move_x, move_y)
+                    print(f"   🔍 DEBUG: Resultado del comando move_xy: {result}")
+                    
+                    if not result["success"]:
+                        print(f"❌ Error moviendo a {config['nombre']}: {result}")
+                        continue
+                    
+                    # CRÍTICO: Esperar que termine completamente el movimiento
+                    print(f"   ⏳ Esperando completar movimiento a {config['nombre']}...")
+                    completion = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
+                    print(f"   🔍 DEBUG: Completado del movimiento: {completion}")
+                    
+                    if not completion:
+                        print(f"❌ Timeout moviendo a {config['nombre']}")
+                        continue
+                    
+                    # Pausa para que se procese el callback de posición
+                    import time
+                    time.sleep(0.3)
                 
-                # Usar solo movimiento vertical
-                result = self.robot.cmd.move_xy(0, move_y)  # Explícito: X=0, Y=target
-                print(f"   🔍 DEBUG: Resultado del comando move_xy: {result}")
+                # VERIFICACIÓN FINAL: Confirmar posición después del movimiento
+                pos_final = self.robot.get_status()['position']
+                print(f"   🔍 DEBUG: Posición final: X={pos_final['x']:.1f}mm, Y={pos_final['y']:.1f}mm")
+                print(f"   🎯 Objetivo era: X={target_x:.1f}mm, Y={target_y:.1f}mm")
                 
-                if not result["success"]:
-                    print(f"❌ Error moviendo a {config['nombre']}: {result}")
-                    continue
+                # Verificar precisión del posicionamiento
+                error_x = abs(pos_final['x'] - target_x)
+                error_y = abs(pos_final['y'] - target_y)
+                print(f"   📊 Error de posicionamiento: X=±{error_x:.1f}mm, Y=±{error_y:.1f}mm")
                 
-                # CRÍTICO: Esperar que termine completamente el movimiento de posicionamiento
-                print(f"   ⏳ Esperando completar movimiento a {config['nombre']}...")
-                completion = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
-                print(f"   🔍 DEBUG: Completado del movimiento: {completion}")
-                
-                if not completion:
-                    print(f"❌ Timeout moviendo a {config['nombre']}")
-                    continue
-                
-                # PAUSA CRÍTICA: Dar tiempo al callback de actualización de posición global
-                import time
-                time.sleep(0.5)  # 500ms para que se procese el callback
-                
-                # DEBUG: Verificar posición después del movimiento
-                pos_after = self.robot.get_status()['position']
-                print(f"   🔍 DEBUG: Posición después del movimiento: X={pos_after['x']:.1f}mm, Y={pos_after['y']:.1f}mm")
+                if error_x > 10.0 or error_y > 10.0:
+                    print(f"   ⚠️ ADVERTENCIA: Error de posicionamiento alto, pero continuando...")
+                else:
+                    print(f"   ✅ Posicionamiento exitoso en {config['nombre']}")
                 
                 print(f"   ✅ Llegada a {config['nombre']} completada")
                 
@@ -580,22 +598,32 @@ class RobotStateMachine:
                 pos_real = self.robot.get_status()['position']
                 print(f"   🔍 Posición real antes del escáner: X={pos_real['x']:.1f}mm, Y={pos_real['y']:.1f}mm")
                 
-                # Hacer escáner horizontal usando el módulo standalone
-                print(f"   🔍 Iniciando escáner horizontal autónomo en {config['nombre']}...")
+                # Hacer escáner horizontal
+                print(f"   🔍 Iniciando escáner horizontal en {config['nombre']}...")
+                print(f"   📌 Posición antes del escáner: X={pos_final['x']:.1f}mm, Y={pos_final['y']:.1f}mm")
                 
                 try:
-                    # Usar directamente el método simple de escaneado que ya funciona
+                    # Usar el método de escaneado con workspace
                     success = self._scan_horizontal_with_workspace(tubo_id)
                 except Exception as e:
-                    print(f"❌ Error ejecutando escáner horizontal: {e}")
+                    print(f"❌ Error ejecutando escáner: {e}")
+                    import traceback
+                    traceback.print_exc()
                     success = False
+                    
                 if not success:
-                    print(f"⚠️ Error escaneando {config['nombre']}")
-                    continue
+                    print(f"⚠️ Error escaneando {config['nombre']}, pero continuando...")
+                else:
+                    print(f"   ✅ Escáner completado exitosamente en {config['nombre']}")
                 
                 print(f"✅ {config['nombre']} completado")
             
             print("✅ Mapeo de cultivo completado")
+            
+            # DEBUG FINAL: Mostrar posición final del robot
+            final_pos = self.robot.get_status()['position']
+            print(f"📍 Posición final del robot: X={final_pos['x']:.1f}mm, Y={final_pos['y']:.1f}mm")
+            
             return True
             
         except Exception as e:

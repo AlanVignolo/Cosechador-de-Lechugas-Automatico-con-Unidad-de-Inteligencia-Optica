@@ -48,27 +48,18 @@ def scan_horizontal_with_live_camera(robot):
     scan_id = str(uuid.uuid4())[:8]
     is_scanning = [False]
 
-    # DETERMINAR TUBO AUTOMÁTICAMENTE BASADO EN POSICIÓN ACTUAL
-    current_pos = robot.get_status()['position']
-    current_y = current_pos['y']
-    
-    # Buscar el tubo más cercano a la posición actual
-    tubo_seleccionado = None
-    min_distance = float('inf')
-    
-    for tubo_id, config in tubo_config.items():
-        distance = abs(current_y - config['y_mm'])
-        if distance < min_distance:
-            min_distance = distance
-            tubo_seleccionado = tubo_id
-    
-    if tubo_seleccionado is None:
-        print(f"❌ No se pudo determinar tubo automáticamente. Posición Y actual: {current_y}mm")
-        return False
+    while True:
+        try:
+            tubo_seleccionado = int(input(f"Seleccione tubo (1-{num_tubos}): "))
+            if tubo_seleccionado in tubo_config.keys():
+                break
+            else:
+                print(f"Opción inválida. Seleccione entre 1 y {num_tubos}.")
+        except ValueError:
+            print("Por favor ingrese un número válido.")
     
     selected_tubo = tubo_config[tubo_seleccionado]
-    print(f"🎯 Tubo detectado automáticamente: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
-    print(f"   📍 Posición actual del robot: Y={current_y:.1f}mm (diferencia: {min_distance:.1f}mm)")
+    print(f"Tubo seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
     
     try:
         # Importar solo lo necesario dentro de la función
@@ -361,173 +352,21 @@ def scan_horizontal_with_live_camera(robot):
                     cv2.waitKey(1)
                 except:
                     pass
-                except:
-                    pass
                 try:
                     camera_mgr.stop_stream_ref()
+                    time.sleep(0.2)
+                    camera_mgr.release("escaner_standalone")
                 except:
                     pass
-        finally:
-            cv2.destroyAllWindows()
-            camera_mgr.release("escaner_standalone")
+                return False
         
-        return len(detections) > 0
-    
-    except Exception as e:
-        print(f"Error en scan_horizontal_with_live_camera: {e}")
-        return False
-
-def scan_horizontal_autonomous(robot, tubo_id):
-    """
-    Versión completamente autónoma del escáner horizontal para un tubo específico
-    No requiere interacción del usuario
-    """
-    try:
-        # Importar sistema de matriz y configuración dinámica de tubos
-        import sys
-        sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Analizar Cultivo'))
-        from matriz_cintas import matriz_cintas
-        from configuracion_tubos import config_tubos
+        # Movimiento hacia switch izquierdo
+        result = robot.cmd.move_xy(2000, 0)
         
-        # Obtener configuración dinámica de tubos
-        tubo_config = config_tubos.obtener_configuracion_tubos()
+        # Esperar límite izquierdo (aceptar evento o estado polleado)
+        limit_message = robot.cmd.uart.wait_for_limit_specific('H_LEFT', timeout=120.0)
         
-        if tubo_id not in tubo_config:
-            print(f"❌ Tubo {tubo_id} no encontrado en configuración")
-            return False
-        
-        selected_tubo = tubo_config[tubo_id]
-        print(f"🎯 Escaneando {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm) - MODO AUTÓNOMO")
-        
-        # Importar solo lo necesario dentro de la función
-        from camera_manager import get_camera_manager
-        from config.robot_config import RobotConfig
-        
-        camera_mgr = get_camera_manager()
-        detections = []
-        
-        # Verificaciones básicas
-        if not robot.is_homed:
-            print("❌ Error: Robot debe estar hecho homing primero")
-            return False
-        
-        if not robot.arm.is_in_safe_position():
-            print("⚠️ Advertencia: El brazo no está en posición segura, pero continuando en modo autónomo")
-        
-        # Limpiar ventanas previas que puedan estar abiertas
-        cv2.destroyAllWindows()
-        time.sleep(0.2)
-        
-        # Adquirir y preparar cámara (uso compartido administrado por CameraManager)
-        if not camera_mgr.acquire("escaner_autonomous"):
-            print("❌ Error: No se pudo adquirir la cámara")
-            return False
-        
-        if not camera_mgr.start_stream_ref(fps=6):
-            print("❌ Error: No se pudo iniciar video stream")
-            camera_mgr.release("escaner_autonomous")
-            return False
-        
-        print(f"✅ Cámara inicializada exitosamente")
-        
-        # Obtener dimensiones del workspace desde el robot
-        workspace_dims = robot.get_workspace_dimensions()
-        if not workspace_dims.get('calibrated', False):
-            print("❌ Error: Workspace no calibrado")
-            camera_mgr.release("escaner_autonomous")
-            return False
-        
-        scan_distance_mm = workspace_dims.get('width_mm', 1000)
-        print(f"📐 Usando distancia de escaneo: {scan_distance_mm}mm")
-        
-        # PASO 1: Configurar velocidades de escaneo
-        print("⚙️ Configurando velocidades para escáner...")
-        scan_speed_h = 4000  # Velocidad más lenta para mejor detección
-        scan_speed_v = 6000
-        
-        speed_result = robot.cmd.set_velocities(scan_speed_h, scan_speed_v)
-        if not speed_result["success"]:
-            print(f"❌ Error configurando velocidades: {speed_result}")
-            camera_mgr.release("escaner_autonomous")
-            return False
-        
-        print(f"✅ Velocidades configuradas: H={scan_speed_h}, V={scan_speed_v}")
-        
-        # PASO 2: Ejecutar escaneo horizontal completo
-        print(f"➡️ Moviendo {scan_distance_mm}mm hacia la izquierda...")
-        
-        # Limpiar snapshots previos
-        robot.cmd.uart.clear_last_snapshots()
-        
-        # Iniciar el movimiento horizontal
-        move_result = robot.cmd.move_xy(scan_distance_mm, 0)
-        if not move_result["success"]:
-            print(f"❌ Error iniciando movimiento: {move_result}")
-            camera_mgr.release("escaner_autonomous")
-            return False
-        
-        print(f"🚀 Movimiento iniciado - Escaneando automáticamente...")
-        
-        # Esperar a que termine el movimiento (automático con límites)
-        completion = robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=60.0)
-        if not completion:
-            print("❌ Timeout en el movimiento de escaneo")
-            camera_mgr.release("escaner_autonomous")
-            return False
-        
-        print("✅ Movimiento de escaneo completado")
-        
-        # PASO 3: Obtener snapshots y procesar detecciones
-        snapshots = robot.cmd.uart.get_last_snapshots()
-        print(f"📸 Snapshots capturados: {len(snapshots)}")
-        
-        if len(snapshots) == 0:
-            print("⚠️ No se capturaron snapshots durante el escaneo")
-        else:
-            # Procesar los snapshots como detecciones
-            for i, (x_mm, y_mm) in enumerate(snapshots):
-                detections.append({
-                    'id': i + 1,
-                    'x_mm': x_mm,
-                    'y_mm': y_mm,
-                    'timestamp': time.time()
-                })
-                print(f"🎯 Detección {i+1}: X={x_mm}mm, Y={y_mm}mm")
-        
-        # PASO 4: Restaurar velocidades normales
-        print("⚙️ Restaurando velocidades normales...")
-        restore_result = robot.cmd.set_velocities(8000, 12000)
-        if restore_result["success"]:
-            print("✅ Velocidades restauradas")
-        
-        # PASO 5: Regresar al inicio del tubo
-        print("⬅️ Regresando al inicio del tubo...")
-        return_result = robot.cmd.move_xy(-scan_distance_mm, 0)
-        if return_result["success"]:
-            completion = robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
-            if completion:
-                print("✅ Regreso completado")
-        
-        # PASO 6: Guardar detecciones en matriz si las hay
-        if len(detections) > 0:
-            try:
-                # Guardar en matriz de cintas
-                matriz_cintas.guardar_detecciones_horizontal(tubo_id, detections)
-                print(f"💾 {len(detections)} detecciones guardadas en matriz de cintas")
-            except Exception as e:
-                print(f"⚠️ Error guardando en matriz: {e}")
-        
-        return len(detections) > 0
-        
-    except Exception as e:
-        print(f"❌ Error en escáner autónomo: {e}")
-        return False
-    finally:
-        try:
-            cv2.destroyAllWindows()
-            camera_mgr.release("escaner_autonomous")
-        except:
-            pass
+        # Detener video de forma controlada
         is_scanning[0] = False
         
         # Dar tiempo al thread para salir del loop
