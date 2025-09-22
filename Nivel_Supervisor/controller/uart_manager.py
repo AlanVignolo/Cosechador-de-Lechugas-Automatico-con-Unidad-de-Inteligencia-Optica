@@ -198,6 +198,15 @@ class UARTManager:
                 pass
             if "stepper_start_callback" in self.message_callbacks:
                 self.message_callbacks["stepper_start_callback"](message)
+            # Al iniciar un nuevo movimiento, invalidar cualquier marca de completado
+            # reciente para evitar falsos positivos en wait_for_action_completion.
+            # De lo contrario, si un movimiento anterior terminó hace <5s,
+            # el siguiente wait podría devolver True inmediatamente sin
+            # que el movimiento actual haya terminado realmente.
+            try:
+                self.completed_actions_recent.pop("STEPPER_MOVE", None)
+            except Exception:
+                pass
             # Al iniciar un nuevo movimiento, limpiar snapshots previos
             try:
                 self._last_movement_snapshots.clear()
