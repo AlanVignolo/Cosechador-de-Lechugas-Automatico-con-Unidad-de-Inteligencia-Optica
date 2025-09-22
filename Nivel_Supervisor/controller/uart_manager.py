@@ -536,13 +536,15 @@ class UARTManager:
             essential_callbacks = {}
             # Mantener callbacks del sistema si existen
             for key in ["status_callback", "servo_start_callback", "servo_complete_callback", 
-                       "gripper_start_callback", "gripper_complete_callback"]:
+                       "gripper_start_callback", "gripper_complete_callback",
+                       "stepper_start_callback", "stepper_complete_callback"]:  # CRÍTICO: Mantener callbacks de stepper para tracking de posición
                 if key in self.message_callbacks:
                     essential_callbacks[key] = self.message_callbacks[key]
             
             # Limpiar todos los callbacks y restaurar solo los esenciales
             self.message_callbacks.clear()
             self.message_callbacks.update(essential_callbacks)
+            self.logger.info(f"🔧 Callbacks después del reset: {list(self.message_callbacks.keys())}")
             
             # Resetear eventos de acción y completado
             self.action_events.clear()
