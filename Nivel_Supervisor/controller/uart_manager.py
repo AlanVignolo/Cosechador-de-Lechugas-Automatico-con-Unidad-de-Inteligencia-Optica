@@ -120,11 +120,14 @@ class UARTManager:
                 
                 # Llamar al callback del RobotController para tracking de posición
                 if "stepper_complete_callback" in self.message_callbacks:
-                    self.logger.info(f"🔧 Llamando callback stepper_complete_callback...")
+                    if RobotConfig.VERBOSE_LOGGING:
+                        self.logger.info(f"🔧 Llamando callback stepper_complete_callback...")
                     self.message_callbacks["stepper_complete_callback"](message)
-                    self.logger.info(f"🔧 Callback stepper_complete_callback ejecutado")
+                    if RobotConfig.VERBOSE_LOGGING:
+                        self.logger.info(f"🔧 Callback stepper_complete_callback ejecutado")
                 else:
-                    self.logger.warning(f"🔧 NO HAY CALLBACK stepper_complete_callback registrado")
+                    if RobotConfig.VERBOSE_LOGGING:
+                        self.logger.warning(f"🔧 NO HAY CALLBACK stepper_complete_callback registrado")
                 
                 # Al completar el movimiento, permitir que el próximo movimiento imprima encabezado
                 self._snap_header_printed = False
@@ -466,10 +469,12 @@ class UARTManager:
         self.message_callbacks["gripper_complete_callback"] = complete_callback
         
     def set_stepper_callbacks(self, start_callback, complete_callback):
-        self.logger.info(f"🔧 set_stepper_callbacks llamado: start={start_callback}, complete={complete_callback}")
+        if RobotConfig.VERBOSE_LOGGING:
+            self.logger.info(f"🔧 set_stepper_callbacks llamado: start={start_callback}, complete={complete_callback}")
         self.message_callbacks["stepper_start_callback"] = start_callback
         self.message_callbacks["stepper_complete_callback"] = complete_callback
-        self.logger.info(f"🔧 Callbacks registrados. Total callbacks: {list(self.message_callbacks.keys())}")
+        if RobotConfig.VERBOSE_LOGGING:
+            self.logger.info(f"🔧 Callbacks registrados. Total callbacks: {list(self.message_callbacks.keys())}")
     
     def set_limit_callback(self, callback: Callable[[str], None]):
         self.message_callbacks["limit_callback"] = callback
@@ -601,7 +606,8 @@ class UARTManager:
             # Limpiar todos los callbacks y restaurar solo los esenciales
             self.message_callbacks.clear()
             self.message_callbacks.update(essential_callbacks)
-            self.logger.info(f"🔧 Callbacks después del reset: {list(self.message_callbacks.keys())}")
+            if RobotConfig.VERBOSE_LOGGING:
+                self.logger.info(f"🔧 Callbacks después del reset: {list(self.message_callbacks.keys())}")
             
             # Resetear eventos de acción y completado
             self.action_events.clear()

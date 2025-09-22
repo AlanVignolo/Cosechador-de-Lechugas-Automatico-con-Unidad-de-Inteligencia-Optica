@@ -158,6 +158,9 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         MIN_POS_STREAK_FOR_END = 8    # mínimos positivos previos a FIN (más estricto)
         MIN_WIDTH_MM = 60             # ancho mínimo entre INICIO/FIN (mm) para considerar cinta válida
 
+        # Modo silencioso para reducir logs (solo eventos importantes)
+        DEBUG = False
+
         detection_state = {
             'current_state': None,  # 'accepted' | 'rejected' | None
             'position_buffer': [],
@@ -172,6 +175,12 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
             'pending_pre_end_pos_streak': 0,
             'last_transition_ts': 0.0,
         }
+        # Pequeño guard para evitar flags falsos al inicio del movimiento horizontal:
+        # bloquear la primera transición a 'accepted' durante unos ms después de iniciar el movimiento.
+        MIN_TIME_AFTER_MOVE_START_FOR_FIRST_ACCEPT_S = 0.25
+        scan_move_start_ts = 0.0
+        # Bandera para no enviar flags antes de iniciar el movimiento principal
+        movement_started = [False]
         
         def send_flag_for_state_change(state_type):
             """Enviar flag al firmware para marcar cambio de estado"""
@@ -187,18 +196,25 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 # Enviar comando RP (snapshot) al firmware
                 result = robot.cmd.get_movement_progress()
                 if result.get("success"):
-                    print(f"FLAG #{flag_id} enviado - {state_type}")
+                    # Log mínimo del flag
+                    if DEBUG:
+                        print(f"FLAG #{flag_id} enviado - {state_type}")
                     return flag_id
                 else:
-                    print(f"Error enviando flag: {result}")
+                    if DEBUG:
+                        print(f"Error enviando flag: {result}")
                     return None
             except Exception as e:
-                print(f"Error en send_flag: {e}")
+                if DEBUG:
+                    print(f"Error en send_flag: {e}")
                 return None
         
         def process_detection_state(is_accepted):
             """Procesar cambios de estado con debouncing y enviar flags solo en transiciones.
             Además registra cuántos frames negativos/positivos precedieron a cada flag."""
+            # No procesar detecciones hasta que comience el movimiento principal
+            if not movement_started[0]:
+                return
             # Guardar rachas previas antes de actualizar
             prev_detect_streak = detection_state['detect_streak']
             prev_nodetect_streak = detection_state['nodetect_streak']
@@ -224,7 +240,11 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 now_ts = time.time()
                 if now_ts - detection_state.get('last_transition_ts', 0.0) < MIN_TRANSITION_COOLDOWN_S:
                     return
-                print(f"[TRANSICION] INICIO detectado (detect_streak={detection_state['detect_streak']}, prev_neg={prev_nodetect_streak})")
+                # Evitar primera detección demasiado temprano (antes de que avance el carro)
+                if detection_state['flag_count'] == 0 and scan_move_start_ts and (now_ts - scan_move_start_ts) < MIN_TIME_AFTER_MOVE_START_FOR_FIRST_ACCEPT_S:
+                    return
+                if DEBUG:
+                    print(f"[TRANSICION] INICIO detectado (detect_streak={detection_state['detect_streak']}, prev_neg={prev_nodetect_streak})")
                 detection_state['current_state'] = 'accepted'
                 flag_id = send_flag_for_state_change("INICIO_CINTA")
                 if flag_id:
@@ -241,7 +261,8 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 now_ts = time.time()
                 if now_ts - detection_state.get('last_transition_ts', 0.0) < MIN_TRANSITION_COOLDOWN_S:
                     return
-                print(f"[TRANSICION] FIN detectado (nodetect_streak={detection_state['nodetect_streak']}, prev_pos={prev_detect_streak})")
+                if DEBUG:
+                    print(f"[TRANSICION] FIN detectado (nodetect_streak={detection_state['nodetect_streak']}, prev_pos={prev_detect_streak})")
                 detection_state['current_state'] = 'rejected'
                 flag_id = send_flag_for_state_change("FIN_CINTA")
                 if flag_id and detection_state['tape_segments']:
@@ -249,7 +270,8 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                     last_segment['end_flag'] = flag_id
                     # Usar la racha positiva registrada justo cuando se inició la no detección
                     last_segment['pre_end_pos_streak'] = detection_state.get('pending_pre_end_pos_streak', 0)
-                    print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
+                    if DEBUG:
+                        print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
                 detection_state['last_transition_ts'] = now_ts
         
         def video_loop():
@@ -265,21 +287,23 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                     try:
                         frame = camera_mgr.get_latest_video_frame()
                         if frame is None:
-                            if not printed_none_once:
+                            if DEBUG and not printed_none_once:
                                 print(f"[{scan_id}] Aviso: cámara sin frames (esperando)")
                                 printed_none_once = True
                             time.sleep(0.05)
                             # Watchdog: si en los primeros 2s no llegaron frames, reiniciar stream una vez
                             if (time.time() - start_ts) > 2.0 and frame_count == 0:
                                 try:
-                                    print(f"[{scan_id}] Watchdog: reiniciando stream de video por falta de frames")
+                                    if DEBUG:
+                                        print(f"[{scan_id}] Watchdog: reiniciando stream de video por falta de frames")
                                     camera_mgr.stop_stream_ref()
                                     time.sleep(0.2)
-                                    camera_mgr.start_stream_ref(fps=6)
+                                    camera_mgr.start_stream_ref(fps=10)
                                     # reiniciar temporizador de watchdog
                                     start_ts = time.time()
                                 except Exception as wd_err:
-                                    print(f"[{scan_id}] Error reiniciando stream (watchdog): {wd_err}")
+                                    if DEBUG:
+                                        print(f"[{scan_id}] Error reiniciando stream (watchdog): {wd_err}")
                             continue
                         
                         frame_count += 1
@@ -296,7 +320,8 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                         # Sin UI / imshow
 
                     except Exception as e:
-                        print(f"[{scan_id}] Error en video: {e}")
+                        if DEBUG:
+                            print(f"[{scan_id}] Error en video: {e}")
                         time.sleep(0.1)
                         
                     except KeyboardInterrupt:
@@ -335,12 +360,14 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 pass
             time.sleep(0.05)
         if not first_frame_ok:
-            print(f"[{scan_id}] Aviso: Cámara sin frames tras warm-up. Reiniciando stream de video...")
+            if DEBUG:
+                print(f"[{scan_id}] Aviso: Cámara sin frames tras warm-up. Reiniciando stream de video...")
             try:
                 camera_mgr.stop_stream_ref()
                 time.sleep(0.3)
-                if not camera_mgr.start_stream_ref(fps=6):
-                    print(f"[{scan_id}] Error: No se pudo reiniciar stream de video")
+                if not camera_mgr.start_stream_ref(fps=10):
+                    if DEBUG:
+                        print(f"[{scan_id}] Error: No se pudo reiniciar stream de video")
                 else:
                     # Segundo warm-up
                     warmup_start2 = time.time()
@@ -351,9 +378,10 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                             break
                         time.sleep(0.05)
             except Exception as re_err:
-                print(f"[{scan_id}] Error reiniciando stream: {re_err}")
+                if DEBUG:
+                    print(f"[{scan_id}] Error reiniciando stream: {re_err}")
             if not first_frame_ok:
-                print(f"[{scan_id}] Error: Sin frames tras reintento de stream. Abortando escaneo para evitar hilos colgados.")
+                print(f"Error: Sin frames de cámara tras reintento. Abortando escaneo.")
                 # Detener video de forma controlada y liberar
                 is_scanning[0] = False
                 try:
@@ -370,6 +398,9 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 return False
         
         # Movimiento hacia switch izquierdo
+        # Marcar inicio del movimiento para habilitar guard de primeras detecciones
+        scan_move_start_ts = time.time()
+        movement_started[0] = True
         result = robot.cmd.move_xy(2000, 0)
         
         # Esperar límite izquierdo (aceptar evento o estado polleado)
@@ -401,7 +432,16 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
             return False
         
         # Correlacionar flags con snapshots para obtener posiciones reales
-        correlate_flags_with_snapshots(detection_state)
+        snapshot_pairs, snapshot_x_positions = correlate_flags_with_snapshots(detection_state)
+
+        # Resumen de snapshots recibidos del robot (valores X en mm)
+        try:
+            if snapshot_pairs:
+                print("\nRESUMEN DEL ROBOT (snapshots X en mm):")
+                valores = ", ".join(str(int(x)) for x, _ in snapshot_pairs)
+                print(f"[{valores}]")
+        except Exception:
+            pass
         
         # Filtrar segmentos incompletos y de baja calidad
         filtered_segments = []
@@ -607,9 +647,11 @@ def correlate_flags_with_snapshots(detection_state):
                 print(f"   CINTA #{i+1}: Datos incompletos")
 
         print("Correlación flags-snapshots completada")
+        return snapshot_pairs, snapshot_positions
         
     except Exception as e:
         print(f"Error en correlación flags-snapshots: {e}")
+        return [], []
 
 def process_frame_for_detection(frame):
     """Procesar frame igual que el sistema de posicionamiento"""
@@ -647,8 +689,8 @@ def detect_sophisticated_tape(frame):
             frame_center_x = frame.shape[1] // 2
             distance_from_center = abs(tape_center_x - frame_center_x)
             
-            # Tolerancia más permisiva para el escáner (80 píxeles vs 30 para posicionamiento)
-            if distance_from_center <= 80:
+            # Tolerancia más permisiva para el escáner (150 píxeles para no perder detecciones)
+            if distance_from_center <= 150:
                 return True
         else:
             # Intentar con detección básica si no hay candidatos sofisticados
@@ -683,11 +725,11 @@ def detect_basic_fallback(frame):
         
         # Buscar contorno significativo en el centro
         frame_center_x = frame.shape[1] // 2
-        center_tolerance = 60
+        center_tolerance = 120  # más permisivo
         
         for contour in contours:
             area = cv2.contourArea(contour)
-            if area > 200:  # Área mínima
+            if area > 120:  # Área mínima más permisiva
                 x, y, w, h = cv2.boundingRect(contour)
                 center_x = x + w // 2
                 
@@ -748,6 +790,12 @@ def show_results(detections, detection_state, selected_tubo):
             for cinta in cintas_para_matriz:
                 print(f"│   #{cinta['number']:<3}  │  {cinta['position_mm']:>8.1f}  │  {cinta['y_mm']:>8.0f}  │")
             print("└─────────┴─────────────┴─────────────┘")
+            # Resumen compacto de resultados IA
+            try:
+                xs = ", ".join(f"{c['position_mm']:.1f}" for c in cintas_para_matriz)
+                print(f"\nRESUMEN IA (centros X en mm): [{xs}]")
+            except Exception:
+                pass
         
         return cintas_para_matriz
     else:
