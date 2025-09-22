@@ -505,6 +505,7 @@ class RobotStateMachine:
             callbacks_post_homing = list(self.robot.cmd.uart.message_callbacks.keys())
             print(f"🔧 DEBUG: Callbacks después del homing: {callbacks_post_homing}")
             
+            
             if abs(pos_after_homing['x']) > 0.1 or abs(pos_after_homing['y']) > 0.1:
                 print(f"⚠️ ADVERTENCIA: Posición no está exactamente en (0,0) después del homing")
             

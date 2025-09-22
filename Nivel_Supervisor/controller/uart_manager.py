@@ -115,6 +115,14 @@ class UARTManager:
             # Procesar información de posición relativa si está disponible
             if "STEPPER_MOVE_COMPLETED:" in message and "REL:" in message:
                 self._process_movement_completed(message)
+                
+                # CRÍTICO: También llamar al callback del RobotController para tracking de posición
+                if "stepper_complete_callback" in self.message_callbacks:
+                    self.logger.info(f"🔧 Llamando callback stepper_complete_callback...")
+                    self.message_callbacks["stepper_complete_callback"](message)
+                    self.logger.info(f"🔧 Callback stepper_complete_callback ejecutado")
+                else:
+                    self.logger.warning(f"🔧 NO HAY CALLBACK stepper_complete_callback registrado")
             
             # Log de diagnóstico
             try:
