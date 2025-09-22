@@ -25,6 +25,8 @@ class UARTManager:
         self.waiting_for_completion = {}
         # Cache de completados recientes para evitar condiciones de carrera
         self.completed_actions_recent = {}
+        # Timestamp del último START por tipo de acción (para validar completados recientes)
+        self.last_started_ts = {}
         # Buffer de snapshots de último movimiento (lista de tuplas [(x_mm, y_mm), ...])
         self._last_movement_snapshots = []
         self._snap_header_printed = False
@@ -198,6 +200,11 @@ class UARTManager:
                 pass
             if "stepper_start_callback" in self.message_callbacks:
                 self.message_callbacks["stepper_start_callback"](message)
+            # Registrar timestamp de START para validaciones de completado
+            try:
+                self.last_started_ts["STEPPER_MOVE"] = time.time()
+            except Exception:
+                pass
             # Al iniciar un nuevo movimiento, invalidar cualquier marca de completado
             # reciente para evitar falsos positivos en wait_for_action_completion.
             # De lo contrario, si un movimiento anterior terminó hace <5s,
@@ -222,12 +229,36 @@ class UARTManager:
             
     
     def wait_for_action_completion(self, action_type: str, timeout: float = 30.0) -> bool:
-        # Comprobar si ya se completó hace muy poco (evita carrera con comandos rápidos)
+        # Ruta robusta para STEPPER_MOVE: evitar que completados antiguos o
+        # mensajes pendientes disparen el evento por error. Nos basamos en
+        # timestamps de START/COMPLETED para confirmar que el COMPLETED
+        # corresponde al movimiento actual.
+        if action_type == "STEPPER_MOVE":
+            start_wait = time.time()
+            started_ts = self.last_started_ts.get("STEPPER_MOVE")
+            # Bucle de espera activo con sondeo de completado reciente
+            while time.time() - start_wait < timeout:
+                try:
+                    completed_ts = self.completed_actions_recent.get("STEPPER_MOVE")
+                    if started_ts is not None and completed_ts is not None:
+                        if completed_ts >= started_ts:
+                            # Consumir marca y confirmar completado
+                            self.completed_actions_recent.pop("STEPPER_MOVE", None)
+                            return True
+                except Exception:
+                    pass
+                time.sleep(0.01)
+            return False
+
+        # Para otras acciones, mantener la lógica basada en eventos con una
+        # pequeña optimización si el completado fue muy reciente y posterior al START.
         try:
-            ts = self.completed_actions_recent.get(action_type)
-            if ts is not None and (time.time() - ts) < 5.0:
-                del self.completed_actions_recent[action_type]
-                return True
+            completed_ts = self.completed_actions_recent.get(action_type)
+            started_ts = self.last_started_ts.get(action_type)
+            if started_ts is not None and completed_ts is not None:
+                if completed_ts >= started_ts and (time.time() - completed_ts) < 5.0:
+                    del self.completed_actions_recent[action_type]
+                    return True
         except Exception:
             pass
 

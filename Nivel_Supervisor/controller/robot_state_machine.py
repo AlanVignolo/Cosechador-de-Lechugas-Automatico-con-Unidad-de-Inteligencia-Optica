@@ -577,6 +577,19 @@ class RobotStateMachine:
                         print(f"❌ Timeout moviendo a {config['nombre']}")
                         continue
                     
+                    # Verificación adicional: si la posición reportada aún está lejos del objetivo,
+                    # hacer una segunda espera más larga por si el evento llegó con retraso.
+                    pos_check = self.robot.get_status()['position']
+                    err_x_chk = abs(pos_check['x'] - target_x)
+                    err_y_chk = abs(pos_check['y'] - target_y)
+                    if err_x_chk > 5.0 or err_y_chk > 5.0:
+                        print(f"   ⚠️ Posición aún lejos del objetivo tras primer wait (err X=±{err_x_chk:.1f}mm, Y=±{err_y_chk:.1f}mm). Esperando confirmación adicional...")
+                        completed2 = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=60.0)
+                        print(f"   🔍 DEBUG: Completado adicional del movimiento: {completed2}")
+                        # Pequeña pausa para permitir el callback de posición
+                        import time as _t
+                        _t.sleep(0.3)
+                    
                     # Pausa para que se procese el callback de posición
                     import time
                     time.sleep(0.3)
