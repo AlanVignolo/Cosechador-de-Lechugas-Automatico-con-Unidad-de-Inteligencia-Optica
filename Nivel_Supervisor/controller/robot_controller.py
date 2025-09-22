@@ -63,18 +63,31 @@ class RobotController:
     def _on_movement_completed(self, message: str):
         """Callback para actualizar posición global cuando se completa un movimiento"""
         try:
+            # DEBUG: Imprimir mensaje recibido
+            self.logger.info(f"🔍 CALLBACK RECIBIDO: {message}")
+            
             # Limpiar mensaje de posibles mezclas
             clean_message = message.split('\n')[0]
+            self.logger.info(f"🔍 MENSAJE LIMPIO: {clean_message}")
             
             # Formato: STEPPER_MOVE_COMPLETED:pos_h,pos_v,REL:rel_h,rel_v,MM:mm_h,mm_v
             parts = clean_message.split(',')
+            self.logger.info(f"🔍 PARTES DEL MENSAJE: {parts} (total: {len(parts)})")
+            
             if len(parts) >= 6:
                 rel_h_mm = float(parts[4].split(':')[1])
                 rel_v_mm = float(parts[5])
                 
+                self.logger.info(f"🔍 MOVIMIENTO PARSEADO: X={rel_h_mm}mm, Y={rel_v_mm}mm")
+                
                 # Actualizar posición global acumulada
+                old_x = self.global_position["x"]
+                old_y = self.global_position["y"]
+                
                 self.global_position["x"] += rel_h_mm
                 self.global_position["y"] += rel_v_mm
+                
+                self.logger.info(f"🔍 POSICIÓN ACTUALIZADA: ({old_x:.1f},{old_y:.1f}) → ({self.global_position['x']:.1f},{self.global_position['y']:.1f})")
                 
                 # Guardar posición actualizada
                 self._save_current_position()
@@ -82,9 +95,13 @@ class RobotController:
                 display_x = RobotConfig.display_x_position(self.global_position['x'])
                 display_y = RobotConfig.display_y_position(self.global_position['y'])
                 self.logger.info(f"Posición global actualizada: X={display_x}mm, Y={display_y}mm")
+            else:
+                self.logger.warning(f"🔍 MENSAJE CON FORMATO INCORRECTO: {len(parts)} partes, esperaba >= 6")
                 
         except Exception as e:
             self.logger.warning(f"Error actualizando posición global: {e}")
+            import traceback
+            self.logger.warning(f"Traceback: {traceback.format_exc()}")
     
     def reset_global_position(self, x: float = 0.0, y: float = 0.0):
         """Resetear posición global (usado en homing)"""
