@@ -116,13 +116,16 @@ class UARTManager:
             if "STEPPER_MOVE_COMPLETED:" in message and "REL:" in message:
                 self._process_movement_completed(message)
                 
-                # CRÍTICO: También llamar al callback del RobotController para tracking de posición
+                # Llamar al callback del RobotController para tracking de posición
                 if "stepper_complete_callback" in self.message_callbacks:
                     self.logger.info(f"🔧 Llamando callback stepper_complete_callback...")
                     self.message_callbacks["stepper_complete_callback"](message)
                     self.logger.info(f"🔧 Callback stepper_complete_callback ejecutado")
                 else:
                     self.logger.warning(f"🔧 NO HAY CALLBACK stepper_complete_callback registrado")
+                
+                # Al completar el movimiento, permitir que el próximo movimiento imprima encabezado
+                self._snap_header_printed = False
             
             # Log de diagnóstico
             try:
@@ -203,20 +206,7 @@ class UARTManager:
             except Exception:
                 pass
                 
-        elif "STEPPER_MOVE_COMPLETED:" in message:
-            # Evitar procesamiento duplicado
-            if hasattr(self, '_last_completed_message') and self._last_completed_message == message:
-                return
-            self._last_completed_message = message
-            
-            if "stepper_complete_callback" in self.message_callbacks:
-                self.logger.info(f"🔧 Llamando callback stepper_complete_callback...")
-                self.message_callbacks["stepper_complete_callback"](message)
-                self.logger.info(f"🔧 Callback stepper_complete_callback ejecutado")
-            else:
-                self.logger.warning(f"🔧 NO HAY CALLBACK stepper_complete_callback registrado")
-            # Al completar el movimiento, permitir que el próximo movimiento imprima encabezado
-            self._snap_header_printed = False
+        # STEPPER_MOVE_COMPLETED ya se procesa arriba en "_COMPLETED:" - evitar duplicación
                 
         elif "MOVEMENT_SNAPSHOTS:" in message:
             self._process_movement_snapshots(message)
