@@ -669,6 +669,11 @@ class RobotStateMachine:
     def _scan_horizontal_with_workspace(self, tubo_id: int) -> bool:
         """Escáner horizontal usando distancia completa del workspace"""
         try:
+            # Si tenemos el módulo de escáner con IA, delegar a él (preferido)
+            if 'scan_horizontal_with_live_camera' in globals() and SCANNER_MODULES_AVAILABLE:
+                print(f"   🤖 Ejecutando escáner IA horizontal (scan_horizontal_with_live_camera) para tubo {tubo_id}...")
+                return scan_horizontal_with_live_camera(self.robot, tubo_id=tubo_id)
+            
             # Obtener dimensiones reales del workspace
             workspace_dims = self.robot.get_workspace_dimensions()
             horizontal_mm = workspace_dims.get('width_mm', 0)

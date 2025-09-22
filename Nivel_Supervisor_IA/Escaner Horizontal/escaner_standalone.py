@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Super
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'config'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Correccion Posicion Horizontal'))
 
-def scan_horizontal_with_live_camera(robot):
+def scan_horizontal_with_live_camera(robot, tubo_id=None):
     """
     Función principal de escaneo horizontal autónoma con matriz de cintas
     """
@@ -38,25 +38,34 @@ def scan_horizontal_with_live_camera(robot):
     
     config_tubos.mostrar_configuracion_actual()
     
-    # Selección de tubo dinámica
+    # Selección de tubo dinámica (interactiva o programática)
     print(f"\nSelección de tubo:")
-    for tubo_id, config in tubo_config.items():
-        print(f"{tubo_id}. {config['nombre']} (Y={config['y_mm']}mm)")
+    for _tid, config in tubo_config.items():
+        print(f"{_tid}. {config['nombre']} (Y={config['y_mm']}mm)")
     
     # Definir un ID de escaneo por defecto y estado de escaneo por si hay errores tempranos
     import uuid
     scan_id = str(uuid.uuid4())[:8]
     is_scanning = [False]
 
-    while True:
-        try:
-            tubo_seleccionado = int(input(f"Seleccione tubo (1-{num_tubos}): "))
-            if tubo_seleccionado in tubo_config.keys():
-                break
-            else:
-                print(f"Opción inválida. Seleccione entre 1 y {num_tubos}.")
-        except ValueError:
-            print("Por favor ingrese un número válido.")
+    if tubo_id is None:
+        # Modo interactivo
+        while True:
+            try:
+                tubo_seleccionado = int(input(f"Seleccione tubo (1-{num_tubos}): "))
+                if tubo_seleccionado in tubo_config.keys():
+                    break
+                else:
+                    print(f"Opción inválida. Seleccione entre 1 y {num_tubos}.")
+            except ValueError:
+                print("Por favor ingrese un número válido.")
+    else:
+        # Modo programático desde la máquina de estados
+        tubo_seleccionado = int(tubo_id)
+        if tubo_seleccionado not in tubo_config.keys():
+            print(f"Error: tubo_id inválido ({tubo_seleccionado}). Disponible: {list(tubo_config.keys())}")
+            return False
+        print(f"(Automático) Tubo seleccionado: {tubo_seleccionado}")
     
     selected_tubo = tubo_config[tubo_seleccionado]
     print(f"Tubo seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
