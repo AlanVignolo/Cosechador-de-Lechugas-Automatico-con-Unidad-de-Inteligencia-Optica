@@ -22,6 +22,9 @@ class RobotController:
         self.is_homed = False
         self.arm = ArmController(command_manager)
         
+        # Pasarle referencia de este RobotController al ArmController para callbacks
+        self.arm.robot_controller = self
+        
         # Configurar callback para tracking de posición
         self._setup_position_tracking()
         

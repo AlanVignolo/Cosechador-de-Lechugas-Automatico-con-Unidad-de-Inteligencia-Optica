@@ -83,6 +83,13 @@ def setup_robot_callbacks():
     def on_stepper_completed(message: str):
         logger.info(f"Stepper completado: {message}")
         update_queue.put("stepper_update")
+        
+        # IMPORTANTE: También llamar al callback del RobotController para tracking de posición
+        try:
+            if hasattr(robot_controller, '_on_movement_completed'):
+                robot_controller._on_movement_completed(message)
+        except Exception as e:
+            logger.warning(f"Error llamando callback de posición del RobotController: {e}")
     
     # Configurar callbacks
     robot_controller.cmd.uart.set_servo_callbacks(None, on_servo_completed)

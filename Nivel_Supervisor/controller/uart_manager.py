@@ -409,8 +409,10 @@ class UARTManager:
         self.message_callbacks["gripper_complete_callback"] = complete_callback
         
     def set_stepper_callbacks(self, start_callback, complete_callback):
+        self.logger.info(f"🔧 set_stepper_callbacks llamado: start={start_callback}, complete={complete_callback}")
         self.message_callbacks["stepper_start_callback"] = start_callback
         self.message_callbacks["stepper_complete_callback"] = complete_callback
+        self.logger.info(f"🔧 Callbacks registrados. Total callbacks: {list(self.message_callbacks.keys())}")
     
     def set_limit_callback(self, callback: Callable[[str], None]):
         self.message_callbacks["limit_callback"] = callback

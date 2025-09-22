@@ -122,6 +122,13 @@ class ArmController:
     
     def _on_stepper_completed(self, message: str):
         self.logger.debug(f"Stepper completado: {message}")
+        
+        # IMPORTANTE: También llamar al callback del RobotController para tracking de posición
+        try:
+            if hasattr(self, 'robot_controller') and self.robot_controller:
+                self.robot_controller._on_movement_completed(message)
+        except Exception as e:
+            self.logger.warning(f"Error llamando callback de posición del RobotController: {e}")
     
     def get_current_state(self) -> Dict:
         return {
