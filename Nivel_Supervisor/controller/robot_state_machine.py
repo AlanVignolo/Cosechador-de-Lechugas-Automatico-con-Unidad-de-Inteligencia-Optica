@@ -501,6 +501,10 @@ class RobotStateMachine:
             pos_after_homing = self.robot.get_status()['position']
             print(f"✅ Robot en origen - Posición reportada: X={pos_after_homing['x']:.1f}mm, Y={pos_after_homing['y']:.1f}mm")
             
+            # DEBUG: Verificar estado de callbacks después del homing
+            callbacks_post_homing = list(self.robot.cmd.uart.message_callbacks.keys())
+            print(f"🔧 DEBUG: Callbacks después del homing: {callbacks_post_homing}")
+            
             if abs(pos_after_homing['x']) > 0.1 or abs(pos_after_homing['y']) > 0.1:
                 print(f"⚠️ ADVERTENCIA: Posición no está exactamente en (0,0) después del homing")
             
@@ -556,15 +560,19 @@ class RobotStateMachine:
                     print(f"   🔍 DEBUG: Resultado del comando move_xy: {result}")
                     
                     if not result["success"]:
-                        print(f"❌ Error moviendo a {config['nombre']}: {result}")
-                        continue
+                        print(f"   ➡️ Moviendo a Tubo {tubo_id}: X={move_x:.1f}mm, Y={move_y:.1f}mm")
+                    print(f"   🔍 DEBUG: Resultado del comando move_xy: {result}")
                     
-                    # CRÍTICO: Esperar que termine completamente el movimiento
-                    print(f"   ⏳ Esperando completar movimiento a {config['nombre']}...")
-                    completion = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
-                    print(f"   🔍 DEBUG: Completado del movimiento: {completion}")
+                    # DEBUG: Verificar estado de callbacks antes del movimiento
+                    callbacks_activos = list(self.robot.cmd.uart.message_callbacks.keys())
+                    print(f"   🔧 DEBUG: Callbacks activos antes del movimiento: {callbacks_activos}")
                     
-                    if not completion:
+                    # Esperar a que complete el movimiento
+                    print(f"   ⏳ Esperando completar movimiento a Tubo {tubo_id}...")
+                    completed = self.robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=30.0)
+                    print(f"   🔍 DEBUG: Completado del movimiento: {completed}")
+                    
+                    if not completed:
                         print(f"❌ Timeout moviendo a {config['nombre']}")
                         continue
                     
