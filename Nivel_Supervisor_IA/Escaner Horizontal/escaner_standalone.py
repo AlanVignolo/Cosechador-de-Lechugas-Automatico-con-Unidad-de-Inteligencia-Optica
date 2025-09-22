@@ -151,12 +151,12 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None, prepared_at_right: boo
         # Parámetros de debouncing y límites
         from config.robot_config import RobotConfig
         MAX_FLAGS = RobotConfig.MAX_SNAPSHOTS * 2
-        DETECT_ON_FRAMES = 5    # Debounce más robusto para INICIO
-        DETECT_OFF_FRAMES = 5   # Debounce más robusto para FIN
-        MIN_TRANSITION_COOLDOWN_S = 0.25  # Evita chatter rápido entre transiciones
+        DETECT_ON_FRAMES = 3    # Debounce más permisivo para INICIO
+        DETECT_OFF_FRAMES = 3   # Debounce más permisivo para FIN
+        MIN_TRANSITION_COOLDOWN_S = 0.15  # Evita chatter rápido entre transiciones
         # Umbrales de calidad para filtrar falsos positivos/negativos
-        MIN_NEG_STREAK_FOR_START = 8  # mínimos negativos previos a INICIO (más estricto)
-        MIN_POS_STREAK_FOR_END = 8    # mínimos positivos previos a FIN (más estricto)
+        MIN_NEG_STREAK_FOR_START = 2  # mínimos negativos previos a INICIO (más permisivo)
+        MIN_POS_STREAK_FOR_END = 2    # mínimos positivos previos a FIN (más permisivo)
         MIN_WIDTH_MM = 60             # ancho mínimo entre INICIO/FIN (mm) para considerar cinta válida
 
         # Modo silencioso para reducir logs (solo eventos importantes)
@@ -178,7 +178,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None, prepared_at_right: boo
         }
         # Pequeño guard para evitar flags falsos al inicio del movimiento horizontal:
         # bloquear la primera transición a 'accepted' durante unos ms después de iniciar el movimiento.
-        MIN_TIME_AFTER_MOVE_START_FOR_FIRST_ACCEPT_S = 0.25
+        MIN_TIME_AFTER_MOVE_START_FOR_FIRST_ACCEPT_S = 0.18
         scan_move_start_ts = 0.0
         # Bandera para no enviar flags antes de iniciar el movimiento principal
         movement_started = [False]
@@ -398,6 +398,34 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None, prepared_at_right: boo
                     pass
                 return False
         
+        # Registrar callback temporal para cerrar cinta al tocar límite izquierdo
+        prev_limit_cb = None
+        try:
+            if hasattr(robot.cmd.uart, 'message_callbacks'):
+                prev_limit_cb = robot.cmd.uart.message_callbacks.get('limit_callback')
+
+            def _limit_close_segment_cb(msg: str):
+                try:
+                    # Disparar cierre si llega el límite izquierdo y seguimos en 'accepted'
+                    if 'LIMIT_H_LEFT_TRIGGERED' in msg:
+                        if detection_state.get('current_state') == 'accepted' and detection_state['flag_count'] < detection_state['max_flags']:
+                            detection_state['pending_pre_end_pos_streak'] = detection_state.get('detect_streak', 0)
+                            send_flag_for_state_change("FIN_CINTA")
+                            detection_state['current_state'] = 'rejected'
+                finally:
+                    # Encadenar callback previo si existía
+                    if prev_limit_cb:
+                        try:
+                            prev_limit_cb(msg)
+                        except Exception:
+                            pass
+
+            # Instalar callback temporal
+            if hasattr(robot.cmd.uart, 'set_limit_callback'):
+                robot.cmd.uart.set_limit_callback(_limit_close_segment_cb)
+        except Exception:
+            pass
+
         # Movimiento hacia switch izquierdo
         # Marcar inicio del movimiento para habilitar guard de primeras detecciones
         scan_move_start_ts = time.time()
@@ -431,7 +459,29 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None, prepared_at_right: boo
         if not (limit_message and ("LIMIT_H_LEFT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_LEFT" in limit_message))):
             print("Error: No se alcanzó el límite izquierdo")
             return False
+
+        # Fallback: si el recorrido terminó y seguimos en estado 'accepted', forzar FIN para cerrar la cinta
+        try:
+            if detection_state.get('current_state') == 'accepted' and detection_state['flag_count'] < detection_state['max_flags']:
+                # Registrar la racha positiva previa como la última conocida
+                detection_state['pending_pre_end_pos_streak'] = detection_state.get('detect_streak', 0)
+                flag_id = send_flag_for_state_change("FIN_CINTA")
+                if flag_id and detection_state['tape_segments']:
+                    last_segment = detection_state['tape_segments'][-1]
+                    last_segment['end_flag'] = flag_id
+                    last_segment['pre_end_pos_streak'] = detection_state.get('pending_pre_end_pos_streak', 0)
+                detection_state['current_state'] = 'rejected'
+        except Exception:
+            pass
         
+        # Restaurar callback de límite previo (si no fue reseteado en finally)
+        try:
+            if hasattr(robot.cmd.uart, 'set_limit_callback'):
+                if prev_limit_cb:
+                    robot.cmd.uart.set_limit_callback(prev_limit_cb)
+        except Exception:
+            pass
+
         # Correlacionar flags con snapshots para obtener posiciones reales
         snapshot_pairs, snapshot_x_positions = correlate_flags_with_snapshots(detection_state)
 
