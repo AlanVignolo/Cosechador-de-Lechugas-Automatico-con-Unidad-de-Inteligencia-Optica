@@ -108,21 +108,41 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             return False
 
         print("[inicio_completo] Paso 3/4: Escaneo horizontal por tubo...")
+        # Calcular ancho/alto del workspace y semilla Y actual (después de escaneo vertical estamos en límite inferior)
+        dims = robot.get_workspace_dimensions()
+        if dims.get('calibrated'):
+            width_mm = float(dims.get('width_mm', 0.0))
+            height_mm = float(dims.get('height_mm', 0.0))
+        else:
+            width_mm = float(RobotConfig.MAX_X)
+            height_mm = float(RobotConfig.MAX_Y)
+        safety = 10.0
+        y_curr = height_mm
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
-            status = robot.get_status()
-            curr_x = float(status['position']['x'])
-            curr_y = float(status['position']['y'])
-
-            # Posicionamiento absoluto requerido: X=0, Y=Y_tubo
-            dx = -curr_x
-            dy = y_target - curr_y
+            # Posicionamiento: asumir X≈0 (no dependemos de tracking) y calcular Y relativo desde y_curr
+            dx = 0.0
+            dy = y_target - y_curr
 
             print(f"  -> Tubo {tubo_id}: mover a (X=0.0, Y={y_target:.1f}) con ΔX={dx:.1f}mm, ΔY={dy:.1f}mm")
             move_res = robot.cmd.move_xy(dx, dy)
             if not move_res.get('success'):
                 print(f"Error moviendo a tubo {tubo_id}: {move_res}")
                 return False
+            # Esperar a que finalice el movimiento antes de iniciar el escaneo horizontal
+            try:
+                robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
+            except Exception:
+                pass
+            # Fallback: esperar según distancia/velocidad (por si no llegó COMPLETED)
+            try:
+                v_mm_s = max(1.0, float(RobotConfig.NORMAL_SPEED_V) / float(RobotConfig.STEPS_PER_MM_V))
+                est_t = abs(dy) / v_mm_s + 0.5
+                time.sleep(min(est_t, 10.0))
+            except Exception:
+                time.sleep(1.0)
+            # Actualizar Y actual asumido
+            y_curr = y_target
 
             # Ejecutar escaneo horizontal en el tubo actual
             try:
@@ -134,6 +154,29 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             if not h_ok:
                 print(f"Escaneo horizontal con errores en tubo {tubo_id}")
                 # Continuar con el siguiente tubo a pesar del error
+
+            # Si quedó en límite izquierdo, retroceder hacia el origen X≈0 para el próximo tubo
+            try:
+                lim = robot.cmd.uart.get_limit_status()
+                if lim and lim.get('status', {}).get('H_LEFT', False):
+                    # Retroceder a la derecha sin tocar límite derecho (aprox hasta X=0)
+                    back_dx = -(max(0.0, width_mm - safety))
+                    robot.cmd.move_xy(back_dx, 0.0)
+                    # Esperar a que termine el retroceso
+                    try:
+                        robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=60.0)
+                    except Exception:
+                        pass
+                    # Fallback por tiempo
+                    try:
+                        h_mm_s = max(1.0, float(RobotConfig.NORMAL_SPEED_H) / float(RobotConfig.STEPS_PER_MM_H))
+                        est_t = abs(back_dx) / h_mm_s + 0.5
+                        time.sleep(min(est_t, 8.0))
+                    except Exception:
+                        time.sleep(1.0)
+                    time.sleep(0.2)
+            except Exception:
+                pass
 
             # Optional: pequeña pausa para estabilización
             time.sleep(0.2)
@@ -215,6 +258,13 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             return False
 
         print("[inicio_simple] Paso 3/4: Escaneo horizontal por tubo...")
+        # Calcular ancho util del workspace para retroceso controlado entre tubos
+        dims = robot.get_workspace_dimensions()
+        if dims.get('calibrated'):
+            width_mm = float(dims.get('width_mm', 0.0))
+        else:
+            width_mm = float(RobotConfig.MAX_X)
+        safety = 10.0
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
             status = robot.get_status()
@@ -240,7 +290,23 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             if not h_ok:
                 print(f"Escaneo horizontal con errores en tubo {tubo_id}")
 
-            first = False
+            # Si quedó en límite izquierdo, retroceder hacia el origen X≈0 para el próximo tubo
+            try:
+                lim = robot.cmd.uart.get_limit_status()
+                if lim and lim.get('status', {}).get('H_LEFT', False):
+                    back_dx = -(max(0.0, width_mm - safety))
+                    robot.cmd.move_xy(back_dx, 0.0)
+                    # Esperar a que termine el retroceso
+                    try:
+                        robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=60.0)
+                    except Exception:
+                        pass
+                    time.sleep(0.2)
+            except Exception:
+                pass
+
+            # Optional: pequeña pausa para estabilización
+            time.sleep(0.2)
 
         # Paso 4: Volver a (0,0)
         if return_home:

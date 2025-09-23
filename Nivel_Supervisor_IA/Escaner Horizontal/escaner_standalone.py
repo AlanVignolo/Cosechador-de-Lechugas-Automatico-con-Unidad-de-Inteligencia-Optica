@@ -346,11 +346,28 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                     pass
                 return False
         
+        # Comprobación previa: si estamos en límite izquierdo, retroceder un poco a la derecha
+        try:
+            lim = robot.cmd.uart.get_limit_status()
+            if lim and lim.get('status', {}).get('H_LEFT', False):
+                print("Aviso: límite izquierdo activo al iniciar; retrocediendo 20mm a la derecha")
+                robot.cmd.move_xy(-20.0, 0.0)
+                time.sleep(0.5)
+                robot.cmd.uart.check_limits()
+        except Exception:
+            pass
+
+        # Limpiar snapshots previos antes de iniciar el movimiento principal
+        try:
+            robot.cmd.uart.clear_last_snapshots()
+        except Exception:
+            pass
+
         # Movimiento hacia switch izquierdo
         result = robot.cmd.move_xy(2000, 0)
-        
-        # Esperar límite izquierdo (aceptar evento o estado polleado)
-        limit_message = robot.cmd.uart.wait_for_limit_specific('H_LEFT', timeout=120.0)
+
+        # Esperar límite izquierdo - solo aceptar TRIGGER explícito
+        limit_triggered = robot.cmd.uart.wait_for_message("LIMIT_H_LEFT_TRIGGERED", timeout=120.0)
         
         # Detener video de forma controlada
         is_scanning[0] = False
@@ -373,8 +390,8 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception:
             pass
         
-        if not (limit_message and ("LIMIT_H_LEFT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_LEFT" in limit_message))):
-            print("Error: No se alcanzó el límite izquierdo")
+        if not limit_triggered:
+            print("Error: No se alcanzó el límite izquierdo (timeout esperando trigger)")
             return False
         
         # Correlacionar flags con snapshots para obtener posiciones reales
