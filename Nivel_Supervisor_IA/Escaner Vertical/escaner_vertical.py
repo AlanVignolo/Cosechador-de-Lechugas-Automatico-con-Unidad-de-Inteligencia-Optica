@@ -79,29 +79,8 @@ def scan_vertical_manual(robot):
         print("Configurando velocidades de escaneo...")
         robot.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)  # 3000, 8000
         
-        # PASO 1: Ir al límite superior (V_UP)
-        print("\nPASO 1: Moviendo hacia límite superior...")
-        result = robot.cmd.move_xy(0, -2000)  # Movimiento hacia arriba (valores negativos)
-        
-        # Esperar límite superior
-        limit_message = robot.cmd.uart.wait_for_limit_specific('V_UP', timeout=30.0)
-        if not (limit_message and ("LIMIT_V_UP_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "V_UP" in limit_message))):
-            print("Error: No se alcanzó el límite superior")
-            return False
-        
-        # Retroceder 1cm del límite superior
-        print("Retrocediendo 1cm del límite superior...")
-        result = robot.cmd.move_xy(0, 10)  # 10mm hacia abajo
-        if not result["success"]:
-            print(f"Error en retroceso: {result}")
-            return False
-        
-        time.sleep(2)
-        
-        # Resetear posición global para que coincida con y=0 del escáner
-        robot.reset_global_position(robot.global_position['x'], 0.0)
-        
-        print("\nPASO 2: Iniciando movimiento descendente...")
+        # Iniciar escaneo vertical sin tocar el límite superior
+        print("\nINICIANDO MOVIMIENTO DESCENDENTE (sin tocar límite superior)...")
         print("Durante el movimiento, presiona ENTER para enviar flags")
         print("Los flags marcarán posiciones de interés durante el escaneo")
         print("Presiona 'q' + ENTER para terminar el escaneo antes del límite\n")
@@ -134,7 +113,7 @@ def scan_vertical_manual(robot):
         input_thread = threading.Thread(target=input_loop, daemon=True)
         input_thread.start()
         
-        # PASO 3: Movimiento descendente largo hacia límite inferior
+        # Movimiento descendente largo hacia límite inferior
         result = robot.cmd.move_xy(0, 2000)  # Movimiento hacia abajo (valores positivos)
         
         # Esperar límite inferior o terminación manual

@@ -728,7 +728,6 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     
     return {'success': True, 'message': "Corrección completa (horizontal + vertical) exitosa"}
 
-
 def menu_interactivo(uart_manager, robot):
     global lettuce_on
     cmd_manager = robot.cmd
