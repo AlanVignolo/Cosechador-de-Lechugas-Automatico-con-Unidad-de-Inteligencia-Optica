@@ -107,31 +107,18 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             print("No hay tubos configurados tras el escaneo vertical")
             return False
 
-        # Determinar ancho util del workspace
-        dims = robot.get_workspace_dimensions()
-        if dims.get('calibrated'):
-            width_mm = float(dims.get('width_mm', 0.0))
-        else:
-            width_mm = float(RobotConfig.MAX_X)
-        safety = 10.0
-        # Movimiento hacia la derecha sin tocar switch: X- (negativo) de casi todo el ancho
-        back_to_right_mm = -(max(0.0, width_mm - safety))
-
         print("[inicio_completo] Paso 3/4: Escaneo horizontal por tubo...")
-        first = True
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
             status = robot.get_status()
             curr_x = float(status['position']['x'])
             curr_y = float(status['position']['y'])
 
-            dx = 0.0
+            # Posicionamiento absoluto requerido: X=0, Y=Y_tubo
+            dx = -curr_x
             dy = y_target - curr_y
-            if not first:
-                # Volver hacia la derecha antes de bajar/subir al próximo Y, evitando switch derecho
-                dx = back_to_right_mm
 
-            print(f"  -> Tubo {tubo_id}: mover ΔX={dx:.1f}mm, ΔY={dy:.1f}mm (Y={y_target:.1f}mm)")
+            print(f"  -> Tubo {tubo_id}: mover a (X=0.0, Y={y_target:.1f}) con ΔX={dx:.1f}mm, ΔY={dy:.1f}mm")
             move_res = robot.cmd.move_xy(dx, dy)
             if not move_res.get('success'):
                 print(f"Error moviendo a tubo {tubo_id}: {move_res}")
@@ -148,7 +135,8 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
                 print(f"Escaneo horizontal con errores en tubo {tubo_id}")
                 # Continuar con el siguiente tubo a pesar del error
 
-            first = False
+            # Optional: pequeña pausa para estabilización
+            time.sleep(0.2)
 
         # Paso 4: Volver a (0,0)
         if return_home:
@@ -226,29 +214,18 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             print("No hay tubos configurados tras el escaneo vertical")
             return False
 
-        # Determinar ancho util del workspace
-        dims = robot.get_workspace_dimensions()
-        if dims.get('calibrated'):
-            width_mm = float(dims.get('width_mm', 0.0))
-        else:
-            width_mm = float(RobotConfig.MAX_X)
-        safety = 10.0
-        back_to_right_mm = -(max(0.0, width_mm - safety))
-
         print("[inicio_simple] Paso 3/4: Escaneo horizontal por tubo...")
-        first = True
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
             status = robot.get_status()
             curr_x = float(status['position']['x'])
             curr_y = float(status['position']['y'])
 
-            dx = 0.0
+            # Posicionamiento absoluto requerido: X=0, Y=Y_tubo
+            dx = -curr_x
             dy = y_target - curr_y
-            if not first:
-                dx = back_to_right_mm
 
-            print(f"  -> Tubo {tubo_id}: mover ΔX={dx:.1f}mm, ΔY={dy:.1f}mm (Y={y_target:.1f}mm)")
+            print(f"  -> Tubo {tubo_id}: mover a (X=0.0, Y={y_target:.1f}) con ΔX={dx:.1f}mm, ΔY={dy:.1f}mm")
             move_res = robot.cmd.move_xy(dx, dy)
             if not move_res.get('success'):
                 print(f"Error moviendo a tubo {tubo_id}: {move_res}")
