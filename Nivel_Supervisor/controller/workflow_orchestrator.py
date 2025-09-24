@@ -245,6 +245,11 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             width_mm = float(RobotConfig.MAX_X)
             height_mm = float(RobotConfig.MAX_Y)
 
+        # Evitar acercarse al límite por seguridad al inicio y al depositar
+        edge_backoff_mm = 20.0
+        x_edge = max(0.0, width_mm - edge_backoff_mm)
+        y_edge = max(0.0, height_mm - edge_backoff_mm)
+
         # Helper: mover a posición absoluta
         def move_abs(x_target: float, y_target: float, timeout_s: float = 180.0):
             status = robot.get_status()
@@ -295,8 +300,8 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         if robot.arm.current_state != 'mover_lechuga':
             first_tube_id = sorted(tubos_cfg.keys())[0]
             y_tubo1 = float(tubos_cfg[first_tube_id]['y_mm'])
-            print(f"[cosecha] Moviendo a inicio: X={width_mm:.1f}, Y={y_tubo1:.1f}")
-            if not move_abs(width_mm, y_tubo1):
+            print(f"[cosecha] Moviendo a inicio: X={x_edge:.1f}, Y={y_tubo1:.1f}")
+            if not move_abs(x_edge, y_tubo1):
                 return False
             print("[cosecha] Cambiando brazo a 'mover_lechuga'")
             res_arm = robot.arm.change_state('mover_lechuga')
@@ -367,8 +372,8 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                     return False
 
                 # Ir a esquina para soltar: (fin_workspace, fin_workspace)
-                print(f"     → Llevando a esquina para depositar: ({width_mm:.1f},{height_mm:.1f})")
-                if not move_abs(width_mm, height_mm):
+                print(f"     → Llevando a esquina para depositar: ({x_edge:.1f},{y_edge:.1f})")
+                if not move_abs(x_edge, y_edge):
                     return False
                 # Depositar
                 res_dep = robot.arm.change_state('depositar_lechuga')
