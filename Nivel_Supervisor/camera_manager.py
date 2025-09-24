@@ -32,6 +32,9 @@ class CameraManager:
             self.last_frame = None
             self.initialized = True
             self._working_camera_cache = None
+            # Reference counters
+            self._use_count = 0          # How many components are using the camera
+            self._stream_users = 0       # How many components requested video stream
             
             # Video streaming functionality
             self.video_mode = False
@@ -41,14 +44,22 @@ class CameraManager:
             self.video_fps = 30
             self.video_stop_event = threading.Event()
     
-    def find_working_camera(self) -> Optional[int]:
-        """Encuentra una cámara que funcione, probando índices de 0 a 9"""
+    def find_working_camera(self, timeout_per_camera: float = 3.0) -> Optional[int]:
+        """Encuentra una cámara que funcione, probando índices de 0 a 9 con timeout"""
         if self._working_camera_cache is not None:
             # Verificar si la cámara cached sigue funcionando
             try:
                 test_cap = cv2.VideoCapture(self._working_camera_cache)
                 if test_cap.isOpened():
-                    ret, frame = test_cap.read()
+                    # Timeout para lectura
+                    start_time = time.time()
+                    ret, frame = None, None
+                    while time.time() - start_time < 2.0:
+                        ret, frame = test_cap.read()
+                        if ret and frame is not None:
+                            break
+                        time.sleep(0.1)
+                    
                     test_cap.release()
                     if ret and frame is not None:
                         return self._working_camera_cache
@@ -63,23 +74,43 @@ class CameraManager:
         # Buscar una cámara que funcione
         print("Buscando cámara disponible...")
         for i in range(10):
+            print(f"Probando cámara índice {i}...")
             try:
+                start_time = time.time()
                 cap = cv2.VideoCapture(i)
+                
+                # Timeout para apertura
+                if time.time() - start_time > timeout_per_camera:
+                    print(f"Timeout abriendo cámara {i}")
+                    cap.release()
+                    continue
+                    
                 if cap.isOpened():
-                    ret, frame = cap.read()
+                    # Timeout para lectura de frame
+                    frame_start = time.time()
+                    ret, frame = None, None
+                    while time.time() - frame_start < timeout_per_camera:
+                        ret, frame = cap.read()
+                        if ret and frame is not None:
+                            break
+                        time.sleep(0.1)
+                        
                     if ret and frame is not None:
-                        print(f"Cámara encontrada en índice {i}")
+                        print(f"✅ Cámara encontrada en índice {i}")
                         cap.release()
                         self._working_camera_cache = i
                         return i
                     else:
+                        print(f"❌ No se pudo leer frame de cámara {i}")
                         cap.release()
                 else:
+                    print(f"❌ No se pudo abrir cámara {i}")
                     cap.release()
             except Exception as e:
+                print(f"❌ Error probando cámara {i}: {e}")
                 continue
         
-        print("No se encontró ninguna cámara funcional")
+        print("❌ No se encontró ninguna cámara funcional")
         return None
     
     def initialize_camera(self, camera_index: Optional[int] = None, force_reinit: bool = False) -> bool:
@@ -117,7 +148,6 @@ class CameraManager:
                 if camera_index is None:
                     print("Error: No se pudo encontrar una cámara funcional")
                     return False
-            
             # Inicializar cámara
             try:
                 print(f"Inicializando cámara en índice {camera_index}")
@@ -158,6 +188,14 @@ class CameraManager:
                         pass
                     self.cap = None
                 return False
+    
+    def ensure_initialized(self) -> bool:
+        """Asegura que la cámara esté inicializada sin reiniciar si ya está activa."""
+        if self.is_camera_active():
+            return True
+        # Elegir índice actual o cacheado si existe; si no, auto-detectar dentro de initialize_camera
+        idx = self.camera_index if self.camera_index is not None else self._working_camera_cache
+        return self.initialize_camera(idx)
     
     def capture_frame(self, timeout: float = 5.0, max_retries: int = 3) -> Optional[np.ndarray]:
         """
@@ -250,6 +288,10 @@ class CameraManager:
     def release_camera(self):
         """Libera la cámara completamente"""
         with self._lock:
+            # Solo permitir liberar si nadie la está usando
+            if getattr(self, '_use_count', 0) > 0:
+                print(f"No se libera cámara: en uso por {_format_count(self._use_count)} consumidor(es)")
+                return
             if self.cap is not None:
                 try:
                     print("Liberando cámara...")
@@ -263,6 +305,97 @@ class CameraManager:
                     self.is_active = False
                     self.camera_index = None
                     self.last_frame = None
+
+    def acquire(self, owner: Optional[str] = None) -> bool:
+        """Indica que un componente comenzará a usar la cámara."""
+        with self._lock:
+            self._use_count += 1
+        # Inicializar si no está lista
+        ok = self.ensure_initialized()
+        if not ok:
+            # revertir contador si falla
+            with self._lock:
+                self._use_count = max(0, self._use_count - 1)
+        else:
+            if owner:
+                print(f"CameraManager: uso adquirido por '{owner}' (total={self._use_count})")
+        return ok
+
+    def release(self, owner: Optional[str] = None):
+        """Indica que un componente ya no necesita la cámara. No libera el dispositivo a menos que el conteo llegue a 0 y no haya streaming."""
+        with self._lock:
+            self._use_count = max(0, self._use_count - 1)
+            remaining = self._use_count
+        if owner:
+            print(f"CameraManager: uso liberado por '{owner}' (restantes={remaining})")
+        # No apagamos la cámara aquí; se hace al cerrar app
+
+    def start_stream_ref(self, fps: int = 30) -> bool:
+        """Solicita el stream de video con referencia. Inicia el hilo solo cuando pasa de 0 -> 1 usuarios."""
+        if not self.ensure_initialized():
+            return False
+        with self._lock:
+            self._stream_users += 1
+            need_start = (self._stream_users == 1)
+        if need_start:
+            return self.start_video_stream(fps=fps)
+        else:
+            # Ajustar FPS si se solicita distinto por nuevos usuarios (opcional: mantener el existente)
+            return True
+
+    def stop_stream_ref(self):
+        """Libera una referencia de streaming. Detiene el hilo solo cuando el conteo llega a 0."""
+        with self._lock:
+            self._stream_users = max(0, self._stream_users - 1)
+            need_stop = (self._stream_users == 0)
+        if need_stop:
+            self.stop_video_stream()
+    
+    def reset_completely(self):
+        """Reset completo del camera manager - limpia todo estado y recursos"""
+        print("Iniciando reset completo del camera manager...")
+        
+        # 1. Detener video stream si está activo
+        self.stop_video_stream()
+        
+        # 2. Liberar cámara completamente
+        self.release_camera()
+        
+        # 3. Reset completo de estado
+        with self._lock:
+            # Limpiar todas las variables de estado
+            self.cap = None
+            self.camera_index = None
+            self.is_active = False
+            self.last_frame = None
+            self._working_camera_cache = None
+            
+            # Reset video state
+            self.video_mode = False
+            self.video_thread = None
+            self.video_callbacks.clear()
+            
+            # Limpiar queue
+            while not self.video_queue.empty():
+                try:
+                    self.video_queue.get_nowait()
+                except:
+                    break
+            
+            # Reset events
+            if hasattr(self, 'video_stop_event'):
+                self.video_stop_event.set()
+                self.video_stop_event.clear()
+        
+        # 4. Limpieza agresiva de OpenCV
+        for _ in range(5):
+            cv2.destroyAllWindows()
+            time.sleep(0.1)
+        
+        # 5. Espera adicional para liberación de recursos
+        time.sleep(1.0)
+        
+        print("Reset completo del camera manager finalizado")
     
     def _video_capture_loop(self):
         """Loop interno de captura de video en hilo separado"""
@@ -381,6 +514,14 @@ class CameraManager:
                     latest_frame = self.video_queue.get_nowait()
                 except Empty:
                     break
+            # Fallbacks para evitar devolver None durante warm-up
+            if latest_frame is None:
+                # Intentar devolver el último frame válido conocido
+                if self.last_frame is not None:
+                    return self.last_frame.copy()
+                # Como último recurso, intentar una captura directa rápida
+                frame = self.capture_frame(timeout=0.5, max_retries=1)
+                return frame
             return latest_frame
         except:
             return None
@@ -396,6 +537,13 @@ class CameraManager:
             self.release_camera()
         except:
             pass
+
+# Helper interno para mensajes
+def _format_count(n: int) -> int:
+    try:
+        return int(n)
+    except Exception:
+        return 0
 
 
 # Instancia global del gestor

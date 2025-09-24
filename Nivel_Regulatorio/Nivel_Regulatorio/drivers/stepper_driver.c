@@ -150,7 +150,7 @@ ISR(TIMER1_COMPA_vect) {
 				
 				// Enviar snapshots si los hay
 				if (snapshot_count > 0) {
-					char snapshot_msg[256];
+					char snapshot_msg[512];
 					int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
 					
 					for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
@@ -348,13 +348,15 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 	int32_t v_distance = abs32(v_pos - vertical_axis.current_position);
 	
 	if (h_pos > horizontal_axis.current_position) {
+		// INVERTIDO: X+ ahora va hacia la IZQUIERDA (igual que supervisor)
 		horizontal_axis.direction = true;
-		PORTA &= ~(1 << 0);
-		PORTA |= (1 << 2);
-		} else if (h_pos < horizontal_axis.current_position) {
-		horizontal_axis.direction = false;
 		PORTA |= (1 << 0);
 		PORTA &= ~(1 << 2);
+		} else if (h_pos < horizontal_axis.current_position) {
+		// INVERTIDO: X- ahora va hacia la DERECHA (igual que supervisor)
+		horizontal_axis.direction = false;
+		PORTA &= ~(1 << 0);
+		PORTA |= (1 << 2);
 	}
 
 	if (v_pos > vertical_axis.current_position) {

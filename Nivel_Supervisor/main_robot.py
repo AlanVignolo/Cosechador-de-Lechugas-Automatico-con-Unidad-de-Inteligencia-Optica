@@ -50,21 +50,38 @@ except Exception as e:
     AI_MODULES_AVAILABLE = False
 
 # Importar escáner horizontal autónomo (independiente)
-SCANNER_AVAILABLE = False
+SCANNER_HORIZONTAL_AVAILABLE = False
 scan_horizontal_with_live_camera = None
 
 try:
     print("Intentando importar escáner horizontal...")
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
     from escaner_standalone import scan_horizontal_with_live_camera
-    SCANNER_AVAILABLE = True
+    SCANNER_HORIZONTAL_AVAILABLE = True
     print("Escáner horizontal autónomo importado exitosamente")
 except ImportError as e:
-    print(f"Error importando escáner: {e}")
-    SCANNER_AVAILABLE = False
+    print(f"Error importando escáner horizontal: {e}")
+    SCANNER_HORIZONTAL_AVAILABLE = False
 except Exception as e:
-    print(f"Error inesperado en import de escáner: {e}")
-    SCANNER_AVAILABLE = False
+    print(f"Error inesperado en import de escáner horizontal: {e}")
+    SCANNER_HORIZONTAL_AVAILABLE = False
+
+# Importar escáner vertical manual
+SCANNER_VERTICAL_AVAILABLE = False
+scan_vertical_manual = None
+
+try:
+    print("Intentando importar escáner vertical...")
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
+    from escaner_vertical import scan_vertical_manual
+    SCANNER_VERTICAL_AVAILABLE = True
+    print("Escáner vertical manual importado exitosamente")
+except ImportError as e:
+    print(f"Error importando escáner vertical: {e}")
+    SCANNER_VERTICAL_AVAILABLE = False
+except Exception as e:
+    print(f"Error inesperado en import de escáner vertical: {e}")
+    SCANNER_VERTICAL_AVAILABLE = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -213,6 +230,12 @@ def menu_control_brazo(arm_controller):
                     
                     if result["success"]:
                         print(f"{result['message']}")
+                        # Pequeña pausa para que se complete la trayectoria
+                        time.sleep(0.5)
+                        # Forzar actualización del estado
+                        arm_controller._detect_initial_state()
+                        print("✅ Estado actualizado - menú se refrescará automáticamente")
+                        time.sleep(1)
                     else:
                         print(f"No se puede ir a '{target_state}': {result['message']}")
             else:
@@ -220,7 +243,7 @@ def menu_control_brazo(arm_controller):
         else:
             print("Opción inválida")
 
-        # input("\nPresiona Enter para continuar...")  # Confirmación removida
+        # El menú se actualiza automáticamente en el próximo ciclo
 
 def test_position_correction_direct(robot, camera_index=0, max_iterations=10, tolerance_mm=1.0):
     """
@@ -705,7 +728,6 @@ def test_position_correction_direct_debug(robot, camera_index, max_iterations, t
     
     return {'success': True, 'message': "Corrección completa (horizontal + vertical) exitosa"}
 
-
 def menu_interactivo(uart_manager, robot):
     global lettuce_on
     cmd_manager = robot.cmd
@@ -730,11 +752,12 @@ def menu_interactivo(uart_manager, robot):
         print("10. Prueba correccion IA (Horizontal + Vertical)")
         print(f"11. Toggle Lechuga {'ON' if lettuce_on else 'OFF'} (Estado: {'Con lechuga' if lettuce_on else 'Sin lechuga'})")
         print("12. Escaneado horizontal con camara en vivo")
+        print("13. Escaneado vertical manual (flags por usuario)")
         print("-"*60)
         print("0.  Salir")
         print("-"*60)
         
-        opcion = input("Selecciona opción (0-12): ")
+        opcion = input("Selecciona opción (0-13): ")
 
         if opcion == '1':
             x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
@@ -889,17 +912,17 @@ def menu_interactivo(uart_manager, robot):
             print(f"Estado cambiado: Robot ahora está {estado}")
             print(f"Las trayectorias mover_lechuga -> recoger_lechuga usarán el comportamiento para {estado.lower()}")
         elif opcion == '12':
-            if SCANNER_AVAILABLE:
+            if SCANNER_HORIZONTAL_AVAILABLE:
                 try:
                     success = scan_horizontal_with_live_camera(robot)
                     if success:
-                        print("Escaneado completado exitosamente")
+                        print("Escaneado horizontal completado exitosamente")
                     else:
-                        print("El escaneado se completó con errores")
+                        print("El escaneado horizontal se completó con errores")
                 except KeyboardInterrupt:
-                    print("\nEscaneado interrumpido por el usuario")
+                    print("\nEscaneado horizontal interrumpido por el usuario")
                 except Exception as e:
-                    print(f"Error durante el escaneado: {e}")
+                    print(f"Error durante el escaneado horizontal: {e}")
                     import traceback
                     traceback.print_exc()
                 
@@ -908,6 +931,26 @@ def menu_interactivo(uart_manager, robot):
                 print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
             else:
                 print("Escáner horizontal no disponible. Verificar imports.")
+        elif opcion == '13':
+            if SCANNER_VERTICAL_AVAILABLE:
+                try:
+                    success = scan_vertical_manual(robot)
+                    if success:
+                        print("Escaneado vertical completado exitosamente")
+                    else:
+                        print("El escaneado vertical se completó con errores")
+                except KeyboardInterrupt:
+                    print("\nEscaneado vertical interrumpido por el usuario")
+                except Exception as e:
+                    print(f"Error durante el escaneado vertical: {e}")
+                    import traceback
+                    traceback.print_exc()
+                
+                # Mensaje de seguridad
+                print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
+                print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
+            else:
+                print("Escáner vertical no disponible. Verificar imports.")
         elif opcion == '0':
             print("Saliendo...")
             break

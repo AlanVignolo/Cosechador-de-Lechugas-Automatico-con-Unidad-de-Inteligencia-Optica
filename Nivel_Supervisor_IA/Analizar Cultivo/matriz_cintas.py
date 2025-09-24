@@ -13,11 +13,10 @@ class MatrizCintas:
         self.archivo_matriz = os.path.join(os.path.dirname(__file__), archivo_matriz)
         self.tubos = self._cargar_matriz()
         
-        # Configuración de tubos hardcodeada
-        self.configuracion_tubos = {
-            1: {"y_mm": 300, "nombre": "Tubo 1"},
-            2: {"y_mm": 600, "nombre": "Tubo 2"}
-        }
+        # Cargar configuración dinámica de tubos
+        from configuracion_tubos import config_tubos
+        self.config_tubos = config_tubos
+        self.configuracion_tubos = self.config_tubos.obtener_configuracion_tubos()
     
     def _cargar_matriz(self) -> Dict:
         """Cargar matriz existente o crear nueva"""
@@ -32,17 +31,34 @@ class MatrizCintas:
             return self._crear_matriz_vacia()
     
     def _crear_matriz_vacia(self) -> Dict:
-        """Crear estructura de matriz vacía"""
+        """Crear estructura de matriz vacía usando configuración dinámica"""
+        tubos_dict = {}
+        
+        # Usar configuración dinámica si está disponible
+        try:
+            from configuracion_tubos import config_tubos
+            configuracion = config_tubos.obtener_configuracion_tubos()
+            
+            for tubo_id, config in configuracion.items():
+                tubos_dict[str(tubo_id)] = {
+                    "y_mm": config["y_mm"], 
+                    "cintas": [], 
+                    "last_scan": None
+                }
+        except:
+            # Fallback a configuración por defecto
+            tubos_dict = {
+                "1": {"y_mm": 300, "cintas": [], "last_scan": None},
+                "2": {"y_mm": 600, "cintas": [], "last_scan": None}
+            }
+        
         return {
             "metadata": {
                 "version": "1.0",
                 "created": datetime.now().isoformat(),
                 "last_updated": datetime.now().isoformat()
             },
-            "tubos": {
-                "1": {"y_mm": 300, "cintas": [], "last_scan": None},
-                "2": {"y_mm": 600, "cintas": [], "last_scan": None}
-            }
+            "tubos": tubos_dict
         }
     
     def guardar_matriz(self):
@@ -66,6 +82,9 @@ class MatrizCintas:
         if tubo_str not in self.tubos["tubos"]:
             print(f"Error: Tubo {tubo_id} no existe")
             return False
+        
+        # Actualizar configuración dinámica
+        self.configuracion_tubos = self.config_tubos.obtener_configuracion_tubos()
         
         # Preparar datos de cintas
         cintas_procesadas = []
@@ -103,6 +122,9 @@ class MatrizCintas:
     def obtener_todas_cintas(self) -> Dict:
         """Obtener todas las cintas de todos los tubos"""
         todas_cintas = {}
+        
+        # Actualizar configuración dinámica
+        self.configuracion_tubos = self.config_tubos.obtener_configuracion_tubos()
         
         for tubo_id, config in self.configuracion_tubos.items():
             cintas = self.obtener_cintas_tubo(tubo_id)
@@ -152,8 +174,11 @@ class MatrizCintas:
             self.tubos["tubos"][tubo_str]["cintas"] = []
             self.tubos["tubos"][tubo_str]["last_scan"] = None
             
+            # Actualizar configuración dinámica
+            self.configuracion_tubos = self.config_tubos.obtener_configuracion_tubos()
+            
             if self.guardar_matriz():
-                print(f"🧹 Datos del {self.configuracion_tubos[tubo_id]['nombre']} limpiados")
+                print(f"Datos del {self.configuracion_tubos[tubo_id]['nombre']} limpiados")
                 return True
         
         return False

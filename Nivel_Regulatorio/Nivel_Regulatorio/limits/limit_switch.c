@@ -4,6 +4,18 @@
 #include "../drivers/stepper_driver.h"
 
 static limit_status_t limits = {false, false, false, false};
+// Contador para reporte periódico del estado de límites (se incrementa en cada update)
+static uint16_t limit_status_counter = 0;
+// Periodicidad del reporte en ticks de limit_switch_update(); ajustar según frecuencia de llamada
+// Por ejemplo, si limit_switch_update() se llama cada ~10ms, 100 -> ~1s
+#define LIMIT_STATUS_PERIOD_TICKS 100
+// Heartbeat habilitado por el supervisor (para evitar spam cuando no hay conexión)
+static uint8_t limit_status_heartbeat_enabled = 0;
+
+// Permite al parser habilitar/deshabilitar el heartbeat desde un comando
+void limit_switch_set_heartbeat(uint8_t enabled) {
+    limit_status_heartbeat_enabled = enabled ? 1 : 0;
+}
 
 void limit_switch_init(void) {
 	// Configurar pines como entradas con pull-up interno
@@ -42,10 +54,24 @@ void limit_switch_update(void) {
 				
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
-				
-				if (!horizontal_axis.direction) {  // false = izquierda
-					stepper_stop_horizontal();
-				}
+                
+                if (horizontal_axis.direction) {  // true = izquierda (AJUSTADO)
+                    // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
+                    extern uint8_t snapshot_count;
+                    extern progress_snapshot_t snapshots[];
+                    if (snapshot_count > 0) {
+                        char snapshot_msg[512];
+                        int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+                        for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+                            offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+                                               "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+                        }
+                        uart_send_response(snapshot_msg);
+                        // Resetear snapshots después de enviar
+                        snapshot_count = 0;
+                    }
+                    stepper_stop_all();  // CORREGIDO: usar stepper_stop_all() para enviar distancias
+                }
 			}
 		}
 		} else {
@@ -69,10 +95,24 @@ void limit_switch_update(void) {
 				
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
-				
-				if (horizontal_axis.direction) {
-					stepper_stop_horizontal();
-				}
+                
+                if (!horizontal_axis.direction) {  // false = derecha (AJUSTADO)
+                    // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
+                    extern uint8_t snapshot_count;
+                    extern progress_snapshot_t snapshots[];
+                    if (snapshot_count > 0) {
+                        char snapshot_msg[256];
+                        int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+                        for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+                            offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+                                               "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+                        }
+                        uart_send_response(snapshot_msg);
+                        // Resetear snapshots despu�s de enviar
+                        snapshot_count = 0;
+                    }
+                    stepper_stop_all();  // CORREGIDO: usar stepper_stop_all() para enviar distancias
+                }
 			}
 		}
 		} else {
@@ -96,10 +136,24 @@ void limit_switch_update(void) {
 				
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
-				
-				if (vertical_axis.direction) {
-					stepper_stop_vertical();
-				}
+                
+                if (vertical_axis.direction) {
+                    // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
+                    extern uint8_t snapshot_count;
+                    extern progress_snapshot_t snapshots[];
+                    if (snapshot_count > 0) {
+                        char snapshot_msg[256];
+                        int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+                        for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+                            offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+                                               "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+                        }
+                        uart_send_response(snapshot_msg);
+                        // Resetear snapshots después de enviar
+                        snapshot_count = 0;
+                    }
+                    stepper_stop_all();  // CORREGIDO: usar stepper_stop_all() para enviar distancias
+                }
 			}
 		}
 		} else {
@@ -123,31 +177,67 @@ void limit_switch_update(void) {
 				
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
-				
-				if (!vertical_axis.direction) {
-					stepper_stop_vertical();
-				}
+                
+                if (!vertical_axis.direction) {
+                    // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
+                    extern uint8_t snapshot_count;
+                    extern progress_snapshot_t snapshots[];
+                    if (snapshot_count > 0) {
+                        char snapshot_msg[256];
+                        int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+                        for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+                            offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+                                               "S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+                        }
+                        uart_send_response(snapshot_msg);
+                        // Resetear snapshots despu�s de enviar
+                        snapshot_count = 0;
+                    }
+                    stepper_stop_all();  // CORREGIDO: usar stepper_stop_all() para enviar distancias
+                }
 			}
 		}
 		} else {
 		debounce_counter[3] = 0;
 		limits.v_up_triggered = false;
 	}
+
+    // Reporte periódico del estado de límites mientras permanezcan presionados
+    // Esto asegura que el supervisor conozca el estado actual aunque se haya perdido el evento de borde
+    // Solo enviar si el supervisor habilitó el heartbeat (para no saturar cuando no hay conexión)
+    if (limit_status_heartbeat_enabled) {
+        limit_status_counter++;
+        if (limit_status_counter >= LIMIT_STATUS_PERIOD_TICKS) {
+            limit_status_counter = 0;
+            if (limits.h_left_triggered || limits.h_right_triggered || limits.v_up_triggered || limits.v_down_triggered) {
+                char status_msg[64];
+                // Usar claves claras para el supervisor
+                snprintf(status_msg, sizeof(status_msg),
+                         "LIMIT_STATUS:H_LEFT=%d,H_RIGHT=%d,V_UP=%d,V_DOWN=%d",
+                         limits.h_left_triggered ? 1 : 0,
+                         limits.h_right_triggered ? 1 : 0,
+                         limits.v_up_triggered ? 1 : 0,
+                         limits.v_down_triggered ? 1 : 0);
+                uart_send_response(status_msg);
+            }
+        }
+    }
 }
 
 bool limit_switch_check_h_movement(bool direction) {
-	// Verificar si el movimiento horizontal est� permitido
-	if (direction && limits.h_right_triggered) {
-		return false;  // No permitir movimiento a la derecha
+	// Verificar si el movimiento horizontal está permitido
+	// AJUSTADO: direction=true es izquierda, direction=false es derecha
+	if (direction && limits.h_left_triggered) {
+		return false;  // No permitir movimiento a la izquierda si está activado LEFT
 	}
-	if (!direction && limits.h_left_triggered) {
-		return false;  // No permitir movimiento a la izquierda
+	if (!direction && limits.h_right_triggered) {
+		return false;  // No permitir movimiento a la derecha si está activado RIGHT
 	}
 	return true;  // Movimiento permitido
 }
 
 bool limit_switch_check_v_movement(bool direction) {
-	// Verificar si el movimiento vertical est� permitido
+	// Verificar si el movimiento vertical está permitido
 	if (!direction && limits.v_up_triggered) {
 		return false;  // No permitir movimiento hacia ARRIBA si est� activado UP
 	}

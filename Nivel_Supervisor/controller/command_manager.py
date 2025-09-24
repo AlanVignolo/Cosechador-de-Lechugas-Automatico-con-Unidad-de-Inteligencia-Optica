@@ -10,13 +10,11 @@ class CommandManager:
     
     def move_xy(self, x_mm: float, y_mm: float) -> Dict:
         """Mover a posición X,Y en mm (relativo)
-        NOTA: Eje X invertido - valores positivos de entrada van hacia la izquierda en el robot
+        NOTA: Ahora el firmware coincide con supervisor: X+ hacia izquierda, X- hacia derecha
         """
-        # INVERSIÓN DEL EJE X: multiplicar por -1
-        inverted_x_mm = -x_mm
-        
-        command = f"M:{inverted_x_mm},{y_mm}"
-        self.logger.debug(f"Movimiento: entrada X={x_mm}mm → robot X={inverted_x_mm}mm, Y={y_mm}mm")
+        # YA NO SE NECESITA INVERSIÓN - firmware actualizado para coincidir con supervisor
+        command = f"M:{x_mm},{y_mm}"
+        self.logger.debug(f"Movimiento: X={x_mm}mm, Y={y_mm}mm")
         return self.uart.send_command(command)
     
     def get_system_status(self) -> Dict:
@@ -125,3 +123,7 @@ class CommandManager:
             return {"success": True, "message": "Gripper cerrado confirmado"}
         else:
             return {"success": False, "message": "Timeout esperando confirmación de cierre"}
+    
+    def get_current_position_mm(self) -> Dict:
+        """Consultar posición actual en mm (durante movimiento)"""
+        return self.uart.send_command("XY?")

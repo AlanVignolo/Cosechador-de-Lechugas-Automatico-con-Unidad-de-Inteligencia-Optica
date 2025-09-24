@@ -5,7 +5,7 @@ class RobotConfig:
     
     # ---- INVERSIÓN DE EJES ----
     # Cambiar estas flags para invertir direcciones sin modificar código
-    X_AXIS_INVERTED = True   # True = invertir eje X (izquierda es positivo)
+    X_AXIS_INVERTED = False  # False = firmware ya actualizado para coincidir con supervisor (X+ izquierda)
     Y_AXIS_INVERTED = False  # False = normal (arriba es negativo)
     
     # ---- PLATAFORMA ----
@@ -46,6 +46,10 @@ class RobotConfig:
     VERBOSE_LOGGING = False   # Reducir mensajes spam
     SHOW_UART_EVENTS = False  # Mostrar eventos UART detallados
     SHOW_MOVEMENT_COMPLETE = True  # Mostrar completado de movimientos
+    
+    # ---- SNAPSHOTS (capacidad firmware) ----
+    # Debe coincidir con MAX_SNAPSHOTS del firmware. Usado para calcular límite de flags por movimiento.
+    MAX_SNAPSHOTS = 30
     
     # =================================
     # MÉTODOS AUXILIARES PARA DIRECCIONES

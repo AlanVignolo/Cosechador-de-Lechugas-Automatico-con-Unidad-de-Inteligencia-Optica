@@ -105,7 +105,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 2000,
+                    "time_ms": 4000,
                     "description": "Retraer brazo a posición segura"
                 },
                 {
@@ -130,7 +130,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": target_state["servo1"],
                     "servo2": target_state["servo2"],
-                    "time_ms": 2000,
+                    "time_ms": 4000,
                     "description": "Retraer brazo a posición segura"
                 }
             ]
@@ -308,7 +308,7 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": 0,
                     "servo2": 0,
-                    "time_ms": 1500,
+                    "time_ms": 4000,
                     "description": "Ir primero a posición segura"
                 },
                 {
@@ -358,14 +358,14 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": 10,
                     "servo2": 120,
-                    "time_ms": 1500,
+                    "time_ms": 3000,
                     "description": "Retraer a posición intermedia segura"
                 },
                 {
                     "type": "arm_move",
                     "servo1": safe_state["servo1"],  # 10
                     "servo2": safe_state["servo2"],  # 10
-                    "time_ms": 2000,
+                    "time_ms": 4000,
                     "description": "Bajar a posición segura final"
                 }
             ]
@@ -384,14 +384,14 @@ class TrajectoryDefinitions:
                     "type": "arm_move",
                     "servo1": 0,
                     "servo2": 90,
-                    "time_ms": 1000,
+                    "time_ms": 3000,
                     "description": "Ir a posición intermedia"
                 },
                 {
                     "type": "arm_move",
                     "servo1": safe_state["servo1"],
                     "servo2": safe_state["servo2"],
-                    "time_ms": 1000,
+                    "time_ms": 3000,
                     "description": "Llegar a posición segura"
                 },
                 {

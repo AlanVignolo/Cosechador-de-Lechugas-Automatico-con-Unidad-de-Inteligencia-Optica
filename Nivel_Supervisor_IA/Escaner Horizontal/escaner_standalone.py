@@ -15,44 +15,56 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Super
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'config'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Correccion Posicion Horizontal'))
 
-def scan_horizontal_with_live_camera(robot):
+def scan_horizontal_with_live_camera(robot, tubo_id=None):
     """
     Función principal de escaneo horizontal autónoma con matriz de cintas
     """
-    print("\n" + "="*60)
-    print("ESCANEADO HORIZONTAL AUTONOMO")
-    print("="*60)
-    
-    # Importar sistema de matriz
+    # Importar sistema de matriz y configuración dinámica de tubos
     import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Analizar Cultivo'))
     from matriz_cintas import matriz_cintas
+    from configuracion_tubos import config_tubos
     
-    # Mostrar resumen actual
-    matriz_cintas.mostrar_resumen()
+    # Obtener configuración dinámica de tubos
+    tubo_config = config_tubos.obtener_configuracion_tubos()
+    num_tubos = config_tubos.obtener_numero_tubos()
     
-    # Selección de tubo
-    print("\n🔴 SELECCIÓN DE TUBO:")
-    print("1. Tubo 1 (Y=300mm)")
-    print("2. Tubo 2 (Y=600mm)")
+    # Mostrar configuración actual
+    print(f"\nConfiguración actual de tubos:")
+    if config_tubos.hay_configuracion_desde_escaner():
+        print("(Actualizada desde escáner vertical)")
+    else:
+        print("(Configuración por defecto - se recomienda ejecutar escáner vertical primero)")
     
-    while True:
-        try:
-            tubo_seleccionado = int(input("Seleccione tubo (1-2): "))
-            if tubo_seleccionado in [1, 2]:
-                break
-            else:
-                print("Opción inválida. Seleccione 1 o 2.")
-        except ValueError:
-            print("Por favor ingrese un número válido.")
+    config_tubos.mostrar_configuracion_actual()
     
-    tubo_config = {
-        1: {"y_mm": 300, "nombre": "Tubo 1"},
-        2: {"y_mm": 600, "nombre": "Tubo 2"}
-    }
+    # Selección de tubo dinámica (permitir preselección para modo automático)
+    print(f"\nSelección de tubo:")
+    for t_id, config in tubo_config.items():
+        print(f"{t_id}. {config['nombre']} (Y={config['y_mm']}mm)")
+    
+    # Definir un ID de escaneo por defecto y estado de escaneo por si hay errores tempranos
+    import uuid
+    scan_id = str(uuid.uuid4())[:8]
+    is_scanning = [False]
+
+    # Si se pasa un tubo preseleccionado y es válido, usarlo sin preguntar
+    if tubo_id is not None and int(tubo_id) in tubo_config.keys():
+        tubo_seleccionado = int(tubo_id)
+        print(f"Seleccionado automáticamente Tubo {tubo_seleccionado}")
+    else:
+        while True:
+            try:
+                tubo_seleccionado = int(input(f"Seleccione tubo (1-{num_tubos}): "))
+                if tubo_seleccionado in tubo_config.keys():
+                    break
+                else:
+                    print(f"Opción inválida. Seleccione entre 1 y {num_tubos}.")
+            except ValueError:
+                print("Por favor ingrese un número válido.")
     
     selected_tubo = tubo_config[tubo_seleccionado]
-    print(f"Seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
+    print(f"Tubo seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
     
     try:
         # Importar solo lo necesario dentro de la función
@@ -75,96 +87,84 @@ def scan_horizontal_with_live_camera(robot):
                 print("Operación cancelada por el usuario")
                 return False
         
-        # Inicializar cámara
-        print("Iniciando cámara...")
-        if not camera_mgr.initialize_camera():
-            print("Error: No se pudo inicializar la cámara")
+        # Limpiar ventanas previas que puedan estar abiertas
+        cv2.destroyAllWindows()
+        time.sleep(0.2)
+        
+        # Adquirir y preparar cámara (uso compartido administrado por CameraManager)
+        # Adquirir cámara
+        if not camera_mgr.acquire("escaner_standalone"):
+            print("Error: No se pudo adquirir la cámara")
             return False
         
-        if not camera_mgr.start_video_stream(fps=6):
+        if not camera_mgr.start_stream_ref(fps=6):
             print("Error: No se pudo iniciar video stream")
+            camera_mgr.release("escaner_standalone")
             return False
-        
-        print("Cámara iniciada")
         
         # Velocidades lentas
         robot.cmd.set_velocities(2000, 2000)
-        print("Velocidades configuradas para escaneado")
         
-        # POSICIONAMIENTO EN Y SEGÚN TUBO SELECCIONADO
-        print(f"\nFASE 1: Posicionándose en {selected_tubo['nombre']}...")
-        
-        # Mover a la altura Y del tubo seleccionado
-        current_y = robot.global_position['y']
-        target_y = selected_tubo['y_mm']
-        delta_y = target_y - current_y
-        
-        if abs(delta_y) > 5:  # Solo mover si la diferencia es significativa
-            print(f"   Moviendo de Y={current_y:.1f}mm a Y={target_y}mm...")
-            result = robot.cmd.move_xy(0, delta_y)
-            if not result["success"]:
-                print(f"Error moviendo a posición Y: {result}")
-                return False
-            time.sleep(2)
-            print(f"Posicionado en Y={target_y}mm")
-        else:
-            print(f"Ya en posición correcta Y={target_y}mm")
+        # NOTA: El posicionamiento Y ahora se hace desde otro código externo
+        # Solo informamos qué tubo se va a escanear para la matriz de coordenadas
         
         # SECUENCIA DE MOVIMIENTO HORIZONTAL
-        print("\nFASE 2: Posicionándose en el inicio horizontal...")
-        
-        # Ir al switch derecho (X negativos)
-        print("   Moviendo hacia switch derecho...")
-        result = robot.cmd.move_xy(-2000, 0)
-        
-        # Esperar límite derecho
-        limit_message = robot.cmd.uart.wait_for_limit(timeout=30.0)
-        if not (limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message):
-            print("Error: No se alcanzó el límite derecho")
-            return False
-        
-        print("Límite derecho alcanzado")
-        
-        # Retroceder 1cm
-        print("FASE 3: Retrocediendo 1cm...")
-        result = robot.cmd.move_xy(10, 0)
-        if not result["success"]:
-            print(f"Error en retroceso: {result}")
-            return False
-        
-        time.sleep(2)
-        print("Retroceso completado")
-        
-        # Resetear posición global para que coincida con x=0 del escáner
-        # Esto hace que las coordenadas relativas funcionen correctamente
-        robot.reset_global_position(0.0, robot.global_position['y'])
-        print("📍 Posición de inicio del escáner establecida en x=0")
-        
+        # Nota: Evitar tocar el switch derecho. Comenzar el escaneo desde la
+        # posición actual y mover directamente hacia el límite izquierdo.
         # Iniciar detección básica
-        print("FASE 4: Iniciando escaneado con video...")
-        print("Video activo - Mostrando feed de cámara")
         
-        is_scanning[0] = True
+        # PRE-ESCANEO: limpiar hilos zombie
+        # utilizar/actualizar ID de escaneo ahora que comienza el proceso principal
+        scan_id = str(uuid.uuid4())[:8]
+        is_scanning = [True]
+        video_thread = None
+        
+        print(f"Escaneo ID: {scan_id}")
+        
         last_detection_pos = [None]
         
         # Sistema de tracking de estados para flags
+        # Parámetros de debouncing y límites
+        from config.robot_config import RobotConfig
+        MAX_FLAGS = RobotConfig.MAX_SNAPSHOTS * 2
+        DETECT_ON_FRAMES = 5    # Debounce más robusto para INICIO
+        DETECT_OFF_FRAMES = 5   # Debounce más robusto para FIN
+        MIN_TRANSITION_COOLDOWN_S = 0.25  # Evita chatter rápido entre transiciones
+        # Umbrales de calidad para filtrar falsos positivos/negativos
+        MIN_NEG_STREAK_FOR_START = 8  # mínimos negativos previos a INICIO (más estricto)
+        MIN_POS_STREAK_FOR_END = 8    # mínimos positivos previos a FIN (más estricto)
+        MIN_WIDTH_MM = 60             # ancho mínimo entre INICIO/FIN (mm) para considerar cinta válida
+
         detection_state = {
             'current_state': None,  # 'accepted' | 'rejected' | None
             'position_buffer': [],
             'tape_segments': [],
-            'flag_count': 0
+            'flag_count': 0,
+            'uart_ref': robot.cmd.uart,
+            'detect_streak': 0,
+            'nodetect_streak': 0,
+            'max_flags': MAX_FLAGS,
+            # Valores pendientes para registrar rachas previas reales en el instante de cambio
+            'pending_pre_start_neg_streak': 0,
+            'pending_pre_end_pos_streak': 0,
+            'last_transition_ts': 0.0,
         }
         
-        def send_flag_for_state_change(state_type, position):
+        def send_flag_for_state_change(state_type):
             """Enviar flag al firmware para marcar cambio de estado"""
             try:
+                # No enviar más flags si alcanzamos el límite de snapshots del firmware
+                if detection_state['flag_count'] >= detection_state['max_flags']:
+                    print(f"Límite de flags alcanzado ({detection_state['max_flags']}). No se enviarán más RP en este movimiento.")
+                    return None
+
                 detection_state['flag_count'] += 1
                 flag_id = detection_state['flag_count']
                 
                 # Enviar comando RP (snapshot) al firmware
                 result = robot.cmd.get_movement_progress()
                 if result.get("success"):
-                    print(f"FLAG #{flag_id} enviado - {state_type} en x={position:.1f}mm")
+                    print(f"FLAG #{flag_id} enviado - {state_type}")
                     return flag_id
                 else:
                     print(f"Error enviando flag: {result}")
@@ -173,136 +173,261 @@ def scan_horizontal_with_live_camera(robot):
                 print(f"Error en send_flag: {e}")
                 return None
         
-        def process_detection_state(is_accepted, current_pos):
-            """Procesar cambios de estado de detección y enviar flags"""
-            new_state = 'accepted' if is_accepted else 'rejected'
-            
-            # Detectar cambio de estado
-            if detection_state['current_state'] != new_state:
-                if detection_state['current_state'] == 'rejected' and new_state == 'accepted':
-                    # INICIO de cinta
-                    flag_id = send_flag_for_state_change("INICIO_CINTA", current_pos)
-                    detection_state['position_buffer'] = [current_pos]  # Resetear buffer
-                    if flag_id:
-                        detection_state['tape_segments'].append({
-                            'start_flag': flag_id,
-                            'start_pos': current_pos,
-                            'positions': [current_pos]
-                        })
-                
-                elif detection_state['current_state'] == 'accepted' and new_state == 'rejected':
-                    # FIN de cinta
-                    flag_id = send_flag_for_state_change("FIN_CINTA", current_pos)
-                    if flag_id and detection_state['tape_segments']:
-                        # Actualizar último segmento
-                        last_segment = detection_state['tape_segments'][-1]
-                        last_segment['end_flag'] = flag_id
-                        last_segment['end_pos'] = current_pos
-                        
-                        # Calcular posición media del segmento
-                        if detection_state['position_buffer']:
-                            avg_pos = sum(detection_state['position_buffer']) / len(detection_state['position_buffer'])
-                            last_segment['center_pos'] = avg_pos
-                            print(f"CINTA COMPLETADA - Centro: {avg_pos:.1f}mm (de {len(detection_state['position_buffer'])} muestras)")
-                
-                detection_state['current_state'] = new_state
-            
-            # Acumular posiciones durante estado 'accepted'
-            if new_state == 'accepted':
-                detection_state['position_buffer'].append(current_pos)
+        def process_detection_state(is_accepted):
+            """Procesar cambios de estado con debouncing y enviar flags solo en transiciones.
+            Además registra cuántos frames negativos/positivos precedieron a cada flag."""
+            # Guardar rachas previas antes de actualizar
+            prev_detect_streak = detection_state['detect_streak']
+            prev_nodetect_streak = detection_state['nodetect_streak']
+
+            # Actualizar rachas de detección / no detección
+            if is_accepted:
+                # Si acabamos de entrar a detección (streak pasa de 0 a 1),
+                # guardar los negativos justo antes de entrar
+                if prev_detect_streak == 0:
+                    detection_state['pending_pre_start_neg_streak'] = prev_nodetect_streak
+                detection_state['detect_streak'] = prev_detect_streak + 1
+                detection_state['nodetect_streak'] = 0
+            else:
+                # Si acabamos de salir a no detección (streak pasa de 0 a 1),
+                # guardar los positivos justo antes de salir
+                if prev_nodetect_streak == 0:
+                    detection_state['pending_pre_end_pos_streak'] = prev_detect_streak
+                detection_state['nodetect_streak'] = prev_nodetect_streak + 1
+                detection_state['detect_streak'] = 0
+
+            # Evaluar transición a 'accepted' (INICIO) con debouncing y cooldown
+            if detection_state['current_state'] != 'accepted' and detection_state['detect_streak'] >= DETECT_ON_FRAMES:
+                now_ts = time.time()
+                if now_ts - detection_state.get('last_transition_ts', 0.0) < MIN_TRANSITION_COOLDOWN_S:
+                    return
+                print(f"[TRANSICION] INICIO detectado (detect_streak={detection_state['detect_streak']}, prev_neg={prev_nodetect_streak})")
+                detection_state['current_state'] = 'accepted'
+                flag_id = send_flag_for_state_change("INICIO_CINTA")
+                if flag_id:
+                    detection_state['tape_segments'].append({
+                        'start_flag': flag_id,
+                        # Usar la racha negativa registrada justo cuando se inició la detección
+                        'pre_start_neg_streak': detection_state.get('pending_pre_start_neg_streak', 0)
+                    })
+                detection_state['last_transition_ts'] = now_ts
+                return
+
+            # Evaluar transición a 'rejected' (FIN) con debouncing y cooldown
+            if detection_state['current_state'] == 'accepted' and detection_state['nodetect_streak'] >= DETECT_OFF_FRAMES:
+                now_ts = time.time()
+                if now_ts - detection_state.get('last_transition_ts', 0.0) < MIN_TRANSITION_COOLDOWN_S:
+                    return
+                print(f"[TRANSICION] FIN detectado (nodetect_streak={detection_state['nodetect_streak']}, prev_pos={prev_detect_streak})")
+                detection_state['current_state'] = 'rejected'
+                flag_id = send_flag_for_state_change("FIN_CINTA")
+                if flag_id and detection_state['tape_segments']:
+                    last_segment = detection_state['tape_segments'][-1]
+                    last_segment['end_flag'] = flag_id
+                    # Usar la racha positiva registrada justo cuando se inició la no detección
+                    last_segment['pre_end_pos_streak'] = detection_state.get('pending_pre_end_pos_streak', 0)
+                    print(f"CINTA COMPLETADA - Flags {last_segment['start_flag']}-{flag_id}")
+                detection_state['last_transition_ts'] = now_ts
         
         def video_loop():
-            """Bucle de video con detección de estados"""
-            detection_count = 0
+            """Bucle de video sin UI; solo procesa y emite flags"""
+            thread_name = threading.current_thread().name
             
-            while is_scanning[0]:
-                try:
-                    frame = camera_mgr.get_latest_video_frame()
-                    if frame is None:
+            try:
+                # Sin ventanas UI (evita bloqueos en 2ª corrida)
+                frame_count = 0
+                start_ts = time.time()
+                printed_none_once = False
+                while is_scanning[0]:
+                    try:
+                        frame = camera_mgr.get_latest_video_frame()
+                        if frame is None:
+                            if not printed_none_once:
+                                print(f"[{scan_id}] Aviso: cámara sin frames (esperando)")
+                                printed_none_once = True
+                            time.sleep(0.05)
+                            # Watchdog: si en los primeros 2s no llegaron frames, reiniciar stream una vez
+                            if (time.time() - start_ts) > 2.0 and frame_count == 0:
+                                try:
+                                    print(f"[{scan_id}] Watchdog: reiniciando stream de video por falta de frames")
+                                    camera_mgr.stop_stream_ref()
+                                    time.sleep(0.2)
+                                    camera_mgr.start_stream_ref(fps=6)
+                                    # reiniciar temporizador de watchdog
+                                    start_ts = time.time()
+                                except Exception as wd_err:
+                                    print(f"[{scan_id}] Error reiniciando stream (watchdog): {wd_err}")
+                            continue
+                        
+                        frame_count += 1
+                        printed_none_once = False
+                        
+                        # Procesar frame para detección
+                        processed = process_frame_for_detection(frame)
+                        
+                        # Usar detector sofisticado
+                        is_tape_detected = detect_sophisticated_tape(processed)
+                        
+                        # Procesar cambios de estado y enviar flags (sin posición)
+                        process_detection_state(is_tape_detected)
+                        # Sin UI / imshow
+
+                    except Exception as e:
+                        print(f"[{scan_id}] Error en video: {e}")
                         time.sleep(0.1)
-                        continue
-                    
-                    # Procesar frame como el sistema de posicionamiento
-                    processed = process_frame_for_detection(frame)
-                    
-                    # Obtener posición actual
-                    current_x = robot.global_position['x']
-                    
-                    # Usar el detector sofisticado del sistema de posicionamiento
-                    is_tape_detected = detect_sophisticated_tape(processed)
-                    
-                    # Procesar cambios de estado y enviar flags
-                    process_detection_state(is_tape_detected, current_x)
-                    
-                    # Marcar detección en video
-                    if is_tape_detected:
-                        cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 15, (0, 255, 0), 3)
-                        cv2.putText(processed, "CINTA DETECTADA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                    else:
-                        cv2.circle(processed, (processed.shape[1]//2, processed.shape[0]//2), 10, (0, 0, 255), 2)
-                        cv2.putText(processed, "SIN CINTA", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    
-                    # Mostrar info en video
-                    cv2.putText(processed, f"ESCANER - Flags: {detection_state['flag_count']}", 
-                               (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                    cv2.putText(processed, f"Segmentos: {len(detection_state['tape_segments'])}", 
-                               (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                    cv2.putText(processed, f"Posicion: {current_x:.1f}mm", 
-                               (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-                    cv2.putText(processed, "ESC para detener", 
-                               (10, processed.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-                    
-                    cv2.imshow("Escaner Horizontal Autonomo", processed)
-                    
-                    key = cv2.waitKey(1) & 0xFF
-                    if key == 27:  # ESC
-                        print("🛑 Usuario presionó ESC")
+                        
+                    except KeyboardInterrupt:
+                        print(f"[{scan_id}] Interrupción por teclado")
                         is_scanning[0] = False
                         break
                         
-                except Exception as e:
-                    print(f"Error en video: {e}")
-                    time.sleep(0.1)
+            finally:
+                # Fin del hilo de video
+                pass
         
-        # Iniciar hilo de video
-        video_thread = threading.Thread(target=video_loop)
-        video_thread.daemon = True
+        # KILLER DE THREADS ZOMBIE ANTES DE INICIAR NUEVO ESCANEO
+        # Pre-escaneo: limpieza mínima de threads zombie
+        zombie_count = 0
+        for thread in threading.enumerate():
+            if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
+                if thread.is_alive():
+                    zombie_count += 1
+        
+        # Iniciar hilo de video con nombre único
+        video_thread_name = f"VideoScanThread_{scan_id}"
+        video_thread = threading.Thread(target=video_loop, name=video_thread_name)
+        video_thread.daemon = True  # Evitar bloqueos si el hilo no termina
         video_thread.start()
         
+        # Pequeño warm-up: esperar a que llegue el primer frame válido
+        warmup_start = time.time()
+        first_frame_ok = False
+        while time.time() - warmup_start < 2.0:
+            try:
+                test_frame = camera_mgr.get_latest_video_frame(timeout=0.2)
+                if test_frame is not None:
+                    first_frame_ok = True
+                    break
+            except Exception:
+                pass
+            time.sleep(0.05)
+        if not first_frame_ok:
+            print(f"[{scan_id}] Aviso: Cámara sin frames tras warm-up. Reiniciando stream de video...")
+            try:
+                camera_mgr.stop_stream_ref()
+                time.sleep(0.3)
+                if not camera_mgr.start_stream_ref(fps=6):
+                    print(f"[{scan_id}] Error: No se pudo reiniciar stream de video")
+                else:
+                    # Segundo warm-up
+                    warmup_start2 = time.time()
+                    while time.time() - warmup_start2 < 2.0:
+                        test_frame = camera_mgr.get_latest_video_frame(timeout=0.2)
+                        if test_frame is not None:
+                            first_frame_ok = True
+                            break
+                        time.sleep(0.05)
+            except Exception as re_err:
+                print(f"[{scan_id}] Error reiniciando stream: {re_err}")
+            if not first_frame_ok:
+                print(f"[{scan_id}] Error: Sin frames tras reintento de stream. Abortando escaneo para evitar hilos colgados.")
+                # Detener video de forma controlada y liberar
+                is_scanning[0] = False
+                try:
+                    cv2.destroyAllWindows()
+                    cv2.waitKey(1)
+                except:
+                    pass
+                try:
+                    camera_mgr.stop_stream_ref()
+                    time.sleep(0.2)
+                    camera_mgr.release("escaner_standalone")
+                except:
+                    pass
+                return False
+        
+        # Comprobación previa: si estamos en límite izquierdo, retroceder un poco a la derecha
+        try:
+            lim = robot.cmd.uart.get_limit_status()
+            if lim and lim.get('status', {}).get('H_LEFT', False):
+                print("Aviso: límite izquierdo activo al iniciar; retrocediendo 20mm a la derecha")
+                robot.cmd.move_xy(-20.0, 0.0)
+                time.sleep(0.5)
+                robot.cmd.uart.check_limits()
+        except Exception:
+            pass
+
+        # Limpiar snapshots previos antes de iniciar el movimiento principal
+        try:
+            robot.cmd.uart.clear_last_snapshots()
+        except Exception:
+            pass
+
         # Movimiento hacia switch izquierdo
-        print("Iniciando movimiento hacia switch izquierdo...")
         result = robot.cmd.move_xy(2000, 0)
+
+        # Esperar límite izquierdo - solo aceptar TRIGGER explícito
+        limit_triggered = robot.cmd.uart.wait_for_message("LIMIT_H_LEFT_TRIGGERED", timeout=120.0)
         
-        # Esperar límite izquierdo
-        limit_message = robot.cmd.uart.wait_for_limit(timeout=120.0)
-        
-        # Detener video
+        # Detener video de forma controlada
         is_scanning[0] = False
-        time.sleep(1)
         
-        if not (limit_message and "LIMIT_H_LEFT_TRIGGERED" in limit_message):
-            print("Error: No se alcanzó el límite izquierdo")
+        # Dar tiempo al thread para salir del loop
+        time.sleep(0.2)
+        
+        # Esperar terminación con intentos múltiples
+        for attempt in range(3):
+            if not video_thread.is_alive():
+                break
+            video_thread.join(timeout=1.0)
+            if not video_thread.is_alive():
+                break
+        
+        # Limpiar ventanas OpenCV de forma segura
+        try:
+            cv2.destroyAllWindows()
+            cv2.waitKey(1)
+        except Exception:
+            pass
+        
+        if not limit_triggered:
+            print("Error: No se alcanzó el límite izquierdo (timeout esperando trigger)")
             return False
-        
-        print("Límite izquierdo alcanzado - Escaneado completo")
         
         # Correlacionar flags con snapshots para obtener posiciones reales
         correlate_flags_with_snapshots(detection_state)
         
+        # Filtrar segmentos incompletos y de baja calidad
+        filtered_segments = []
+        for idx, seg in enumerate(detection_state['tape_segments'], 1):
+            # Requiere inicio y fin
+            if 'start_flag' not in seg or 'end_flag' not in seg:
+                print(f"   Segmento #{idx}: descartado por incompleto (falta inicio/fin)")
+                continue
+            # Rachas mínimas antes de cada transición
+            pre_neg = seg.get('pre_start_neg_streak', 0)
+            pre_pos = seg.get('pre_end_pos_streak', 0)
+            if pre_neg < MIN_NEG_STREAK_FOR_START or pre_pos < MIN_POS_STREAK_FOR_END:
+                print(f"   Segmento #{idx}: descartado por rachas insuficientes (neg={pre_neg}, pos={pre_pos})")
+                continue
+            # Si tenemos posiciones reales, filtrar por ancho mínimo
+            if 'start_pos_real' in seg and 'end_pos_real' in seg:
+                width_mm = abs(seg['end_pos_real'] - seg['start_pos_real'])
+                if width_mm < MIN_WIDTH_MM:
+                    print(f"   Segmento #{idx}: descartado por ancho insuficiente ({width_mm:.1f}mm < {MIN_WIDTH_MM}mm)")
+                    continue
+            filtered_segments.append(seg)
+        # Reemplazar por lista filtrada
+        detection_state['tape_segments'] = filtered_segments
+
         # Mostrar resultados y guardar en matriz
         resultados = show_results(detections, detection_state, selected_tubo)
         
         # Guardar cintas detectadas en la matriz
         if resultados:
-            print(f"\nGuardando {len(resultados)} cintas en matriz...")
+            # Guardar en matriz (silenciar mensajes intermedios)
             if matriz_cintas.guardar_cintas_tubo(tubo_seleccionado, resultados):
-                print("Cintas guardadas exitosamente en la matriz")
-                
-                # Mostrar matriz actualizada
-                print("\n" + "="*60)
-                print("MATRIZ ACTUALIZADA")
-                print("="*60)
-                matriz_cintas.mostrar_resumen()
+                pass
             else:
                 print("Error guardando cintas en matriz")
         
@@ -314,43 +439,158 @@ def scan_horizontal_with_live_camera(robot):
         traceback.print_exc()
         return False
     finally:
-        # Limpiar recursos
-        try:
-            is_scanning[0] = False
-            camera_mgr.stop_video_stream()
-            cv2.destroyAllWindows()
-            robot.cmd.set_velocities(
-                RobotConfig.get_normal_speed_x(),
-                RobotConfig.get_normal_speed_y()
-            )
-            print("Recursos liberados")
-        except:
+        # LIMPIEZA COMPLETA DE RECURSOS
+        # FORZAR PARADA DE VIDEO THREAD
+        is_scanning[0] = False
+        
+        # FORZAR TERMINACIÓN DE TODOS LOS THREADS ACTIVOS
+        
+        # LIMPIEZA: Verificar y terminar video thread
+        if 'video_thread' in locals() and video_thread is not None:
+            # Esperar terminación con timeout agresivo
+            for cleanup_attempt in range(10):
+                if not video_thread.is_alive():
+                    break
+                
+                video_thread.join(timeout=0.2)
+                
+                if cleanup_attempt == 9:
+                    # FORZAR DESTRUCCIÓN DE VENTANAS OPENCV
+                    try:
+                        cv2.destroyAllWindows()
+                        for _ in range(10):
+                            cv2.waitKey(1)
+                            time.sleep(0.01)
+                    except:
+                        pass
+        else:
             pass
+        
+        # BUSCAR Y TERMINAR THREADS ZOMBIE
+        zombie_threads = []
+        for thread in threading.enumerate():
+            if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
+                if thread.is_alive():
+                    zombie_threads.append(thread)
+                    print(f"[{scan_id}] LIMPIEZA: ⚠️ Thread zombie encontrado: {thread.name}")
+        
+        if zombie_threads:
+            # Intentar cerrar ventanas asociadas a threads zombie
+            cv2.destroyAllWindows()
+            for _ in range(20):
+                cv2.waitKey(1)
+                time.sleep(0.01)
+
+        # PARAR VIDEO STREAM (referenciado) Y LIBERAR USO
+        try:
+            camera_mgr.stop_stream_ref()
+            time.sleep(0.2)
+            camera_mgr.release("escaner_standalone")
+        except Exception:
+            pass
+
+        # DESTRUIR VENTANAS OPENCV AGRESIVAMENTE
+        try:
+            for attempt in range(3):
+                cv2.destroyAllWindows()
+                cv2.waitKey(1)
+                time.sleep(0.05)
+        except Exception:
+            pass
+
+        # RESETEAR VELOCIDADES SIEMPRE (crítico para siguientes movimientos)
+        try:
+            print(f"[{scan_id}] LIMPIEZA: Reseteando velocidades del robot...")
+            robot.cmd.set_velocities(
+                RobotConfig.NORMAL_SPEED_H,
+                RobotConfig.NORMAL_SPEED_V
+            )
+            time.sleep(1.0)
+            print(f"[{scan_id}] LIMPIEZA: Velocidades reseteadas correctamente")
+        except Exception as e:
+            print(f"[{scan_id}] LIMPIEZA: Error reseteando velocidades: {e}")
+
+        # RESET COMPLETO del UART manager para limpiar callbacks y estado de firmware
+        try:
+            print(f"[{scan_id}] LIMPIEZA: Reset completo del UART manager...")
+            robot.cmd.uart.reset_scanning_state()
+        except Exception as e:
+            print(f"Error en reset del UART manager: {e}")
+
+        # No resetear completamente el camera manager: se conserva para otros módulos
+        
+        # Limpieza final adicional para asegurar estado limpio
+        try:
+            print("LIMPIEZA: Limpieza final adicional...")
+            # Resetear flags globales que puedan quedar
+            import gc
+            gc.collect()  # Forzar garbage collection
+            
+            # Una última verificación de ventanas
+            cv2.destroyAllWindows()
+            cv2.waitKey(1)
+            time.sleep(0.5)
+            
+            print("LIMPIEZA: Estado completamente limpio para siguiente escaneo")
+        except Exception as e:
+            print(f"Advertencia en limpieza final: {e}")
+
+        print("LIMPIEZA COMPLETADA - Robot listo para siguiente operación")
 
 def correlate_flags_with_snapshots(detection_state):
     """Correlacionar flags con snapshots para obtener posiciones reales"""
     try:
         print("\nCORRELACIONANDO FLAGS CON SNAPSHOTS...")
+        # Obtener snapshots reales del último movimiento desde el UART manager
+        # Nota: el escáner corre dentro de main_robot con un objeto 'robot'
+        # accesible por cierre de ámbito no está aquí. Por eso, obtenemos el
+        # UART manager a través de los flags de detección: guardamos una
+        # referencia cuando enviamos flags. Como alternativa simple aquí,
+        # accedemos al singleton de camera_manager no es adecuado; usamos
+        # el truco de localizar un UARTManager en runtime a través de la
+        # instancia global if disponible. Para mantenerlo simple y robusto,
+        # pedimos al módulo command_manager expuesto por robot vía closures.
+        # En este archivo, robot.cmd.uart fue usado en otras funciones, por
+        # lo tanto, almacenamos un puntero dentro de detection_state.
+        uart = detection_state.get('uart_ref')
+        if uart is None:
+            try:
+                # Fallback: intentar acceder mediante un import tardío del main_robot
+                from Nivel_Supervisor.controller.uart_manager import UARTManager  # tipo
+            except Exception:
+                pass
         
-        # Usar las posiciones reales del log actual mostrado por el usuario
-        # S1: X=-49mm, S2: X=-147mm, S3: X=-249mm, etc.
-        snapshot_positions = [-49, -147, -249, -337, -450, -538, -651, -738, -841, -934]
-        
+        snapshot_pairs = []
+        try:
+            if uart is not None and hasattr(uart, 'get_last_snapshots'):
+                snapshot_pairs = uart.get_last_snapshots()  # [(x_mm, y_mm), ...]
+        except Exception:
+            snapshot_pairs = []
+
+        if not snapshot_pairs:
+            print("⚠️ No se recibieron snapshots del robot para este movimiento."
+                  " Verifique que el firmware esté enviando 'MOVEMENT_SNAPSHOTS'"
+                  " al finalizar o al tocar límites. No se calcularán posiciones.")
+            print(f"Flags enviados: {detection_state['flag_count']}")
+            return
+
+        # Usar solo X para correlación horizontal
+        snapshot_positions = [xy[0] for xy in snapshot_pairs]
         print(f"Snapshots disponibles: {len(snapshot_positions)}")
         print(f"Flags enviados: {detection_state['flag_count']}")
-        
+
         # Correlacionar cada par de flags (inicio, fin) con snapshots consecutivos
         for i, segment in enumerate(detection_state['tape_segments']):
             start_flag_idx = segment.get('start_flag', 0) - 1  # Convertir a índice 0-based
             end_flag_idx = segment.get('end_flag', 0) - 1
-            
+
             # Usar posiciones de snapshots correspondientes
             if 0 <= start_flag_idx < len(snapshot_positions):
                 segment['start_pos_real'] = snapshot_positions[start_flag_idx]
-            
+
             if 0 <= end_flag_idx < len(snapshot_positions):
                 segment['end_pos_real'] = snapshot_positions[end_flag_idx]
-                
+
             # Calcular posición central del segmento usando snapshots
             if 'start_pos_real' in segment and 'end_pos_real' in segment:
                 segment['center_pos_real'] = (segment['start_pos_real'] + segment['end_pos_real']) / 2
@@ -359,7 +599,7 @@ def correlate_flags_with_snapshots(detection_state):
                 print(f"        → Centro: {segment['center_pos_real']:.1f}mm, Distancia: {distancia:.0f}mm")
             else:
                 print(f"   CINTA #{i+1}: Datos incompletos")
-        
+
         print("Correlación flags-snapshots completada")
         
     except Exception as e:
