@@ -265,6 +265,34 @@ class RobotController:
             if not result["success"]:
                 return {"success": False, "message": "Error configurando velocidades"}
             
+            # Pre-clear: si algún límite está activo, alejarse 20mm en la dirección segura
+            try:
+                lim = self.cmd.uart.get_limit_status()
+                active = lim.get('status', {}) if lim else {}
+                pre_moves = []
+                if active.get('H_RIGHT', False):
+                    # alejarse a la izquierda
+                    pre_moves.append((RobotConfig.apply_x_direction(20), 0))
+                if active.get('H_LEFT', False):
+                    # alejarse a la derecha
+                    pre_moves.append((RobotConfig.apply_x_direction(-20), 0))
+                if active.get('V_UP', False):
+                    # alejarse hacia abajo
+                    pre_moves.append((0, RobotConfig.apply_y_direction(20)))
+                if active.get('V_DOWN', False):
+                    # alejarse hacia arriba
+                    pre_moves.append((0, RobotConfig.apply_y_direction(-20)))
+                for dx, dy in pre_moves:
+                    print(f"Pre-homing: alejándose de límite activo ΔX={dx}mm, ΔY={dy}mm")
+                    self.cmd.move_xy(dx, dy)
+                    try:
+                        self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=10.0)
+                    except Exception:
+                        time.sleep(0.5)
+                    time.sleep(0.2)
+            except Exception:
+                pass
+            
             print("Moviendo hacia la DERECHA hasta tocar límite...")
             result = self.cmd.move_xy(RobotConfig.get_homing_direction_x(), 0)
             
