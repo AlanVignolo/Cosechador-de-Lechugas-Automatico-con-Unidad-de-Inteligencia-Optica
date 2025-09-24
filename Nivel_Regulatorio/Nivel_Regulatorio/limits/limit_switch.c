@@ -55,7 +55,7 @@ void limit_switch_update(void) {
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
                 
-                if (horizontal_axis.direction) {  // true = izquierda (AJUSTADO)
+                if (horizontal_axis.state == STEPPER_MOVING && horizontal_axis.direction) {  // true = izquierda (AJUSTADO)
                     // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
                     extern uint8_t snapshot_count;
                     extern progress_snapshot_t snapshots[];
@@ -96,7 +96,7 @@ void limit_switch_update(void) {
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
                 
-                if (!horizontal_axis.direction) {  // false = derecha (AJUSTADO)
+                if (horizontal_axis.state == STEPPER_MOVING && !horizontal_axis.direction) {  // false = derecha (AJUSTADO)
                     // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
                     extern uint8_t snapshot_count;
                     extern progress_snapshot_t snapshots[];
@@ -137,7 +137,7 @@ void limit_switch_update(void) {
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
                 
-                if (vertical_axis.direction) {
+                if (vertical_axis.state == STEPPER_MOVING && vertical_axis.direction) {
                     // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
                     extern uint8_t snapshot_count;
                     extern progress_snapshot_t snapshots[];
@@ -178,7 +178,7 @@ void limit_switch_update(void) {
 				// Terminar calibraci�n autom�ticamente
 				stepper_stop_calibration();
                 
-                if (!vertical_axis.direction) {
+                if (vertical_axis.state == STEPPER_MOVING && !vertical_axis.direction) {
                     // ENVIAR SNAPSHOTS ANTES DE PARAR (si los hay)
                     extern uint8_t snapshot_count;
                     extern progress_snapshot_t snapshots[];

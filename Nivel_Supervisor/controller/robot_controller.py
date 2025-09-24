@@ -302,6 +302,36 @@ class RobotController:
             else:
                 return {"success": False, "message": "❌ No se alcanzó límite derecho"}
             
+            # Asegurar liberar límite derecho antes de subir
+            try:
+                lim = self.cmd.uart.get_limit_status()
+                at_right = bool(lim and lim.get('status', {}).get('H_RIGHT', False))
+            except Exception:
+                at_right = False
+            if at_right:
+                try:
+                    print("Despegando 12mm desde límite derecho antes de subir...")
+                    self.cmd.move_xy(RobotConfig.apply_x_direction(12), 0)
+                    try:
+                        self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=8.0)
+                    except Exception:
+                        time.sleep(0.5)
+                    # Poll hasta que libere H_RIGHT o 1s
+                    start = time.time()
+                    while time.time() - start < 1.0:
+                        resp = self.cmd.check_limits()
+                        try:
+                            resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+                        except Exception:
+                            resp_str = ""
+                        self.cmd.uart._update_limit_status_from_response(resp_str)
+                        st = self.cmd.uart.get_limit_status()
+                        if not st.get('status', {}).get('H_RIGHT', False):
+                            break
+                        time.sleep(0.05)
+                except Exception:
+                    pass
+
             print("Moviendo hacia ARRIBA hasta tocar límite...")
             result = self.cmd.move_xy(0, RobotConfig.get_homing_direction_y())
             
@@ -591,7 +621,37 @@ class RobotController:
             limit_message = self.cmd.uart.wait_for_limit_specific('H_RIGHT', timeout=30.0)
             if not limit_message:
                 return {"success": False, "message": "No se alcanzó límite derecho en homing final"}
-            
+
+            # Liberar H_RIGHT antes de subir para que no interrumpa el movimiento vertical
+            try:
+                lim = self.cmd.uart.get_limit_status()
+                at_right = bool(lim and lim.get('status', {}).get('H_RIGHT', False))
+            except Exception:
+                at_right = False
+            if at_right:
+                try:
+                    print("      → Retrocediendo 12mm desde límite derecho para liberar switch...")
+                    self.cmd.move_xy(RobotConfig.apply_x_direction(12), 0)
+                    try:
+                        self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=8.0)
+                    except Exception:
+                        time.sleep(0.5)
+                    # Poll hasta que libere H_RIGHT o 1s
+                    start = time.time()
+                    while time.time() - start < 1.0:
+                        resp = self.cmd.check_limits()
+                        try:
+                            resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+                        except Exception:
+                            resp_str = ""
+                        self.cmd.uart._update_limit_status_from_response(resp_str)
+                        st = self.cmd.uart.get_limit_status()
+                        if not st.get('status', {}).get('H_RIGHT', False):
+                            break
+                        time.sleep(0.05)
+                except Exception:
+                    pass
+
             # Ir a límite superior
             print("      → Moviendo hacia límite superior...")
             result = self.cmd.move_xy(0, RobotConfig.get_homing_direction_y())
