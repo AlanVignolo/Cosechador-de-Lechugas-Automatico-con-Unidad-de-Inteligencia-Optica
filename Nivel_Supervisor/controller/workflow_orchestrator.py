@@ -323,16 +323,25 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
         first_tube = True
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
-            # Posicionamiento combinado: si venimos del límite izquierdo (tubo anterior),
-            # retroceder a X≈0 y subir/bajar al Y objetivo en un único movimiento diagonal
+            # Posicionamiento combinado: volver a X≈0 y ajustar Y al siguiente tubo en un único movimiento diagonal
+            # Calcular ΔX en base a la posición real reportada por firmware (XY?)
             dx = 0.0
             try:
-                lim = robot.cmd.uart.get_limit_status()
-                at_left = bool(lim and lim.get('status', {}).get('H_LEFT', False))
+                fw = robot.cmd.get_current_position_mm()
+                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
+                if 'MM:' in resp:
+                    mm_part = resp.split('MM:')[1]
+                    parts = mm_part.replace('\n', ' ').split(',')
+                    if len(parts) >= 2:
+                        curr_x_fw = float(parts[0].strip())
+                    else:
+                        curr_x_fw = float(robot.get_status()['position']['x'])
+                else:
+                    curr_x_fw = float(robot.get_status()['position']['x'])
             except Exception:
-                at_left = False
-            if not first_tube and at_left:
-                dx = -(max(0.0, width_mm - safety))
+                curr_x_fw = float(robot.get_status()['position']['x'])
+            if not first_tube:
+                dx = -curr_x_fw
             # ΔY desde la última Y alcanzada
             dy = y_target - y_curr
 
@@ -376,13 +385,22 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
         # Paso 4: Volver a (0,0)
         if return_home:
             print("[inicio_completo] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
-            # Incluir componente X solo si seguimos en límite izquierdo; si no, mover solo Y
+            # Usar posición real de firmware para volver a X≈0 independientemente de switches
             try:
-                lim = robot.cmd.uart.get_limit_status()
-                at_left = bool(lim and lim.get('status', {}).get('H_LEFT', False))
+                fw = robot.cmd.get_current_position_mm()
+                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
+                if 'MM:' in resp:
+                    mm_part = resp.split('MM:')[1]
+                    parts = mm_part.replace('\n', ' ').split(',')
+                    if len(parts) >= 2:
+                        curr_x_fw = float(parts[0].strip())
+                    else:
+                        curr_x_fw = 0.0
+                else:
+                    curr_x_fw = 0.0
             except Exception:
-                at_left = False
-            dx_back = -(max(0.0, width_mm - safety)) if at_left else 0.0
+                curr_x_fw = 0.0
+            dx_back = -curr_x_fw
             dy_back = -y_curr
             print(f"     ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
@@ -1083,7 +1101,22 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
         # Paso 4: Volver a (0,0)
         if return_home:
             print("[inicio_simple] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
-            dx_back = -(max(0.0, width_mm - safety))
+            # Usar posición real del firmware para regresar a X≈0 de forma robusta
+            try:
+                fw = robot.cmd.get_current_position_mm()
+                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
+                if 'MM:' in resp:
+                    mm_part = resp.split('MM:')[1]
+                    parts = mm_part.replace('\n', ' ').split(',')
+                    if len(parts) >= 2:
+                        curr_x_fw = float(parts[0].strip())
+                    else:
+                        curr_x_fw = 0.0
+                else:
+                    curr_x_fw = 0.0
+            except Exception:
+                curr_x_fw = 0.0
+            dx_back = -curr_x_fw
             dy_back = -y_curr
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
             if not ret_res.get('success'):
@@ -1221,13 +1254,23 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
             dx = 0.0
+            # Volver a X≈0 usando posición real de firmware, independientemente del switch
             try:
-                lim = robot.cmd.uart.get_limit_status()
-                at_left = bool(lim and lim.get('status', {}).get('H_LEFT', False))
+                fw = robot.cmd.get_current_position_mm()
+                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
+                if 'MM:' in resp:
+                    mm_part = resp.split('MM:')[1]
+                    parts = mm_part.replace('\n', ' ').split(',')
+                    if len(parts) >= 2:
+                        curr_x_fw = float(parts[0].strip())
+                    else:
+                        curr_x_fw = float(robot.get_status()['position']['x'])
+                else:
+                    curr_x_fw = float(robot.get_status()['position']['x'])
             except Exception:
-                at_left = False
-            if not first_tube and at_left:
-                dx = -(max(0.0, width_mm - safety))
+                curr_x_fw = float(robot.get_status()['position']['x'])
+            if not first_tube:
+                dx = -curr_x_fw
             dy = y_target - y_curr
 
             print(f"  -> Tubo {tubo_id}: mover a (X=0.0, Y={y_target:.1f}) con ΔX={dx:.1f}mm, ΔY={dy:.1f}mm")
@@ -1263,12 +1306,22 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
         # Paso 4: Volver a (0,0)
         if return_home:
             print("[inicio_completo_hard] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
+            # Usar firmware XY? para determinar ΔX de retorno a X≈0
             try:
-                lim = robot.cmd.uart.get_limit_status()
-                at_left = bool(lim and lim.get('status', {}).get('H_LEFT', False))
+                fw = robot.cmd.get_current_position_mm()
+                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
+                if 'MM:' in resp:
+                    mm_part = resp.split('MM:')[1]
+                    parts = mm_part.replace('\n', ' ').split(',')
+                    if len(parts) >= 2:
+                        curr_x_fw = float(parts[0].strip())
+                    else:
+                        curr_x_fw = 0.0
+                else:
+                    curr_x_fw = 0.0
             except Exception:
-                at_left = False
-            dx_back = -(max(0.0, width_mm - safety)) if at_left else 0.0
+                curr_x_fw = 0.0
+            dx_back = -curr_x_fw
             dy_back = -y_curr
             print(f"     ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
