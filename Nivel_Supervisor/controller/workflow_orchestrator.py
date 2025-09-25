@@ -527,14 +527,17 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         print(f"[cosecha] Moviendo a inicio seguro: X={x_edge:.1f}, Y={y_tubo1:.1f}")
         if not move_abs(x_edge, y_tubo1):
             return False
-        wait_until_position(x_edge, y_tubo1)
         if robot.arm.current_state != 'mover_lechuga':
             print("[cosecha] Cambiando brazo a 'mover_lechuga'")
             res_arm = robot.arm.change_state('mover_lechuga')
             if not res_arm.get('success'):
                 print(f"No se pudo ir a 'mover_lechuga': {res_arm}")
                 return False
-            # Esperar a que termine el movimiento del brazo antes de avanzar
+            # Esperar confirmación de fin de trayectoria por UART y luego idle
+            try:
+                robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
+            except Exception:
+                pass
             wait_arm_idle(6.0)
         else:
             print("[cosecha] Brazo ya en 'mover_lechuga'")
@@ -606,6 +609,10 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not res_arm.get('success'):
                     print(f"       Error moviendo a 'recoger_lechuga': {res_arm}")
                     return False
+                try:
+                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=12.0)
+                except Exception:
+                    pass
                 wait_arm_idle(8.0)
                 # Al completarse, setear CON lechuga y volver a transporte
                 robot.arm.set_lettuce_state(True)
@@ -613,6 +620,10 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not res_arm2.get('success'):
                     print(f"       Error moviendo a 'mover_lechuga': {res_arm2}")
                     return False
+                try:
+                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
+                except Exception:
+                    pass
                 wait_arm_idle(6.0)
 
                 # Ir a esquina para soltar: (fin_workspace, fin_workspace)
@@ -624,6 +635,10 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not res_dep.get('success'):
                     print(f"       Error en 'depositar_lechuga': {res_dep}")
                     return False
+                try:
+                    robot.cmd.uart.wait_for_action_completion("GRIPPER_ACTION", timeout=10.0)
+                except Exception:
+                    pass
                 wait_arm_idle(6.0)
                 # Volver a transporte sin lechuga
                 robot.arm.set_lettuce_state(False)
@@ -631,13 +646,17 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not res_back.get('success'):
                     print(f"       Error volviendo a 'mover_lechuga': {res_back}")
                     return False
+                try:
+                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
+                except Exception:
+                    pass
                 wait_arm_idle(6.0)
                 # Volver a la Y del tubo actual antes de seguir con la siguiente cinta
                 status = robot.get_status()
                 curr_x_after_deposit = float(status['position']['x'])
                 if not move_abs(curr_x_after_deposit, y_tubo):
                     return False
-                wait_until_position(curr_x_after_deposit, y_tubo)
+                # El movimiento absoluto ya espera por COMPLETED; no es necesario polling adicional
 
                 print("     ✓ Cosecha y depósito completados para esta cinta")
                 # Continuar a la siguiente cinta
@@ -645,8 +664,34 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             # Fin de cintas de este tubo
             print(f"== Fin de {nombre_tubo} ==")
 
-        # Al terminar todos los tubos: volver a (0,0)
+        # Al terminar todos los tubos: ir a (x_edge, y_actual), poner brazo en 'movimiento' y luego volver a (0,0)
         if return_home:
+            # Obtener Y actual
+            fwpos_end = _get_curr_pos_mm_from_fw()
+            if fwpos_end is not None:
+                _, y_actual = fwpos_end
+            else:
+                st_end = robot.get_status()
+                y_actual = float(st_end['position']['y'])
+
+            print(f"[cosecha] Preparando retorno: mover a borde seguro X={x_edge:.1f}, Y={y_actual:.1f}")
+            if not move_abs(x_edge, y_actual, timeout_s=240.0):
+                print("Advertencia: No se pudo mover a borde seguro antes de volver a (0,0)")
+            else:
+                pass
+
+            # Poner brazo en 'movimiento' para transporte seguro al origen
+            print("[cosecha] Poniendo brazo en 'movimiento' para retorno al origen")
+            res_arm_end = robot.arm.change_state('movimiento')
+            if not res_arm_end.get('success'):
+                print(f"Advertencia: No se pudo poner brazo en 'movimiento': {res_arm_end}")
+            else:
+                try:
+                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
+                except Exception:
+                    pass
+                wait_arm_idle(6.0)
+
             print("[cosecha] Volviendo a (0,0)...")
             if not move_abs(0.0, 0.0, timeout_s=240.0):
                 print("Advertencia: No se pudo volver a (0,0)")
