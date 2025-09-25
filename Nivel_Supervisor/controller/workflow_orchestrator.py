@@ -236,11 +236,24 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             print("Error: Matriz de cintas no disponible")
             return False
 
+        # Asegurar estado HOMED (para tener origen y tracking coherente)
+        status0 = robot.get_status()
+        if not status0.get('homed'):
+            print("[cosecha] Robot no homed. Ejecutando homing...")
+            res_home = robot.home_robot()
+            if not res_home.get('success'):
+                print(f"[cosecha] Error en homing: {res_home.get('message')}")
+                return False
         # Obtener dimensiones del workspace
         dims = robot.get_workspace_dimensions()
         if dims.get('calibrated'):
             width_mm = float(dims.get('width_mm', 0.0))
             height_mm = float(dims.get('height_mm', 0.0))
+            # Validación de medidas válidas
+            if width_mm <= 0 or height_mm <= 0:
+                print("[cosecha] Dimensiones calibradas inválidas. Usando RobotConfig MAX_X/Y")
+                width_mm = float(RobotConfig.MAX_X)
+                height_mm = float(RobotConfig.MAX_Y)
         else:
             width_mm = float(RobotConfig.MAX_X)
             height_mm = float(RobotConfig.MAX_Y)
@@ -249,6 +262,9 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         edge_backoff_mm = 20.0
         x_edge = max(0.0, width_mm - edge_backoff_mm)
         y_edge = max(0.0, height_mm - edge_backoff_mm)
+
+        print(f"[cosecha] Workspace: width={width_mm:.1f}mm, height={height_mm:.1f}mm")
+        print(f"[cosecha] Edges: x_edge={x_edge:.1f}mm, y_edge={y_edge:.1f}mm")
 
         # Helper: mover a posición absoluta
         def move_abs(x_target: float, y_target: float, timeout_s: float = 180.0):
@@ -264,6 +280,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 dy = 0.0
             if dx == 0.0 and dy == 0.0:
                 return True
+            print(f"[move_abs] curr=({curr_x:.1f},{curr_y:.1f}) -> target=({x_target:.1f},{y_target:.1f}) | d=({dx:.1f},{dy:.1f})")
             # Enviar directamente (firmware coincide con convención del supervisor)
             res = robot.cmd.move_xy(dx, dy)
             if not res.get('success'):
@@ -302,13 +319,19 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             print("No hay tubos configurados")
             return False
 
-        # Mover al punto inicial si el brazo no está en 'mover_lechuga'
+        # Ir SIEMPRE al punto inicial seguro (X=fin-20, Y=tubo1) y luego asegurar brazo en 'mover_lechuga'
+        first_tube_id = sorted(tubos_cfg.keys())[0]
+        y_tubo1 = float(tubos_cfg[first_tube_id]['y_mm'])
+        # Paso inicial en dos etapas: (1) horizontal puro hasta X seguro, (2) bajar/subir a Y del tubo
+        status = robot.get_status()
+        curr_y_init = float(status['position']['y'])
+        print(f"[cosecha] Moviendo a inicio seguro (etapa 1/2 H): X={x_edge:.1f}, Y={curr_y_init:.1f}")
+        if not move_abs(x_edge, curr_y_init):
+            return False
+        print(f"[cosecha] Moviendo a inicio seguro (etapa 2/2 V): X={x_edge:.1f}, Y={y_tubo1:.1f}")
+        if not move_abs(x_edge, y_tubo1):
+            return False
         if robot.arm.current_state != 'mover_lechuga':
-            first_tube_id = sorted(tubos_cfg.keys())[0]
-            y_tubo1 = float(tubos_cfg[first_tube_id]['y_mm'])
-            print(f"[cosecha] Moviendo a inicio: X={x_edge:.1f}, Y={y_tubo1:.1f}")
-            if not move_abs(x_edge, y_tubo1):
-                return False
             print("[cosecha] Cambiando brazo a 'mover_lechuga'")
             res_arm = robot.arm.change_state('mover_lechuga')
             if not res_arm.get('success'):
@@ -394,6 +417,11 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 res_back = robot.arm.change_state('mover_lechuga')
                 if not res_back.get('success'):
                     print(f"       Error volviendo a 'mover_lechuga': {res_back}")
+                    return False
+                # Volver a la Y del tubo actual antes de seguir con la siguiente cinta
+                status = robot.get_status()
+                curr_x_after_deposit = float(status['position']['x'])
+                if not move_abs(curr_x_after_deposit, y_tubo):
                     return False
 
                 print("     ✓ Cosecha y depósito completados para esta cinta")

@@ -310,12 +310,14 @@ class RobotController:
                 at_right = False
             if at_right:
                 try:
-                    print("Despegando 12mm desde límite derecho antes de subir...")
-                    self.cmd.move_xy(RobotConfig.apply_x_direction(12), 0)
+                    print(f"Despegando {RobotConfig.HOME_OFFSET_H}mm desde límite derecho antes de subir...")
+                    # Alejarse del límite derecho hacia la izquierda exactamente HOME_OFFSET_H
+                    self.cmd.move_xy(RobotConfig.apply_x_direction(RobotConfig.HOME_OFFSET_H), 0)
                     try:
                         self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=8.0)
                     except Exception:
                         time.sleep(0.5)
+                    
                     # Poll hasta que libere H_RIGHT o 1s
                     start = time.time()
                     while time.time() - start < 1.0:
@@ -341,9 +343,10 @@ class RobotController:
             else:
                 return {"success": False, "message": "❌ No se alcanzó límite superior"}
             
-            print(f"Estableciendo origen ({RobotConfig.HOME_OFFSET_H}mm, {RobotConfig.HOME_OFFSET_V}mm desde límites)...")
+            # Aplicar solo offset vertical tras tocar límite superior
+            print(f"Estableciendo origen vertical (bajar {RobotConfig.HOME_OFFSET_V}mm desde límite superior)...")
             
-            result = self.cmd.move_xy(RobotConfig.get_home_offset_x(), RobotConfig.get_home_offset_y())
+            result = self.cmd.move_xy(0, RobotConfig.get_home_offset_y())
             if not result["success"]:
                 return {"success": False, "message": "Error en offset"}
             
