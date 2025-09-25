@@ -625,28 +625,64 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
                 print("Error: no se pudo mover el brazo a posición segura")
                 return False
 
+        # Helpers locales para posición fiable
+        def _parse_mm_from_xy_response(resp: str):
+            try:
+                s = str(resp or "")
+                if "MM:" in s:
+                    mm_part = s.split("MM:")[1]
+                    parts = mm_part.replace('\n', ' ').split(',')
+                    if len(parts) >= 2:
+                        x = float(parts[0])
+                        y = float(parts[1])
+                        return x, y
+            except Exception:
+                pass
+            return None
+
+        def _wait_until_position(x_target: float, y_target: float, tol_mm: float = 2.0, timeout_s: float = 2.0):
+            import time as _t
+            t0 = _t.time()
+            while _t.time() - t0 < timeout_s:
+                st = robot.get_status()
+                cx = float(st['position']['x'])
+                cy = float(st['position']['y'])
+                if abs(cx - x_target) <= tol_mm and abs(cy - y_target) <= tol_mm:
+                    return True
+                _t.sleep(0.05)
+            return False
+
         # Paso 1: Ir a (0,0)
         print("[inicio_simple] Paso 1/4: Ir a (0,0)...")
-        curr_x = float(status['position']['x'])
-        curr_y = float(status['position']['y'])
+        # Intentar leer posición real desde firmware (XY?) y usarla para el delta
+        fw_pos = robot.cmd.get_current_position_mm()
+        # Fallback a estado del supervisor si falla el parseo
+        status_now = robot.get_status()
+        curr_x = float(status_now['position']['x'])
+        curr_y = float(status_now['position']['y'])
+        try:
+            resp = fw_pos.get('response', '') if isinstance(fw_pos, dict) else str(fw_pos)
+        except Exception:
+            resp = ""
+        parsed = _parse_mm_from_xy_response(resp)
+        if parsed:
+            curr_x, curr_y = parsed
+            print(f"[inicio_simple] Posición actual (firmware): X={curr_x:.1f}mm, Y={curr_y:.1f}mm")
+        else:
+            print(f"[inicio_simple] Posición actual (supervisor): X={curr_x:.1f}mm, Y={curr_y:.1f}mm")
+
         if abs(curr_x) > 0.01 or abs(curr_y) > 0.01:
             res0 = robot.cmd.move_xy(-curr_x, -curr_y)
             if not res0.get('success'):
                 print(f"Error moviendo a (0,0): {res0}")
                 return False
-            # Esperar a que complete el movimiento a (0,0)
             try:
                 robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=120.0)
             except Exception:
                 pass
-            # Fallback por tiempo
-            try:
-                h_mm_s = max(1.0, float(RobotConfig.NORMAL_SPEED_H) / float(RobotConfig.STEPS_PER_MM_H))
-                v_mm_s = max(1.0, float(RobotConfig.NORMAL_SPEED_V) / float(RobotConfig.STEPS_PER_MM_V))
-                est_t = max(abs(curr_x) / h_mm_s, abs(curr_y) / v_mm_s) + 0.5
-                time.sleep(min(est_t, 8.0))
-            except Exception:
-                time.sleep(1.0)
+            # Pequeño delay y verificación de llegada
+            time.sleep(0.1)
+            _wait_until_position(0.0, 0.0)
 
         # Paso 2: Escaneo vertical
         print("[inicio_simple] Paso 2/4: Escaneo vertical (manual)...")
