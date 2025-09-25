@@ -93,9 +93,13 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
                 print("Error: no se pudo mover el brazo a posición segura")
                 return False
 
-        # Pre-posicionamiento si el brazo NO está en 'movimiento' (10°,10°): ir a (x_edge, Y>=250) y luego cambiar a 'movimiento'
-        if not robot.arm.is_in_movement_position():
-            print("[inicio_simple] Pre-posicionamiento: brazo no está en 'movimiento'.")
+        # Pre-posicionamiento si el brazo NO está en 'movimiento': ir a (x_edge, Y>=250) y luego cambiar a 'movimiento'
+        try:
+            in_move = robot.arm.is_in_movement_position()
+        except Exception:
+            in_move = False
+        if not in_move:
+            print("[inicio_completo] Pre-posicionamiento: brazo no está en 'movimiento'.")
             # Calcular borde seguro (x_edge)
             dims_pp = robot.get_workspace_dimensions()
             if dims_pp.get('calibrated'):
@@ -122,74 +126,9 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
                 fw_str = fw.get('response', '') if isinstance(fw, dict) else str(fw)
             except Exception:
                 fw_str = ''
-            parsed = _parse_fw_xy(fw_str)
-            if parsed:
-                curr_x_pp, curr_y_pp = parsed
-            else:
-                st = robot.get_status()
-                curr_x_pp = float(st['position']['x'])
-                curr_y_pp = float(st['position']['y'])
-
-            y_target_pp = curr_y_pp if curr_y_pp >= 250.0 else 250.0
-            dx_pp = x_edge_pp - curr_x_pp
-            dy_pp = y_target_pp - curr_y_pp
-            print(f"[inicio_simple] Moviendo a zona segura X={x_edge_pp:.1f}, Y={y_target_pp:.1f} (ΔX={dx_pp:.1f}, ΔY={dy_pp:.1f})")
-            res_pp = robot.cmd.move_xy(dx_pp, dy_pp)
-            if not res_pp.get('success'):
-                print(f"Error en pre-posicionamiento XY: {res_pp}")
-                return False
-            try:
-                robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
-            except Exception:
-                pass
-            time.sleep(0.1)
-
-            # Pasar brazo a 'movimiento' y esperar
-            res_arm_pp = robot.arm.change_state('movimiento')
-            if not res_arm_pp.get('success'):
-                print(f"Error: no se pudo cambiar brazo a 'movimiento': {res_arm_pp}")
-                return False
-            t0 = time.time()
-            while time.time() - t0 < 6.0:
-                try:
-                    if not getattr(robot.arm, 'is_executing_trajectory', False):
-                        break
-                except Exception:
-                    break
-                time.sleep(0.05)
-
-        # Pre-posicionamiento seguro si el brazo NO está exactamente en 'movimiento' (10°,10°)
-        if not robot.arm.is_in_movement_position():
-            print("[inicio_completo] Pre-posicionamiento: brazo no está en 'movimiento'.")
-            # Calcular borde seguro de trabajo
-            dims_pp = robot.get_workspace_dimensions()
-            if dims_pp.get('calibrated'):
-                width_pp = float(dims_pp.get('width_mm', 0.0))
-            else:
-                width_pp = float(RobotConfig.MAX_X)
-            edge_backoff_mm = 20.0
-            x_edge_pp = max(0.0, width_pp - edge_backoff_mm)
-
-            # Leer posición actual desde firmware para deltas correctos
-            def _parse_fw_xy(resp: str):
-                try:
-                    if 'MM:' in resp:
-                        mm_part = resp.split('MM:')[1]
-                        parts = mm_part.replace('\n', ' ').split(',')
-                        if len(parts) >= 2:
-                            return float(parts[0].strip()), float(parts[1].strip())
-                except Exception:
-                    pass
-                return None
-
-            try:
-                fw = robot.cmd.get_current_position_mm()
-                fw_str = fw.get('response', '') if isinstance(fw, dict) else str(fw)
-            except Exception:
-                fw_str = ''
-            parsed = _parse_fw_xy(fw_str)
-            if parsed:
-                curr_x_pp, curr_y_pp = parsed
+            parsed_pp = _parse_fw_xy(fw_str)
+            if parsed_pp:
+                curr_x_pp, curr_y_pp = parsed_pp
             else:
                 st = robot.get_status()
                 curr_x_pp = float(st['position']['x'])
@@ -209,73 +148,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
                 pass
             time.sleep(0.1)
 
-            # Pasar brazo a 'movimiento' y esperar
-            res_arm_pp = robot.arm.change_state('movimiento')
-            if not res_arm_pp.get('success'):
-                print(f"Error: no se pudo cambiar brazo a 'movimiento': {res_arm_pp}")
-                return False
-            # Esperar a que termine trayectoria del brazo
-            t0 = time.time()
-            while time.time() - t0 < 6.0:
-                try:
-                    if not getattr(robot.arm, 'is_executing_trajectory', False):
-                        break
-                except Exception:
-                    break
-                time.sleep(0.05)
-
-        # Pre-posicionamiento seguro si el brazo NO está exactamente en 'movimiento' (10°,10°)
-        if not robot.arm.is_in_movement_position():
-            print("[inicio_completo] Pre-posicionamiento: brazo no está en 'movimiento'.")
-            # Calcular borde seguro de trabajo
-            dims_pp = robot.get_workspace_dimensions()
-            if dims_pp.get('calibrated'):
-                width_pp = float(dims_pp.get('width_mm', 0.0))
-            else:
-                width_pp = float(RobotConfig.MAX_X)
-            edge_backoff_mm = 20.0
-            x_edge_pp = max(0.0, width_pp - edge_backoff_mm)
-
-            # Leer posición actual desde firmware para deltas correctos
-            def _parse_fw_xy(resp: str):
-                try:
-                    if 'MM:' in resp:
-                        mm_part = resp.split('MM:')[1]
-                        parts = mm_part.replace('\n', ' ').split(',')
-                        if len(parts) >= 2:
-                            return float(parts[0].strip()), float(parts[1].strip())
-                except Exception:
-                    pass
-                return None
-
-            try:
-                fw = robot.cmd.get_current_position_mm()
-                fw_str = fw.get('response', '') if isinstance(fw, dict) else str(fw)
-            except Exception:
-                fw_str = ''
-            parsed = _parse_fw_xy(fw_str)
-            if parsed:
-                curr_x_pp, curr_y_pp = parsed
-            else:
-                st = robot.get_status()
-                curr_x_pp = float(st['position']['x'])
-                curr_y_pp = float(st['position']['y'])
-
-            y_target_pp = curr_y_pp if curr_y_pp >= 250.0 else 250.0
-            dx_pp = x_edge_pp - curr_x_pp
-            dy_pp = y_target_pp - curr_y_pp
-            print(f"[inicio_completo] Moviendo a zona segura X={x_edge_pp:.1f}, Y={y_target_pp:.1f} (ΔX={dx_pp:.1f}, ΔY={dy_pp:.1f})")
-            res_pp = robot.cmd.move_xy(dx_pp, dy_pp)
-            if not res_pp.get('success'):
-                print(f"Error en pre-posicionamiento XY: {res_pp}")
-                return False
-            try:
-                robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
-            except Exception:
-                pass
-            time.sleep(0.1)
-
-            # Pasar brazo a 'movimiento' y esperar
+            # Cambiar brazo a 'movimiento' y esperar
             res_arm_pp = robot.arm.change_state('movimiento')
             if not res_arm_pp.get('success'):
                 print(f"Error: no se pudo cambiar brazo a 'movimiento': {res_arm_pp}")
@@ -341,6 +214,10 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             except Exception:
                 curr_x_fw = float(robot.get_status()['position']['x'])
             if not first_tube:
+                try:
+                    print(f"[inicio_completo] XY? firmware reporta X actual = {curr_x_fw:.1f}mm")
+                except Exception:
+                    pass
                 dx = -curr_x_fw
             # ΔY desde la última Y alcanzada
             dy = y_target - y_curr
@@ -803,9 +680,9 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         return False
 
 
-def inicio_completo(robot, return_home: bool = True) -> bool:
+def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
     """
-    Inicio completo (calibración del workspace):
+    Inicio completo (LEGACY - calibración del workspace):
     1) Calibración completa del workspace (homing + medida)
     2) Escaneo vertical (manual de flags)
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
@@ -1057,12 +934,21 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             # retroceder a X≈0 y subir/bajar al Y objetivo en un único movimiento diagonal
             dx = 0.0
             try:
-                lim = robot.cmd.uart.get_limit_status()
-                at_left = bool(lim and lim.get('status', {}).get('H_LEFT', False))
+                fw = robot.cmd.get_current_position_mm()
+                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
+                if 'MM:' in resp:
+                    mm_part = resp.split('MM:')[1]
+                    parts = mm_part.replace('\n', ' ').split(',')
+                    if len(parts) >= 2:
+                        curr_x_fw = float(parts[0].strip())
+                    else:
+                        curr_x_fw = float(robot.get_status()['position']['x'])
+                else:
+                    curr_x_fw = float(robot.get_status()['position']['x'])
             except Exception:
-                at_left = False
-            if not first_tube and at_left:
-                dx = -(max(0.0, width_mm - safety))
+                curr_x_fw = float(robot.get_status()['position']['x'])
+            if not first_tube:
+                dx = -curr_x_fw
             # ΔY desde la última Y alcanzada
             dy = y_target - y_curr
 
