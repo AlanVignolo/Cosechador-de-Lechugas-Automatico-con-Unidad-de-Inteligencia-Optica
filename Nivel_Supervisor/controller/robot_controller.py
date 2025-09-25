@@ -448,6 +448,30 @@ class RobotController:
             "gripper": self.gripper_state
         }
 
+    def resync_global_position_from_firmware(self) -> bool:
+        """Consultar XY? al firmware y sincronizar la posición global del supervisor.
+        Retorna True si se pudo sincronizar, False en caso contrario.
+        """
+        try:
+            resp = self.cmd.get_current_position_mm()
+            s = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+            if 'MM:' in s:
+                mm_part = s.split('MM:')[1]
+                parts = mm_part.replace('\n', ' ').split(',')
+                if len(parts) >= 2:
+                    x = float(parts[0].strip())
+                    y = float(parts[1].strip())
+                    self.global_position['x'] = x
+                    self.global_position['y'] = y
+                    self._save_current_position()
+                    display_x = RobotConfig.display_x_position(x)
+                    display_y = RobotConfig.display_y_position(y)
+                    self.logger.info(f"Resync posición desde firmware: X={display_x}mm, Y={display_y}mm")
+                    return True
+        except Exception as e:
+            self.logger.warning(f"No se pudo resync desde firmware: {e}")
+        return False
+
     def calibrate_workspace(self) -> Dict:
         """Calibración del workspace usando mensajes STEPPER_EMERGENCY_STOP del firmware"""
         print("Iniciando calibración del workspace...")

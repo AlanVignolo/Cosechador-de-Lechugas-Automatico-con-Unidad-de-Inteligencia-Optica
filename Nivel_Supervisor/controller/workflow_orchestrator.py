@@ -267,6 +267,18 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
                 print(f"Advertencia: No se pudo volver a (0,0): {ret_res}")
             else:
                 print("Regreso a (0,0) solicitado")
+                # Esperar confirmación y resincronizar estado global desde firmware
+                try:
+                    robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
+                except Exception:
+                    pass
+                try:
+                    ok_resync = robot.resync_global_position_from_firmware()
+                    if not ok_resync:
+                        # Como fallback, mantener el estado del supervisor
+                        pass
+                except Exception:
+                    pass
 
         print("[inicio_completo] Secuencia finalizada")
         return True
@@ -386,6 +398,17 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             if not res_home.get('success'):
                 print(f"[cosecha] Error en homing: {res_home.get('message')}")
                 return False
+        # Antes de calcular y mover, resincronizar posición global desde firmware para evitar usar estado viejo
+        try:
+            if robot.resync_global_position_from_firmware():
+                st_sync = robot.get_status()
+                print(f"[cosecha] Posición resincronizada: X={st_sync['position']['x']:.1f}mm, Y={st_sync['position']['y']:.1f}mm")
+            else:
+                st_nosync = robot.get_status()
+                print(f"[cosecha] Aviso: no se pudo resincronizar. Usando estado supervisor: X={st_nosync['position']['x']:.1f}mm, Y={st_nosync['position']['y']:.1f}mm")
+        except Exception:
+            pass
+
         # Obtener dimensiones del workspace
         dims = robot.get_workspace_dimensions()
         if dims.get('calibrated'):
