@@ -266,11 +266,31 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         print(f"[cosecha] Workspace: width={width_mm:.1f}mm, height={height_mm:.1f}mm")
         print(f"[cosecha] Edges: x_edge={x_edge:.1f}mm, y_edge={y_edge:.1f}mm")
 
+        # Helper: obtener posición actual desde firmware (preferido) o supervisor
+        def _get_curr_pos_mm_from_fw() -> Optional[Tuple[float, float]]:
+            try:
+                resp = robot.cmd.get_current_position_mm()
+                resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+                if 'MM:' in resp_str:
+                    mm_part = resp_str.split('MM:')[1]
+                    parts = mm_part.replace('\n', ' ').split(',')
+                    if len(parts) >= 2:
+                        cx = float(parts[0].strip())
+                        cy = float(parts[1].strip())
+                        return (cx, cy)
+            except Exception:
+                pass
+            return None
+
         # Helper: mover a posición absoluta
         def move_abs(x_target: float, y_target: float, timeout_s: float = 180.0):
-            status = robot.get_status()
-            curr_x = float(status['position']['x'])
-            curr_y = float(status['position']['y'])
+            fw_pos = _get_curr_pos_mm_from_fw()
+            if fw_pos is not None:
+                curr_x, curr_y = fw_pos
+            else:
+                status = robot.get_status()
+                curr_x = float(status['position']['x'])
+                curr_y = float(status['position']['y'])
             dx = x_target - curr_x
             dy = y_target - curr_y
             # Evitar movimientos mínimos (ruido en tracking)
@@ -299,15 +319,37 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         def wait_until_position(x_target: float, y_target: float, tol_mm: float = 2.0, timeout_s: float = 2.0) -> bool:
             import time as _t
             t0 = _t.time()
+            last_cx = None
+            last_cy = None
             while _t.time() - t0 < timeout_s:
-                st = robot.get_status()
-                cx = float(st['position']['x'])
-                cy = float(st['position']['y'])
+                fw = _get_curr_pos_mm_from_fw()
+                if fw is not None:
+                    cx, cy = fw
+                else:
+                    st = robot.get_status()
+                    cx = float(st['position']['x'])
+                    cy = float(st['position']['y'])
+                last_cx, last_cy = cx, cy
                 if abs(cx - x_target) <= tol_mm and abs(cy - y_target) <= tol_mm:
                     return True
                 _t.sleep(0.05)
             # No alcanzó exactamente; continuar igual pero avisar
-            print(f"[wait_until_position] Aviso: estado no llegó a target dentro de tolerancia. curr=({cx:.1f},{cy:.1f}), target=({x_target:.1f},{y_target:.1f})")
+            if last_cx is not None and last_cy is not None:
+                print(f"[wait_until_position] Aviso: estado no llegó a target dentro de tolerancia. curr=({last_cx:.1f},{last_cy:.1f}), target=({x_target:.1f},{y_target:.1f})")
+            return False
+
+        # Helper: esperar a que el brazo termine cualquier trayectoria en curso
+        def wait_arm_idle(timeout_s: float = 5.0) -> bool:
+            import time as _t
+            t0 = _t.time()
+            while _t.time() - t0 < timeout_s:
+                try:
+                    if not getattr(robot.arm, 'is_executing_trajectory', False):
+                        return True
+                except Exception:
+                    return True
+                _t.sleep(0.05)
+            print("[wait_arm_idle] Aviso: brazo aún en movimiento tras timeout; continuando con cuidado")
             return False
 
         # Helper: posicionamiento completo (opción main_robot 10-3)
@@ -350,6 +392,8 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             if not res_arm.get('success'):
                 print(f"No se pudo ir a 'mover_lechuga': {res_arm}")
                 return False
+            # Esperar a que termine el movimiento del brazo antes de avanzar
+            wait_arm_idle(6.0)
         else:
             print("[cosecha] Brazo ya en 'mover_lechuga'")
 
@@ -362,9 +406,14 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             nombre_tubo = tubos_cfg[tubo_id]['nombre']
             print(f"\n== TUBO {tubo_id} ({nombre_tubo}) Y={y_tubo:.1f}mm ==")
 
-            # Asegurar estar en Y del tubo actual (mantener X actual)
-            status = robot.get_status()
-            curr_x = float(status['position']['x'])
+            # Asegurar estar en Y del tubo actual (mantener X actual) solo después de que el brazo esté quieto
+            wait_arm_idle(6.0)
+            fwpos = _get_curr_pos_mm_from_fw()
+            if fwpos is not None:
+                curr_x, _ = fwpos
+            else:
+                status = robot.get_status()
+                curr_x = float(status['position']['x'])
             if not move_abs(curr_x, y_tubo):
                 return False
 
@@ -380,9 +429,15 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             for cinta in cintas_sorted:
                 x_cinta = float(cinta.get('x_mm', 0.0))
                 print(f"  -> Cinta #{cinta.get('id','?')}: mover a X={x_cinta:.1f}mm (horizontal puro)")
+                # Asegurar brazo quieto antes de mover XY
+                wait_arm_idle(6.0)
                 # Mantener Y actual para evitar movimientos diagonales involuntarios
-                status = robot.get_status()
-                curr_y = float(status['position']['y'])
+                fwpos = _get_curr_pos_mm_from_fw()
+                if fwpos is not None:
+                    _, curr_y = fwpos
+                else:
+                    status = robot.get_status()
+                    curr_y = float(status['position']['y'])
                 if not move_abs(x_cinta, curr_y):
                     return False
 
@@ -409,12 +464,14 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not res_arm.get('success'):
                     print(f"       Error moviendo a 'recoger_lechuga': {res_arm}")
                     return False
+                wait_arm_idle(8.0)
                 # Al completarse, setear CON lechuga y volver a transporte
                 robot.arm.set_lettuce_state(True)
                 res_arm2 = robot.arm.change_state('mover_lechuga')
                 if not res_arm2.get('success'):
                     print(f"       Error moviendo a 'mover_lechuga': {res_arm2}")
                     return False
+                wait_arm_idle(6.0)
 
                 # Ir a esquina para soltar: (fin_workspace, fin_workspace)
                 print(f"     → Llevando a esquina para depositar: ({x_edge:.1f},{y_edge:.1f})")
@@ -425,12 +482,14 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not res_dep.get('success'):
                     print(f"       Error en 'depositar_lechuga': {res_dep}")
                     return False
+                wait_arm_idle(6.0)
                 # Volver a transporte sin lechuga
                 robot.arm.set_lettuce_state(False)
                 res_back = robot.arm.change_state('mover_lechuga')
                 if not res_back.get('success'):
                     print(f"       Error volviendo a 'mover_lechuga': {res_back}")
                     return False
+                wait_arm_idle(6.0)
                 # Volver a la Y del tubo actual antes de seguir con la siguiente cinta
                 status = robot.get_status()
                 curr_x_after_deposit = float(status['position']['x'])

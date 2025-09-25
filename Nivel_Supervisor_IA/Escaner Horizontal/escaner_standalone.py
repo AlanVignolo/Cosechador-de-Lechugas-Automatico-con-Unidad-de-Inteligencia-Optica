@@ -363,11 +363,41 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception:
             pass
 
-        # Movimiento hacia switch izquierdo
-        result = robot.cmd.move_xy(2000, 0)
-
-        # Esperar límite izquierdo - solo aceptar TRIGGER explícito
-        limit_triggered = robot.cmd.uart.wait_for_message("LIMIT_H_LEFT_TRIGGERED", timeout=120.0)
+        # Movimiento hasta el borde derecho seguro (x_edge = width_mm - safety)
+        dims = robot.get_workspace_dimensions()
+        if dims.get('calibrated'):
+            width_mm = float(dims.get('width_mm', 0.0))
+        else:
+            from config.robot_config import RobotConfig as _RC
+            width_mm = float(_RC.MAX_X)
+        safety = 20.0
+        x_edge = max(0.0, width_mm - safety)
+        try:
+            status = robot.get_status()
+            curr_x = float(status['position']['x'])
+        except Exception:
+            curr_x = 0.0
+        dx = x_edge - curr_x
+        print(f"Escaneo horizontal: moviendo hasta X={x_edge:.1f}mm (ΔX={dx:.1f}mm)")
+        res_move = robot.cmd.move_xy(dx, 0)
+        if not res_move.get('success'):
+            print(f"Error iniciando movimiento horizontal: {res_move}")
+            return False
+        # Esperar finalización normal del movimiento (no por límite)
+        move_completed = False
+        try:
+            move_completed = robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
+        except Exception:
+            move_completed = False
+        if not move_completed:
+            # Fallback por tiempo estimado según velocidad configurada
+            try:
+                from config.robot_config import RobotConfig as _RC
+                h_mm_s = max(1.0, float(_RC.NORMAL_SPEED_H) / float(_RC.STEPS_PER_MM_H))
+                est_t = abs(dx) / h_mm_s + 0.5
+                time.sleep(min(est_t, 10.0))
+            except Exception:
+                time.sleep(1.0)
         
         # Detener video de forma controlada
         is_scanning[0] = False
@@ -390,9 +420,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception:
             pass
         
-        if not limit_triggered:
-            print("Error: No se alcanzó el límite izquierdo (timeout esperando trigger)")
-            return False
+        # Ya no esperamos tocar límite; el movimiento termina en x_edge con snapshots automáticos
         
         # Correlacionar flags con snapshots para obtener posiciones reales
         correlate_flags_with_snapshots(detection_state)
