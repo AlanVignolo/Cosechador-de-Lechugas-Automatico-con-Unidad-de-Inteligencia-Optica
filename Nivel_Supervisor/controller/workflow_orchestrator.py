@@ -257,8 +257,14 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             curr_y = float(status['position']['y'])
             dx = x_target - curr_x
             dy = y_target - curr_y
-            if abs(dx) < 1e-3 and abs(dy) < 1e-3:
+            # Evitar movimientos mínimos (ruido en tracking)
+            if abs(dx) < 0.5:
+                dx = 0.0
+            if abs(dy) < 0.5:
+                dy = 0.0
+            if dx == 0.0 and dy == 0.0:
                 return True
+            # Enviar directamente (firmware coincide con convención del supervisor)
             res = robot.cmd.move_xy(dx, dy)
             if not res.get('success'):
                 print(f"Movimiento falló: {res}")
@@ -337,8 +343,11 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
 
             for cinta in cintas_sorted:
                 x_cinta = float(cinta.get('x_mm', 0.0))
-                print(f"  -> Cinta #{cinta.get('id','?')}: mover a X={x_cinta:.1f}mm, Y={y_tubo:.1f}mm")
-                if not move_abs(x_cinta, y_tubo):
+                print(f"  -> Cinta #{cinta.get('id','?')}: mover a X={x_cinta:.1f}mm (horizontal puro)")
+                # Mantener Y actual para evitar movimientos diagonales involuntarios
+                status = robot.get_status()
+                curr_y = float(status['position']['y'])
+                if not move_abs(x_cinta, curr_y):
                     return False
 
                 # Clasificación interactiva
