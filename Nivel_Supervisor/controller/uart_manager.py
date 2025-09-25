@@ -529,8 +529,14 @@ class UARTManager:
             # Resetear callbacks (mantener solo los esenciales del sistema)
             essential_callbacks = {}
             # Mantener callbacks del sistema si existen
-            for key in ["status_callback", "servo_start_callback", "servo_complete_callback", 
-                       "gripper_start_callback", "gripper_complete_callback"]:
+            for key in [
+                "status_callback",
+                "servo_start_callback", "servo_complete_callback",
+                "gripper_start_callback", "gripper_complete_callback",
+                # IMPORTANTES: mantener también stepper y límites para no romper tracking
+                "stepper_start_callback", "stepper_complete_callback",
+                "limit_callback",
+            ]:
                 if key in self.message_callbacks:
                     essential_callbacks[key] = self.message_callbacks[key]
             

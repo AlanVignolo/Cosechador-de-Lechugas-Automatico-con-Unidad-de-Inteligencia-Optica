@@ -197,28 +197,19 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
             # Posicionamiento combinado: volver a X≈0 y ajustar Y al siguiente tubo en un único movimiento diagonal
-            # Calcular ΔX en base a la posición real reportada por firmware (XY?)
+            # Calcular ΔX usando la posición global del supervisor (acumulada por STEPPER_MOVE_COMPLETED)
             dx = 0.0
             try:
-                fw = robot.cmd.get_current_position_mm()
-                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
-                if 'MM:' in resp:
-                    mm_part = resp.split('MM:')[1]
-                    parts = mm_part.replace('\n', ' ').split(',')
-                    if len(parts) >= 2:
-                        curr_x_fw = float(parts[0].strip())
-                    else:
-                        curr_x_fw = float(robot.get_status()['position']['x'])
-                else:
-                    curr_x_fw = float(robot.get_status()['position']['x'])
+                status_pos = robot.get_status()
+                curr_x = float(status_pos['position']['x'])
             except Exception:
-                curr_x_fw = float(robot.get_status()['position']['x'])
+                curr_x = 0.0
             if not first_tube:
                 try:
-                    print(f"[inicio_completo] XY? firmware reporta X actual = {curr_x_fw:.1f}mm")
+                    print(f"[inicio_completo] Supervisor X actual = {curr_x:.1f}mm")
                 except Exception:
                     pass
-                dx = -curr_x_fw
+                dx = -curr_x
             # ΔY desde la última Y alcanzada
             dy = y_target - y_curr
 
@@ -987,22 +978,13 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
         # Paso 4: Volver a (0,0)
         if return_home:
             print("[inicio_simple] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
-            # Usar posición real del firmware para regresar a X≈0 de forma robusta
+            # Usar posición global del supervisor para calcular retorno a X≈0
             try:
-                fw = robot.cmd.get_current_position_mm()
-                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
-                if 'MM:' in resp:
-                    mm_part = resp.split('MM:')[1]
-                    parts = mm_part.replace('\n', ' ').split(',')
-                    if len(parts) >= 2:
-                        curr_x_fw = float(parts[0].strip())
-                    else:
-                        curr_x_fw = 0.0
-                else:
-                    curr_x_fw = 0.0
+                status_pos = robot.get_status()
+                curr_x = float(status_pos['position']['x'])
             except Exception:
-                curr_x_fw = 0.0
-            dx_back = -curr_x_fw
+                curr_x = 0.0
+            dx_back = -curr_x
             dy_back = -y_curr
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
             if not ret_res.get('success'):

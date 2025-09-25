@@ -177,6 +177,24 @@ void uart_parse_command(const char* cmd) {
 		snprintf(response, sizeof(response), "GRIPPER_STATUS:%s,%d", state_str, position);
 	}
 	
+	// XY? - Consultar posición actual de los steppers en pasos y milímetros
+	else if (cmd[0] == 'X' && cmd[1] == 'Y' && cmd[2] == '?') {
+		int32_t h_pos_steps = 0;
+		int32_t v_pos_steps = 0;
+		stepper_get_position(&h_pos_steps, &v_pos_steps);
+		
+		// Convertir a mm con redondeo simétrico (igual que en otros mensajes)
+		int32_t h_mm = (h_pos_steps >= 0) ?
+			(h_pos_steps + STEPS_PER_MM_H/2) / STEPS_PER_MM_H :
+			(h_pos_steps - STEPS_PER_MM_H/2) / STEPS_PER_MM_H;
+		int32_t v_mm = (v_pos_steps >= 0) ?
+			(v_pos_steps + STEPS_PER_MM_V/2) / STEPS_PER_MM_V :
+			(v_pos_steps - STEPS_PER_MM_V/2) / STEPS_PER_MM_V;
+		
+		snprintf(response, sizeof(response), "OK:XY:STEPS:%ld,%ld,MM:%ld,%ld",
+			(long)h_pos_steps, (long)v_pos_steps, (long)h_mm, (long)v_mm);
+	}
+	
 	else if (cmd[0] == 'C' && cmd[1] == 'S') {  // CS - Calibration Start
 		stepper_start_calibration();
 		snprintf(response, sizeof(response), "OK:CALIBRATION_STARTED");
