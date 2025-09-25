@@ -290,7 +290,25 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=timeout_s)
             except Exception:
                 pass
+            # Pequeño delay para asegurar que el callback de posición global se procese
+            import time as _t
+            _t.sleep(0.1)
             return True
+
+        # Helper: esperar hasta que la posición global esté cerca del target
+        def wait_until_position(x_target: float, y_target: float, tol_mm: float = 2.0, timeout_s: float = 2.0) -> bool:
+            import time as _t
+            t0 = _t.time()
+            while _t.time() - t0 < timeout_s:
+                st = robot.get_status()
+                cx = float(st['position']['x'])
+                cy = float(st['position']['y'])
+                if abs(cx - x_target) <= tol_mm and abs(cy - y_target) <= tol_mm:
+                    return True
+                _t.sleep(0.05)
+            # No alcanzó exactamente; continuar igual pero avisar
+            print(f"[wait_until_position] Aviso: estado no llegó a target dentro de tolerancia. curr=({cx:.1f},{cy:.1f}), target=({x_target:.1f},{y_target:.1f})")
+            return False
 
         # Helper: posicionamiento completo (opción main_robot 10-3)
         def posicionamiento_completo(robot):
@@ -319,18 +337,13 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             print("No hay tubos configurados")
             return False
 
-        # Ir SIEMPRE al punto inicial seguro (X=fin-20, Y=tubo1) y luego asegurar brazo en 'mover_lechuga'
+        # Ir SIEMPRE al punto inicial seguro (X=fin-20, Y=tubo1) en un solo movimiento y luego asegurar brazo en 'mover_lechuga'
         first_tube_id = sorted(tubos_cfg.keys())[0]
         y_tubo1 = float(tubos_cfg[first_tube_id]['y_mm'])
-        # Paso inicial en dos etapas: (1) horizontal puro hasta X seguro, (2) bajar/subir a Y del tubo
-        status = robot.get_status()
-        curr_y_init = float(status['position']['y'])
-        print(f"[cosecha] Moviendo a inicio seguro (etapa 1/2 H): X={x_edge:.1f}, Y={curr_y_init:.1f}")
-        if not move_abs(x_edge, curr_y_init):
-            return False
-        print(f"[cosecha] Moviendo a inicio seguro (etapa 2/2 V): X={x_edge:.1f}, Y={y_tubo1:.1f}")
+        print(f"[cosecha] Moviendo a inicio seguro: X={x_edge:.1f}, Y={y_tubo1:.1f}")
         if not move_abs(x_edge, y_tubo1):
             return False
+        wait_until_position(x_edge, y_tubo1)
         if robot.arm.current_state != 'mover_lechuga':
             print("[cosecha] Cambiando brazo a 'mover_lechuga'")
             res_arm = robot.arm.change_state('mover_lechuga')
@@ -423,6 +436,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 curr_x_after_deposit = float(status['position']['x'])
                 if not move_abs(curr_x_after_deposit, y_tubo):
                     return False
+                wait_until_position(curr_x_after_deposit, y_tubo)
 
                 print("     ✓ Cosecha y depósito completados para esta cinta")
                 # Continuar a la siguiente cinta
