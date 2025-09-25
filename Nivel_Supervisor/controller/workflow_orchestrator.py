@@ -253,22 +253,13 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
         # Paso 4: Volver a (0,0)
         if return_home:
             print("[inicio_completo] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
-            # Usar posición real de firmware para volver a X≈0 independientemente de switches
+            # Usar posición global del supervisor para volver a X≈0
             try:
-                fw = robot.cmd.get_current_position_mm()
-                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
-                if 'MM:' in resp:
-                    mm_part = resp.split('MM:')[1]
-                    parts = mm_part.replace('\n', ' ').split(',')
-                    if len(parts) >= 2:
-                        curr_x_fw = float(parts[0].strip())
-                    else:
-                        curr_x_fw = 0.0
-                else:
-                    curr_x_fw = 0.0
+                status_pos = robot.get_status()
+                curr_x = float(status_pos['position']['x'])
             except Exception:
-                curr_x_fw = 0.0
-            dx_back = -curr_x_fw
+                curr_x = 0.0
+            dx_back = -curr_x
             dy_back = -y_curr
             print(f"     ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
