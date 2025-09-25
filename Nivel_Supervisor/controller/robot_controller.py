@@ -93,6 +93,11 @@ class RobotController:
         display_x = RobotConfig.display_x_position(x)
         display_y = RobotConfig.display_y_position(y)
         self.logger.info(f"Posición global reseteada a: X={display_x}mm, Y={display_y}mm")
+        # Persistir posición si está homed
+        try:
+            self._save_current_position()
+        except Exception:
+            pass
     
     def _initialize_global_position(self):
         """Inicializar posición global al arrancar Python"""

@@ -274,9 +274,11 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
                     pass
                 try:
                     ok_resync = robot.resync_global_position_from_firmware()
-                    if not ok_resync:
-                        # Como fallback, mantener el estado del supervisor
-                        pass
+                except Exception:
+                    ok_resync = False
+                # Independientemente del resync, fijar supervisor en (0,0) como invariante post-retorno
+                try:
+                    robot.reset_global_position(0.0, 0.0)
                 except Exception:
                     pass
 
@@ -399,15 +401,31 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print(f"[cosecha] Error en homing: {res_home.get('message')}")
                 return False
         # Antes de calcular y mover, resincronizar posición global desde firmware para evitar usar estado viejo
+        did_resync = False
         try:
             if robot.resync_global_position_from_firmware():
                 st_sync = robot.get_status()
                 print(f"[cosecha] Posición resincronizada: X={st_sync['position']['x']:.1f}mm, Y={st_sync['position']['y']:.1f}mm")
-            else:
-                st_nosync = robot.get_status()
-                print(f"[cosecha] Aviso: no se pudo resincronizar. Usando estado supervisor: X={st_nosync['position']['x']:.1f}mm, Y={st_nosync['position']['y']:.1f}mm")
+                did_resync = True
         except Exception:
-            pass
+            did_resync = False
+        if not did_resync:
+            st_nosync = robot.get_status()
+            print(f"[cosecha] Aviso: no se pudo resincronizar. Usando estado supervisor: X={st_nosync['position']['x']:.1f}mm, Y={st_nosync['position']['y']:.1f}mm")
+            # Si estamos exactamente en (0, -height) por tracking invertido, corregir a (0,0)
+            dims_chk = robot.get_workspace_dimensions()
+            try:
+                height_chk = float(dims_chk.get('height_mm', 0.0)) if dims_chk.get('calibrated') else float(RobotConfig.MAX_Y)
+            except Exception:
+                height_chk = float(RobotConfig.MAX_Y)
+            y_bad = st_nosync['position']['y']
+            x_bad = st_nosync['position']['x']
+            if abs(x_bad - 0.0) <= 2.0 and abs(abs(y_bad) - height_chk) <= 2.0:
+                print("[cosecha] Corrección automática: interpretando estado (0, -height) como (0,0) tras retorno previo")
+                try:
+                    robot.reset_global_position(0.0, 0.0)
+                except Exception:
+                    pass
 
         # Obtener dimensiones del workspace
         dims = robot.get_workspace_dimensions()
@@ -456,6 +474,14 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 status = robot.get_status()
                 curr_x = float(status['position']['x'])
                 curr_y = float(status['position']['y'])
+                # Corrección robusta: si parece (0, -height) anómalo tras un retorno, tomar (0,0)
+                try:
+                    dims_m = robot.get_workspace_dimensions()
+                    height_m = float(dims_m.get('height_mm', 0.0)) if dims_m.get('calibrated') else float(RobotConfig.MAX_Y)
+                except Exception:
+                    height_m = float(RobotConfig.MAX_Y)
+                if abs(curr_x) <= 5.0 and abs(abs(curr_y) - height_m) <= 5.0:
+                    curr_x, curr_y = 0.0, 0.0
             dx = x_target - curr_x
             dy = y_target - curr_y
             # Evitar movimientos mínimos (ruido en tracking)
