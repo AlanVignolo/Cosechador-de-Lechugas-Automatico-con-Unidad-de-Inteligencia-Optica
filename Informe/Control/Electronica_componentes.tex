@@ -1,0 +1,47 @@
+La arquitectura electrónica del robot cosechador se fundamenta en un diseño de control distribuido que separa claramente las responsabilidades entre diferentes niveles de procesamiento. Esta aproximación permite optimizar tanto el rendimiento del sistema como la confiabilidad operacional, distribuyendo las tareas según la naturaleza temporal y crítica de cada función.
+
+\subsubsection{Unidad Central de Procesamiento - Raspberry Pi 4}
+
+La Raspberry Pi 4 constituye el cerebro principal del sistema, encargándose de las funciones de alto nivel que requieren capacidad de procesamiento intensivo. Su selección se basó en varios criterios fundamentales:
+
+La capacidad de procesamiento cuádruple núcleo ARM Cortex-A72 a 1.5 GHz proporciona la potencia computacional necesaria para ejecutar algoritmos de visión artificial en tiempo real. Los 4 GB de RAM permiten el manejo eficiente de múltiples procesos concurrentes, incluyendo la captura y procesamiento de imágenes, la máquina de estados principal y la comunicación con subsistemas.
+
+Este módulo gestiona tres funciones críticas del sistema. Primero, implementa la inteligencia artificial para reconocimiento de lechugas mediante algoritmos de visión por computadora, procesando las imágenes captadas por la cámara USB integrada para identificar objetivos de cosecha y determinar su estado de madurez. Segundo, coordina la máquina de estados global del robot, supervisando las transiciones entre diferentes fases operacionales como navegación, posicionamiento, cosecha y depósito. Tercero, actúa como supervisor de todo el sistema, monitoreando el estado de los subsistemas y coordinando las acciones de los diferentes actuadores.
+
+\subsubsection{Controlador de Bajo Nivel - Arduino Mega 2560}
+
+El Arduino Mega 2560 maneja el control regulatorio porque requiere conectar simultáneamente 4 finales de carrera, 3 drivers TB6600, 3 servomotores y comunicación UART con la Raspberry Pi - esto supera los pines disponibles en un Arduino Uno. El microcontrolador ATmega2560 permite control en tiempo real sin las latencias variables del sistema operativo Linux de la Raspberry Pi.
+
+Se encarga del control directo de motores paso a paso, lectura de finales de carrera, control de servomotores, y sistemas de seguridad que deben responder independientemente del estado del nivel supervisor.
+
+\subsubsection{Sensores de Seguridad - Finales de Carrera}
+
+Se implementaron 4 switches electromecánicos como finales de carrera (2 para eje horizontal, 2 para eje vertical). La selección se basó en switches normalmente abiertos por su alta confiabilidad mecánica y respuesta instantánea. La conexión directa al Arduino garantiza detección inmediata sin latencias de procesamiento.
+
+\subsubsection{Actuadores Principales - Motores Paso a Paso}
+
+\subsubsection{Drivers TB6600 y Motores Paso a Paso}
+
+Los motores seleccionados (dos NEMA 17 para movimiento horizontal y un NEMA 23 para vertical) se calcularon en la sección de diseño mecánico según los requerimientos de torque del sistema.
+
+Los drivers TB6600 se seleccionaron por su capacidad de manejo hasta 8.1A de corriente, suficiente para los motores NEMA 23 bajo carga máxima. Se configuraron en modo de 8 micropasos mediante switches DIP (off-on-off), proporcionando balance entre precisión y velocidad para las operaciones de cosecha. La interfaz de control mediante pulsos y dirección se integra directamente con las salidas digitales del Arduino sin circuitos adicionales.
+
+La alimentación a 24V proporciona el torque necesario para mover la estructura con carga, manteniendo velocidades operacionales adecuadas.
+
+\subsubsection{Sistema de Manipulación - Servomotores}
+
+El brazo manipulador implementa un sistema de dos grados de libertad utilizando servomotores MG996R, complementado con un actuador específico para el gripper. Esta configuración proporciona la flexibilidad necesaria para aproximarse a las lechugas desde ángulos apropiados y ejecutar movimientos de cosecha precisos.
+
+Los servomotores MG996R se caracterizan por su alto torque (9.4 kg-cm a 6V), construcción robusta con engranajes metálicos, y retroalimentación de posición integrada. Operan a 7V mediante reguladores de voltaje dedicados, optimizando su rendimiento y extendiendo su vida útil.
+
+Para el mecanismo gripper se emplea un motor paso a paso 28BYJ-48, que ofrece control preciso del grado de apertura y fuerza de sujeción. Este motor de 5V permite movimientos suaves y controlados, evitando daños a las lechugas durante la manipulación.
+
+\subsubsection{Cámara de Visión}
+
+Se seleccionó una cámara ELP USB 3.0 con lente ojo de pez de 2.0 Mpx y sensor Sony por dos factores críticos. El lente ojo de pez con campo de visión de 170° permite capturar un área amplia a distancias cortas, compensando las limitaciones de espacio entre la cámara y las lechugas. La interfaz USB 3.0 garantiza transferencia de datos suficiente para procesamiento en tiempo real, mientras que el sensor Sony proporciona calidad de imagen adecuada para algoritmos de detección.
+
+\subsubsection{Sistema de Alimentación}
+
+La fuente switching de 24V y 5A se seleccionó como alimentación primaria por su capacidad de suministrar la corriente requerida por los motores paso a paso bajo carga máxima.
+
+Dos reguladores step-down XL6009 generan voltajes secundarios: uno configurado a 7V para los servomotores MG996R (optimizando su torque) y otro a 5V para el motor del gripper 28BYJ-48. Esta configuración multi-voltaje evita sobrecargas en reguladores internos y asegura alimentación estable para todos los subsistemas.

@@ -1,0 +1,136 @@
+\documentclass[a4paper]{report}
+\usepackage[
+  a4paper,
+  margin=1.5cm,
+  top=70pt,
+  headheight=30pt,
+]{geometry}  
+
+
+
+
+% \usepackage[spanish]{babel}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsmath,eqparbox}
+\usepackage{array}
+\usepackage{bm}
+\usepackage{blindtext}
+\usepackage{caption}
+\usepackage[makeroom]{cancel}
+\usepackage{euscript}[mathcal]
+\usepackage{enumitem}
+\usepackage{fontenc}
+\usepackage{gensymb}
+\usepackage{graphicx}
+\usepackage{lastpage}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{verbatim}
+\usepackage{comment}
+\excludecomment{debug}
+\usepackage{subcaption}
+
+%% Renew commands
+\renewcommand{\figurename}{Fig.}
+\captionsetup{font=footnotesize}
+
+%%  ----- Cabecera y pie de pagina -----
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead{}
+\fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
+\fancyhead[C]{317 - Automátas y Control Discreto \\ \hspace{0.5pt} \\ \textbf{Proyecto Final de Estudios: Robot cosechador automático}}
+\fancyhead[R]{Brenda Gudiño \\ Alan Vignolo \\ \hspace{0.5pt}}
+
+\fancyfoot{}
+\fancyfoot[R]{Página \thepage \hspace{2pt} de \pageref{LastPage}} 
+
+%% Para ver cabecera y pie de pagina en los inicios de capitulo
+\fancypagestyle{plain}{
+\fancyhead{}
+\fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2024 \\ \hspace{0.1pt}}
+\fancyhead[C]{Proyecto final de estudios \\ \hspace{0.5pt} \\ \textbf{Robot cosechador automático}}
+\fancyhead[R]{Brenda Gudiño \\ Alan Vignolo  \\ \hspace{0.5pt}}
+
+\fancyfoot{}
+\fancyfoot[R]{Página \thepage \hspace{2pt} de \pageref{LastPage}} 
+}
+
+%% -------------------------------------
+%% Indice y capitulos ----------------------------
+\renewcommand*\contentsname{Índice}
+\titleformat{\chapter}[block]
+  {\normalfont\huge\bfseries}{\thechapter.}{1em}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{10pt}
+%% ------------------------------------
+
+
+
+
+%% Portada ------------------------------
+\title{
+\includegraphics[scale = 0.3]{logo_uncuyo.png} \\ [2cm]
+{\Huge \textbf{Proyecto final de estudios} \\ [1cm] 
+Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Optica}}
+\author{Brenda Gudiño \\ Alan Vignolo}
+
+\date{Fecha de presentación \\ XX/XX/2025}
+%% -------------------------------------
+\begin{document}
+
+
+\maketitle
+\tableofcontents
+
+
+%% RESUMEN \\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\newpage
+\chapter{Resumen}
+En el presente informe se detalla el desarrollo del proyecto final de estudios de Ingeniería Mecatrónica, el mismo consiste en un robot cosechador automático de lechugas hidropónicas con posicionamiento ajustador por inteligencia artificial. En el transcurso del informe se desarrollan el modelado mecánico y electrónico de la estructura, montaje, control, pruebas, resultados finales y posibles mejoras.
+%% INTRODUCCION \\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\newpage
+\chapter{Introducción}
+El presente informe expone el desarrollo de un robot cosechador automático de lechugas, cuyo objetivo principal es optimizar las labores de recolección en entornos de cultivo, mejorando la eficiencia del proceso y reduciendo la necesidad de intervención manual. Para lograrlo, se abordaron diferentes etapas de diseño, modelado, montaje, control e implementación de interfaces, las cuales se estructuran en este documento siguiendo la lógica de construcción del sistema.
+
+En la sección 3 se detallan los aspectos técnicos y metodológicos empleados. Se inicia con el modelado (3.1), que comprende el diseño mecánico del sistema, la elaboración de modelos CAD y su posterior impresión 3D, así como la descripción de la estructura que soporta los diferentes subsistemas. A continuación, en el apartado de electrónica y componentes, se enumeran y justifican los elementos electrónicos seleccionados, desde sensores hasta actuadores, que permiten al robot cumplir con sus funciones.
+
+Posteriormente, se presenta el montaje, donde se integran tanto las partes mecánicas como electrónicas, conformando el prototipo físico del robot. La subsección de control aborda dos dimensiones fundamentales: el control de movimiento, que asegura la correcta navegación y operación del sistema, y la creación y uso de inteligencia artificial, la cual dota al robot de capacidades de reconocimiento y toma de decisiones frente a las condiciones de cultivo. Finalmente, se incluye el desarrollo de la interfaz, pensada para la interacción entre el usuario y el sistema, garantizando facilidad de uso y monitoreo eficiente.
+
+Por último, se documentan los ensayos realizados sobre el prototipo, evaluando su desempeño en el ciclo normal de trabajo y en otras situaciones.
+%% DESARROLLO \\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\chapter{Desarrollo}
+\section{Modelado}
+\subsection{Modelado del sistema mecánico}
+\input{Modelado/Modelado_mecánico}
+\subsection{Modelado CAD e impresión 3D}
+\input{Modelado/Modelado_3d}
+\subsection{Estructura}
+\input{Modelado/Estructura}
+\section{Electrónica y componentes}
+\input{{Control}/Electronica_componentes}
+\section{Montaje}
+\section{Control}
+\subsection{Control de movimiento}
+\subsection{Inteligencia Artificial y Sistemas de Visión}
+\input{Control/IA}
+\section{Interfaz}
+\chapter{Pruebas y resultados}
+%% DESARROLLO \\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\chapter{Conclusión}
+
+%% REFERENCIAS \\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\newpage
+\chapter{Referencias}
+\begin{enumerate}[label={[\arabic*]}]
+    \item  
+\end{enumerate}
+
+
+\end{document}
+
+
