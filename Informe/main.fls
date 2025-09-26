@@ -1,0 +1,945 @@
+PWD D:\FACULTAD\MATERIAS PENDIENTES\Proyecto Final\CLAUDIO\Informe
+INPUT C:\Users\alanv\AppData\Local\MiKTeX\miktex\data\le\pdftex\pdflatex.fmt
+INPUT d:\FACULTAD\MATERIAS PENDIENTES\Proyecto Final\CLAUDIO\Informe\main.tex
+OUTPUT main.log
+INPUT C:\Program Files\MiKTeX\tex\latex\base\report.cls
+INPUT C:\Program Files\MiKTeX\tex\latex\base\report.cls
+INPUT C:\Program Files\MiKTeX\tex\latex\base\size12.clo
+INPUT C:\Program Files\MiKTeX\tex\latex\base\size12.clo
+INPUT C:\Program Files\MiKTeX\tex\latex\base\size12.clo
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmr12.tfm
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\geometry\geometry.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\geometry\geometry.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\keyval.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\keyval.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\iftex\ifvtex.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\iftex\ifvtex.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\iftex\iftex.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\iftex\iftex.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\geometry\geometry.cfg
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\geometry\geometry.cfg
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\geometry\geometry.cfg
+INPUT C:\Program Files\MiKTeX\tex\generic\babel\babel.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\babel\babel.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\babel\txtbabel.def
+INPUT C:\Program Files\MiKTeX\tex\latex\arabi\bblopts.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\arabi\bblopts.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\arabi\bblopts.cfg
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\babel-spanish\spanish.ldf
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\babel-spanish\spanish.ldf
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\babel-spanish\spanish.ldf
+INPUT C:\Program Files\MiKTeX\tex\generic\babel\locale\es\babel-spanish.tex
+INPUT C:\Program Files\MiKTeX\tex\generic\babel\locale\es\babel-spanish.tex
+INPUT C:\Program Files\MiKTeX\tex\generic\babel\locale\es\babel-spanish.tex
+INPUT C:\Program Files\MiKTeX\tex\generic\babel\locale\es\babel-es.ini
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\amssymb.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\amssymb.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\amsfonts.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\amsfonts.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amsmath.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amsmath.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amsopn.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amstext.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amstext.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amsgen.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amsgen.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amsbsy.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amsbsy.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsmath\amsopn.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\eqparbox\eqparbox.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\eqparbox\eqparbox.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\tools\array.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\tools\array.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\environ\environ.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\environ\environ.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\trimspaces\trimspaces.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\trimspaces\trimspaces.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\tools\bm.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\tools\bm.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\blindtext\blindtext.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\blindtext\blindtext.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\tools\xspace.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\tools\xspace.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\caption\caption.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\caption\caption.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\caption\caption3.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\caption\caption3.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\cancel\cancel.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\cancel\cancel.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\euscript.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\euscript.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\enumitem\enumitem.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\enumitem\enumitem.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\base\fontenc.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\base\fontenc.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\gensymb\gensymb.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\gensymb\gensymb.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\graphicx.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\graphicx.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\graphics.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\graphics.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\trig.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\trig.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-cfg\graphics.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-cfg\graphics.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-cfg\graphics.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-def\pdftex.def
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-def\pdftex.def
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-def\pdftex.def
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\lastpage\lastpage.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\lastpage\lastpage.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\lastpage\lastpage2e.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\lastpage\lastpage2e.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\lastpage\lastpageclassic.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\lastpage\lastpageclassic.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\multirow\multirow.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\multirow\multirow.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\setspace\setspace.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\setspace\setspace.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\titlesec\titlesec.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\titlesec\titlesec.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\xcolor\xcolor.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\xcolor\xcolor.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-cfg\color.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-cfg\color.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics-cfg\color.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\mathcolor.ltx
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\mathcolor.ltx
+INPUT C:\Program Files\MiKTeX\tex\latex\graphics\mathcolor.ltx
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\float\float.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\float\float.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\tools\verbatim.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\tools\verbatim.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\comment\comment.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\comment\comment.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\caption\subcaption.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\caption\subcaption.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\hyperref.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\hyperref.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\infwarerr\infwarerr.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\infwarerr\infwarerr.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\kvsetkeys\kvsetkeys.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\kvsetkeys\kvsetkeys.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\kvdefinekeys\kvdefinekeys.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\kvdefinekeys\kvdefinekeys.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\pdfescape\pdfescape.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\pdfescape\pdfescape.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\ltxcmds\ltxcmds.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\ltxcmds\ltxcmds.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\pdftexcmds\pdftexcmds.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\pdftexcmds\pdftexcmds.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\hycolor\hycolor.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\hycolor\hycolor.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\letltxmacro\letltxmacro.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\letltxmacro\letltxmacro.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\auxhook\auxhook.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\auxhook\auxhook.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\nameref.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\nameref.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\refcount\refcount.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\refcount\refcount.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\gettitlestring\gettitlestring.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\gettitlestring\gettitlestring.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\kvoptions\kvoptions.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\kvoptions\kvoptions.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\etoolbox\etoolbox.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\etoolbox\etoolbox.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\pd1enc.def
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\pd1enc.def
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\pd1enc.def
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\intcalc\intcalc.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\intcalc\intcalc.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\puenc.def
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\puenc.def
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\puenc.def
+INPUT C:\Program Files\MiKTeX\tex\latex\url\url.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\url\url.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\bitset\bitset.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\bitset\bitset.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\bigintcalc\bigintcalc.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\bigintcalc\bigintcalc.sty
+INPUT C:\Program Files\MiKTeX\tex\generic\atbegshi\atbegshi.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\base\atbegshi-ltx.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\base\atbegshi-ltx.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\hpdftex.def
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\hpdftex.def
+INPUT C:\Program Files\MiKTeX\tex\latex\hyperref\hpdftex.def
+INPUT C:\Program Files\MiKTeX\tex\latex\atveryend\atveryend.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\base\atveryend-ltx.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\base\atveryend-ltx.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\rerunfilecheck\rerunfilecheck.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\rerunfilecheck\rerunfilecheck.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\uniquecounter\uniquecounter.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\generic\uniquecounter\uniquecounter.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\fancyhdr\fancyhdr.sty
+INPUT C:\Users\alanv\AppData\Roaming\MiKTeX\tex\latex\fancyhdr\fancyhdr.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\l3backend\l3backend-pdftex.def
+INPUT C:\Program Files\MiKTeX\tex\latex\l3backend\l3backend-pdftex.def
+INPUT .\main.aux
+INPUT .\main.aux
+INPUT main.aux
+OUTPUT main.aux
+INPUT C:\Program Files\MiKTeX\tex\context\base\mkii\supp-pdf.mkii
+INPUT C:\Program Files\MiKTeX\tex\context\base\mkii\supp-pdf.mkii
+INPUT C:\Program Files\MiKTeX\tex\context\base\mkii\supp-pdf.mkii
+INPUT C:\Program Files\MiKTeX\tex\latex\epstopdf-pkg\epstopdf-base.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\epstopdf-pkg\epstopdf-base.sty
+INPUT C:\Program Files\MiKTeX\tex\latex\00miktex\epstopdf-sys.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\00miktex\epstopdf-sys.cfg
+INPUT C:\Program Files\MiKTeX\tex\latex\00miktex\epstopdf-sys.cfg
+INPUT .\main.out
+INPUT .\main.out
+INPUT main.out
+INPUT main.out
+OUTPUT main.pdf
+INPUT .\main.out
+INPUT .\main.out
+OUTPUT main.out
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmr17.tfm
+INPUT .\logo_uncuyo.png
+INPUT .\logo_uncuyo.png
+INPUT .\logo_uncuyo.png
+INPUT .\logo_uncuyo.png
+INPUT .\logo_uncuyo.png
+INPUT .\logo_uncuyo.png
+INPUT .\logo_uncuyo.png
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmr17.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbx12.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmr12.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmmi12.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmsy10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmex10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmex7.tfm
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\umsa.fd
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\umsa.fd
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\umsa.fd
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msam10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msam10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msam7.tfm
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\umsb.fd
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\umsb.fd
+INPUT C:\Program Files\MiKTeX\tex\latex\amsfonts\umsb.fd
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm7.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbx12.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbx10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbx7.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmmib10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmmib10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmmib7.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbsy10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbsy10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmbsy7.tfm
+INPUT C:\Users\alanv\AppData\Local\MiKTeX\fonts\map\pdftex\pdftex.map
+INPUT .\main.toc
+INPUT .\main.toc
+INPUT main.toc
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbx12.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmr8.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmr6.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmmi12.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmmi8.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmmi6.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmsy10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmsy8.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmsy6.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmex10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmex8.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmex7.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msam10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msam10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msam7.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm7.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbx8.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbx6.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmmib10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmmib8.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmmib6.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbsy10.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmbsy8.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\amsfonts\cmextra\cmbsy6.tfm
+OUTPUT main.toc
+INPUT .\00_Resumen\resumen.tex
+INPUT .\00_Resumen\resumen.tex
+INPUT .\00_Resumen\resumen.tex
+INPUT .\00_Resumen\resumen.tex
+INPUT 00_Resumen\resumen.tex
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmr17.tfm
+INPUT C:\Program Files\MiKTeX\fonts\tfm\public\cm\cmbx12.tfm
+INPUT .\01_Introduccion\contexto_motivacion.tex
+INPUT .\01_Introduccion\contexto_motivacion.tex
+INPUT .\01_Introduccion\contexto_motivacion.tex
+INPUT .\01_Introduccion\contexto_motivacion.tex
+INPUT 01_Introduccion\contexto_motivacion.tex
+INPUT .\01_Introduccion\objetivos.tex
+INPUT .\01_Introduccion\objetivos.tex
+INPUT .\01_Introduccion\objetivos.tex
+INPUT .\01_Introduccion\objetivos.tex
+INPUT 01_Introduccion\objetivos.tex
+INPUT .\01_Introduccion\alcance_limitaciones.tex
+INPUT .\01_Introduccion\alcance_limitaciones.tex
+INPUT .\01_Introduccion\alcance_limitaciones.tex
+INPUT .\01_Introduccion\alcance_limitaciones.tex
+INPUT 01_Introduccion\alcance_limitaciones.tex
+INPUT .\01_Introduccion\estructura_documento.tex
+INPUT .\01_Introduccion\estructura_documento.tex
+INPUT .\01_Introduccion\estructura_documento.tex
+INPUT .\01_Introduccion\estructura_documento.tex
+INPUT 01_Introduccion\estructura_documento.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\arquitecturas_multinivel.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\arquitecturas_multinivel.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\arquitecturas_multinivel.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\arquitecturas_multinivel.tex
+INPUT 02_MarcoTeorico\2.1_control_jerarquico\arquitecturas_multinivel.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\supervisorio_vs_regulatorio.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\supervisorio_vs_regulatorio.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\supervisorio_vs_regulatorio.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\supervisorio_vs_regulatorio.tex
+INPUT 02_MarcoTeorico\2.1_control_jerarquico\supervisorio_vs_regulatorio.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\fundamentacion_separacion.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\fundamentacion_separacion.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\fundamentacion_separacion.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\fundamentacion_separacion.tex
+INPUT 02_MarcoTeorico\2.1_control_jerarquico\fundamentacion_separacion.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\ventajas_arquitectura.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\ventajas_arquitectura.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\ventajas_arquitectura.tex
+INPUT .\02_MarcoTeorico\2.1_control_jerarquico\ventajas_arquitectura.tex
+INPUT 02_MarcoTeorico\2.1_control_jerarquico\ventajas_arquitectura.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\procesamiento_imagenes.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\procesamiento_imagenes.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\procesamiento_imagenes.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\procesamiento_imagenes.tex
+INPUT 02_MarcoTeorico\2.2_vision_ia\procesamiento_imagenes.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\redes_convolucionales.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\redes_convolucionales.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\redes_convolucionales.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\redes_convolucionales.tex
+INPUT 02_MarcoTeorico\2.2_vision_ia\redes_convolucionales.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\transfer_learning.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\transfer_learning.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\transfer_learning.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\transfer_learning.tex
+INPUT 02_MarcoTeorico\2.2_vision_ia\transfer_learning.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\metricas_evaluacion.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\metricas_evaluacion.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\metricas_evaluacion.tex
+INPUT .\02_MarcoTeorico\2.2_vision_ia\metricas_evaluacion.tex
+INPUT 02_MarcoTeorico\2.2_vision_ia\metricas_evaluacion.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\modelado_cinematico.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\modelado_cinematico.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\modelado_cinematico.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\modelado_cinematico.tex
+INPUT 02_MarcoTeorico\2.3_cinematica\modelado_cinematico.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\espacios_trabajo.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\espacios_trabajo.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\espacios_trabajo.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\espacios_trabajo.tex
+INPUT 02_MarcoTeorico\2.3_cinematica\espacios_trabajo.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\analisis_trayectorias.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\analisis_trayectorias.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\analisis_trayectorias.tex
+INPUT .\02_MarcoTeorico\2.3_cinematica\analisis_trayectorias.tex
+INPUT 02_MarcoTeorico\2.3_cinematica\analisis_trayectorias.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\correa_poleas.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\correa_poleas.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\correa_poleas.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\correa_poleas.tex
+INPUT 02_MarcoTeorico\2.4_transmision\correa_poleas.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\husillo_tuerca.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\husillo_tuerca.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\husillo_tuerca.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\husillo_tuerca.tex
+INPUT 02_MarcoTeorico\2.4_transmision\husillo_tuerca.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\rodamientos_guias.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\rodamientos_guias.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\rodamientos_guias.tex
+INPUT .\02_MarcoTeorico\2.4_transmision\rodamientos_guias.tex
+INPUT 02_MarcoTeorico\2.4_transmision\rodamientos_guias.tex
+INPUT .\02_MarcoTeorico\2.5_motores\principio_funcionamiento.tex
+INPUT .\02_MarcoTeorico\2.5_motores\principio_funcionamiento.tex
+INPUT .\02_MarcoTeorico\2.5_motores\principio_funcionamiento.tex
+INPUT .\02_MarcoTeorico\2.5_motores\principio_funcionamiento.tex
+INPUT 02_MarcoTeorico\2.5_motores\principio_funcionamiento.tex
+INPUT .\02_MarcoTeorico\2.5_motores\modos_operacion.tex
+INPUT .\02_MarcoTeorico\2.5_motores\modos_operacion.tex
+INPUT .\02_MarcoTeorico\2.5_motores\modos_operacion.tex
+INPUT .\02_MarcoTeorico\2.5_motores\modos_operacion.tex
+INPUT 02_MarcoTeorico\2.5_motores\modos_operacion.tex
+INPUT .\02_MarcoTeorico\2.5_motores\drivers_electronica.tex
+INPUT .\02_MarcoTeorico\2.5_motores\drivers_electronica.tex
+INPUT .\02_MarcoTeorico\2.5_motores\drivers_electronica.tex
+INPUT .\02_MarcoTeorico\2.5_motores\drivers_electronica.tex
+INPUT 02_MarcoTeorico\2.5_motores\drivers_electronica.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\diagrama_bloques.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\diagrama_bloques.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\diagrama_bloques.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\diagrama_bloques.tex
+INPUT 03_Desarrollo\3.1_arquitectura_general\diagrama_bloques.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\interaccion_niveles.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\interaccion_niveles.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\interaccion_niveles.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\interaccion_niveles.tex
+INPUT 03_Desarrollo\3.1_arquitectura_general\interaccion_niveles.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\flujo_informacion.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\flujo_informacion.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\flujo_informacion.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\flujo_informacion.tex
+INPUT 03_Desarrollo\3.1_arquitectura_general\flujo_informacion.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\maquina_estados_global.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\maquina_estados_global.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\maquina_estados_global.tex
+INPUT .\03_Desarrollo\3.1_arquitectura_general\maquina_estados_global.tex
+INPUT 03_Desarrollo\3.1_arquitectura_general\maquina_estados_global.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\especificaciones_diseno.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\especificaciones_diseno.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\especificaciones_diseno.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\especificaciones_diseno.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\especificaciones_diseno.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\grados_libertad.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\grados_libertad.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\grados_libertad.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\grados_libertad.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\grados_libertad.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\ecuaciones_movimiento.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\ecuaciones_movimiento.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\ecuaciones_movimiento.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\ecuaciones_movimiento.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\ecuaciones_movimiento.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\espacio_trabajo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\espacio_trabajo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\espacio_trabajo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\espacio_trabajo.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\espacio_trabajo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_materiales.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_materiales.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_materiales.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_materiales.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\seleccion_materiales.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculos_resistencia.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculos_resistencia.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculos_resistencia.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculos_resistencia.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\calculos_resistencia.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\estructura_soporte.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\estructura_soporte.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\estructura_soporte.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\estructura_soporte.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\estructura_soporte.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\dimensionamiento_correa.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\dimensionamiento_correa.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\dimensionamiento_correa.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\dimensionamiento_correa.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\dimensionamiento_correa.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_poleas.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_poleas.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_poleas.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_poleas.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\seleccion_poleas.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculo_cargas_horizontal.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculo_cargas_horizontal.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculo_cargas_horizontal.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculo_cargas_horizontal.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\calculo_cargas_horizontal.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\analisis_husillo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\analisis_husillo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\analisis_husillo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\analisis_husillo.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\analisis_husillo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculo_torque.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculo_torque.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculo_torque.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\calculo_torque.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\calculo_torque.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_guias.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_guias.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_guias.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_guias.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\seleccion_guias.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\configuracion_brazo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\configuracion_brazo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\configuracion_brazo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\configuracion_brazo.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\configuracion_brazo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\cinematica_brazo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\cinematica_brazo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\cinematica_brazo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\cinematica_brazo.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\cinematica_brazo.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_servos.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_servos.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_servos.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\seleccion_servos.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\seleccion_servos.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\diseno_piezas_3d.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\diseno_piezas_3d.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\diseno_piezas_3d.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\diseno_piezas_3d.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\diseno_piezas_3d.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\tecnologia_impresion.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\tecnologia_impresion.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\tecnologia_impresion.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\tecnologia_impresion.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\tecnologia_impresion.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\tolerancias_ajustes.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\tolerancias_ajustes.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\tolerancias_ajustes.tex
+INPUT .\03_Desarrollo\3.2_modelado_mecanico\tolerancias_ajustes.tex
+INPUT 03_Desarrollo\3.2_modelado_mecanico\tolerancias_ajustes.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\arquitectura_regulatorio.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\arquitectura_regulatorio.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\arquitectura_regulatorio.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\arquitectura_regulatorio.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\arquitectura_regulatorio.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\justificacion_arduino.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\justificacion_arduino.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\justificacion_arduino.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\justificacion_arduino.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\justificacion_arduino.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\distribucion_pines.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\distribucion_pines.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\distribucion_pines.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\distribucion_pines.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\distribucion_pines.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\motores_paso_paso.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\motores_paso_paso.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\motores_paso_paso.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\motores_paso_paso.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\motores_paso_paso.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\drivers_tb6600.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\drivers_tb6600.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\drivers_tb6600.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\drivers_tb6600.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\drivers_tb6600.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\servomotores.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\servomotores.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\servomotores.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\servomotores.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\servomotores.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\finales_carrera.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\finales_carrera.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\finales_carrera.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\finales_carrera.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\finales_carrera.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\sistema_seguridad.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\sistema_seguridad.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\sistema_seguridad.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\sistema_seguridad.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\sistema_seguridad.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\generacion_trayectorias.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\generacion_trayectorias.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\generacion_trayectorias.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\generacion_trayectorias.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\generacion_trayectorias.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\control_velocidad.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\control_velocidad.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\control_velocidad.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\control_velocidad.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\control_velocidad.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\conversion_pasos_mm.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\conversion_pasos_mm.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\conversion_pasos_mm.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\conversion_pasos_mm.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\conversion_pasos_mm.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\estructura_comandos.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\estructura_comandos.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\estructura_comandos.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\estructura_comandos.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\estructura_comandos.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\manejo_errores.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\manejo_errores.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\manejo_errores.tex
+INPUT .\03_Desarrollo\3.3_nivel_regulatorio\manejo_errores.tex
+INPUT 03_Desarrollo\3.3_nivel_regulatorio\manejo_errores.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\arquitectura_supervisor.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\arquitectura_supervisor.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\arquitectura_supervisor.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\arquitectura_supervisor.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\arquitectura_supervisor.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\justificacion_raspberry.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\justificacion_raspberry.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\justificacion_raspberry.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\justificacion_raspberry.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\justificacion_raspberry.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\capacidades_limitaciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\capacidades_limitaciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\capacidades_limitaciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\capacidades_limitaciones.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\capacidades_limitaciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\diagrama_estados.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\diagrama_estados.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\diagrama_estados.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\diagrama_estados.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\diagrama_estados.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\transiciones_condiciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\transiciones_condiciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\transiciones_condiciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\transiciones_condiciones.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\transiciones_condiciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\manejo_excepciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\manejo_excepciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\manejo_excepciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\manejo_excepciones.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\manejo_excepciones.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\gestion_comandos.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\gestion_comandos.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\gestion_comandos.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\gestion_comandos.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\gestion_comandos.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\sincronizacion_movimientos.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\sincronizacion_movimientos.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\sincronizacion_movimientos.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\sincronizacion_movimientos.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\sincronizacion_movimientos.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\recuperacion_fallas.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\recuperacion_fallas.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\recuperacion_fallas.tex
+INPUT .\03_Desarrollo\3.4_nivel_supervisor\recuperacion_fallas.tex
+INPUT 03_Desarrollo\3.4_nivel_supervisor\recuperacion_fallas.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_ia.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_ia.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_ia.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_ia.tex
+INPUT 03_Desarrollo\3.5_ia_vision\arquitectura_ia.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\pipeline_procesamiento.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\pipeline_procesamiento.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\pipeline_procesamiento.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\pipeline_procesamiento.tex
+INPUT 03_Desarrollo\3.5_ia_vision\pipeline_procesamiento.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\hardware_camara.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\hardware_camara.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\hardware_camara.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\hardware_camara.tex
+INPUT 03_Desarrollo\3.5_ia_vision\hardware_camara.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\preprocesamiento.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\preprocesamiento.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\preprocesamiento.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\preprocesamiento.tex
+INPUT 03_Desarrollo\3.5_ia_vision\preprocesamiento.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\analisis_morfologico.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\analisis_morfologico.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\analisis_morfologico.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\analisis_morfologico.tex
+INPUT 03_Desarrollo\3.5_ia_vision\analisis_morfologico.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\calibracion_pixel_mm.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\calibracion_pixel_mm.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\calibracion_pixel_mm.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\calibracion_pixel_mm.tex
+INPUT 03_Desarrollo\3.5_ia_vision\calibracion_pixel_mm.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\ecuaciones_transformacion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\ecuaciones_transformacion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\ecuaciones_transformacion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\ecuaciones_transformacion.tex
+INPUT 03_Desarrollo\3.5_ia_vision\ecuaciones_transformacion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\validacion_estadistica.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\validacion_estadistica.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\validacion_estadistica.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\validacion_estadistica.tex
+INPUT 03_Desarrollo\3.5_ia_vision\validacion_estadistica.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_cnn.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_cnn.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_cnn.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_cnn.tex
+INPUT 03_Desarrollo\3.5_ia_vision\arquitectura_cnn.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\funcion_perdida.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\funcion_perdida.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\funcion_perdida.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\funcion_perdida.tex
+INPUT 03_Desarrollo\3.5_ia_vision\funcion_perdida.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\metricas_desempeno.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\metricas_desempeno.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\metricas_desempeno.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\metricas_desempeno.tex
+INPUT 03_Desarrollo\3.5_ia_vision\metricas_desempeno.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\justificacion_arquitectura.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\justificacion_arquitectura.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\justificacion_arquitectura.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\justificacion_arquitectura.tex
+INPUT 03_Desarrollo\3.5_ia_vision\justificacion_arquitectura.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\algoritmo_exploracion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\algoritmo_exploracion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\algoritmo_exploracion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\algoritmo_exploracion.tex
+INPUT 03_Desarrollo\3.5_ia_vision\algoritmo_exploracion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\sincronizacion_imagen_posicion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\sincronizacion_imagen_posicion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\sincronizacion_imagen_posicion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\sincronizacion_imagen_posicion.tex
+INPUT 03_Desarrollo\3.5_ia_vision\sincronizacion_imagen_posicion.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\cooldown_espacial.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\cooldown_espacial.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\cooldown_espacial.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\cooldown_espacial.tex
+INPUT 03_Desarrollo\3.5_ia_vision\cooldown_espacial.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\matriz_cultivo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\matriz_cultivo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\matriz_cultivo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\matriz_cultivo.tex
+INPUT 03_Desarrollo\3.5_ia_vision\matriz_cultivo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\tsp_adaptado.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\tsp_adaptado.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\tsp_adaptado.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\tsp_adaptado.tex
+INPUT 03_Desarrollo\3.5_ia_vision\tsp_adaptado.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\funcion_objetivo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\funcion_objetivo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\funcion_objetivo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\funcion_objetivo.tex
+INPUT 03_Desarrollo\3.5_ia_vision\funcion_objetivo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\heuristicas.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\heuristicas.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\heuristicas.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\heuristicas.tex
+INPUT 03_Desarrollo\3.5_ia_vision\heuristicas.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\correccion_horizontal_vertical.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\correccion_horizontal_vertical.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\correccion_horizontal_vertical.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\correccion_horizontal_vertical.tex
+INPUT 03_Desarrollo\3.5_ia_vision\correccion_horizontal_vertical.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\criterio_convergencia.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\criterio_convergencia.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\criterio_convergencia.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\criterio_convergencia.tex
+INPUT 03_Desarrollo\3.5_ia_vision\criterio_convergencia.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\precision_alcanzada.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\precision_alcanzada.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\precision_alcanzada.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\precision_alcanzada.tex
+INPUT 03_Desarrollo\3.5_ia_vision\precision_alcanzada.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_modular.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_modular.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_modular.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\arquitectura_modular.tex
+INPUT 03_Desarrollo\3.5_ia_vision\arquitectura_modular.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\logging_monitoreo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\logging_monitoreo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\logging_monitoreo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\logging_monitoreo.tex
+INPUT 03_Desarrollo\3.5_ia_vision\logging_monitoreo.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\calibracion_automatica.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\calibracion_automatica.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\calibracion_automatica.tex
+INPUT .\03_Desarrollo\3.5_ia_vision\calibracion_automatica.tex
+INPUT 03_Desarrollo\3.5_ia_vision\calibracion_automatica.tex
+INPUT .\03_Desarrollo\3.6_interfaz\diseno_interfaz.tex
+INPUT .\03_Desarrollo\3.6_interfaz\diseno_interfaz.tex
+INPUT .\03_Desarrollo\3.6_interfaz\diseno_interfaz.tex
+INPUT .\03_Desarrollo\3.6_interfaz\diseno_interfaz.tex
+INPUT 03_Desarrollo\3.6_interfaz\diseno_interfaz.tex
+INPUT .\03_Desarrollo\3.6_interfaz\funcionalidades.tex
+INPUT .\03_Desarrollo\3.6_interfaz\funcionalidades.tex
+INPUT .\03_Desarrollo\3.6_interfaz\funcionalidades.tex
+INPUT .\03_Desarrollo\3.6_interfaz\funcionalidades.tex
+INPUT 03_Desarrollo\3.6_interfaz\funcionalidades.tex
+INPUT .\03_Desarrollo\3.6_interfaz\visualizacion_datos.tex
+INPUT .\03_Desarrollo\3.6_interfaz\visualizacion_datos.tex
+INPUT .\03_Desarrollo\3.6_interfaz\visualizacion_datos.tex
+INPUT .\03_Desarrollo\3.6_interfaz\visualizacion_datos.tex
+INPUT 03_Desarrollo\3.6_interfaz\visualizacion_datos.tex
+INPUT .\03_Desarrollo\3.6_interfaz\control_remoto.tex
+INPUT .\03_Desarrollo\3.6_interfaz\control_remoto.tex
+INPUT .\03_Desarrollo\3.6_interfaz\control_remoto.tex
+INPUT .\03_Desarrollo\3.6_interfaz\control_remoto.tex
+INPUT 03_Desarrollo\3.6_interfaz\control_remoto.tex
+INPUT .\03_Desarrollo\3.7_montaje\ensamblaje_mecanico.tex
+INPUT .\03_Desarrollo\3.7_montaje\ensamblaje_mecanico.tex
+INPUT .\03_Desarrollo\3.7_montaje\ensamblaje_mecanico.tex
+INPUT .\03_Desarrollo\3.7_montaje\ensamblaje_mecanico.tex
+INPUT 03_Desarrollo\3.7_montaje\ensamblaje_mecanico.tex
+INPUT .\03_Desarrollo\3.7_montaje\integracion_electronica.tex
+INPUT .\03_Desarrollo\3.7_montaje\integracion_electronica.tex
+INPUT .\03_Desarrollo\3.7_montaje\integracion_electronica.tex
+INPUT .\03_Desarrollo\3.7_montaje\integracion_electronica.tex
+INPUT 03_Desarrollo\3.7_montaje\integracion_electronica.tex
+INPUT .\03_Desarrollo\3.7_montaje\calibracion_puesta_marcha.tex
+INPUT .\03_Desarrollo\3.7_montaje\calibracion_puesta_marcha.tex
+INPUT .\03_Desarrollo\3.7_montaje\calibracion_puesta_marcha.tex
+INPUT .\03_Desarrollo\3.7_montaje\calibracion_puesta_marcha.tex
+INPUT 03_Desarrollo\3.7_montaje\calibracion_puesta_marcha.tex
+INPUT .\03_Desarrollo\3.7_montaje\problemas_soluciones.tex
+INPUT .\03_Desarrollo\3.7_montaje\problemas_soluciones.tex
+INPUT .\03_Desarrollo\3.7_montaje\problemas_soluciones.tex
+INPUT .\03_Desarrollo\3.7_montaje\problemas_soluciones.tex
+INPUT 03_Desarrollo\3.7_montaje\problemas_soluciones.tex
+INPUT .\04_Pruebas\4.1_metodologia\diseno_experimental.tex
+INPUT .\04_Pruebas\4.1_metodologia\diseno_experimental.tex
+INPUT .\04_Pruebas\4.1_metodologia\diseno_experimental.tex
+INPUT .\04_Pruebas\4.1_metodologia\diseno_experimental.tex
+INPUT 04_Pruebas\4.1_metodologia\diseno_experimental.tex
+INPUT .\04_Pruebas\4.1_metodologia\metricas_evaluacion.tex
+INPUT .\04_Pruebas\4.1_metodologia\metricas_evaluacion.tex
+INPUT .\04_Pruebas\4.1_metodologia\metricas_evaluacion.tex
+INPUT .\04_Pruebas\4.1_metodologia\metricas_evaluacion.tex
+INPUT 04_Pruebas\4.1_metodologia\metricas_evaluacion.tex
+INPUT .\04_Pruebas\4.2_mecanico\precision_posicionamiento.tex
+INPUT .\04_Pruebas\4.2_mecanico\precision_posicionamiento.tex
+INPUT .\04_Pruebas\4.2_mecanico\precision_posicionamiento.tex
+INPUT .\04_Pruebas\4.2_mecanico\precision_posicionamiento.tex
+INPUT 04_Pruebas\4.2_mecanico\precision_posicionamiento.tex
+INPUT .\04_Pruebas\4.2_mecanico\repetibilidad.tex
+INPUT .\04_Pruebas\4.2_mecanico\repetibilidad.tex
+INPUT .\04_Pruebas\4.2_mecanico\repetibilidad.tex
+INPUT .\04_Pruebas\4.2_mecanico\repetibilidad.tex
+INPUT 04_Pruebas\4.2_mecanico\repetibilidad.tex
+INPUT .\04_Pruebas\4.2_mecanico\velocidades_maximas.tex
+INPUT .\04_Pruebas\4.2_mecanico\velocidades_maximas.tex
+INPUT .\04_Pruebas\4.2_mecanico\velocidades_maximas.tex
+INPUT .\04_Pruebas\4.2_mecanico\velocidades_maximas.tex
+INPUT 04_Pruebas\4.2_mecanico\velocidades_maximas.tex
+INPUT .\04_Pruebas\4.2_mecanico\vibraciones_estabilidad.tex
+INPUT .\04_Pruebas\4.2_mecanico\vibraciones_estabilidad.tex
+INPUT .\04_Pruebas\4.2_mecanico\vibraciones_estabilidad.tex
+INPUT .\04_Pruebas\4.2_mecanico\vibraciones_estabilidad.tex
+INPUT 04_Pruebas\4.2_mecanico\vibraciones_estabilidad.tex
+INPUT .\04_Pruebas\4.3_control\respuesta_temporal.tex
+INPUT .\04_Pruebas\4.3_control\respuesta_temporal.tex
+INPUT .\04_Pruebas\4.3_control\respuesta_temporal.tex
+INPUT .\04_Pruebas\4.3_control\respuesta_temporal.tex
+INPUT 04_Pruebas\4.3_control\respuesta_temporal.tex
+INPUT .\04_Pruebas\4.3_control\manejo_errores.tex
+INPUT .\04_Pruebas\4.3_control\manejo_errores.tex
+INPUT .\04_Pruebas\4.3_control\manejo_errores.tex
+INPUT .\04_Pruebas\4.3_control\manejo_errores.tex
+INPUT 04_Pruebas\4.3_control\manejo_errores.tex
+INPUT .\04_Pruebas\4.3_control\finales_carrera.tex
+INPUT .\04_Pruebas\4.3_control\finales_carrera.tex
+INPUT .\04_Pruebas\4.3_control\finales_carrera.tex
+INPUT .\04_Pruebas\4.3_control\finales_carrera.tex
+INPUT 04_Pruebas\4.3_control\finales_carrera.tex
+INPUT .\04_Pruebas\4.4_ia\precision_deteccion.tex
+INPUT .\04_Pruebas\4.4_ia\precision_deteccion.tex
+INPUT .\04_Pruebas\4.4_ia\precision_deteccion.tex
+INPUT .\04_Pruebas\4.4_ia\precision_deteccion.tex
+INPUT 04_Pruebas\4.4_ia\precision_deteccion.tex
+INPUT .\04_Pruebas\4.4_ia\tasa_clasificacion.tex
+INPUT .\04_Pruebas\4.4_ia\tasa_clasificacion.tex
+INPUT .\04_Pruebas\4.4_ia\tasa_clasificacion.tex
+INPUT .\04_Pruebas\4.4_ia\tasa_clasificacion.tex
+INPUT 04_Pruebas\4.4_ia\tasa_clasificacion.tex
+INPUT .\04_Pruebas\4.4_ia\tiempo_procesamiento.tex
+INPUT .\04_Pruebas\4.4_ia\tiempo_procesamiento.tex
+INPUT .\04_Pruebas\4.4_ia\tiempo_procesamiento.tex
+INPUT .\04_Pruebas\4.4_ia\tiempo_procesamiento.tex
+INPUT 04_Pruebas\4.4_ia\tiempo_procesamiento.tex
+INPUT .\04_Pruebas\4.4_ia\robustez_variaciones.tex
+INPUT .\04_Pruebas\4.4_ia\robustez_variaciones.tex
+INPUT .\04_Pruebas\4.4_ia\robustez_variaciones.tex
+INPUT .\04_Pruebas\4.4_ia\robustez_variaciones.tex
+INPUT 04_Pruebas\4.4_ia\robustez_variaciones.tex
+INPUT .\04_Pruebas\4.4_ia\validacion_mapeo.tex
+INPUT .\04_Pruebas\4.4_ia\validacion_mapeo.tex
+INPUT .\04_Pruebas\4.4_ia\validacion_mapeo.tex
+INPUT .\04_Pruebas\4.4_ia\validacion_mapeo.tex
+INPUT 04_Pruebas\4.4_ia\validacion_mapeo.tex
+INPUT .\04_Pruebas\4.5_integracion\ciclo_completo.tex
+INPUT .\04_Pruebas\4.5_integracion\ciclo_completo.tex
+INPUT .\04_Pruebas\4.5_integracion\ciclo_completo.tex
+INPUT .\04_Pruebas\4.5_integracion\ciclo_completo.tex
+INPUT 04_Pruebas\4.5_integracion\ciclo_completo.tex
+INPUT .\04_Pruebas\4.5_integracion\eficiencia_sistema.tex
+INPUT .\04_Pruebas\4.5_integracion\eficiencia_sistema.tex
+INPUT .\04_Pruebas\4.5_integracion\eficiencia_sistema.tex
+INPUT .\04_Pruebas\4.5_integracion\eficiencia_sistema.tex
+INPUT 04_Pruebas\4.5_integracion\eficiencia_sistema.tex
+INPUT .\04_Pruebas\4.5_integracion\casos_extremos.tex
+INPUT .\04_Pruebas\4.5_integracion\casos_extremos.tex
+INPUT .\04_Pruebas\4.5_integracion\casos_extremos.tex
+INPUT .\04_Pruebas\4.5_integracion\casos_extremos.tex
+INPUT 04_Pruebas\4.5_integracion\casos_extremos.tex
+INPUT .\04_Pruebas\4.6_analisis\comparacion_objetivos.tex
+INPUT .\04_Pruebas\4.6_analisis\comparacion_objetivos.tex
+INPUT .\04_Pruebas\4.6_analisis\comparacion_objetivos.tex
+INPUT .\04_Pruebas\4.6_analisis\comparacion_objetivos.tex
+INPUT 04_Pruebas\4.6_analisis\comparacion_objetivos.tex
+INPUT .\04_Pruebas\4.6_analisis\limitaciones.tex
+INPUT .\04_Pruebas\4.6_analisis\limitaciones.tex
+INPUT .\04_Pruebas\4.6_analisis\limitaciones.tex
+INPUT .\04_Pruebas\4.6_analisis\limitaciones.tex
+INPUT 04_Pruebas\4.6_analisis\limitaciones.tex
+INPUT .\04_Pruebas\4.6_analisis\mejoras_potenciales.tex
+INPUT .\04_Pruebas\4.6_analisis\mejoras_potenciales.tex
+INPUT .\04_Pruebas\4.6_analisis\mejoras_potenciales.tex
+INPUT .\04_Pruebas\4.6_analisis\mejoras_potenciales.tex
+INPUT 04_Pruebas\4.6_analisis\mejoras_potenciales.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\logros_alcanzados.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\logros_alcanzados.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\logros_alcanzados.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\logros_alcanzados.tex
+INPUT 05_Conclusiones\5.1_conclusiones\logros_alcanzados.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\cumplimiento_objetivos.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\cumplimiento_objetivos.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\cumplimiento_objetivos.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\cumplimiento_objetivos.tex
+INPUT 05_Conclusiones\5.1_conclusiones\cumplimiento_objetivos.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\lecciones_aprendidas.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\lecciones_aprendidas.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\lecciones_aprendidas.tex
+INPUT .\05_Conclusiones\5.1_conclusiones\lecciones_aprendidas.tex
+INPUT 05_Conclusiones\5.1_conclusiones\lecciones_aprendidas.tex
+INPUT .\05_Conclusiones\5.2_aportes\innovaciones.tex
+INPUT .\05_Conclusiones\5.2_aportes\innovaciones.tex
+INPUT .\05_Conclusiones\5.2_aportes\innovaciones.tex
+INPUT .\05_Conclusiones\5.2_aportes\innovaciones.tex
+INPUT 05_Conclusiones\5.2_aportes\innovaciones.tex
+INPUT .\05_Conclusiones\5.2_aportes\contribuciones_tecnicas.tex
+INPUT .\05_Conclusiones\5.2_aportes\contribuciones_tecnicas.tex
+INPUT .\05_Conclusiones\5.2_aportes\contribuciones_tecnicas.tex
+INPUT .\05_Conclusiones\5.2_aportes\contribuciones_tecnicas.tex
+INPUT 05_Conclusiones\5.2_aportes\contribuciones_tecnicas.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\mejoras_propuestas.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\mejoras_propuestas.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\mejoras_propuestas.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\mejoras_propuestas.tex
+INPUT 05_Conclusiones\5.3_trabajo_futuro\mejoras_propuestas.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\escalabilidad.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\escalabilidad.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\escalabilidad.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\escalabilidad.tex
+INPUT 05_Conclusiones\5.3_trabajo_futuro\escalabilidad.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\aplicaciones_potenciales.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\aplicaciones_potenciales.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\aplicaciones_potenciales.tex
+INPUT .\05_Conclusiones\5.3_trabajo_futuro\aplicaciones_potenciales.tex
+INPUT 05_Conclusiones\5.3_trabajo_futuro\aplicaciones_potenciales.tex
+INPUT .\Anexos\A_diagramas_electricos.tex
+INPUT .\Anexos\A_diagramas_electricos.tex
+INPUT .\Anexos\A_diagramas_electricos.tex
+INPUT .\Anexos\A_diagramas_electricos.tex
+INPUT Anexos\A_diagramas_electricos.tex
+INPUT .\Anexos\B_codigo_fuente.tex
+INPUT .\Anexos\B_codigo_fuente.tex
+INPUT .\Anexos\B_codigo_fuente.tex
+INPUT .\Anexos\B_codigo_fuente.tex
+INPUT Anexos\B_codigo_fuente.tex
+INPUT .\Anexos\C_especificaciones.tex
+INPUT .\Anexos\C_especificaciones.tex
+INPUT .\Anexos\C_especificaciones.tex
+INPUT .\Anexos\C_especificaciones.tex
+INPUT Anexos\C_especificaciones.tex
+INPUT .\Anexos\D_manual_usuario.tex
+INPUT .\Anexos\D_manual_usuario.tex
+INPUT .\Anexos\D_manual_usuario.tex
+INPUT .\Anexos\D_manual_usuario.tex
+INPUT Anexos\D_manual_usuario.tex
+INPUT .\Anexos\E_hojas_datos.tex
+INPUT .\Anexos\E_hojas_datos.tex
+INPUT .\Anexos\E_hojas_datos.tex
+INPUT .\Anexos\E_hojas_datos.tex
+INPUT Anexos\E_hojas_datos.tex
+INPUT .\Referencias\referencias.tex
+INPUT .\Referencias\referencias.tex
+INPUT .\Referencias\referencias.tex
+INPUT .\Referencias\referencias.tex
+INPUT Referencias\referencias.tex
+INPUT main.aux
+INPUT .\main.out
+INPUT .\main.out
+INPUT C:\Program Files\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx12.pfb
+INPUT C:\Program Files\MiKTeX\fonts\type1\public\amsfonts\cm\cmbx12.pfb
+INPUT C:\Program Files\MiKTeX\fonts\type1\public\amsfonts\cm\cmr12.pfb
+INPUT C:\Program Files\MiKTeX\fonts\type1\public\amsfonts\cm\cmr12.pfb
+INPUT C:\Program Files\MiKTeX\fonts\type1\public\amsfonts\cm\cmr17.pfb
+INPUT C:\Program Files\MiKTeX\fonts\type1\public\amsfonts\cm\cmr17.pfb
