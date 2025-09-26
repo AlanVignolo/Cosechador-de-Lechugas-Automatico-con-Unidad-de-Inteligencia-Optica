@@ -25,6 +25,8 @@ class UARTManager:
         self.waiting_for_completion = {}
         # Cache de completados recientes para evitar condiciones de carrera
         self.completed_actions_recent = {}
+        # Timestamp del último STARTED por tipo de acción
+        self._action_last_started = {}
         # Buffer de snapshots de último movimiento (lista de tuplas [(x_mm, y_mm), ...])
         self._last_movement_snapshots = []
         self._snap_header_printed = False
@@ -167,6 +169,11 @@ class UARTManager:
                 pass
             if "servo_start_callback" in self.message_callbacks:
                 self.message_callbacks["servo_start_callback"](message)
+            # Registrar STARTED
+            try:
+                self._action_last_started["SERVO_MOVE"] = time.time()
+            except Exception:
+                pass
         
         elif "SERVO_MOVE_COMPLETED:" in message:
             if "servo_complete_callback" in self.message_callbacks:
@@ -175,6 +182,11 @@ class UARTManager:
         elif "GRIPPER_ACTION_STARTED:" in message:
             if "gripper_start_callback" in self.message_callbacks:
                 self.message_callbacks["gripper_start_callback"](message)
+            # Registrar STARTED
+            try:
+                self._action_last_started["GRIPPER_ACTION"] = time.time()
+            except Exception:
+                pass
                 
         elif "GRIPPER_ACTION_COMPLETED:" in message:
             if "gripper_complete_callback" in self.message_callbacks:
@@ -194,6 +206,11 @@ class UARTManager:
                 self._movement_seen_ids.clear()
             except Exception:
                 pass
+            # Registrar STARTED
+            try:
+                self._action_last_started["STEPPER_MOVE"] = time.time()
+            except Exception:
+                pass
                 
         elif "STEPPER_MOVE_COMPLETED:" in message:
             # Evitar procesamiento duplicado
@@ -211,12 +228,20 @@ class UARTManager:
             
     
     def wait_for_action_completion(self, action_type: str, timeout: float = 30.0) -> bool:
-        # Comprobar si ya se completó hace muy poco (evita carrera con comandos rápidos)
+        # Comprobar si ya se completó hace muy poco Y corresponde al movimiento actual
         try:
-            ts = self.completed_actions_recent.get(action_type)
-            if ts is not None and (time.time() - ts) < 5.0:
-                del self.completed_actions_recent[action_type]
-                return True
+            ts_completed = self.completed_actions_recent.get(action_type)
+            ts_started = self._action_last_started.get(action_type)
+            now = time.time()
+            if ts_completed is not None and (now - ts_completed) < 5.0:
+                # Para STEPPER_MOVE requerir STARTED explícito para evitar tomar un COMPLETED viejo
+                if action_type == "STEPPER_MOVE" and ts_started is None:
+                    pass  # no aceptar cache sin STARTED
+                else:
+                    # Aceptar solo si COMPLETED es posterior al último STARTED
+                    if ts_started is None or ts_completed >= ts_started:
+                        del self.completed_actions_recent[action_type]
+                        return True
         except Exception:
             pass
 
@@ -529,8 +554,14 @@ class UARTManager:
             # Resetear callbacks (mantener solo los esenciales del sistema)
             essential_callbacks = {}
             # Mantener callbacks del sistema si existen
-            for key in ["status_callback", "servo_start_callback", "servo_complete_callback", 
-                       "gripper_start_callback", "gripper_complete_callback"]:
+            for key in [
+                "status_callback",
+                "servo_start_callback", "servo_complete_callback",
+                "gripper_start_callback", "gripper_complete_callback",
+                # IMPORTANTES: mantener también stepper y límites para no romper tracking
+                "stepper_start_callback", "stepper_complete_callback",
+                "limit_callback",
+            ]:
                 if key in self.message_callbacks:
                     essential_callbacks[key] = self.message_callbacks[key]
             
@@ -542,6 +573,7 @@ class UARTManager:
             self.action_events.clear()
             self.waiting_for_completion.clear()
             self.completed_actions_recent.clear()
+            self._action_last_started.clear()
             # Limpiar snapshots almacenados
             self._last_movement_snapshots.clear()
         

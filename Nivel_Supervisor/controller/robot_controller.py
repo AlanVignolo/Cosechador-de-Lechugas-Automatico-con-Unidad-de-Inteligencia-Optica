@@ -93,6 +93,11 @@ class RobotController:
         display_x = RobotConfig.display_x_position(x)
         display_y = RobotConfig.display_y_position(y)
         self.logger.info(f"Posición global reseteada a: X={display_x}mm, Y={display_y}mm")
+        # Persistir posición si está homed
+        try:
+            self._save_current_position()
+        except Exception:
+            pass
     
     def _initialize_global_position(self):
         """Inicializar posición global al arrancar Python"""
@@ -265,6 +270,34 @@ class RobotController:
             if not result["success"]:
                 return {"success": False, "message": "Error configurando velocidades"}
             
+            # Pre-clear: si algún límite está activo, alejarse 20mm en la dirección segura
+            try:
+                lim = self.cmd.uart.get_limit_status()
+                active = lim.get('status', {}) if lim else {}
+                pre_moves = []
+                if active.get('H_RIGHT', False):
+                    # alejarse a la izquierda
+                    pre_moves.append((RobotConfig.apply_x_direction(20), 0))
+                if active.get('H_LEFT', False):
+                    # alejarse a la derecha
+                    pre_moves.append((RobotConfig.apply_x_direction(-20), 0))
+                if active.get('V_UP', False):
+                    # alejarse hacia abajo
+                    pre_moves.append((0, RobotConfig.apply_y_direction(20)))
+                if active.get('V_DOWN', False):
+                    # alejarse hacia arriba
+                    pre_moves.append((0, RobotConfig.apply_y_direction(-20)))
+                for dx, dy in pre_moves:
+                    print(f"Pre-homing: alejándose de límite activo ΔX={dx}mm, ΔY={dy}mm")
+                    self.cmd.move_xy(dx, dy)
+                    try:
+                        self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=10.0)
+                    except Exception:
+                        time.sleep(0.5)
+                    time.sleep(0.2)
+            except Exception:
+                pass
+            
             print("Moviendo hacia la DERECHA hasta tocar límite...")
             result = self.cmd.move_xy(RobotConfig.get_homing_direction_x(), 0)
             
@@ -274,6 +307,38 @@ class RobotController:
             else:
                 return {"success": False, "message": "❌ No se alcanzó límite derecho"}
             
+            # Asegurar liberar límite derecho antes de subir
+            try:
+                lim = self.cmd.uart.get_limit_status()
+                at_right = bool(lim and lim.get('status', {}).get('H_RIGHT', False))
+            except Exception:
+                at_right = False
+            if at_right:
+                try:
+                    print(f"Despegando {RobotConfig.HOME_OFFSET_H}mm desde límite derecho antes de subir...")
+                    # Alejarse del límite derecho hacia la izquierda exactamente HOME_OFFSET_H
+                    self.cmd.move_xy(RobotConfig.apply_x_direction(RobotConfig.HOME_OFFSET_H), 0)
+                    try:
+                        self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=8.0)
+                    except Exception:
+                        time.sleep(0.5)
+                    
+                    # Poll hasta que libere H_RIGHT o 1s
+                    start = time.time()
+                    while time.time() - start < 1.0:
+                        resp = self.cmd.check_limits()
+                        try:
+                            resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+                        except Exception:
+                            resp_str = ""
+                        self.cmd.uart._update_limit_status_from_response(resp_str)
+                        st = self.cmd.uart.get_limit_status()
+                        if not st.get('status', {}).get('H_RIGHT', False):
+                            break
+                        time.sleep(0.05)
+                except Exception:
+                    pass
+
             print("Moviendo hacia ARRIBA hasta tocar límite...")
             result = self.cmd.move_xy(0, RobotConfig.get_homing_direction_y())
             
@@ -283,9 +348,10 @@ class RobotController:
             else:
                 return {"success": False, "message": "❌ No se alcanzó límite superior"}
             
-            print(f"Estableciendo origen ({RobotConfig.HOME_OFFSET_H}mm, {RobotConfig.HOME_OFFSET_V}mm desde límites)...")
+            # Aplicar solo offset vertical tras tocar límite superior
+            print(f"Estableciendo origen vertical (bajar {RobotConfig.HOME_OFFSET_V}mm desde límite superior)...")
             
-            result = self.cmd.move_xy(RobotConfig.get_home_offset_x(), RobotConfig.get_home_offset_y())
+            result = self.cmd.move_xy(0, RobotConfig.get_home_offset_y())
             if not result["success"]:
                 return {"success": False, "message": "Error en offset"}
             
@@ -386,6 +452,30 @@ class RobotController:
             },
             "gripper": self.gripper_state
         }
+
+    def resync_global_position_from_firmware(self) -> bool:
+        """Consultar XY? al firmware y sincronizar la posición global del supervisor.
+        Retorna True si se pudo sincronizar, False en caso contrario.
+        """
+        try:
+            resp = self.cmd.get_current_position_mm()
+            s = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+            if 'MM:' in s:
+                mm_part = s.split('MM:')[1]
+                parts = mm_part.replace('\n', ' ').split(',')
+                if len(parts) >= 2:
+                    x = float(parts[0].strip())
+                    y = float(parts[1].strip())
+                    self.global_position['x'] = x
+                    self.global_position['y'] = y
+                    self._save_current_position()
+                    display_x = RobotConfig.display_x_position(x)
+                    display_y = RobotConfig.display_y_position(y)
+                    self.logger.info(f"Resync posición desde firmware: X={display_x}mm, Y={display_y}mm")
+                    return True
+        except Exception as e:
+            self.logger.warning(f"No se pudo resync desde firmware: {e}")
+        return False
 
     def calibrate_workspace(self) -> Dict:
         """Calibración del workspace usando mensajes STEPPER_EMERGENCY_STOP del firmware"""
@@ -563,7 +653,37 @@ class RobotController:
             limit_message = self.cmd.uart.wait_for_limit_specific('H_RIGHT', timeout=30.0)
             if not limit_message:
                 return {"success": False, "message": "No se alcanzó límite derecho en homing final"}
-            
+
+            # Liberar H_RIGHT antes de subir para que no interrumpa el movimiento vertical
+            try:
+                lim = self.cmd.uart.get_limit_status()
+                at_right = bool(lim and lim.get('status', {}).get('H_RIGHT', False))
+            except Exception:
+                at_right = False
+            if at_right:
+                try:
+                    print("      → Retrocediendo 12mm desde límite derecho para liberar switch...")
+                    self.cmd.move_xy(RobotConfig.apply_x_direction(12), 0)
+                    try:
+                        self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=8.0)
+                    except Exception:
+                        time.sleep(0.5)
+                    # Poll hasta que libere H_RIGHT o 1s
+                    start = time.time()
+                    while time.time() - start < 1.0:
+                        resp = self.cmd.check_limits()
+                        try:
+                            resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+                        except Exception:
+                            resp_str = ""
+                        self.cmd.uart._update_limit_status_from_response(resp_str)
+                        st = self.cmd.uart.get_limit_status()
+                        if not st.get('status', {}).get('H_RIGHT', False):
+                            break
+                        time.sleep(0.05)
+                except Exception:
+                    pass
+
             # Ir a límite superior
             print("      → Moviendo hacia límite superior...")
             result = self.cmd.move_xy(0, RobotConfig.get_homing_direction_y())

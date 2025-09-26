@@ -219,70 +219,46 @@ class HorizontalScanner:
             display_thread = threading.Thread(target=self.display_live_feed, daemon=True)
             display_thread.start()
             
-            print("Fase 1: Moviendo al switch derecho...")
-            
-            # Configurar velocidades de homing
+            print("Fase única: Recorrido horizontal dentro del espacio de trabajo...")
             from config.robot_config import RobotConfig
+            # Velocidad de homing para recorrido estable (puedes ajustar a NORMAL si prefieres)
             result = robot.cmd.set_velocities(
-                RobotConfig.HOMING_SPEED_H, 
+                RobotConfig.HOMING_SPEED_H,
                 RobotConfig.HOMING_SPEED_V
             )
             if not result["success"]:
                 print(f"Error configurando velocidades: {result}")
                 return False
-            
-            # Configurar callback para límites
-            limit_reached = {"reached": False, "type": None}
-            
-            def on_limit_callback(message):
-                limit_reached["reached"] = True
-                limit_reached["type"] = message
-                print(f"Límite alcanzado: {message}")
-            
-            robot.cmd.uart.set_limit_callback(on_limit_callback)
-            
-            # Mover hacia el switch derecho (X negativos)
-            print("   Moviendo hacia switch derecho...")
-            result = robot.cmd.move_xy(-2000, 0)  # Hacia X negativos (switch derecho)
-            
-            # Esperar límite derecho
-            limit_message = robot.cmd.uart.wait_for_limit(timeout=30.0)
-            if not (limit_message and "LIMIT_H_RIGHT_TRIGGERED" in limit_message):
-                print("Error: No se alcanzó el límite derecho")
+
+            # Calcular borde seguro de trabajo (x_edge)
+            dims = robot.get_workspace_dimensions()
+            if dims.get('calibrated'):
+                width_mm = float(dims.get('width_mm', 0.0))
+            else:
+                width_mm = float(RobotConfig.MAX_X)
+            safety = 20.0
+            x_edge = max(0.0, width_mm - safety)
+
+            # Mover desde X actual hasta x_edge (sin tocar switches)
+            try:
+                st = robot.get_status()
+                curr_x = float(st['position']['x'])
+            except Exception:
+                curr_x = 0.0
+            dx = x_edge - curr_x
+            print(f"   Moviendo hasta X={x_edge:.1f}mm (ΔX={dx:.1f}mm) sin tocar límites...")
+            move_res = robot.cmd.move_xy(dx, 0)
+            if not move_res.get('success'):
+                print(f"Error iniciando recorrido: {move_res}")
                 return False
-            
-            print("Límite derecho alcanzado")
-            
-            # 3. Retroceder 1cm
-            print("Fase 2: Retrocediendo 1cm desde el switch...")
-            result = robot.cmd.move_xy(10, 0)  # 10mm hacia X positivos (alejarse del switch derecho)
-            if not result["success"]:
-                print(f"Error en retroceso: {result}")
-                return False
-            
-            time.sleep(2)  # Esperar que complete el movimiento
-            print("Retroceso completado")
-            
-            # 4. Recorrido completo hacia el switch izquierdo
-            print("Fase 3: Iniciando recorrido horizontal completo...")
-            print("Cámara activa - observe el feed de video")
-            print("Recorriendo a velocidad de homing...")
-            
-            # Reiniciar callback para límite izquierdo
-            limit_reached = {"reached": False, "type": None}
-            robot.cmd.uart.set_limit_callback(on_limit_callback)
-            
-            # Mover hacia el switch izquierdo (X positivos) - DISTANCIA MUY LARGA
-            result = robot.cmd.move_xy(2000, 0)  # 2000mm hacia X positivos (switch izquierdo)
-            
-            # Esperar límite izquierdo
-            print("   Esperando alcanzar límite izquierdo...")
-            limit_message = robot.cmd.uart.wait_for_limit(timeout=120.0)  # 2 minutos timeout
-            if not (limit_message and "LIMIT_H_LEFT_TRIGGERED" in limit_message):
-                print("Error: No se alcanzó el límite izquierdo en tiempo esperado")
-                return False
-            
-            print("Límite izquierdo alcanzado - Recorrido completo terminado")
+
+            # Esperar finalización normal (no por límite)
+            try:
+                robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
+            except Exception:
+                pass
+
+            print("Recorrido horizontal terminado en x_edge")
             
             return True
             

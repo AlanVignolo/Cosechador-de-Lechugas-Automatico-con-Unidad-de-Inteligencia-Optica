@@ -232,12 +232,16 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         def video_loop():
             """Bucle de video sin UI; solo procesa y emite flags"""
             thread_name = threading.current_thread().name
+            print(f"[{scan_id}] HILO DE VIDEO INICIADO: {thread_name}")
             
             try:
                 # Sin ventanas UI (evita bloqueos en 2ª corrida)
                 frame_count = 0
                 start_ts = time.time()
                 printed_none_once = False
+                detection_count = 0
+                last_status_report = time.time()
+                
                 while is_scanning[0]:
                     try:
                         frame = camera_mgr.get_latest_video_frame()
@@ -268,6 +272,14 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                         # Usar detector sofisticado
                         is_tape_detected = detect_sophisticated_tape(processed)
                         
+                        if is_tape_detected:
+                            detection_count += 1
+                        
+                        # Reporte de estado cada 5 segundos
+                        if time.time() - last_status_report > 5.0:
+                            print(f"[{scan_id}] HILO: frames={frame_count}, detecciones={detection_count}, is_scanning={is_scanning[0]}")
+                            last_status_report = time.time()
+                        
                         # Procesar cambios de estado y enviar flags (sin posición)
                         process_detection_state(is_tape_detected)
                         # Sin UI / imshow
@@ -283,6 +295,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                         
             finally:
                 # Fin del hilo de video
+                print(f"[{scan_id}] HILO DE VIDEO TERMINADO: frames={frame_count}, detecciones={detection_count}")
                 pass
         
         # KILLER DE THREADS ZOMBIE ANTES DE INICIAR NUEVO ESCANEO
@@ -297,7 +310,15 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         video_thread_name = f"VideoScanThread_{scan_id}"
         video_thread = threading.Thread(target=video_loop, name=video_thread_name)
         video_thread.daemon = True  # Evitar bloqueos si el hilo no termina
+        print(f"[{scan_id}] INICIANDO HILO DE VIDEO: {video_thread_name}")
         video_thread.start()
+        
+        # Verificar que el hilo realmente se inició
+        time.sleep(0.2)
+        if video_thread.is_alive():
+            print(f"[{scan_id}] CONFIRMADO: Hilo de video está vivo")
+        else:
+            print(f"[{scan_id}] ERROR: Hilo de video NO está vivo tras iniciar")
         
         # Pequeño warm-up: esperar a que llegue el primer frame válido
         warmup_start = time.time()
@@ -357,23 +378,89 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception:
             pass
 
+        # CRÍTICO: Esperar a que el hilo de detección esté realmente funcionando
+        # antes de iniciar el movimiento para evitar perder detecciones al inicio
+        print(f"[{scan_id}] Esperando estabilización completa del sistema de detección...")
+        detection_ready = False
+        detection_wait_start = time.time()
+        
+        # Esperar hasta 3 segundos adicionales a que el hilo procese al menos 5 frames
+        while time.time() - detection_wait_start < 3.0 and not detection_ready:
+            try:
+                # Verificar que el hilo de video esté procesando frames activamente
+                test_frame = camera_mgr.get_latest_video_frame(timeout=0.1)
+                if test_frame is not None:
+                    # Dar tiempo para que procese varios frames consecutivos
+                    time.sleep(0.5)
+                    test_frame2 = camera_mgr.get_latest_video_frame(timeout=0.1)
+                    if test_frame2 is not None:
+                        print(f"[{scan_id}] Sistema de detección estabilizado y listo")
+                        detection_ready = True
+                        break
+            except Exception:
+                pass
+            time.sleep(0.1)
+        
+        if not detection_ready:
+            print(f"[{scan_id}] Advertencia: Sistema de detección no completamente estable, continuando...")
+        
         # Limpiar snapshots previos antes de iniciar el movimiento principal
         try:
             robot.cmd.uart.clear_last_snapshots()
         except Exception:
             pass
 
-        # Movimiento hacia switch izquierdo
-        result = robot.cmd.move_xy(2000, 0)
-
-        # Esperar límite izquierdo - solo aceptar TRIGGER explícito
-        limit_triggered = robot.cmd.uart.wait_for_message("LIMIT_H_LEFT_TRIGGERED", timeout=120.0)
+        # Movimiento hasta el borde derecho seguro (x_edge = width_mm - safety)
+        dims = robot.get_workspace_dimensions()
+        if dims.get('calibrated'):
+            width_mm = float(dims.get('width_mm', 0.0))
+        else:
+            from config.robot_config import RobotConfig as _RC
+            width_mm = float(_RC.MAX_X)
+        safety = 20.0
+        x_edge = max(0.0, width_mm - safety)
+        try:
+            status = robot.get_status()
+            curr_x = float(status['position']['x'])
+        except Exception:
+            curr_x = 0.0
+        dx = x_edge - curr_x
+        print(f"Escaneo horizontal: moviendo hasta X={x_edge:.1f}mm (ΔX={dx:.1f}mm)")
+        res_move = robot.cmd.move_xy(dx, 0)
+        if not res_move.get('success'):
+            print(f"Error iniciando movimiento horizontal: {res_move}")
+            return False
+        # Esperar finalización normal del movimiento (no por límite)
+        move_completed = False
+        try:
+            move_completed = robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
+        except Exception:
+            move_completed = False
+        if not move_completed:
+            # Fallback por tiempo estimado según velocidad configurada
+            try:
+                from config.robot_config import RobotConfig as _RC
+                h_mm_s = max(1.0, float(_RC.NORMAL_SPEED_H) / float(_RC.STEPS_PER_MM_H))
+                est_t = abs(dx) / h_mm_s + 0.5
+                time.sleep(min(est_t, 10.0))
+            except Exception:
+                time.sleep(1.0)
         
         # Detener video de forma controlada
+        print(f"[{scan_id}] DETENIENDO hilo de video...")
         is_scanning[0] = False
         
         # Dar tiempo al thread para salir del loop
         time.sleep(0.2)
+        if video_thread and video_thread.is_alive():
+            print(f"[{scan_id}] Esperando terminación del hilo de video...")
+            video_thread.join(timeout=1.0)
+            if video_thread.is_alive():
+                print(f"[{scan_id}] ADVERTENCIA: Hilo de video no terminó en tiempo")
+            else:
+                print(f"[{scan_id}] Hilo de video terminado correctamente")
+        else:
+            print(f"[{scan_id}] Hilo de video ya estaba terminado")
         
         # Esperar terminación con intentos múltiples
         for attempt in range(3):
@@ -390,9 +477,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception:
             pass
         
-        if not limit_triggered:
-            print("Error: No se alcanzó el límite izquierdo (timeout esperando trigger)")
-            return False
+        # Ya no esperamos tocar límite; el movimiento termina en x_edge con snapshots automáticos
         
         # Correlacionar flags con snapshots para obtener posiciones reales
         correlate_flags_with_snapshots(detection_state)
@@ -441,6 +526,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
     finally:
         # LIMPIEZA COMPLETA DE RECURSOS
         # FORZAR PARADA DE VIDEO THREAD
+        print(f"[{scan_id}] LIMPIEZA FINAL: Forzando parada de hilo de video")
         is_scanning[0] = False
         
         # FORZAR TERMINACIÓN DE TODOS LOS THREADS ACTIVOS

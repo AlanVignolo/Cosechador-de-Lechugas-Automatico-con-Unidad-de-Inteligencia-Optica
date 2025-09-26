@@ -7,7 +7,7 @@ import logging
 from controller.uart_manager import UARTManager
 from controller.command_manager import CommandManager
 from controller.robot_controller import RobotController
-from controller.workflow_orchestrator import inicio_completo, inicio_simple
+from controller.workflow_orchestrator import inicio_completo, inicio_simple, inicio_completo_hard, cosecha_interactiva
 from config.robot_config import RobotConfig
 from camera_manager import get_camera_manager
 
@@ -27,10 +27,12 @@ def run_menu(robot: RobotController):
         print("-" * 60)
         print("1. Inicio simple (ir a 0,0 -> escaneo vertical -> escaneos horizontales -> volver a 0,0)")
         print("2. Inicio completo (homing -> escaneo vertical -> escaneos horizontales -> volver a 0,0)")
+        print("3. Inicio completo HARD (calibración completa -> escaneo vertical -> escaneos horizontales -> volver a 0,0)")
+        print("4. Cosecha interactiva (clasificación manual lista/no lista/vacío + recolección y depósito)")
         print("0. Salir")
         print("-" * 60)
 
-        opcion = input("Selecciona opción (0-2): ").strip()
+        opcion = input("Selecciona opción (0-4): ").strip()
 
         if opcion == '1':
             print("\nINICIANDO 'INICIO SIMPLE'...")
@@ -46,6 +48,20 @@ def run_menu(robot: RobotController):
                 print("Inicio completo finalizado correctamente")
             else:
                 print("Inicio completo finalizado con errores")
+        elif opcion == '3':
+            print("\nINICIANDO 'INICIO COMPLETO HARD' (calibración completa)...")
+            ok = inicio_completo_hard(robot)
+            if ok:
+                print("Inicio completo HARD finalizado correctamente")
+            else:
+                print("Inicio completo HARD finalizado con errores")
+        elif opcion == '4':
+            print("\nINICIANDO 'COSECHA INTERACTIVA'...")
+            ok = cosecha_interactiva(robot)
+            if ok:
+                print("Cosecha interactiva finalizada correctamente")
+            else:
+                print("Cosecha interactiva finalizada con errores")
         elif opcion == '0':
             print("Saliendo del menú de acciones automáticas...")
             break
