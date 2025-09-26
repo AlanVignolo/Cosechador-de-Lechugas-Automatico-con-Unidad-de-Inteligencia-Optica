@@ -1,4 +1,4 @@
-\documentclass[a4paper]{report}
+\documentclass[a4paper,12pt]{report}
 \usepackage[
   a4paper,
   margin=1.5cm,
@@ -6,10 +6,8 @@
   headheight=30pt,
 ]{geometry}  
 
-
-
-
-% \usepackage[spanish]{babel}
+% Paquetes
+\usepackage[spanish]{babel}
 \usepackage{amssymb}
 \usepackage{amsfonts}
 \usepackage{amsmath}
@@ -32,105 +30,337 @@
 \usepackage{float}
 \usepackage{verbatim}
 \usepackage{comment}
-\excludecomment{debug}
 \usepackage{subcaption}
+\usepackage{hyperref}
 
-%% Renew commands
+\excludecomment{debug}
+
+% Renombrar figuras
 \renewcommand{\figurename}{Fig.}
 \captionsetup{font=footnotesize}
 
-%%  ----- Cabecera y pie de pagina -----
+% Cabecera y pie de página
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhead{}
 \fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
-\fancyhead[C]{317 - Automátas y Control Discreto \\ \hspace{0.5pt} \\ \textbf{Proyecto Final de Estudios: Robot cosechador automático}}
+\fancyhead[C]{317 - Autómatas y Control Discreto \\ \hspace{0.5pt} \\ \textbf{Proyecto Final de Estudios: Robot cosechador automático}}
 \fancyhead[R]{Brenda Gudiño \\ Alan Vignolo \\ \hspace{0.5pt}}
 
 \fancyfoot{}
 \fancyfoot[R]{Página \thepage \hspace{2pt} de \pageref{LastPage}} 
 
-%% Para ver cabecera y pie de pagina en los inicios de capitulo
 \fancypagestyle{plain}{
 \fancyhead{}
-\fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2024 \\ \hspace{0.1pt}}
+\fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
 \fancyhead[C]{Proyecto final de estudios \\ \hspace{0.5pt} \\ \textbf{Robot cosechador automático}}
 \fancyhead[R]{Brenda Gudiño \\ Alan Vignolo  \\ \hspace{0.5pt}}
-
 \fancyfoot{}
 \fancyfoot[R]{Página \thepage \hspace{2pt} de \pageref{LastPage}} 
 }
 
-%% -------------------------------------
-%% Indice y capitulos ----------------------------
+% Formato de índice y capítulos
 \renewcommand*\contentsname{Índice}
 \titleformat{\chapter}[block]
   {\normalfont\huge\bfseries}{\thechapter.}{1em}{\Huge}
 \titlespacing*{\chapter}{0pt}{0pt}{10pt}
-%% ------------------------------------
 
-
-
-
-%% Portada ------------------------------
+% Portada
 \title{
 \includegraphics[scale = 0.3]{logo_uncuyo.png} \\ [2cm]
-{\Huge \textbf{Proyecto final de estudios} \\ [1cm] 
-Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Optica}}
+{\Huge \textbf{Proyecto Final de Estudios} \\ [1cm] 
+Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artificial}}
 \author{Brenda Gudiño \\ Alan Vignolo}
-
 \date{Fecha de presentación \\ XX/XX/2025}
-%% -------------------------------------
-\begin{document}
 
+\begin{document}
 
 \maketitle
 \tableofcontents
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% RESUMEN
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+\input{00_Resumen/resumen}
 
-%% RESUMEN \\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\newpage
-\chapter{Resumen}
-En el presente informe se detalla el desarrollo del proyecto final de estudios de Ingeniería Mecatrónica, el mismo consiste en un robot cosechador automático de lechugas hidropónicas con posicionamiento ajustador por inteligencia artificial. En el transcurso del informe se desarrollan el modelado mecánico y electrónico de la estructura, montaje, control, pruebas, resultados finales y posibles mejoras.
-%% INTRODUCCION \\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPÍTULO 1: INTRODUCCIÓN
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Introducción}
-El presente informe expone el desarrollo de un robot cosechador automático de lechugas, cuyo objetivo principal es optimizar las labores de recolección en entornos de cultivo, mejorando la eficiencia del proceso y reduciendo la necesidad de intervención manual. Para lograrlo, se abordaron diferentes etapas de diseño, modelado, montaje, control e implementación de interfaces, las cuales se estructuran en este documento siguiendo la lógica de construcción del sistema.
 
-En la sección 3 se detallan los aspectos técnicos y metodológicos empleados. Se inicia con el modelado (3.1), que comprende el diseño mecánico del sistema, la elaboración de modelos CAD y su posterior impresión 3D, así como la descripción de la estructura que soporta los diferentes subsistemas. A continuación, en el apartado de electrónica y componentes, se enumeran y justifican los elementos electrónicos seleccionados, desde sensores hasta actuadores, que permiten al robot cumplir con sus funciones.
+\section{Contexto y Motivación}
+\input{01_Introduccion/contexto_motivacion}
 
-Posteriormente, se presenta el montaje, donde se integran tanto las partes mecánicas como electrónicas, conformando el prototipo físico del robot. La subsección de control aborda dos dimensiones fundamentales: el control de movimiento, que asegura la correcta navegación y operación del sistema, y la creación y uso de inteligencia artificial, la cual dota al robot de capacidades de reconocimiento y toma de decisiones frente a las condiciones de cultivo. Finalmente, se incluye el desarrollo de la interfaz, pensada para la interacción entre el usuario y el sistema, garantizando facilidad de uso y monitoreo eficiente.
+\section{Objetivos del Proyecto}
+\input{01_Introduccion/objetivos}
 
-Por último, se documentan los ensayos realizados sobre el prototipo, evaluando su desempeño en el ciclo normal de trabajo y en otras situaciones.
-%% DESARROLLO \\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\chapter{Desarrollo}
-\section{Modelado}
-\subsection{Modelado del sistema mecánico}
-\input{Modelado/Modelado_mecánico}
-\subsection{Modelado CAD e impresión 3D}
-\input{Modelado/Modelado_3d}
-\subsection{Estructura}
-\input{Modelado/Estructura}
-\section{Electrónica y componentes}
-\input{{Control}/Electronica_componentes}
-\section{Montaje}
-\section{Control}
-\subsection{Control de movimiento}
-\subsection{Inteligencia Artificial y Sistemas de Visión}
-\input{Control/IA}
-\section{Interfaz}
-\chapter{Pruebas y resultados}
-%% DESARROLLO \\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\chapter{Conclusión}
+\section{Alcance y Limitaciones}
+\input{01_Introduccion/alcance_limitaciones}
 
-%% REFERENCIAS \\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\newpage
-\chapter{Referencias}
-\begin{enumerate}[label={[\arabic*]}]
-    \item  
-\end{enumerate}
+\section{Estructura del Documento}
+\input{01_Introduccion/estructura_documento}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPÍTULO 2: MARCO TEÓRICO
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Marco Teórico}
+
+\section{Sistemas de Control Jerárquico}
+\input{02_MarcoTeorico/2.1_control_jerarquico/arquitecturas_multinivel}
+\input{02_MarcoTeorico/2.1_control_jerarquico/supervisorio_vs_regulatorio}
+\input{02_MarcoTeorico/2.1_control_jerarquico/fundamentacion_separacion}
+\input{02_MarcoTeorico/2.1_control_jerarquico/ventajas_arquitectura}
+
+\section{Fundamentos de Visión Artificial y Aprendizaje Profundo}
+\input{02_MarcoTeorico/2.2_vision_ia/procesamiento_imagenes}
+\input{02_MarcoTeorico/2.2_vision_ia/redes_convolucionales}
+\input{02_MarcoTeorico/2.2_vision_ia/transfer_learning}
+\input{02_MarcoTeorico/2.2_vision_ia/metricas_evaluacion}
+
+\section{Cinemática de Robots Cartesianos}
+\input{02_MarcoTeorico/2.3_cinematica/modelado_cinematico}
+\input{02_MarcoTeorico/2.3_cinematica/espacios_trabajo}
+\input{02_MarcoTeorico/2.3_cinematica/analisis_trayectorias}
+
+\section{Sistemas de Transmisión Mecánica}
+\input{02_MarcoTeorico/2.4_transmision/correa_poleas}
+\input{02_MarcoTeorico/2.4_transmision/husillo_tuerca}
+\input{02_MarcoTeorico/2.4_transmision/rodamientos_guias}
+
+\section{Control de Motores Paso a Paso}
+\input{02_MarcoTeorico/2.5_motores/principio_funcionamiento}
+\input{02_MarcoTeorico/2.5_motores/modos_operacion}
+\input{02_MarcoTeorico/2.5_motores/drivers_electronica}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPÍTULO 3: DESARROLLO DEL SISTEMA
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Desarrollo del Sistema}
+
+\section{Arquitectura General del Sistema}
+\input{03_Desarrollo/3.1_arquitectura_general/diagrama_bloques}
+\input{03_Desarrollo/3.1_arquitectura_general/interaccion_niveles}
+\input{03_Desarrollo/3.1_arquitectura_general/flujo_informacion}
+\input{03_Desarrollo/3.1_arquitectura_general/maquina_estados_global}
+
+\section{Modelado y Diseño Mecánico}
+
+\subsection{Especificaciones de Diseño y Restricciones}
+\input{03_Desarrollo/3.2_modelado_mecanico/especificaciones_diseno}
+
+\subsection{Análisis Cinemático del Sistema}
+\input{03_Desarrollo/3.2_modelado_mecanico/grados_libertad}
+\input{03_Desarrollo/3.2_modelado_mecanico/ecuaciones_movimiento}
+\input{03_Desarrollo/3.2_modelado_mecanico/espacio_trabajo}
+
+\subsection{Diseño Estructural}
+\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_materiales}
+\input{03_Desarrollo/3.2_modelado_mecanico/calculos_resistencia}
+\input{03_Desarrollo/3.2_modelado_mecanico/estructura_soporte}
+
+\subsection{Sistema de Movimiento Horizontal}
+\input{03_Desarrollo/3.2_modelado_mecanico/dimensionamiento_correa}
+\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_poleas}
+\input{03_Desarrollo/3.2_modelado_mecanico/calculo_cargas_horizontal}
+
+\subsection{Sistema de Movimiento Vertical}
+\input{03_Desarrollo/3.2_modelado_mecanico/analisis_husillo}
+\input{03_Desarrollo/3.2_modelado_mecanico/calculo_torque}
+\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_guias}
+
+\subsection{Brazo Robótico}
+\input{03_Desarrollo/3.2_modelado_mecanico/configuracion_brazo}
+\input{03_Desarrollo/3.2_modelado_mecanico/cinematica_brazo}
+\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_servos}
+
+\subsection{Modelado CAD y Fabricación}
+\input{03_Desarrollo/3.2_modelado_mecanico/diseno_piezas_3d}
+\input{03_Desarrollo/3.2_modelado_mecanico/tecnologia_impresion}
+\input{03_Desarrollo/3.2_modelado_mecanico/tolerancias_ajustes}
+
+\section{Sistema de Control de Bajo Nivel (Nivel Regulatorio)}
+
+\subsection{Arquitectura del Nivel Regulatorio}
+\input{03_Desarrollo/3.3_nivel_regulatorio/arquitectura_regulatorio}
+
+\subsection{Hardware de Control - Arduino Mega 2560}
+\input{03_Desarrollo/3.3_nivel_regulatorio/justificacion_arduino}
+\input{03_Desarrollo/3.3_nivel_regulatorio/distribucion_pines}
+
+\subsection{Selección y Dimensionamiento de Actuadores}
+\input{03_Desarrollo/3.3_nivel_regulatorio/motores_paso_paso}
+\input{03_Desarrollo/3.3_nivel_regulatorio/drivers_tb6600}
+\input{03_Desarrollo/3.3_nivel_regulatorio/servomotores}
+
+\subsection{Sensores de Seguridad}
+\input{03_Desarrollo/3.3_nivel_regulatorio/finales_carrera}
+\input{03_Desarrollo/3.3_nivel_regulatorio/sistema_seguridad}
+
+\subsection{Control de Movimiento}
+\input{03_Desarrollo/3.3_nivel_regulatorio/generacion_trayectorias}
+\input{03_Desarrollo/3.3_nivel_regulatorio/control_velocidad}
+\input{03_Desarrollo/3.3_nivel_regulatorio/conversion_pasos_mm}
+
+\subsection{Protocolo de Comunicación UART}
+\input{03_Desarrollo/3.3_nivel_regulatorio/estructura_comandos}
+\input{03_Desarrollo/3.3_nivel_regulatorio/manejo_errores}
+
+\section{Sistema de Supervisión y Alta Gestión (Nivel Supervisor)}
+
+\subsection{Arquitectura del Nivel Supervisor}
+\input{03_Desarrollo/3.4_nivel_supervisor/arquitectura_supervisor}
+
+\subsection{Hardware Supervisor - Raspberry Pi 4}
+\input{03_Desarrollo/3.4_nivel_supervisor/justificacion_raspberry}
+\input{03_Desarrollo/3.4_nivel_supervisor/capacidades_limitaciones}
+
+\subsection{Máquina de Estados Supervisora}
+\input{03_Desarrollo/3.4_nivel_supervisor/diagrama_estados}
+\input{03_Desarrollo/3.4_nivel_supervisor/transiciones_condiciones}
+\input{03_Desarrollo/3.4_nivel_supervisor/manejo_excepciones}
+
+\subsection{Coordinación con Nivel Regulatorio}
+\input{03_Desarrollo/3.4_nivel_supervisor/gestion_comandos}
+\input{03_Desarrollo/3.4_nivel_supervisor/sincronizacion_movimientos}
+\input{03_Desarrollo/3.4_nivel_supervisor/recuperacion_fallas}
+
+\section{Inteligencia Artificial y Visión por Computadora}
+
+\subsection{Arquitectura General del Sistema de IA}
+\input{03_Desarrollo/3.5_ia_vision/arquitectura_ia}
+\input{03_Desarrollo/3.5_ia_vision/pipeline_procesamiento}
+
+\subsection{Sistema de Visión Artificial}
+\input{03_Desarrollo/3.5_ia_vision/hardware_camara}
+\input{03_Desarrollo/3.5_ia_vision/preprocesamiento}
+\input{03_Desarrollo/3.5_ia_vision/analisis_morfologico}
+
+\subsection{Calibración Espacial del Sistema}
+\input{03_Desarrollo/3.5_ia_vision/calibracion_pixel_mm}
+\input{03_Desarrollo/3.5_ia_vision/ecuaciones_transformacion}
+\input{03_Desarrollo/3.5_ia_vision/validacion_estadistica}
+
+\subsection{Red Neuronal Convolucional para Clasificación}
+\input{03_Desarrollo/3.5_ia_vision/arquitectura_cnn}
+\input{03_Desarrollo/3.5_ia_vision/funcion_perdida}
+\input{03_Desarrollo/3.5_ia_vision/metricas_desempeno}
+\input{03_Desarrollo/3.5_ia_vision/justificacion_arquitectura}
+
+\subsection{Mapeo Inteligente del Entorno}
+\input{03_Desarrollo/3.5_ia_vision/algoritmo_exploracion}
+\input{03_Desarrollo/3.5_ia_vision/sincronizacion_imagen_posicion}
+\input{03_Desarrollo/3.5_ia_vision/cooldown_espacial}
+\input{03_Desarrollo/3.5_ia_vision/matriz_cultivo}
+
+\subsection{Optimización de Trayectorias}
+\input{03_Desarrollo/3.5_ia_vision/tsp_adaptado}
+\input{03_Desarrollo/3.5_ia_vision/funcion_objetivo}
+\input{03_Desarrollo/3.5_ia_vision/heuristicas}
+
+\subsection{Algoritmos de Corrección de Posición}
+\input{03_Desarrollo/3.5_ia_vision/correccion_horizontal_vertical}
+\input{03_Desarrollo/3.5_ia_vision/criterio_convergencia}
+\input{03_Desarrollo/3.5_ia_vision/precision_alcanzada}
+
+\subsection{Integración de Módulos de IA}
+\input{03_Desarrollo/3.5_ia_vision/arquitectura_modular}
+\input{03_Desarrollo/3.5_ia_vision/logging_monitoreo}
+\input{03_Desarrollo/3.5_ia_vision/calibracion_automatica}
+
+\section{Interfaz de Usuario y Supervisión}
+\input{03_Desarrollo/3.6_interfaz/diseno_interfaz}
+\input{03_Desarrollo/3.6_interfaz/funcionalidades}
+\input{03_Desarrollo/3.6_interfaz/visualizacion_datos}
+\input{03_Desarrollo/3.6_interfaz/control_remoto}
+
+\section{Montaje e Integración}
+\input{03_Desarrollo/3.7_montaje/ensamblaje_mecanico}
+\input{03_Desarrollo/3.7_montaje/integracion_electronica}
+\input{03_Desarrollo/3.7_montaje/calibracion_puesta_marcha}
+\input{03_Desarrollo/3.7_montaje/problemas_soluciones}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPÍTULO 4: PRUEBAS Y RESULTADOS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Pruebas y Resultados}
+
+\section{Metodología de Pruebas}
+\input{04_Pruebas/4.1_metodologia/diseno_experimental}
+\input{04_Pruebas/4.1_metodologia/metricas_evaluacion}
+
+\section{Pruebas del Sistema Mecánico}
+\input{04_Pruebas/4.2_mecanico/precision_posicionamiento}
+\input{04_Pruebas/4.2_mecanico/repetibilidad}
+\input{04_Pruebas/4.2_mecanico/velocidades_maximas}
+\input{04_Pruebas/4.2_mecanico/vibraciones_estabilidad}
+
+\section{Pruebas del Sistema de Control}
+\input{04_Pruebas/4.3_control/respuesta_temporal}
+\input{04_Pruebas/4.3_control/manejo_errores}
+\input{04_Pruebas/4.3_control/finales_carrera}
+
+\section{Pruebas del Sistema de IA}
+\input{04_Pruebas/4.4_ia/precision_deteccion}
+\input{04_Pruebas/4.4_ia/tasa_clasificacion}
+\input{04_Pruebas/4.4_ia/tiempo_procesamiento}
+\input{04_Pruebas/4.4_ia/robustez_variaciones}
+\input{04_Pruebas/4.4_ia/validacion_mapeo}
+
+\section{Pruebas de Integración}
+\input{04_Pruebas/4.5_integracion/ciclo_completo}
+\input{04_Pruebas/4.5_integracion/eficiencia_sistema}
+\input{04_Pruebas/4.5_integracion/casos_extremos}
+
+\section{Análisis de Resultados}
+\input{04_Pruebas/4.6_analisis/comparacion_objetivos}
+\input{04_Pruebas/4.6_analisis/limitaciones}
+\input{04_Pruebas/4.6_analisis/mejoras_potenciales}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPÍTULO 5: CONCLUSIONES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Conclusiones y Trabajo Futuro}
+
+\section{Conclusiones Generales}
+\input{05_Conclusiones/5.1_conclusiones/logros_alcanzados}
+\input{05_Conclusiones/5.1_conclusiones/cumplimiento_objetivos}
+\input{05_Conclusiones/5.1_conclusiones/lecciones_aprendidas}
+
+\section{Aportes del Proyecto}
+\input{05_Conclusiones/5.2_aportes/innovaciones}
+\input{05_Conclusiones/5.2_aportes/contribuciones_tecnicas}
+
+\section{Trabajo Futuro}
+\input{05_Conclusiones/5.3_trabajo_futuro/mejoras_propuestas}
+\input{05_Conclusiones/5.3_trabajo_futuro/escalabilidad}
+\input{05_Conclusiones/5.3_trabajo_futuro/aplicaciones_potenciales}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ANEXOS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\chapter{Diagramas Eléctricos Completos}
+\input{Anexos/A_diagramas_electricos}
+
+\chapter{Código Fuente Relevante}
+\input{Anexos/B_codigo_fuente}
+
+\chapter{Especificaciones Técnicas de Componentes}
+\input{Anexos/C_especificaciones}
+
+\chapter{Manual de Usuario}
+\input{Anexos/D_manual_usuario}
+
+\chapter{Hojas de Datos}
+\input{Anexos/E_hojas_datos}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% REFERENCIAS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Referencias}
+\addcontentsline{toc}{chapter}{Referencias}
+\input{Referencias/referencias}
 
 \end{document}
-
-
