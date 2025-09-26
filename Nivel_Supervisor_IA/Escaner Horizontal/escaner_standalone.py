@@ -357,6 +357,32 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception:
             pass
 
+        # CRÍTICO: Esperar a que el hilo de detección esté realmente funcionando
+        # antes de iniciar el movimiento para evitar perder detecciones al inicio
+        print(f"[{scan_id}] Esperando estabilización completa del sistema de detección...")
+        detection_ready = False
+        detection_wait_start = time.time()
+        
+        # Esperar hasta 3 segundos adicionales a que el hilo procese al menos 5 frames
+        while time.time() - detection_wait_start < 3.0 and not detection_ready:
+            try:
+                # Verificar que el hilo de video esté procesando frames activamente
+                test_frame = camera_mgr.get_latest_video_frame(timeout=0.1)
+                if test_frame is not None:
+                    # Dar tiempo para que procese varios frames consecutivos
+                    time.sleep(0.5)
+                    test_frame2 = camera_mgr.get_latest_video_frame(timeout=0.1)
+                    if test_frame2 is not None:
+                        print(f"[{scan_id}] Sistema de detección estabilizado y listo")
+                        detection_ready = True
+                        break
+            except Exception:
+                pass
+            time.sleep(0.1)
+        
+        if not detection_ready:
+            print(f"[{scan_id}] Advertencia: Sistema de detección no completamente estable, continuando...")
+        
         # Limpiar snapshots previos antes de iniciar el movimiento principal
         try:
             robot.cmd.uart.clear_last_snapshots()
