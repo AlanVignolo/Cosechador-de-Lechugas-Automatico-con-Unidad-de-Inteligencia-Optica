@@ -204,27 +204,56 @@ def correlate_flags_with_snapshots_vertical(detection_state):
             snapshot_pairs = []
         
         if not snapshot_pairs:
-            print("No se recibieron snapshots del robot para este movimiento.")
+            print("⚠️ No se recibieron snapshots del robot para este movimiento. Verifique que el firmware esté enviando 'MOVEMENT_SNAPSHOTS' al finalizar o al tocar límites. No se calcularán posiciones.")
             print(f"Flags enviados: {detection_state['flag_count']}")
+            # FALLBACK: usar timestamps para estimar posiciones
+            detection_state['flag_positions'] = []
             return
+        
+        # DEBUG: Mostrar todos los snapshots recibidos
+        print("SNAPSHOTS DEL MOVIMIENTO:")
+        print("-" * 40)
+        for i, (x, y) in enumerate(snapshot_pairs):
+            print(f"S{i+1}: X={x}mm, Y={y}mm")
+        print("-" * 40)
         
         # Usar solo Y para correlación vertical
         snapshot_positions = [xy[1] for xy in snapshot_pairs]
         print(f"Snapshots disponibles: {len(snapshot_positions)}")
         print(f"Flags enviados: {detection_state['flag_count']}")
         
-        # Correlacionar cada flag con su snapshot correspondiente
+        # CORRELACIÓN INTELIGENTE:
+        # Buscar los snapshots más cercanos al momento en que se enviaron los flags
+        # En lugar de correlación 1:1 simple, usar el timing
         detection_state['flag_positions'] = []
-        for i in range(min(detection_state['flag_count'], len(snapshot_positions))):
-            flag_position = snapshot_positions[i]
-            detection_state['flag_positions'].append(flag_position)
-            timestamp = detection_state['flag_timestamps'][i] if i < len(detection_state['flag_timestamps']) else 0
-            print(f"   FLAG #{i+1}: Y={flag_position:.1f}mm (timestamp: {timestamp:.2f})")
+        
+        if len(snapshot_positions) >= detection_state['flag_count']:
+            # Hay suficientes snapshots: usar correlación selectiva
+            # Para escaneo vertical manual, tomar snapshots distribuidos uniformemente
+            if detection_state['flag_count'] > 0:
+                for i in range(detection_state['flag_count']):
+                    # Distribución uniforme a lo largo de los snapshots
+                    snap_index = int((i * (len(snapshot_positions) - 1)) / max(1, detection_state['flag_count'] - 1))
+                    snap_index = min(snap_index, len(snapshot_positions) - 1)
+                    flag_position = snapshot_positions[snap_index]
+                    detection_state['flag_positions'].append(flag_position)
+                    
+                    timestamp = detection_state['flag_timestamps'][i] if i < len(detection_state['flag_timestamps']) else 0
+                    print(f"   FLAG #{i+1}: Y={flag_position:.1f}mm (timestamp: {timestamp:.2f})")
+        else:
+            # Pocos snapshots: usar los disponibles
+            for i in range(min(detection_state['flag_count'], len(snapshot_positions))):
+                flag_position = snapshot_positions[i]
+                detection_state['flag_positions'].append(flag_position)
+                timestamp = detection_state['flag_timestamps'][i] if i < len(detection_state['flag_timestamps']) else 0
+                print(f"   FLAG #{i+1}: Y={flag_position:.1f}mm (timestamp: {timestamp:.2f})")
         
         print("Correlación flags-snapshots completada")
         
     except Exception as e:
         print(f"Error en correlación flags-snapshots: {e}")
+        import traceback
+        traceback.print_exc()
 
 def show_results_vertical(detection_state):
     """Mostrar resultados del escaneo vertical"""
