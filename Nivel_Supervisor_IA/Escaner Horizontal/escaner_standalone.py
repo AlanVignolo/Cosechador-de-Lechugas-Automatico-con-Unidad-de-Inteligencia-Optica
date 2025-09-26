@@ -232,12 +232,16 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         def video_loop():
             """Bucle de video sin UI; solo procesa y emite flags"""
             thread_name = threading.current_thread().name
+            print(f"[{scan_id}] HILO DE VIDEO INICIADO: {thread_name}")
             
             try:
                 # Sin ventanas UI (evita bloqueos en 2ª corrida)
                 frame_count = 0
                 start_ts = time.time()
                 printed_none_once = False
+                detection_count = 0
+                last_status_report = time.time()
+                
                 while is_scanning[0]:
                     try:
                         frame = camera_mgr.get_latest_video_frame()
@@ -268,6 +272,14 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                         # Usar detector sofisticado
                         is_tape_detected = detect_sophisticated_tape(processed)
                         
+                        if is_tape_detected:
+                            detection_count += 1
+                        
+                        # Reporte de estado cada 5 segundos
+                        if time.time() - last_status_report > 5.0:
+                            print(f"[{scan_id}] HILO: frames={frame_count}, detecciones={detection_count}, is_scanning={is_scanning[0]}")
+                            last_status_report = time.time()
+                        
                         # Procesar cambios de estado y enviar flags (sin posición)
                         process_detection_state(is_tape_detected)
                         # Sin UI / imshow
@@ -283,6 +295,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                         
             finally:
                 # Fin del hilo de video
+                print(f"[{scan_id}] HILO DE VIDEO TERMINADO: frames={frame_count}, detecciones={detection_count}")
                 pass
         
         # KILLER DE THREADS ZOMBIE ANTES DE INICIAR NUEVO ESCANEO
@@ -297,7 +310,15 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         video_thread_name = f"VideoScanThread_{scan_id}"
         video_thread = threading.Thread(target=video_loop, name=video_thread_name)
         video_thread.daemon = True  # Evitar bloqueos si el hilo no termina
+        print(f"[{scan_id}] INICIANDO HILO DE VIDEO: {video_thread_name}")
         video_thread.start()
+        
+        # Verificar que el hilo realmente se inició
+        time.sleep(0.2)
+        if video_thread.is_alive():
+            print(f"[{scan_id}] CONFIRMADO: Hilo de video está vivo")
+        else:
+            print(f"[{scan_id}] ERROR: Hilo de video NO está vivo tras iniciar")
         
         # Pequeño warm-up: esperar a que llegue el primer frame válido
         warmup_start = time.time()
@@ -426,10 +447,20 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 time.sleep(1.0)
         
         # Detener video de forma controlada
+        print(f"[{scan_id}] DETENIENDO hilo de video...")
         is_scanning[0] = False
         
         # Dar tiempo al thread para salir del loop
         time.sleep(0.2)
+        if video_thread and video_thread.is_alive():
+            print(f"[{scan_id}] Esperando terminación del hilo de video...")
+            video_thread.join(timeout=1.0)
+            if video_thread.is_alive():
+                print(f"[{scan_id}] ADVERTENCIA: Hilo de video no terminó en tiempo")
+            else:
+                print(f"[{scan_id}] Hilo de video terminado correctamente")
+        else:
+            print(f"[{scan_id}] Hilo de video ya estaba terminado")
         
         # Esperar terminación con intentos múltiples
         for attempt in range(3):
@@ -495,6 +526,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
     finally:
         # LIMPIEZA COMPLETA DE RECURSOS
         # FORZAR PARADA DE VIDEO THREAD
+        print(f"[{scan_id}] LIMPIEZA FINAL: Forzando parada de hilo de video")
         is_scanning[0] = False
         
         # FORZAR TERMINACIÓN DE TODOS LOS THREADS ACTIVOS
