@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1758915073.25292 "d:/FACULTAD/MATERIAS PENDIENTES/Proyecto Final/CLAUDIO/Informe/main.tex" "main.pdf" "main" 1758915076.7958 2
+["pdflatex"] 1758916664.50851 "d:/FACULTAD/MATERIAS PENDIENTES/Proyecto Final/CLAUDIO/Informe/main.tex" "main.pdf" "main" 1758916667.86566 2
   "00_Resumen/resumen.tex" 1758903732.54908 13 c96b7c97ac93b25d9187a9525364dd7c ""
   "01_Introduccion/alcance_limitaciones.tex" 1758903732.55242 26 a659618c444174f27413186cfe811aaf ""
   "01_Introduccion/contexto_motivacion.tex" 1758903732.55013 25 7747827b8d8ca228b514d71d2f288a3d ""
@@ -266,7 +266,7 @@
   "C:/Users/alanv/AppData/Roaming/MiKTeX/tex/latex/setspace/setspace.sty" 1670403145 22490 8cac309b79a4c53a4ffce4b1b07aead0 ""
   "C:/Users/alanv/AppData/Roaming/MiKTeX/tex/latex/titlesec/titlesec.sty" 1736608268 48766 87a17a4ef312a39cd43896e34a679a56 ""
   "Referencias/referencias.tex" 1758903732.65305 17 c4d71cf29485d68cb4b27c399f07ce2c ""
-  "d:/FACULTAD/MATERIAS PENDIENTES/Proyecto Final/CLAUDIO/Informe/main.tex" 1758915067.49773 13752 a137404b62c05fd9ef679b5593add213 ""
+  "d:/FACULTAD/MATERIAS PENDIENTES/Proyecto Final/CLAUDIO/Informe/main.tex" 1758916604.99277 13761 bfadf53ea489951c30eb3faaea476849 ""
   "imagenes/aproximacion_contorno.png" 0 -1 0 ""
   "imagenes/bounding_box.png" 0 -1 0 ""
   "imagenes/calibracion_camara.png" 0 -1 0 ""
@@ -281,9 +281,9 @@
   "imagenes/robustez_ruido.png" 0 -1 0 ""
   "imagenes/tradeoff_precision_recall.png" 0 -1 0 ""
   "logo_uncuyo.png" 1758906862 345965 7cc2f1a228a9ab149a24c3484b6557ac ""
-  "main.aux" 1758915076.21823 19692 0c9683f197415c4ff317b10e1f732165 "pdflatex"
-  "main.out" 1758915076.25234 13999 8ef031fb848ad74f3727b209b4e0fa50 "pdflatex"
-  "main.toc" 1758915076.27358 8657 bb704611c6e1b03016cfb5678bc3481d "pdflatex"
+  "main.aux" 1758916667.32219 19692 0c9683f197415c4ff317b10e1f732165 "pdflatex"
+  "main.out" 1758916667.33787 13999 8ef031fb848ad74f3727b209b4e0fa50 "pdflatex"
+  "main.toc" 1758916667.35117 8657 bb704611c6e1b03016cfb5678bc3481d "pdflatex"
   (generated)
   "main.aux"
   "main.log"
