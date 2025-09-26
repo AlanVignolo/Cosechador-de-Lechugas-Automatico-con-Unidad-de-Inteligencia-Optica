@@ -1,0 +1,342 @@
+\subsection{Clasificación Basada en Análisis Morfológico}
+
+La clasificación morfológica de objetos utiliza características geométricas y estadísticas extraídas de contornos e imágenes para asignar categorías a elementos detectados. A diferencia de métodos de aprendizaje profundo, este enfoque se fundamenta en reglas explícitas derivadas del conocimiento del dominio y análisis estadístico de datos representativos.
+
+\subsubsection{Fundamentos de Clasificación por Umbrales}
+
+El método más directo de clasificación morfológica establece límites de decisión basados en valores de descriptores geométricos. Para un descriptor $d$ y un conjunto de clases $\mathcal{C} = \{c_1, c_2, ..., c_n\}$, la regla de clasificación se define como:
+
+\begin{equation}
+\text{Clase}(x) = c_i \quad \text{si} \quad t_{i-1} < d(x) \leq t_i
+\end{equation}
+
+donde $t_0, t_1, ..., t_n$ son umbrales que particionan el espacio de características.
+
+\textbf{Clasificación por Área}
+
+Para objetos que se diferencian principalmente por tamaño, el área en píxeles constituye un descriptor efectivo:
+
+\begin{equation}
+\text{Clase}(C) = \begin{cases}
+\text{Pequeño} & \text{si } A < t_1 \\
+\text{Mediano} & \text{si } t_1 \leq A < t_2 \\
+\text{Grande} & \text{si } A \geq t_2
+\end{cases}
+\end{equation}
+
+La robustez del método depende de la separabilidad entre clases. La distancia entre centroides de clases adyacentes debe ser significativa respecto a la dispersión intra-clase.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{imagenes/clasificacion_por_area.png}
+\caption{Distribución de áreas para diferentes categorías de objetos}
+\label{fig:clasificacion_area}
+\end{figure}
+
+\subsubsection{Análisis Estadístico para Determinación de Umbrales}
+
+La selección óptima de umbrales requiere análisis estadístico de una base de datos representativa de cada clase.
+
+\textbf{Parámetros Estadísticos por Clase}
+
+Para cada clase $c_i$, se calculan:
+
+\begin{equation}
+\mu_i = \frac{1}{N_i}\sum_{j=1}^{N_i} d_j
+\end{equation}
+
+\begin{equation}
+\sigma_i = \sqrt{\frac{1}{N_i-1}\sum_{j=1}^{N_i}(d_j - \mu_i)^2}
+\end{equation}
+
+donde $N_i$ es el número de muestras de la clase $i$, $\mu_i$ es la media y $\sigma_i$ la desviación estándar del descriptor $d$.
+
+\textbf{Determinación de Umbrales mediante Análisis de Distribuciones}
+
+Asumiendo distribuciones normales para cada clase:
+
+\begin{equation}
+P(d|c_i) = \frac{1}{\sigma_i\sqrt{2\pi}} \exp\left(-\frac{(d-\mu_i)^2}{2\sigma_i^2}\right)
+\end{equation}
+
+El umbral óptimo entre clases $c_i$ y $c_{i+1}$ se encuentra resolviendo:
+
+\begin{equation}
+P(d|c_i) = P(d|c_{i+1})
+\end{equation}
+
+Para distribuciones con igual varianza ($\sigma_i = \sigma_{i+1} = \sigma$), la solución es:
+
+\begin{equation}
+t_i^* = \frac{\mu_i + \mu_{i+1}}{2}
+\end{equation}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{imagenes/distribucion_gaussiana_clases.png}
+\caption{Distribuciones gaussianas de clases y umbral óptimo de decisión}
+\label{fig:distribucion_clases}
+\end{figure}
+
+\textbf{Criterio de Máxima Verosimilitud}
+
+Para varianzas distintas, el umbral se obtiene resolviendo:
+
+\begin{equation}
+\frac{(d-\mu_i)^2}{\sigma_i^2} = \frac{(d-\mu_{i+1})^2}{\sigma_{i+1}^2}
+\end{equation}
+
+Esta ecuación cuadrática puede tener dos soluciones; se selecciona la que minimiza la probabilidad de error.
+
+\textbf{Margen de Confianza y Zonas de Incertidumbre}
+
+Para mejorar la robustez, se establecen intervalos de confianza alrededor de cada umbral:
+
+\begin{equation}
+\text{Zona de incertidumbre} = [t_i - k\sigma_{pooled}, t_i + k\sigma_{pooled}]
+\end{equation}
+
+donde $\sigma_{pooled} = \sqrt{(\sigma_i^2 + \sigma_{i+1}^2)/2}$ y $k \in [1,2]$ define el nivel de confianza. Muestras en esta zona pueden requerir verificación adicional o clasificación multi-criterio.
+
+\subsubsection{Clasificación Multi-Criterio}
+
+Cuando un único descriptor no proporciona separabilidad suficiente, se emplean múltiples características simultáneamente.
+
+\textbf{Reglas de Decisión Conjuntas}
+
+La clasificación se basa en la evaluación simultánea de $m$ descriptores $\{d_1, d_2, ..., d_m\}$:
+
+\begin{equation}
+\text{Clase}(x) = c_i \quad \text{si} \quad \bigwedge_{j=1}^{m} (t_{ij}^{min} \leq d_j(x) \leq t_{ij}^{max})
+\end{equation}
+
+donde $\bigwedge$ denota la conjunción lógica (AND).
+
+\textbf{Espacio de Características}
+
+Los objetos se representan como vectores en el espacio $\mathbb{R}^m$:
+
+\begin{equation}
+\mathbf{x} = [d_1, d_2, ..., d_m]^T
+\end{equation}
+
+La clasificación divide este espacio en regiones mediante hiperplanos de decisión.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{imagenes/espacio_caracteristicas_2d.png}
+\caption{Espacio de características bidimensional mostrando regiones de decisión}
+\label{fig:espacio_caracteristicas}
+\end{figure}
+
+\textbf{Distancia de Mahalanobis}
+
+Para clasificación basada en similitud al prototipo de cada clase, se utiliza la distancia de Mahalanobis que considera la correlación entre características:
+
+\begin{equation}
+D_M(\mathbf{x}, c_i) = \sqrt{(\mathbf{x} - \boldsymbol{\mu}_i)^T \boldsymbol{\Sigma}_i^{-1} (\mathbf{x} - \boldsymbol{\mu}_i)}
+\end{equation}
+
+donde $\boldsymbol{\mu}_i$ es el vector de medias y $\boldsymbol{\Sigma}_i$ la matriz de covarianza de la clase $i$.
+
+La regla de clasificación asigna la clase de menor distancia:
+
+\begin{equation}
+\text{Clase}(x) = \arg\min_{i} D_M(\mathbf{x}, c_i)
+\end{equation}
+
+\subsubsection{Análisis de Separabilidad de Clases}
+
+La efectividad de un descriptor para clasificación se cuantifica mediante métricas de separabilidad.
+
+\textbf{Criterio de Fisher}
+
+Mide la razón entre varianza inter-clase e intra-clase:
+
+\begin{equation}
+J_F = \frac{(\mu_1 - \mu_2)^2}{\sigma_1^2 + \sigma_2^2}
+\end{equation}
+
+Valores altos de $J_F$ indican buena separabilidad. Para múltiples clases:
+
+\begin{equation}
+J_F = \frac{\sum_{i=1}^{C} N_i(\mu_i - \mu_{global})^2}{\sum_{i=1}^{C} N_i \sigma_i^2}
+\end{equation}
+
+\textbf{Índice de Solapamiento}
+
+Calcula la proporción de distribuciones que se superponen:
+
+\begin{equation}
+\text{Overlap}_{i,j} = \int_{-\infty}^{\infty} \min(P(d|c_i), P(d|c_j)) \, dd
+\end{equation}
+
+Para distribuciones gaussianas, esta integral puede aproximarse mediante:
+
+\begin{equation}
+\text{Overlap}_{i,j} \approx 2\Phi\left(-\frac{|\mu_i - \mu_j|}{2\sqrt{\sigma_i^2 + \sigma_j^2}}\right)
+\end{equation}
+
+donde $\Phi$ es la función de distribución acumulada normal estándar. Valores cercanos a 0 indican separación perfecta; valores cercanos a 1 indican fuerte solapamiento.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{imagenes/solapamiento_distribuciones.png}
+\caption{Solapamiento entre distribuciones de dos clases y zona de error}
+\label{fig:solapamiento}
+\end{figure}
+
+\subsubsection{Análisis de Error y Desempeño}
+
+La tasa de error teórica para un clasificador basado en umbrales se deriva de las distribuciones de probabilidad.
+
+\textbf{Error Tipo I y Tipo II}
+
+Para clasificación binaria con umbral $t$:
+
+\begin{equation}
+P(\text{Error Tipo I}) = P(d > t | c_1) = \int_t^{\infty} P(d|c_1) \, dd
+\end{equation}
+
+\begin{equation}
+P(\text{Error Tipo II}) = P(d \leq t | c_2) = \int_{-\infty}^{t} P(d|c_2) \, dd
+\end{equation}
+
+La probabilidad total de error es:
+
+\begin{equation}
+P(\text{Error}) = P(c_1) \cdot P(\text{Error Tipo I}) + P(c_2) \cdot P(\text{Error Tipo II})
+\end{equation}
+
+donde $P(c_i)$ son las probabilidades a priori de cada clase.
+
+\textbf{Curva ROC Teórica}
+
+Variando el umbral $t$, se obtiene la curva ROC que relaciona sensibilidad y especificidad:
+
+\begin{equation}
+\text{TPR}(t) = \int_t^{\infty} P(d|c_{positive}) \, dd
+\end{equation}
+
+\begin{equation}
+\text{FPR}(t) = \int_t^{\infty} P(d|c_{negative}) \, dd
+\end{equation}
+
+El área bajo la curva ROC cuantifica la capacidad discriminativa del descriptor.
+
+\subsubsection{Validación Estadística del Clasificador}
+
+\textbf{Intervalo de Confianza para la Exactitud}
+
+La exactitud estimada de un clasificador tiene incertidumbre estadística. El intervalo de confianza al 95\% se calcula como:
+
+\begin{equation}
+\text{IC}_{95\%} = \hat{p} \pm 1.96\sqrt{\frac{\hat{p}(1-\hat{p})}{n}}
+\end{equation}
+
+donde $\hat{p}$ es la exactitud observada y $n$ el tamaño de la muestra de prueba.
+
+\textbf{Test de Hipótesis para Comparación de Clasificadores}
+
+Para determinar si un clasificador es significativamente mejor que otro, se emplea el test de McNemar para datos pareados:
+
+\begin{equation}
+\chi^2 = \frac{(n_{01} - n_{10})^2}{n_{01} + n_{10}}
+\end{equation}
+
+donde $n_{01}$ son muestras correctas por clasificador 1 e incorrectas por clasificador 2, y viceversa. Si $\chi^2 > 3.84$, la diferencia es significativa (p < 0.05).
+
+\textbf{Tamaño de Muestra Requerido}
+
+Para estimar parámetros estadísticos con precisión deseada, el tamaño de muestra mínimo se calcula como:
+
+\begin{equation}
+n_{min} = \left(\frac{z_{\alpha/2} \cdot \sigma}{E}\right)^2
+\end{equation}
+
+donde $z_{\alpha/2}$ es el valor crítico (1.96 para 95\% confianza), $\sigma$ la desviación estándar estimada y $E$ el error máximo aceptable.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{imagenes/convergencia_parametros.png}
+\caption{Convergencia de parámetros estadísticos con incremento del tamaño de muestra}
+\label{fig:convergencia}
+\end{figure}
+
+\subsubsection{Robustez y Generalización}
+
+\textbf{Validación Cruzada}
+
+Para evaluar la generalización del clasificador, se emplea validación cruzada k-fold:
+
+\begin{enumerate}
+\item Dividir dataset en $k$ particiones de igual tamaño
+\item Para $i = 1$ a $k$:
+   \begin{itemize}
+   \item Usar partición $i$ como conjunto de prueba
+   \item Usar restantes $k-1$ particiones para calcular parámetros
+   \item Evaluar desempeño en partición $i$
+   \end{itemize}
+\item Promediar métricas de desempeño
+\end{enumerate}
+
+La exactitud estimada por validación cruzada es:
+
+\begin{equation}
+\text{Acc}_{CV} = \frac{1}{k}\sum_{i=1}^{k} \text{Acc}_i
+\end{equation}
+
+\textbf{Sensibilidad a Variaciones}
+
+La robustez ante ruido se evalúa añadiendo perturbaciones controladas:
+
+\begin{equation}
+d_{noisy} = d_{true} + \mathcal{N}(0, \sigma_{noise}^2)
+\end{equation}
+
+Un clasificador robusto mantiene exactitud alta incluso con $\sigma_{noise}$ moderado. La degradación de desempeño se cuantifica como:
+
+\begin{equation}
+\Delta\text{Acc} = \text{Acc}_{clean} - \text{Acc}_{noisy}
+\end{equation}
+
+\textbf{Análisis de Sensibilidad Paramétrica}
+
+Evaluar cómo cambios en umbrales afectan el desempeño:
+
+\begin{equation}
+\frac{\partial \text{Acc}}{\partial t_i} \approx \frac{\text{Acc}(t_i + \Delta t) - \text{Acc}(t_i - \Delta t)}{2\Delta t}
+\end{equation}
+
+Umbrales con baja sensibilidad ($|\partial \text{Acc}/\partial t_i|$ pequeño) son más robustos ante variaciones.
+
+\subsubsection{Ventajas y Limitaciones del Enfoque Morfológico}
+
+\textbf{Ventajas:}
+\begin{itemize}
+\item \textbf{Interpretabilidad}: Reglas de decisión explícitas y comprensibles
+\item \textbf{Eficiencia computacional}: Cálculos geométricos simples, ejecución en tiempo real
+\item \textbf{Pocos datos requeridos}: No requiere miles de muestras etiquetadas
+\item \textbf{Control explícito}: Ajuste directo de umbrales según requerimientos operativos
+\item \textbf{Depuración sencilla}: Fallas identificables mediante inspección de descriptores
+\end{itemize}
+
+\textbf{Limitaciones:}
+\begin{itemize}
+\item \textbf{Diseño manual}: Requiere conocimiento experto del dominio
+\item \textbf{Limitada a características medibles}: No captura patrones visuales complejos
+\item \textbf{Sensibilidad a condiciones}: Variaciones de iluminación o perspectiva pueden afectar descriptores
+\item \textbf{Separabilidad lineal}: Dificultad con clases no linealmente separables
+\end{itemize}
+
+\textbf{Aplicabilidad en Agricultura de Precisión}
+
+El enfoque morfológico resulta particularmente adecuado para clasificación de cultivos cuando:
+\begin{enumerate}
+\item Existe diferenciación clara por tamaño (plantines vs. plantas maduras)
+\item El entorno es controlado (cultivo hidropónico)
+\item Se requiere operación en hardware con recursos limitados
+\item La interpretabilidad del sistema es crítica para validación agronómica
+\end{enumerate}
+
+La combinación con análisis estadístico robusto permite alcanzar desempeño comparable a métodos de aprendizaje profundo en escenarios donde las características geométricas son discriminativas.
