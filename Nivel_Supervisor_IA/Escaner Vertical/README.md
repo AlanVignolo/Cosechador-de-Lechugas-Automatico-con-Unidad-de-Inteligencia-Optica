@@ -22,7 +22,7 @@ Sistema de detección de tubos blancos opacos para el escáner vertical del robo
 | **Objeto** | Cintas oscuras | Tubos blancos opacos |
 | **Filtro** | Threshold inverso (oscuros) | Threshold directo (claros) |
 | **Forma** | Líneas verticales alargadas | Líneas horizontales + formas cilíndricas |
-| **Rotación** | 90° anti-horario | Sin rotación |
+| **Rotación** | 90° anti-horario | 90° anti-horario (igual) |
 | **Scoring** | Consistencia + rectitud | Brillo + forma + posición central |
 
 ## Uso del Sistema
@@ -53,23 +53,24 @@ python test_tube_detection.py
 ## Algoritmo de Detección
 
 ### Paso 1: Preparación de Imagen
-- Captura sin rotación (orientación original)
+- Captura con rotación 90° anti-horario (igual que horizontal)
 - Recorte ROI: 20%-80% horizontal, 30%-70% vertical
 - Conversión a espacios de color: Gray, HSV
 
-### Paso 2: Filtros para Tubos Blancos
-1. **Blancos Brillantes**: HSV con alto brillo (V>180) y baja saturación (S<50)
-2. **Brillo Alto**: Threshold en canal V del HSV (>160)
-3. **Baja Saturación**: Threshold inverso en canal S (<40)
-4. **Blanco Opaco**: Combinación de brillo alto + baja saturación
-5. **Threshold Claro**: Threshold simple en escala de grises (>140)
+### Paso 2: Filtros para Tubos Blancos (Optimizados)
+1. **Baja Saturación Estricta**: Canal S < 25 (detecta tubo más negro que fondo)
+2. **Baja Saturación Original**: Canal S < 40 (para comparación)
+3. **Baja Saturación Limpia**: Canal S < 30 + morfología para limpiar ruido
+4. **Saturación + Morfología**: Canal S < 35 + operaciones de cierre
+5. **Blancos Brillantes**: HSV respaldo (V>160, S<60)
 
-### Paso 3: Evaluación de Candidatos
+### Paso 3: Evaluación de Candidatos (Mejorado)
 **Scoring basado en:**
-- **Área**: 200-5000 píxeles (tamaño razonable)
-- **Solidez**: Extent > 0.3 (forma compacta)
-- **Posición Central**: Dentro del 30% central de la imagen
-- **Tamaño Apropiado**: 30-200px ancho, 30-300px alto
+- **Área Relativa**: Penaliza >60% imagen (incluye fondo), premia 2%-25% (tubo ideal)
+- **Solidez**: Extent >0.7 (+15pts), >0.4 (+10pts) - formas compactas sin huecos
+- **Posición Central**: Muy centrado <20% (+20pts), centrado <40% (+10pts)
+- **Forma**: Aspect ratio 0.3-3.0 evita formas muy alargadas
+- **Bonus Filtro**: +5pts para filtros de saturación (mejor rendimiento)
 
 ### Paso 4: Selección Final
 - Ordenar candidatos por score

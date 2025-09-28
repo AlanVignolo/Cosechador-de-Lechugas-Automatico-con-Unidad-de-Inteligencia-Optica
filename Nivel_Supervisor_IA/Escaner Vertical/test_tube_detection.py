@@ -121,33 +121,35 @@ def interactive_parameter_tuning():
     
     print("Imagen capturada. Probando diferentes configuraciones...")
     
-    # Diferentes configuraciones para probar
+    # Diferentes configuraciones para probar (basadas en feedback del usuario)
     configs = [
         {
-            'name': 'Blancos Brillantes Estricto',
-            'hsv_lower': [0, 0, 200],
-            'hsv_upper': [180, 30, 255],
-            'area_min': 300,
-            'area_max': 3000
+            'name': 'Baja Saturación Estricta (Recomendado)',
+            'saturacion_threshold': 25,
+            'area_min': 100,
+            'area_max': 3000,
+            'morfologia': False
         },
         {
-            'name': 'Blancos Brillantes Permisivo', 
+            'name': 'Baja Saturación Original',
+            'saturacion_threshold': 40,
+            'area_min': 200,
+            'area_max': 5000,
+            'morfologia': False
+        },
+        {
+            'name': 'Baja Saturación con Morfología',
+            'saturacion_threshold': 30,
+            'area_min': 150,
+            'area_max': 4000,
+            'morfologia': True
+        },
+        {
+            'name': 'Blancos Brillantes HSV',
             'hsv_lower': [0, 0, 160],
             'hsv_upper': [180, 60, 255],
             'area_min': 200,
-            'area_max': 5000
-        },
-        {
-            'name': 'Threshold Gris Alto',
-            'gray_threshold': 180,
-            'area_min': 250,
             'area_max': 4000
-        },
-        {
-            'name': 'Threshold Gris Moderado',
-            'gray_threshold': 150,
-            'area_min': 200,
-            'area_max': 5000
         }
     ]
     
@@ -163,10 +165,20 @@ def interactive_parameter_tuning():
             lower = np.array(config['hsv_lower'])
             upper = np.array(config['hsv_upper'])
             mask = cv2.inRange(hsv, lower, upper)
+        elif 'saturacion_threshold' in config:
+            # Filtro de baja saturación (nuevo método principal)
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+            s_channel = hsv[:,:,1]  # Canal de saturación
+            _, mask = cv2.threshold(s_channel, config['saturacion_threshold'], 255, cv2.THRESH_BINARY_INV)
+            
+            # Aplicar morfología si está habilitada
+            if config.get('morfologia', False):
+                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+                mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         else:
-            # Filtro threshold en gris
+            # Filtro threshold en gris (fallback)
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            _, mask = cv2.threshold(gray, config['gray_threshold'], 255, cv2.THRESH_BINARY)
+            _, mask = cv2.threshold(gray, config.get('gray_threshold', 150), 255, cv2.THRESH_BINARY)
         
         # Encontrar contornos
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

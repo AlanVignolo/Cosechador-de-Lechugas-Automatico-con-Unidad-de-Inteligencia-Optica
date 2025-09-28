@@ -81,7 +81,6 @@ def capture_with_timeout(camera_index, timeout=5.0):
 
 def capture_image_for_tube_detection(camera_index=0, max_retries=1):
     """Captura una imagen para detección de tubos usando el gestor centralizado"""
-    # Para tubos verticales, NO rotamos la imagen - mantenemos orientación original
     recorte_config = {
         'x_inicio': 0.2,
         'x_fin': 0.8,
@@ -92,16 +91,16 @@ def capture_image_for_tube_detection(camera_index=0, max_retries=1):
     frame = capture_with_timeout(camera_index, timeout=4.0)
     
     if frame is not None:
-        # NO ROTAR - Para tubos verticales mantenemos orientación original
-        # Los tubos se ven verticalmente y queremos detectar sus líneas horizontales
+        # ROTAR 90° - La cámara está a 90° igual que en el detector horizontal
+        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         
-        alto, ancho = frame.shape[:2]
+        alto, ancho = frame_rotado.shape[:2]
         x1 = int(ancho * recorte_config['x_inicio'])
         x2 = int(ancho * recorte_config['x_fin'])
         y1 = int(alto * recorte_config['y_inicio'])
         y2 = int(alto * recorte_config['y_fin'])
         
-        frame_recortado = frame[y1:y2, x1:x2]
+        frame_recortado = frame_rotado[y1:y2, x1:x2]
         return frame_recortado
     
     return None
@@ -170,22 +169,28 @@ def detect_tube_lines_debug(image, debug=True):
     # PASO 2: Aplicar diferentes filtros para detectar tubos blancos
     filters = {}
     
-    # Filtro 1: Objetos blancos brillantes (alto brillo, baja saturación)
-    lower_white = np.array([0, 0, 180])      # HSV para blancos brillantes
-    upper_white = np.array([180, 50, 255])
+    # Filtro 1: Baja saturación MEJORADO (el tubo es más negro que el fondo en canal S)
+    # Usar threshold más bajo para capturar solo el tubo (más negro)
+    _, filters['baja_saturacion_estricta'] = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY_INV)
+    
+    # Filtro 2: Baja saturación original (para comparar)
+    _, filters['baja_saturacion_original'] = cv2.threshold(s_channel, 40, 255, cv2.THRESH_BINARY_INV)
+    
+    # Filtro 3: Baja saturación con morfología para limpiar ruido
+    _, temp_sat = cv2.threshold(s_channel, 30, 255, cv2.THRESH_BINARY_INV)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    filters['baja_saturacion_limpia'] = cv2.morphologyEx(temp_sat, cv2.MORPH_OPEN, kernel)
+    
+    # Filtro 4: Combinación de saturación + área para filtrar fondo
+    _, sat_mask = cv2.threshold(s_channel, 35, 255, cv2.THRESH_BINARY_INV)
+    # Aplicar cierre morfológico para unir partes del tubo
+    kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 3))
+    filters['saturacion_morfologia'] = cv2.morphologyEx(sat_mask, cv2.MORPH_CLOSE, kernel_close)
+    
+    # Filtro 5: Objetos blancos brillantes (como respaldo)
+    lower_white = np.array([0, 0, 160])      # HSV para blancos brillantes (menos estricto)
+    upper_white = np.array([180, 60, 255])
     filters['blancos_brillantes'] = cv2.inRange(hsv, lower_white, upper_white)
-    
-    # Filtro 2: Objetos claros (solo por brillo)
-    _, filters['brillo_alto'] = cv2.threshold(v_channel, 160, 255, cv2.THRESH_BINARY)
-    
-    # Filtro 3: Objetos blancos opacos (baja saturación)
-    _, filters['baja_saturacion'] = cv2.threshold(s_channel, 40, 255, cv2.THRESH_BINARY_INV)
-    
-    # Filtro 4: Combinación de brillo y saturación
-    filters['blanco_opaco'] = cv2.bitwise_and(filters['brillo_alto'], filters['baja_saturacion'])
-    
-    # Filtro 5: Threshold simple en escala de grises para objetos claros
-    _, filters['threshold_claro'] = cv2.threshold(gray, 140, 255, cv2.THRESH_BINARY)
     
     if debug:
         print("PASO 2: Aplicando filtros para detección de tubos blancos")
@@ -227,7 +232,7 @@ def detect_tube_lines_debug(image, debug=True):
         # Analizar cada contorno
         for i, contour in enumerate(contours):
             area = cv2.contourArea(contour)
-            if area < 200:  # Filtrar contornos muy pequeños
+            if area < 100:  # Filtrar contornos muy pequeños
                 continue
             
             # Obtener rectángulo delimitador
@@ -238,34 +243,54 @@ def detect_tube_lines_debug(image, debug=True):
             extent = area / (w * h) if (w * h) > 0 else 0
             center_y = y + h // 2
             
-            # Evaluar si parece parte de un tubo
-            # Los tubos se ven como formas verticales (h > w) o cuadradas
-            # Las líneas horizontales del tubo deberían ser más anchas que altas
+            # Calcular área relativa respecto a imagen total
+            img_area = w_img * h_img
+            area_ratio = area / img_area
             
             score = 0
             characteristics = []
             
-            # Características positivas para tubos
-            if 50 < area < 5000:  # Tamaño razonable
-                score += 10
-                characteristics.append(f"área_ok({area:.0f})")
+            # NUEVO SCORING MEJORADO PARA TUBOS
             
-            if extent > 0.3:  # Forma sólida
+            # 1. Penalizar áreas muy grandes (probablemente incluyen fondo)
+            if area_ratio > 0.6:  # Más del 60% de la imagen
+                score -= 30
+                characteristics.append(f"área_muy_grande({area_ratio:.2f})")
+            elif area_ratio > 0.3:  # Más del 30% 
+                score -= 15
+                characteristics.append(f"área_grande({area_ratio:.2f})")
+            elif 0.02 < area_ratio < 0.25:  # Tamaño ideal para tubo (2%-25%)
+                score += 20
+                characteristics.append(f"área_ideal({area_ratio:.2f})")
+            
+            # 2. Forma compacta (extent alto = menos huecos)
+            if extent > 0.7:  # Muy sólido
+                score += 15
+                characteristics.append(f"muy_sólido({extent:.2f})")
+            elif extent > 0.4:  # Sólido
                 score += 10
                 characteristics.append(f"sólido({extent:.2f})")
             
-            # Posición central (prefiero tubos cerca del centro)
+            # 3. Posición central (prefiero tubos cerca del centro)
             center_distance = abs(center_y - img_center_y)
-            if center_distance < h_img * 0.3:  # Dentro del 30% central
-                score += 15
+            if center_distance < h_img * 0.2:  # Muy centrado (20%)
+                score += 20
+                characteristics.append(f"muy_centrado({center_distance:.0f}px)")
+            elif center_distance < h_img * 0.4:  # Centrado (40%)
+                score += 10
                 characteristics.append(f"centrado({center_distance:.0f}px)")
             
-            # Bonus por tamaño apropiado para tubos
-            if 30 < w < 200 and 30 < h < 300:
+            # 4. Aspect ratio apropiado para tubo (no muy alargado)
+            if 0.3 < aspect_ratio < 3.0:  # Forma razonable
                 score += 10
-                characteristics.append("tamaño_tubo")
+                characteristics.append(f"forma_ok({aspect_ratio:.2f})")
             
-            if score > 15:  # Umbral mínimo para considerar candidato
+            # 5. Bonus para filtros que funcionan mejor
+            if filter_name.startswith('baja_saturacion'):
+                score += 5  # Bonus para filtros de saturación
+                characteristics.append("filtro_saturación")
+            
+            if score > 5:  # Umbral más bajo para considerar candidato
                 candidates.append({
                     'filter': filter_name,
                     'contour': contour,
