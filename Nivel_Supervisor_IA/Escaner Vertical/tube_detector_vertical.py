@@ -166,38 +166,25 @@ def detect_tube_lines_debug(image, debug=True):
         plt.tight_layout()
         plt.show()
     
-    # PASO 2: Filtros mejorados basados en observaciones del usuario
+    # PASO 2: Volver a lo básico - baja saturación funciona, solo mejorar el filtrado
     filters = {}
     
-    # Filtro 1: Canal S optimizado - tubo es BLANCO en canal S
-    # Usar threshold DIRECTO (no inverso) para capturar partes blancas del tubo
-    _, filters['saturacion_tubo_blanco'] = cv2.threshold(s_channel, 20, 255, cv2.THRESH_BINARY)
+    # Filtro 1: El que funcionaba - baja saturación estricta  
+    _, filters['baja_saturacion_25'] = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY_INV)
     
-    # Filtro 2: Canal S - solo la tapa (más oscura que el resto del tubo)
-    # Threshold más bajo para capturar solo las partes más oscuras (tapa)
-    _, filters['saturacion_tapa_oscura'] = cv2.threshold(s_channel, 10, 255, cv2.THRESH_BINARY_INV)
+    # Filtro 2: Baja saturación original (el que decías que funcionaba)
+    _, filters['baja_saturacion_40'] = cv2.threshold(s_channel, 40, 255, cv2.THRESH_BINARY_INV)
     
-    # Filtro 3: Canal H - aprovechar diferencia azul vs azul-verde
-    # Fondo blanco = muy azul (~120), tubo = azul-verde (~60-100)
-    # Crear máscara para valores de matiz del tubo
-    h_mask1 = cv2.inRange(h_channel, 60, 100)    # Azul-verde del tubo
-    h_mask2 = cv2.inRange(h_channel, 0, 30)      # Rojos que pueden ser tubo
-    filters['matiz_tubo'] = cv2.bitwise_or(h_mask1, h_mask2)
+    # Filtro 3: Baja saturación intermedia
+    _, filters['baja_saturacion_30'] = cv2.threshold(s_channel, 30, 255, cv2.THRESH_BINARY_INV)
     
-    # Filtro 4: Combinación S + H - lo mejor de ambos mundos
-    # Combinar saturación del tubo con matiz específico
-    sat_tubo_mask = cv2.threshold(s_channel, 15, 255, cv2.THRESH_BINARY)[1]
-    filters['saturacion_matiz_combo'] = cv2.bitwise_and(sat_tubo_mask, filters['matiz_tubo'])
+    # Filtro 4: Baja saturación con limpieza simple
+    _, temp_sat = cv2.threshold(s_channel, 35, 255, cv2.THRESH_BINARY_INV)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    filters['baja_saturacion_limpia'] = cv2.morphologyEx(temp_sat, cv2.MORPH_OPEN, kernel)
     
-    # Filtro 5: Morfología avanzada para tapa rectangular
-    # Usar threshold de saturación + operaciones para realzar formas rectangulares
-    _, sat_base = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY)
-    # Kernel rectangular para realzar la tapa (altura > base)
-    kernel_rect = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 7))  # Más alto que ancho
-    filters['tapa_rectangular'] = cv2.morphologyEx(sat_base, cv2.MORPH_CLOSE, kernel_rect)
-    
-    # Filtro 6: Original baja saturación (para comparación)
-    _, filters['baja_saturacion_original'] = cv2.threshold(s_channel, 40, 255, cv2.THRESH_BINARY_INV)
+    # Filtro 5: Threshold simple en escala de grises
+    _, filters['threshold_gris'] = cv2.threshold(gray, 140, 255, cv2.THRESH_BINARY)
     
     if debug:
         print("PASO 2: Aplicando filtros para detección de tubos blancos")
@@ -257,63 +244,43 @@ def detect_tube_lines_debug(image, debug=True):
             score = 0
             characteristics = []
             
-            # NUEVO SCORING MEJORADO PARA TUBOS
+            # SCORING SIMPLIFICADO - ENFOQUE: SEPARAR TUBO DE FONDO GRANDE
             
-            # 1. Penalizar áreas muy grandes (probablemente incluyen fondo)
-            if area_ratio > 0.6:  # Más del 60% de la imagen
-                score -= 30
-                characteristics.append(f"área_muy_grande({area_ratio:.2f})")
-            elif area_ratio > 0.3:  # Más del 30% 
-                score -= 15
+            # 1. PROBLEMA PRINCIPAL: El fondo es muy grande
+            # Penalizar fuertemente áreas grandes que incluyen fondo
+            if area_ratio > 0.5:  # Más del 50% de la imagen
+                score -= 50  # Penalización muy fuerte
+                characteristics.append(f"incluye_fondo({area_ratio:.2f})")
+            elif area_ratio > 0.3:  # Más del 30%
+                score -= 25
                 characteristics.append(f"área_grande({area_ratio:.2f})")
-            elif 0.02 < area_ratio < 0.25:  # Tamaño ideal para tubo (2%-25%)
-                score += 20
-                characteristics.append(f"área_ideal({area_ratio:.2f})")
+            elif 0.01 < area_ratio < 0.2:  # Tamaño más pequeño para solo tubo
+                score += 30  # Reward fuerte para tamaños pequeños
+                characteristics.append(f"área_tubo({area_ratio:.2f})")
             
-            # 2. Forma compacta (extent alto = menos huecos)
-            if extent > 0.7:  # Muy sólido
-                score += 15
-                characteristics.append(f"muy_sólido({extent:.2f})")
-            elif extent > 0.4:  # Sólido
-                score += 10
-                characteristics.append(f"sólido({extent:.2f})")
-            
-            # 3. Posición central (prefiero tubos cerca del centro)
+            # 2. Posición central (tubos suelen estar centrados)
             center_distance = abs(center_y - img_center_y)
-            if center_distance < h_img * 0.2:  # Muy centrado (20%)
+            if center_distance < h_img * 0.3:  # Centrado
                 score += 20
-                characteristics.append(f"muy_centrado({center_distance:.0f}px)")
-            elif center_distance < h_img * 0.4:  # Centrado (40%)
-                score += 10
                 characteristics.append(f"centrado({center_distance:.0f}px)")
             
-            # 4. Aspect ratio apropiado para tubo (no muy alargado)
-            if 0.3 < aspect_ratio < 3.0:  # Forma razonable
-                score += 10
-                characteristics.append(f"forma_ok({aspect_ratio:.2f})")
-            
-            # 5. Bonus para filtros que funcionan mejor
-            if 'saturacion' in filter_name:
-                score += 8  # Bonus para filtros de saturación
-                characteristics.append("filtro_saturación")
-            
-            if 'matiz' in filter_name:
-                score += 6  # Bonus para filtros que usan matiz
-                characteristics.append("filtro_matiz")
-            
-            if 'tapa_rectangular' in filter_name:
-                score += 10  # Bonus especial para detector de tapa
-                characteristics.append("filtro_tapa")
-            
-            # 6. Bonus por forma rectangular de tapa (altura > ancho)
-            if h > w * 1.2:  # Altura al menos 20% mayor que ancho
+            # 3. Forma compacta (evitar formas con muchos huecos)
+            if extent > 0.5:  # Sólido
                 score += 15
-                characteristics.append(f"forma_tapa({h/w:.1f})")
+                characteristics.append(f"sólido({extent:.2f})")
             
-            # 7. Penalizar formas muy anchas (probablemente fondo)
-            if w > h * 2:  # Muy ancho comparado con alto
-                score -= 10
-                characteristics.append("muy_ancho")
+            # 4. Tamaño mínimo (evitar ruido muy pequeño)
+            if area < 50:
+                score -= 20
+                characteristics.append("muy_pequeño")
+            elif 100 < area < 2000:  # Tamaño ideal para tubo individual
+                score += 15
+                characteristics.append(f"tamaño_ideal({area:.0f}px)")
+            
+            # 5. Bonus simple para baja saturación (lo que funcionaba)
+            if 'baja_saturacion' in filter_name:
+                score += 10
+                characteristics.append("filtro_saturación")
             
             if score > 5:  # Umbral más bajo para considerar candidato
                 candidates.append({
