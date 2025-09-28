@@ -251,6 +251,42 @@ def interactive_parameter_tuning():
             'prominence': 0.15,  # fracción del máximo
             'area_min': 200,
             'area_max': 12000
+        },
+        {
+            'name': 'BlackHat Horizontal',
+            'filter_type': 'blackhat_horizontal',
+            'kernel_w': 41,
+            'kernel_h': 5,
+            'post_dilate_w': 31,
+            'post_dilate_h': 3,
+            'area_min': 150,
+            'area_max': 12000
+        },
+        {
+            'name': 'Valle de Intensidad por Fila (percentil)',
+            'filter_type': 'row_valley',
+            'roi_frac_x': 0.6,
+            'percentile': 30,
+            'smooth_sigma_rows': 5,
+            'prom_frac': 0.02,
+            'band_expand_rows': 6,
+            'area_min': 200,
+            'area_max': 15000
+        },
+        {
+            'name': 'Combo: BlackHat ∩ Valle por Fila',
+            'filter_type': 'combo_bh_valley',
+            'bh_kernel_w': 61,
+            'bh_kernel_h': 5,
+            'bh_dilate_w': 41,
+            'bh_dilate_h': 3,
+            'roi_frac_x': 0.6,
+            'percentile': 30,
+            'smooth_sigma_rows': 5,
+            'prom_frac': 0.01,
+            'band_expand_rows': 8,
+            'area_min': 120,
+            'area_max': 20000
         }
     ]
     
@@ -465,6 +501,19 @@ def interactive_parameter_tuning():
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 3))
             mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
         
+        elif config['filter_type'] == 'blackhat_horizontal':
+            # Detectar bandas oscuras horizontales (p.ej., tapa) en fondo claro
+            kw = max(5, int(config.get('kernel_w', 41)))
+            kh = max(3, int(config.get('kernel_h', 5)))
+            se_h = cv2.getStructuringElement(cv2.MORPH_RECT, (kw, kh))
+            bh = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, se_h)
+            # Umbral automático + conexión horizontal
+            _, mask = cv2.threshold(bh, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            pdw = max(5, int(config.get('post_dilate_w', 31)))
+            pdh = max(1, int(config.get('post_dilate_h', 3)))
+            se_d = cv2.getStructuringElement(cv2.MORPH_RECT, (pdw, pdh))
+            mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, se_d, iterations=1)
+        
         elif config['filter_type'] == 'mser':
             # Regiones MSER sobre una imagen realzada con TopHat horizontal
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 5))
@@ -510,6 +559,98 @@ def interactive_parameter_tuning():
             # Suavizar horizontalmente
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 1))
             mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
+        
+        elif config['filter_type'] == 'row_valley':
+            # Perfil por filas usando percentil robusto en ROI central; detectar valle global
+            h_img, w_img = gray.shape
+            frac = float(config.get('roi_frac_x', 0.6))
+            frac = min(1.0, max(0.2, frac))
+            x0 = int((w_img * (1 - frac)) // 2)
+            x1 = w_img - x0
+            roi = gray[:, x0:x1]
+            q = float(config.get('percentile', 30))
+            row_vals = np.percentile(roi, q=q, axis=1).astype(np.float32)
+            # Suavizado 1D gaussian
+            sigma = float(config.get('smooth_sigma_rows', 5))
+            ksize = int(max(3, 2 * int(3 * sigma) + 1))
+            row_vals_sm = cv2.GaussianBlur(row_vals[:, None], (1, ksize), sigma).ravel()
+            base = float(np.median(row_vals_sm))
+            min_y = int(np.argmin(row_vals_sm))
+            prom = base - float(row_vals_sm[min_y])
+            prom_thr = float(config.get('prom_frac', 0.02)) * max(1.0, base)
+            mask = np.zeros_like(gray)
+            if prom >= prom_thr:
+                half = base - prom * 0.5
+                # Buscar bordes del valle
+                y_top = min_y
+                for yy in range(min_y, -1, -1):
+                    if row_vals_sm[yy] > half:
+                        y_top = yy
+                        break
+                y_bot = min_y
+                for yy in range(min_y, h_img):
+                    if row_vals_sm[yy] > half:
+                        y_bot = yy
+                        break
+                expand = int(config.get('band_expand_rows', 6))
+                y_top = max(0, y_top - expand)
+                y_bot = min(h_img - 1, y_bot + expand)
+                if y_bot > y_top:
+                    mask[y_top:y_bot+1, x0:x1] = 255
+        
+        elif config['filter_type'] == 'combo_bh_valley':
+            # Intersección de BlackHat horizontal con banda Row-Valley en ROI central
+            h_img, w_img = gray.shape
+            # BlackHat
+            bh_kw = max(5, int(config.get('bh_kernel_w', 61)))
+            bh_kh = max(3, int(config.get('bh_kernel_h', 5)))
+            se_h = cv2.getStructuringElement(cv2.MORPH_RECT, (bh_kw, bh_kh))
+            bh_resp = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, se_h)
+            _, bh_mask = cv2.threshold(bh_resp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            bh_dw = max(5, int(config.get('bh_dilate_w', 41)))
+            bh_dh = max(1, int(config.get('bh_dilate_h', 3)))
+            se_d = cv2.getStructuringElement(cv2.MORPH_RECT, (bh_dw, bh_dh))
+            bh_mask = cv2.morphologyEx(bh_mask, cv2.MORPH_DILATE, se_d, iterations=1)
+
+            # Row Valley
+            frac = float(config.get('roi_frac_x', 0.6))
+            frac = min(1.0, max(0.2, frac))
+            x0 = int((w_img * (1 - frac)) // 2)
+            x1 = w_img - x0
+            roi = gray[:, x0:x1]
+            q = float(config.get('percentile', 30))
+            row_vals = np.percentile(roi, q=q, axis=1).astype(np.float32)
+            sigma = float(config.get('smooth_sigma_rows', 5))
+            ksize = int(max(3, 2 * int(3 * sigma) + 1))
+            row_vals_sm = cv2.GaussianBlur(row_vals[:, None], (1, ksize), sigma).ravel()
+            base = float(np.median(row_vals_sm))
+            min_y = int(np.argmin(row_vals_sm))
+            prom = base - float(row_vals_sm[min_y])
+            prom_thr = float(config.get('prom_frac', 0.01)) * max(1.0, base)
+            valley_mask = np.zeros_like(gray)
+            if prom >= prom_thr:
+                half = base - prom * 0.5
+                y_top = min_y
+                for yy in range(min_y, -1, -1):
+                    if row_vals_sm[yy] > half:
+                        y_top = yy
+                        break
+                y_bot = min_y
+                for yy in range(min_y, h_img):
+                    if row_vals_sm[yy] > half:
+                        y_bot = yy
+                        break
+                expand = int(config.get('band_expand_rows', 8))
+                y_top = max(0, y_top - expand)
+                y_bot = min(h_img - 1, y_bot + expand)
+                if y_bot > y_top:
+                    valley_mask[y_top:y_bot+1, x0:x1] = 255
+
+            # Combinar: si hay banda valley, intersectar, si no, usar solo BlackHat
+            if np.count_nonzero(valley_mask) > 0:
+                mask = cv2.bitwise_and(bh_mask, valley_mask)
+            else:
+                mask = bh_mask
         
         else:
             # Fallback a threshold simple
