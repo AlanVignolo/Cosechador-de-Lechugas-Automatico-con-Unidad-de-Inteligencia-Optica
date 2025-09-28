@@ -521,6 +521,10 @@ def interactive_parameter_tuning():
         
         # Encontrar contornos
         contours, _ = cv2.findContours(mask_for_contours, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Inicializar colecciones por configuración
+        rectangulos_encontrados = []
+        tubos = []
+        tapas = []
         for contour in contours:
             area = cv2.contourArea(contour)
             if area < 100:
