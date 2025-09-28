@@ -121,54 +121,43 @@ def interactive_parameter_tuning():
     
     print("Imagen capturada. Probando diferentes configuraciones...")
     
-    # NUEVOS FILTROS - BORDES Y SOMBRAS/RELIEVES
+    # MÚLTIPLES ENFOQUES NUEVOS
     configs = [
         {
-            'name': 'Canny Bordes Medio (Recomendado)',
-            'filter_type': 'canny',
-            'canny_low': 50,
-            'canny_high': 120,
-            'area_min': 200,
-            'area_max': 8000
-        },
-        {
-            'name': 'Canny Bordes Suave',
-            'filter_type': 'canny',
-            'canny_low': 30,
-            'canny_high': 80,
-            'area_min': 150,
-            'area_max': 6000
-        },
-        {
-            'name': 'Top-hat Horizontal (Relieves)',
-            'filter_type': 'tophat',
-            'kernel_type': 'horizontal',
-            'kernel_size': (15, 5),
-            'area_min': 100,
+            'name': 'Template Matching Tubo',
+            'filter_type': 'template_tubo',
+            'area_min': 300,
             'area_max': 5000
         },
         {
-            'name': 'Top-hat Vertical (Relieves)',
-            'filter_type': 'tophat',
-            'kernel_type': 'vertical', 
-            'kernel_size': (5, 15),
-            'area_min': 100,
+            'name': 'Template Matching Tapa',
+            'filter_type': 'template_tapa',
+            'area_min': 200,
+            'area_max': 3000
+        },
+        {
+            'name': 'Solo Líneas Horizontales (Direccional)',
+            'filter_type': 'direccional',
+            'area_min': 200,
+            'area_max': 6000
+        },
+        {
+            'name': 'Análisis ROI Central',
+            'filter_type': 'roi_central',
+            'area_min': 150,
             'area_max': 4000
         },
         {
-            'name': 'Bottom-hat Horizontal (Sombras)',
-            'filter_type': 'bottomhat',
-            'kernel_type': 'horizontal',
-            'kernel_size': (15, 5),
-            'area_min': 100,
+            'name': 'Texturas LBP',
+            'filter_type': 'textura_lbp',
+            'area_min': 200,
             'area_max': 5000
         },
         {
-            'name': 'Gradientes Sobel',
-            'filter_type': 'gradientes',
-            'grad_threshold': 30,
-            'area_min': 150,
-            'area_max': 6000
+            'name': 'Diferencias RGB Multicanal',
+            'filter_type': 'multicanal',
+            'area_min': 100,
+            'area_max': 4000
         }
     ]
     
@@ -180,34 +169,69 @@ def interactive_parameter_tuning():
         # Aplicar filtro según configuración - NUEVOS MÉTODOS
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
-        if config['filter_type'] == 'canny':
-            # Detección de bordes Canny
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-            mask = cv2.Canny(blurred, config['canny_low'], config['canny_high'])
+        if config['filter_type'] == 'template_tubo':
+            # Template matching para tubo
+            tubo_template = np.ones((20, 60), dtype=np.uint8) * 255
+            tubo_template = cv2.rectangle(tubo_template, (5, 5), (55, 15), 0, 2)
+            tubo_match = cv2.matchTemplate(gray, tubo_template, cv2.TM_CCOEFF_NORMED)
+            _, mask = cv2.threshold((tubo_match * 255).astype(np.uint8), 100, 255, cv2.THRESH_BINARY)
             
-        elif config['filter_type'] == 'tophat':
-            # Top-hat para relieves
-            kernel_size = config['kernel_size']
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
-            mask = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel)
-            # Convertir a binario
-            _, mask = cv2.threshold(mask, 10, 255, cv2.THRESH_BINARY)
+        elif config['filter_type'] == 'template_tapa':
+            # Template matching para tapa
+            tapa_template = np.ones((40, 25), dtype=np.uint8) * 255
+            tapa_template = cv2.rectangle(tapa_template, (5, 5), (20, 35), 0, 2)
+            tapa_match = cv2.matchTemplate(gray, tapa_template, cv2.TM_CCOEFF_NORMED)
+            _, mask = cv2.threshold((tapa_match * 255).astype(np.uint8), 80, 255, cv2.THRESH_BINARY)
             
-        elif config['filter_type'] == 'bottomhat':
-            # Bottom-hat para sombras
-            kernel_size = config['kernel_size']
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
-            mask = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, kernel)
-            # Convertir a binario
-            _, mask = cv2.threshold(mask, 10, 255, cv2.THRESH_BINARY)
+        elif config['filter_type'] == 'direccional':
+            # Filtrado direccional - solo líneas horizontales
+            kernel_horizontal = np.array([[-1, -1, -1],
+                                        [ 2,  2,  2],
+                                        [-1, -1, -1]], dtype=np.float32)
+            horizontal_response = cv2.filter2D(gray, -1, kernel_horizontal)
+            horizontal_response = np.clip(horizontal_response, 0, 255).astype(np.uint8)
+            _, mask = cv2.threshold(horizontal_response, 50, 255, cv2.THRESH_BINARY)
             
-        elif config['filter_type'] == 'gradientes':
-            # Gradientes Sobel
-            grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-            grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-            grad_magnitude = np.sqrt(grad_x**2 + grad_y**2)
-            grad_magnitude = np.uint8(np.clip(grad_magnitude, 0, 255))
-            _, mask = cv2.threshold(grad_magnitude, config['grad_threshold'], 255, cv2.THRESH_BINARY)
+        elif config['filter_type'] == 'roi_central':
+            # Análisis solo en ROI central
+            h_img, w_img = gray.shape
+            zona_central = gray[h_img//4:3*h_img//4, w_img//4:3*w_img//4]
+            zona_central_blur = cv2.GaussianBlur(zona_central, (5, 5), 0)
+            zona_central_canny = cv2.Canny(zona_central_blur, 40, 100)
+            mask = np.zeros_like(gray)
+            mask[h_img//4:3*h_img//4, w_img//4:3*w_img//4] = zona_central_canny
+            
+        elif config['filter_type'] == 'textura_lbp':
+            # Análisis de texturas LBP simplificado
+            def get_lbp_simple(img):
+                rows, cols = img.shape
+                lbp = np.zeros_like(img)
+                for i in range(1, rows - 1):
+                    for j in range(1, cols - 1):
+                        center = img[i, j]
+                        code = 0
+                        code |= (img[i-1, j-1] >= center) << 7
+                        code |= (img[i-1, j] >= center) << 6
+                        code |= (img[i-1, j+1] >= center) << 5
+                        code |= (img[i, j+1] >= center) << 4
+                        code |= (img[i+1, j+1] >= center) << 3
+                        code |= (img[i+1, j] >= center) << 2
+                        code |= (img[i+1, j-1] >= center) << 1
+                        code |= (img[i, j-1] >= center)
+                        lbp[i, j] = code
+                return lbp
+            lbp = get_lbp_simple(gray)
+            _, mask = cv2.threshold(lbp, 50, 255, cv2.THRESH_BINARY)
+            
+        elif config['filter_type'] == 'multicanal':
+            # Diferencias entre canales R, G, B
+            b, g, r = cv2.split(image)
+            diff_rg = cv2.absdiff(r, g)
+            diff_rb = cv2.absdiff(r, b)
+            diff_gb = cv2.absdiff(g, b)
+            multi_diff = cv2.addWeighted(diff_rg, 0.33, diff_rb, 0.33, 0)
+            multi_diff = cv2.addWeighted(multi_diff, 1.0, diff_gb, 0.34, 0)
+            _, mask = cv2.threshold(multi_diff, 15, 255, cv2.THRESH_BINARY)
             
         else:
             # Fallback a threshold simple

@@ -198,66 +198,141 @@ def detect_tube_lines_debug(image, debug=True):
     tophat_enhanced = cv2.addWeighted(gray, 0.7, tophat_combined, 0.3, 0)
     filters['canny_tophat'] = cv2.Canny(tophat_enhanced, 40, 100)
     
-    # MÉTODO 4: GRADIENTES DIRECCIONALES  
-    # Gradientes para detectar cambios sutiles de intensidad
-    grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-    grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+    # MÉTODO 4: TEMPLATE MATCHING
+    # Crear plantillas simples del tubo y tapa
+    tubo_template = np.ones((20, 60), dtype=np.uint8) * 255  # Rectángulo horizontal
+    tubo_template = cv2.rectangle(tubo_template, (5, 5), (55, 15), 0, 2)  # Borde del tubo
     
-    # Magnitud del gradiente
-    grad_magnitude = np.sqrt(grad_x**2 + grad_y**2)
-    grad_magnitude = np.uint8(np.clip(grad_magnitude, 0, 255))
+    tapa_template = np.ones((40, 25), dtype=np.uint8) * 255  # Rectángulo vertical
+    tapa_template = cv2.rectangle(tapa_template, (5, 5), (20, 35), 0, 2)  # Borde de la tapa
     
-    # Threshold en gradientes
-    _, filters['gradientes'] = cv2.threshold(grad_magnitude, 30, 255, cv2.THRESH_BINARY)
+    # Template matching
+    tubo_match = cv2.matchTemplate(gray, tubo_template, cv2.TM_CCOEFF_NORMED)
+    tapa_match = cv2.matchTemplate(gray, tapa_template, cv2.TM_CCOEFF_NORMED)
+    
+    # Threshold para matches
+    _, filters['template_tubo'] = cv2.threshold((tubo_match * 255).astype(np.uint8), 100, 255, cv2.THRESH_BINARY)
+    _, filters['template_tapa'] = cv2.threshold((tapa_match * 255).astype(np.uint8), 80, 255, cv2.THRESH_BINARY)
+    
+    # MÉTODO 5: ANÁLISIS DE TEXTURAS (LBP)
+    def get_lbp_simple(image, radius=1):
+        """LBP simplificado para detectar texturas"""
+        rows, cols = image.shape
+        lbp = np.zeros_like(image)
+        
+        for i in range(radius, rows - radius):
+            for j in range(radius, cols - radius):
+                center = image[i, j]
+                code = 0
+                code |= (image[i-1, j-1] >= center) << 7
+                code |= (image[i-1, j] >= center) << 6
+                code |= (image[i-1, j+1] >= center) << 5
+                code |= (image[i, j+1] >= center) << 4
+                code |= (image[i+1, j+1] >= center) << 3
+                code |= (image[i+1, j] >= center) << 2
+                code |= (image[i+1, j-1] >= center) << 1
+                code |= (image[i, j-1] >= center) << 0
+                lbp[i, j] = code
+        return lbp
+    
+    lbp = get_lbp_simple(gray)
+    # Buscar texturas uniformes (tubo liso vs madera texturada)
+    _, filters['textura_lbp'] = cv2.threshold(lbp, 50, 255, cv2.THRESH_BINARY)
+    
+    # MÉTODO 6: FILTRADO DIRECCIONAL ESPECÍFICO
+    # Kernel para detectar solo líneas horizontales (suprimir verticales)
+    kernel_horizontal_only = np.array([[-1, -1, -1],
+                                     [ 2,  2,  2],
+                                     [-1, -1, -1]], dtype=np.float32)
+    
+    horizontal_response = cv2.filter2D(gray, -1, kernel_horizontal_only)
+    horizontal_response = np.clip(horizontal_response, 0, 255).astype(np.uint8)
+    _, filters['solo_horizontales'] = cv2.threshold(horizontal_response, 50, 255, cv2.THRESH_BINARY)
+    
+    # MÉTODO 7: ANÁLISIS POR REGIONES (ROI)
+    # Dividir imagen en 3 zonas y analizar centro (evitar bordes con madera)
+    h_img, w_img = gray.shape
+    zona_central = gray[h_img//4:3*h_img//4, w_img//4:3*w_img//4]  # Solo centro
+    
+    # Aplicar Canny solo en zona central
+    zona_central_blur = cv2.GaussianBlur(zona_central, (5, 5), 0)
+    zona_central_canny = cv2.Canny(zona_central_blur, 40, 100)
+    
+    # Expandir resultado a imagen completa
+    filters['roi_central'] = np.zeros_like(gray)
+    filters['roi_central'][h_img//4:3*h_img//4, w_img//4:3*w_img//4] = zona_central_canny
+    
+    # MÉTODO 8: COMBINACIÓN MULTICANAL
+    # Aprovechar diferencias sutiles en R, G, B
+    b, g, r = cv2.split(image)
+    
+    # Diferencia entre canales para resaltar objetos
+    diff_rg = cv2.absdiff(r, g)
+    diff_rb = cv2.absdiff(r, b)
+    diff_gb = cv2.absdiff(g, b)
+    
+    # Combinar diferencias
+    multi_diff = cv2.addWeighted(diff_rg, 0.33, diff_rb, 0.33, 0)
+    multi_diff = cv2.addWeighted(multi_diff, 1.0, diff_gb, 0.34, 0)
+    
+    _, filters['multicanal_diff'] = cv2.threshold(multi_diff, 15, 255, cv2.THRESH_BINARY)
     
     if debug:
-        print("PASO 2: Aplicando filtros BORDES + SOMBRAS/RELIEVES")
+        print("PASO 2: Aplicando MÚLTIPLES ENFOQUES de detección")
+        print(f"Total de filtros: {len(filters)}")
         
-        # Mostrar filtros en múltiples ventanas para ver todos
-        filter_names = list(filters.keys())
-        
-        # Primera ventana: Filtros de bordes Canny
-        canny_filters = {k: v for k, v in filters.items() if 'canny' in k}
-        if canny_filters:
-            fig1, axes1 = plt.subplots(1, len(canny_filters), figsize=(15, 5))
-            fig1.suptitle('BORDES - Detección Canny', fontsize=14)
-            if len(canny_filters) == 1:
+        # Ventana 1: Template Matching y Direccional
+        template_filters = {k: v for k, v in filters.items() if 'template' in k or 'horizontales' in k}
+        if template_filters:
+            fig1, axes1 = plt.subplots(1, len(template_filters), figsize=(12, 4))
+            fig1.suptitle('TEMPLATE MATCHING Y FILTRADO DIRECCIONAL', fontsize=14)
+            if len(template_filters) == 1:
                 axes1 = [axes1]
-            for i, (name, filtered) in enumerate(canny_filters.items()):
+            for i, (name, filtered) in enumerate(template_filters.items()):
                 axes1[i].imshow(filtered, cmap='gray')
                 axes1[i].set_title(f'{name}')
                 axes1[i].axis('off')
             plt.tight_layout()
             plt.show()
         
-        # Segunda ventana: Filtros de sombras/relieves
-        morpho_filters = {k: v for k, v in filters.items() if 'hat' in k}
-        if morpho_filters:
-            fig2, axes2 = plt.subplots(2, 2, figsize=(12, 10))
-            fig2.suptitle('SOMBRAS/RELIEVES - Top-hat y Bottom-hat', fontsize=14)
-            axes2 = axes2.flatten()
-            for i, (name, filtered) in enumerate(morpho_filters.items()):
-                if i < 4:
-                    axes2[i].imshow(filtered, cmap='gray')
-                    axes2[i].set_title(f'{name}')
-                    axes2[i].axis('off')
-            # Ocultar ejes no usados
-            for i in range(len(morpho_filters), 4):
+        # Ventana 2: Análisis de Texturas y ROI
+        texture_filters = {k: v for k, v in filters.items() if 'textura' in k or 'roi' in k or 'multicanal' in k}
+        if texture_filters:
+            fig2, axes2 = plt.subplots(1, len(texture_filters), figsize=(12, 4))
+            fig2.suptitle('TEXTURAS, ROI Y MULTICANAL', fontsize=14)
+            if len(texture_filters) == 1:
+                axes2 = [axes2]
+            for i, (name, filtered) in enumerate(texture_filters.items()):
+                axes2[i].imshow(filtered, cmap='gray')
+                axes2[i].set_title(f'{name}')
                 axes2[i].axis('off')
             plt.tight_layout()
             plt.show()
         
-        # Tercera ventana: Gradientes y combinaciones
-        other_filters = {k: v for k, v in filters.items() if 'canny' not in k and 'hat' not in k}
-        if other_filters:
-            fig3, axes3 = plt.subplots(1, len(other_filters), figsize=(10, 5)) 
-            fig3.suptitle('GRADIENTES Y COMBINACIONES', fontsize=14)
-            if len(other_filters) == 1:
-                axes3 = [axes3]
-            for i, (name, filtered) in enumerate(other_filters.items()):
+        # Ventana 3: Métodos anteriores (bordes, sombras)
+        previous_filters = {k: v for k, v in filters.items() if 'canny' in k or 'hat' in k}
+        if previous_filters:
+            n_filters = len(previous_filters)
+            cols = min(4, n_filters)
+            rows = (n_filters + cols - 1) // cols
+            
+            fig3, axes3 = plt.subplots(rows, cols, figsize=(15, 4*rows))
+            fig3.suptitle('MÉTODOS ANTERIORES - Bordes y Sombras/Relieves', fontsize=14)
+            
+            if rows == 1:
+                axes3 = [axes3] if cols == 1 else axes3
+            else:
+                axes3 = axes3.flatten()
+            
+            for i, (name, filtered) in enumerate(previous_filters.items()):
                 axes3[i].imshow(filtered, cmap='gray')
                 axes3[i].set_title(f'{name}')
                 axes3[i].axis('off')
+            
+            # Ocultar ejes no usados
+            for i in range(len(previous_filters), rows * cols):
+                axes3[i].axis('off')
+            
             plt.tight_layout()
             plt.show()
     
