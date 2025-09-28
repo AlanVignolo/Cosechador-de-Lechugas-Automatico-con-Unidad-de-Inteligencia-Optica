@@ -2,7 +2,11 @@
 Test independiente para calibrar la detección de tubos verticales
 Permite probar diferentes parámetros y ver resultados en tiempo real
 """
-
+import sys
+import os
+import cv2
+import numpy as np
+sys.path.append (os.path.join(os.path.dirname(__file__),'..','..','Nivel_Supervisor'))
 
 from tube_detector_vertical import (
     capture_image_for_tube_detection,
