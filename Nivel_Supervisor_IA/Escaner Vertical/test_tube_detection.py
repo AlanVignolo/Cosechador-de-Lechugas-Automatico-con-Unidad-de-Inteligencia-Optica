@@ -3,89 +3,11 @@ Test independiente para calibrar la detección de tubos verticales
 Permite probar diferentes parámetros y ver resultados en tiempo real
 """
 
-import sys
-import os
-import cv2
-import numpy as np
-
-# Agregar paths necesarios
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor'))
 
 from tube_detector_vertical import (
-    test_tube_detection,
     capture_image_for_tube_detection,
-    detect_tube_position,
-    detect_tube_lines_debug,
-    scan_available_cameras
+    detect_tube_position
 )
-
-def test_camera_connection():
-    """Test básico de conexión de cámara"""
-    print("=== TEST DE CONEXIÓN DE CÁMARA ===")
-    
-    cameras = scan_available_cameras()
-    
-    if not cameras:
-        print("Error: No se encontraron cámaras funcionales")
-        return False
-    
-    print(f"Cámaras encontradas: {len(cameras)}")
-    for cam in cameras:
-        print(f"  Cámara {cam['index']}: {cam['resolution']} - {'OK' if cam['working'] else 'ERROR'}")
-    
-    return len([c for c in cameras if c['working']]) > 0
-
-def test_image_capture():
-    """Test de captura de imagen"""
-    print("\n=== TEST DE CAPTURA DE IMAGEN ===")
-    
-    image = capture_image_for_tube_detection(camera_index=0)
-    
-    if image is None:
-        print("Error: No se pudo capturar imagen")
-        return False
-    
-    h, w = image.shape[:2]
-    print(f"Imagen capturada exitosamente: {w}x{h}")
-    
-    # Mostrar imagen capturada
-    cv2.imshow("Imagen Capturada - Presiona cualquier tecla para continuar", image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    
-    return True
-
-def test_detection_simple():
-    """Test de detección simple sin debug visual"""
-    print("\n=== TEST DE DETECCIÓN SIMPLE ===")
-    
-    image = capture_image_for_tube_detection(camera_index=0)
-    
-    if image is None:
-        print("Error: No se pudo capturar imagen")
-        return False
-    
-    # Detección simple
-    result = detect_tube_position(image, debug=False)
-    
-    if result is not None:
-        print(f"TUBO DETECTADO en Y = {result} píxeles")
-        
-        # Mostrar resultado en imagen
-        result_img = image.copy()
-        h, w = result_img.shape[:2]
-        cv2.line(result_img, (0, result), (w, result), (0, 255, 0), 2)
-        cv2.circle(result_img, (w//2, result), 10, (255, 0, 0), -1)
-        cv2.putText(result_img, f"Tubo Y={result}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        
-        cv2.imshow("Resultado - Presiona cualquier tecla para continuar", result_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        
-        return True
-    else:
-        print("No se detectó ningún tubo")
-        return False
 
 def test_detection_debug():
     """Test de detección con debug completo"""
@@ -121,189 +43,8 @@ def interactive_parameter_tuning():
     
     print("Imagen capturada. Probando diferentes configuraciones...")
     
-    # MÚLTIPLES ENFOQUES NUEVOS
+    # MÍNIMO VIABLE ACTUAL: solo 3 pipelines que estamos probando
     configs = [
-        {
-            'name': 'Template Matching Tubo',
-            'filter_type': 'template_tubo',
-            'area_min': 300,
-            'area_max': 5000
-        },
-        {
-            'name': 'Template Matching Tapa',
-            'filter_type': 'template_tapa',
-            'area_min': 200,
-            'area_max': 3000
-        },
-        {
-            'name': 'Solo Líneas Horizontales (Direccional)',
-            'filter_type': 'direccional',
-            'area_min': 200,
-            'area_max': 6000
-        },
-        {
-            'name': 'Análisis ROI Central',
-            'filter_type': 'roi_central',
-            'area_min': 150,
-            'area_max': 4000
-        },
-        {
-            'name': 'Texturas LBP',
-            'filter_type': 'textura_lbp',
-            'area_min': 200,
-            'area_max': 5000
-        },
-        {
-            'name': 'Diferencias RGB Multicanal',
-            'filter_type': 'multicanal',
-            'area_min': 100,
-            'area_max': 4000
-        },
-        {
-            'name': 'Orientación Horizontal por Gradiente',
-            'filter_type': 'orientation',
-            'angle_tol_deg': 20,  # tolerancia respecto a 90° (bordes horizontales)
-            'area_min': 150,
-            'area_max': 8000
-        },
-        {
-            'name': 'Suprimir Líneas Verticales (Morph)',
-            'filter_type': 'remove_vertical',
-            'vertical_len': 35,
-            'area_min': 150,
-            'area_max': 8000
-        },
-        {
-            'name': 'Hough de Líneas Horizontales',
-            'filter_type': 'hough_horizontal',
-            'min_line_length': 60,
-            'max_line_gap': 15,
-            'canny_low': 40,
-            'canny_high': 100,
-            'area_min': 150,
-            'area_max': 8000
-        },
-        {
-            'name': 'Gabor Horizontal (theta=90°)',
-            'filter_type': 'gabor',
-            'theta_deg': 90,
-            'ksize': 31,
-            'sigma': 4.0,
-            'lambd': 10.0,
-            'gamma': 0.5,
-            'area_min': 150,
-            'area_max': 7000
-        },
-        {
-            'name': 'Pipeline: quitar vertical + cerrar horizontal',
-            'filter_type': 'close_connect',
-            'vertical_len': 35,
-            'horiz_len': 25,
-            'canny_low': 40,
-            'canny_high': 100,
-            'area_min': 150,
-            'area_max': 9000
-        },
-        {
-            'name': 'FFT Notch (suprimir frecuencias verticales)',
-            'filter_type': 'fft_notch',
-            'notch_width': 8,
-            'area_min': 150,
-            'area_max': 9000
-        },
-        {
-            'name': 'Hough Ensamble Rectangular (dos horizontales)',
-            'filter_type': 'hough_rect_assembly',
-            'canny_low': 40,
-            'canny_high': 100,
-            'min_line_length': 40,
-            'max_line_gap': 20,
-            'max_y_gap_between_horizontals': 80,
-            'area_min': 150,
-            'area_max': 12000
-        },
-        {
-            'name': 'CLAHE + Canny',
-            'filter_type': 'clahe_canny',
-            'clip_limit': 3.0,
-            'tile_grid': 8,
-            'canny_low': 50,
-            'canny_high': 120,
-            'area_min': 150,
-            'area_max': 9000
-        },
-        {
-            'name': 'MSER con TopHat',
-            'filter_type': 'mser',
-            'delta': 5,
-            'min_area': 60,
-            'max_area': 10000,
-            'area_min': 150,
-            'area_max': 12000
-        },
-        {
-            'name': 'Proyección Horizontal (picos en filas)',
-            'filter_type': 'row_projection',
-            'canny_low': 40,
-            'canny_high': 100,
-            'vertical_len': 35,
-            'min_band_thickness': 8,
-            'prominence': 0.15,  # fracción del máximo
-            'area_min': 200,
-            'area_max': 12000
-        },
-        {
-            'name': 'BlackHat Horizontal',
-            'filter_type': 'blackhat_horizontal',
-            'kernel_w': 41,
-            'kernel_h': 5,
-            'post_dilate_w': 31,
-            'post_dilate_h': 3,
-            'area_min': 150,
-            'area_max': 12000
-        },
-        {
-            'name': 'Valle de Intensidad por Fila (percentil)',
-            'filter_type': 'row_valley',
-            'roi_frac_x': 0.6,
-            'percentile': 30,
-            'smooth_sigma_rows': 5,
-            'prom_frac': 0.02,
-            'band_expand_rows': 6,
-            'area_min': 200,
-            'area_max': 15000
-        },
-        {
-            'name': 'Combo: BlackHat ∩ Valle por Fila',
-            'filter_type': 'combo_bh_valley',
-            'bh_kernel_w': 61,
-            'bh_kernel_h': 5,
-            'bh_dilate_w': 41,
-            'bh_dilate_h': 3,
-            'roi_frac_x': 0.6,
-            'percentile': 30,
-            'smooth_sigma_rows': 5,
-            'prom_frac': 0.01,
-            'band_expand_rows': 8,
-            'area_min': 120,
-            'area_max': 20000
-        },
-        {
-            'name': 'HSV H+S → Hough horizontales',
-            'filter_type': 'hsv_hs_hough',
-            's_min': 25,
-            'h_tol': 12,
-            'roi_frac_x': 0.5,
-            'v_max': 245,
-            'canny_low': 40,
-            'canny_high': 100,
-            'min_line_length': 60,
-            'max_line_gap': 15,
-            'min_sep_px': 8,
-            'max_sep_px': 120,
-            'area_min': 120,
-            'area_max': 20000
-        },
         {
             'name': 'HSV Adaptativo (S Otsu + H centro) → Hough',
             'filter_type': 'hsv_adapt_hough',
@@ -321,16 +62,18 @@ def interactive_parameter_tuning():
             'area_max': 20000
         },
         {
-            'name': 'Sobel-Y Pair desde H+S',
-            'filter_type': 'sobely_pair_hs',
-            'roi_frac_x': 0.55,
-            's_min': 20,
+            'name': 'HSV H+S → Hough horizontales',
+            'filter_type': 'hsv_hs_hough',
+            's_min': 25,
             'h_tol': 12,
+            'roi_frac_x': 0.5,
             'v_max': 245,
-            'smooth_sigma_rows': 6,
+            'canny_low': 40,
+            'canny_high': 100,
+            'min_line_length': 60,
+            'max_line_gap': 15,
             'min_sep_px': 8,
-            'max_sep_px': 140,
-            'band_expand_rows': 8,
+            'max_sep_px': 120,
             'area_min': 120,
             'area_max': 20000
         },
@@ -358,7 +101,7 @@ def interactive_parameter_tuning():
         # Aplicar filtro según configuración - NUEVOS MÉTODOS
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
-        if config['filter_type'] == 'template_tubo':
+        if False and config['filter_type'] == 'template_tubo':
             # Template matching para tubo (construye máscara al tamaño original)
             th, tw = 20, 60
             tubo_template = np.ones((th, tw), dtype=np.uint8) * 255
@@ -370,7 +113,7 @@ def interactive_parameter_tuning():
             for (yy, xx) in zip(y_idx, x_idx):
                 cv2.rectangle(mask, (int(xx), int(yy)), (int(xx+tw), int(yy+th)), 255, -1)
             
-        elif config['filter_type'] == 'template_tapa':
+        elif False and config['filter_type'] == 'template_tapa':
             # Template matching para tapa (construye máscara al tamaño original)
             th, tw = 40, 25
             tapa_template = np.ones((th, tw), dtype=np.uint8) * 255
@@ -381,7 +124,7 @@ def interactive_parameter_tuning():
             for (yy, xx) in zip(y_idx, x_idx):
                 cv2.rectangle(mask, (int(xx), int(yy)), (int(xx+tw), int(yy+th)), 255, -1)
             
-        elif config['filter_type'] == 'direccional':
+        elif False and config['filter_type'] == 'direccional':
             # Filtrado direccional - solo líneas horizontales
             kernel_horizontal = np.array([[-1, -1, -1],
                                         [ 2,  2,  2],
@@ -390,7 +133,7 @@ def interactive_parameter_tuning():
             horizontal_response = np.clip(horizontal_response, 0, 255).astype(np.uint8)
             _, mask = cv2.threshold(horizontal_response, 50, 255, cv2.THRESH_BINARY)
             
-        elif config['filter_type'] == 'roi_central':
+        elif False and config['filter_type'] == 'roi_central':
             # Análisis solo en ROI central
             h_img, w_img = gray.shape
             zona_central = gray[h_img//4:3*h_img//4, w_img//4:3*w_img//4]
@@ -399,7 +142,7 @@ def interactive_parameter_tuning():
             mask = np.zeros_like(gray)
             mask[h_img//4:3*h_img//4, w_img//4:3*w_img//4] = zona_central_canny
             
-        elif config['filter_type'] == 'textura_lbp':
+        elif False and config['filter_type'] == 'textura_lbp':
             # Análisis de texturas LBP simplificado
             def get_lbp_simple(img):
                 rows, cols = img.shape
@@ -421,7 +164,7 @@ def interactive_parameter_tuning():
             lbp = get_lbp_simple(gray)
             _, mask = cv2.threshold(lbp, 50, 255, cv2.THRESH_BINARY)
             
-        elif config['filter_type'] == 'multicanal':
+        elif False and config['filter_type'] == 'multicanal':
             # Diferencias entre canales R, G, B
             b, g, r = cv2.split(image)
             diff_rg = cv2.absdiff(r, g)
@@ -431,7 +174,7 @@ def interactive_parameter_tuning():
             multi_diff = cv2.addWeighted(multi_diff, 1.0, diff_gb, 0.34, 0)
             _, mask = cv2.threshold(multi_diff, 15, 255, cv2.THRESH_BINARY)
         
-        elif config['filter_type'] == 'orientation':
+        elif False and config['filter_type'] == 'orientation':
             # Mantener solo bordes con orientación horizontal (gradiente ~90°)
             blurred = cv2.GaussianBlur(gray, (5, 5), 0)
             edges = cv2.Canny(blurred, 40, 100)
@@ -442,7 +185,7 @@ def interactive_parameter_tuning():
             orient_mask = (ang >= (90 - tol)).astype(np.uint8) * 255
             mask = cv2.bitwise_and(edges, orient_mask)
         
-        elif config['filter_type'] == 'remove_vertical':
+        elif False and config['filter_type'] == 'remove_vertical':
             # Suprimir líneas verticales largas por apertura morfológica
             blurred = cv2.GaussianBlur(gray, (5, 5), 0)
             edges = cv2.Canny(blurred, 40, 100)
@@ -451,7 +194,7 @@ def interactive_parameter_tuning():
             verticals = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel_vert, iterations=1)
             mask = cv2.subtract(edges, verticals)
         
-        elif config['filter_type'] == 'hough_horizontal':
+        elif False and config['filter_type'] == 'hough_horizontal':
             # Detectar líneas horizontales con Hough y dibujarlas como máscara
             blurred = cv2.GaussianBlur(gray, (5, 5), 0)
             edges = cv2.Canny(blurred, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
@@ -469,7 +212,7 @@ def interactive_parameter_tuning():
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 3))
             mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
         
-        elif config['filter_type'] == 'gabor':
+        elif False and config['filter_type'] == 'gabor':
             # Filtro Gabor orientado
             theta = np.deg2rad(float(config.get('theta_deg', 90)))
             ksize = int(config.get('ksize', 31))
@@ -482,7 +225,7 @@ def interactive_parameter_tuning():
             # Umbral automático (Otsu)
             _, mask = cv2.threshold(resp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         
-        elif config['filter_type'] == 'close_connect':
+        elif False and config['filter_type'] == 'close_connect':
             # Pipeline: quitar verticales y cerrar horizontal
             blurred = cv2.GaussianBlur(gray, (5, 5), 0)
             edges = cv2.Canny(blurred, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
@@ -494,7 +237,7 @@ def interactive_parameter_tuning():
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (hlen, 3))
             mask = cv2.morphologyEx(no_verticals, cv2.MORPH_CLOSE, kernel_h, iterations=1)
         
-        elif config['filter_type'] == 'fft_notch':
+        elif False and config['filter_type'] == 'fft_notch':
             # Suprimir banda de frecuencias verticales alrededor de kx=0 (elimina líneas verticales largas)
             g = gray.astype(np.float32)
             f = np.fft.fft2(g)
@@ -514,7 +257,7 @@ def interactive_parameter_tuning():
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 3))
             mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
         
-        elif config['filter_type'] == 'hough_rect_assembly':
+        elif False and config['filter_type'] == 'hough_rect_assembly':
             # Ensamblar rectángulos a partir de pares de líneas horizontales
             blurred = cv2.GaussianBlur(gray, (5, 5), 0)
             edges = cv2.Canny(blurred, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
@@ -551,7 +294,7 @@ def interactive_parameter_tuning():
             else:
                 mask = edges
         
-        elif config['filter_type'] == 'clahe_canny':
+        elif False and config['filter_type'] == 'clahe_canny':
             # Mejora de contraste local + Canny
             clip = float(config.get('clip_limit', 3.0))
             tiles = int(config.get('tile_grid', 8))
@@ -561,7 +304,7 @@ def interactive_parameter_tuning():
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 3))
             mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
         
-        elif config['filter_type'] == 'blackhat_horizontal':
+        elif False and config['filter_type'] == 'blackhat_horizontal':
             # Detectar bandas oscuras horizontales (p.ej., tapa) en fondo claro
             kw = max(5, int(config.get('kernel_w', 41)))
             kh = max(3, int(config.get('kernel_h', 5)))
@@ -574,7 +317,7 @@ def interactive_parameter_tuning():
             se_d = cv2.getStructuringElement(cv2.MORPH_RECT, (pdw, pdh))
             mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, se_d, iterations=1)
         
-        elif config['filter_type'] == 'mser':
+        elif False and config['filter_type'] == 'mser':
             # Regiones MSER sobre una imagen realzada con TopHat horizontal
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 5))
             th = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_h)
@@ -591,7 +334,7 @@ def interactive_parameter_tuning():
                 # Fallback si MSER no está disponible en la build
                 mask = th
         
-        elif config['filter_type'] == 'row_projection':
+        elif False and config['filter_type'] == 'row_projection':
             # Proyección de bordes por filas para ubicar bandas horizontales
             blurred = cv2.GaussianBlur(gray, (5, 5), 0)
             edges = cv2.Canny(blurred, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
@@ -620,7 +363,7 @@ def interactive_parameter_tuning():
             kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 1))
             mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
         
-        elif config['filter_type'] == 'row_valley':
+        elif False and config['filter_type'] == 'row_valley':
             # Perfil por filas usando percentil robusto en ROI central; detectar valle global
             h_img, w_img = gray.shape
             frac = float(config.get('roi_frac_x', 0.6))
@@ -658,7 +401,7 @@ def interactive_parameter_tuning():
                 if y_bot > y_top:
                     mask[y_top:y_bot+1, x0:x1] = 255
         
-        elif config['filter_type'] == 'combo_bh_valley':
+        elif False and config['filter_type'] == 'combo_bh_valley':
             # Intersección de BlackHat horizontal con banda Row-Valley en ROI central
             h_img, w_img = gray.shape
             # BlackHat
@@ -865,7 +608,7 @@ def interactive_parameter_tuning():
             else:
                 mask = comb
 
-        elif config['filter_type'] == 'sobely_pair_hs':
+        elif False and config['filter_type'] == 'sobely_pair_hs':
             # Dos bordes horizontales via gradiente vertical (Sobel-Y) restringido por H+S y anti-blanco
             hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
             H, S, V = cv2.split(hsv)
@@ -1119,53 +862,6 @@ def interactive_parameter_tuning():
         print("Ninguna configuración detectó tubos válidos")
         print("Considera ajustar los parámetros o verificar la iluminación")
 
-def menu_principal():
-    """Menú principal para los tests"""
-    while True:
-        print("\n" + "="*50)
-        print("SISTEMA DE TEST DE DETECCIÓN DE TUBOS")
-        print("="*50)
-        print("1. Test conexión de cámara")
-        print("2. Test captura de imagen")
-        print("3. Test detección simple")
-        print("4. Test detección con debug")
-        print("5. Ajuste interactivo de parámetros")
-        print("6. Test completo (todo lo anterior)")
-        print("0. Salir")
-        print("="*50)
-        
-        try:
-            opcion = input("Selecciona una opción: ").strip()
-            
-            if opcion == '0':
-                print("Saliendo...")
-                break
-            elif opcion == '1':
-                test_camera_connection()
-            elif opcion == '2':
-                test_image_capture()
-            elif opcion == '3':
-                test_detection_simple()
-            elif opcion == '4':
-                test_detection_debug()
-            elif opcion == '5':
-                interactive_parameter_tuning()
-            elif opcion == '6':
-                print("Ejecutando test completo...")
-                if test_camera_connection():
-                    if test_image_capture():
-                        test_detection_simple()
-                        test_detection_debug()
-                        interactive_parameter_tuning()
-            else:
-                print("Opción inválida")
-                
-        except KeyboardInterrupt:
-            print("\nInterrumpido por el usuario")
-            break
-        except Exception as e:
-            print(f"Error: {e}")
-
 if __name__ == "__main__":
-    print("=== TEST DE DETECCIÓN DE TUBOS VERTICALES ===")
-    menu_principal()
+    print("=== TEST DE DETECCIÓN DE TUBOS VERTICALES (DEBUG) ===")
+    test_detection_debug()
