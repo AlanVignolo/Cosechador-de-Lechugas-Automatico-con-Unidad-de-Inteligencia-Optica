@@ -121,35 +121,53 @@ def interactive_parameter_tuning():
     
     print("Imagen capturada. Probando diferentes configuraciones...")
     
-    # Diferentes configuraciones para probar (basadas en feedback del usuario)
+    # Diferentes configuraciones basadas en observaciones de canales S y H
     configs = [
         {
-            'name': 'Baja Saturación Estricta (Recomendado)',
-            'saturacion_threshold': 25,
+            'name': 'Saturación Tubo Blanco (NUEVO - Recomendado)',
+            'saturacion_threshold': 20,
+            'saturacion_binary_type': 'direct',  # THRESH_BINARY (no inverso)
             'area_min': 100,
             'area_max': 3000,
             'morfologia': False
         },
         {
-            'name': 'Baja Saturación Original',
-            'saturacion_threshold': 40,
-            'area_min': 200,
-            'area_max': 5000,
+            'name': 'Saturación Tapa Oscura (NUEVO)',
+            'saturacion_threshold': 10,
+            'saturacion_binary_type': 'inverse',  # THRESH_BINARY_INV
+            'area_min': 80,
+            'area_max': 2000,
             'morfologia': False
         },
         {
-            'name': 'Baja Saturación con Morfología',
-            'saturacion_threshold': 30,
+            'name': 'Matiz del Tubo (Canal H - NUEVO)',
+            'matiz_range': [60, 100],  # Azul-verde del tubo
             'area_min': 150,
-            'area_max': 4000,
-            'morfologia': True
+            'area_max': 4000
         },
         {
-            'name': 'Blancos Brillantes HSV',
-            'hsv_lower': [0, 0, 160],
-            'hsv_upper': [180, 60, 255],
+            'name': 'Combo Saturación + Matiz (NUEVO)',
+            'saturacion_threshold': 15,
+            'saturacion_binary_type': 'direct',
+            'matiz_range': [60, 100],
+            'area_min': 100,
+            'area_max': 3000
+        },
+        {
+            'name': 'Tapa Rectangular (Morfología NUEVA)',
+            'saturacion_threshold': 25,
+            'saturacion_binary_type': 'direct',
+            'morfologia_rect': True,  # Kernel rectangular para tapa
+            'area_min': 80,
+            'area_max': 2500
+        },
+        {
+            'name': 'Baja Saturación Original (Comparación)',
+            'saturacion_threshold': 40,
+            'saturacion_binary_type': 'inverse',
             'area_min': 200,
-            'area_max': 4000
+            'area_max': 5000,
+            'morfologia': False
         }
     ]
     
@@ -159,22 +177,46 @@ def interactive_parameter_tuning():
         print(f"\nProbando configuración {i+1}: {config['name']}")
         
         # Aplicar filtro según configuración
-        if 'hsv_lower' in config:
-            # Filtro HSV
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            lower = np.array(config['hsv_lower'])
-            upper = np.array(config['hsv_upper'])
-            mask = cv2.inRange(hsv, lower, upper)
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        h_channel = hsv[:,:,0]
+        s_channel = hsv[:,:,1]
+        
+        if 'matiz_range' in config and 'saturacion_threshold' in config:
+            # Combo saturación + matiz
+            binary_type = cv2.THRESH_BINARY if config['saturacion_binary_type'] == 'direct' else cv2.THRESH_BINARY_INV
+            _, sat_mask = cv2.threshold(s_channel, config['saturacion_threshold'], 255, binary_type)
+            
+            matiz_min, matiz_max = config['matiz_range']
+            h_mask = cv2.inRange(h_channel, matiz_min, matiz_max)
+            
+            mask = cv2.bitwise_and(sat_mask, h_mask)
+            
+        elif 'matiz_range' in config:
+            # Solo filtro de matiz (canal H)
+            matiz_min, matiz_max = config['matiz_range']
+            mask = cv2.inRange(h_channel, matiz_min, matiz_max)
+            
         elif 'saturacion_threshold' in config:
-            # Filtro de baja saturación (nuevo método principal)
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            s_channel = hsv[:,:,1]  # Canal de saturación
-            _, mask = cv2.threshold(s_channel, config['saturacion_threshold'], 255, cv2.THRESH_BINARY_INV)
+            # Filtro de saturación
+            threshold = config['saturacion_threshold']
+            binary_type = cv2.THRESH_BINARY if config.get('saturacion_binary_type', 'inverse') == 'direct' else cv2.THRESH_BINARY_INV
+            _, mask = cv2.threshold(s_channel, threshold, 255, binary_type)
             
             # Aplicar morfología si está habilitada
             if config.get('morfologia', False):
                 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
                 mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            
+            # Morfología rectangular para tapa
+            if config.get('morfologia_rect', False):
+                kernel_rect = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 7))
+                mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel_rect)
+                
+        elif 'hsv_lower' in config:
+            # Filtro HSV tradicional
+            lower = np.array(config['hsv_lower'])
+            upper = np.array(config['hsv_upper'])
+            mask = cv2.inRange(hsv, lower, upper)
         else:
             # Filtro threshold en gris (fallback)
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

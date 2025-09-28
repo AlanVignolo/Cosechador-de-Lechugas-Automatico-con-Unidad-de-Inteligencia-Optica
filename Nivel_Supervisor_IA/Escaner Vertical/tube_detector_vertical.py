@@ -166,31 +166,38 @@ def detect_tube_lines_debug(image, debug=True):
         plt.tight_layout()
         plt.show()
     
-    # PASO 2: Aplicar diferentes filtros para detectar tubos blancos
+    # PASO 2: Filtros mejorados basados en observaciones del usuario
     filters = {}
     
-    # Filtro 1: Baja saturación MEJORADO (el tubo es más negro que el fondo en canal S)
-    # Usar threshold más bajo para capturar solo el tubo (más negro)
-    _, filters['baja_saturacion_estricta'] = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY_INV)
+    # Filtro 1: Canal S optimizado - tubo es BLANCO en canal S
+    # Usar threshold DIRECTO (no inverso) para capturar partes blancas del tubo
+    _, filters['saturacion_tubo_blanco'] = cv2.threshold(s_channel, 20, 255, cv2.THRESH_BINARY)
     
-    # Filtro 2: Baja saturación original (para comparar)
+    # Filtro 2: Canal S - solo la tapa (más oscura que el resto del tubo)
+    # Threshold más bajo para capturar solo las partes más oscuras (tapa)
+    _, filters['saturacion_tapa_oscura'] = cv2.threshold(s_channel, 10, 255, cv2.THRESH_BINARY_INV)
+    
+    # Filtro 3: Canal H - aprovechar diferencia azul vs azul-verde
+    # Fondo blanco = muy azul (~120), tubo = azul-verde (~60-100)
+    # Crear máscara para valores de matiz del tubo
+    h_mask1 = cv2.inRange(h_channel, 60, 100)    # Azul-verde del tubo
+    h_mask2 = cv2.inRange(h_channel, 0, 30)      # Rojos que pueden ser tubo
+    filters['matiz_tubo'] = cv2.bitwise_or(h_mask1, h_mask2)
+    
+    # Filtro 4: Combinación S + H - lo mejor de ambos mundos
+    # Combinar saturación del tubo con matiz específico
+    sat_tubo_mask = cv2.threshold(s_channel, 15, 255, cv2.THRESH_BINARY)[1]
+    filters['saturacion_matiz_combo'] = cv2.bitwise_and(sat_tubo_mask, filters['matiz_tubo'])
+    
+    # Filtro 5: Morfología avanzada para tapa rectangular
+    # Usar threshold de saturación + operaciones para realzar formas rectangulares
+    _, sat_base = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY)
+    # Kernel rectangular para realzar la tapa (altura > base)
+    kernel_rect = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 7))  # Más alto que ancho
+    filters['tapa_rectangular'] = cv2.morphologyEx(sat_base, cv2.MORPH_CLOSE, kernel_rect)
+    
+    # Filtro 6: Original baja saturación (para comparación)
     _, filters['baja_saturacion_original'] = cv2.threshold(s_channel, 40, 255, cv2.THRESH_BINARY_INV)
-    
-    # Filtro 3: Baja saturación con morfología para limpiar ruido
-    _, temp_sat = cv2.threshold(s_channel, 30, 255, cv2.THRESH_BINARY_INV)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    filters['baja_saturacion_limpia'] = cv2.morphologyEx(temp_sat, cv2.MORPH_OPEN, kernel)
-    
-    # Filtro 4: Combinación de saturación + área para filtrar fondo
-    _, sat_mask = cv2.threshold(s_channel, 35, 255, cv2.THRESH_BINARY_INV)
-    # Aplicar cierre morfológico para unir partes del tubo
-    kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 3))
-    filters['saturacion_morfologia'] = cv2.morphologyEx(sat_mask, cv2.MORPH_CLOSE, kernel_close)
-    
-    # Filtro 5: Objetos blancos brillantes (como respaldo)
-    lower_white = np.array([0, 0, 160])      # HSV para blancos brillantes (menos estricto)
-    upper_white = np.array([180, 60, 255])
-    filters['blancos_brillantes'] = cv2.inRange(hsv, lower_white, upper_white)
     
     if debug:
         print("PASO 2: Aplicando filtros para detección de tubos blancos")
@@ -286,9 +293,27 @@ def detect_tube_lines_debug(image, debug=True):
                 characteristics.append(f"forma_ok({aspect_ratio:.2f})")
             
             # 5. Bonus para filtros que funcionan mejor
-            if filter_name.startswith('baja_saturacion'):
-                score += 5  # Bonus para filtros de saturación
+            if 'saturacion' in filter_name:
+                score += 8  # Bonus para filtros de saturación
                 characteristics.append("filtro_saturación")
+            
+            if 'matiz' in filter_name:
+                score += 6  # Bonus para filtros que usan matiz
+                characteristics.append("filtro_matiz")
+            
+            if 'tapa_rectangular' in filter_name:
+                score += 10  # Bonus especial para detector de tapa
+                characteristics.append("filtro_tapa")
+            
+            # 6. Bonus por forma rectangular de tapa (altura > ancho)
+            if h > w * 1.2:  # Altura al menos 20% mayor que ancho
+                score += 15
+                characteristics.append(f"forma_tapa({h/w:.1f})")
+            
+            # 7. Penalizar formas muy anchas (probablemente fondo)
+            if w > h * 2:  # Muy ancho comparado con alto
+                score -= 10
+                characteristics.append("muy_ancho")
             
             if score > 5:  # Umbral más bajo para considerar candidato
                 candidates.append({
