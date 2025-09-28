@@ -47,7 +47,7 @@ def interactive_parameter_tuning():
     
     print("Imagen capturada. Probando diferentes configuraciones...")
     
-    # MÍNIMO VIABLE ACTUAL: solo 3 pipelines que estamos probando
+    # Pipelines activos a evaluar
     configs = [
         {
             'name': 'HSV Adaptativo (S Otsu + H centro) → Hough',
@@ -94,6 +94,18 @@ def interactive_parameter_tuning():
             'band_expand_rows': 8,
             'area_min': 120,
             'area_max': 20000
+        },
+        {
+            'name': 'TopHat + Canny + Dilate (horizontal)',
+            'filter_type': 'canny_tophat',
+            'kernel_w': 61,
+            'kernel_h': 5,
+            'canny_low': 40,
+            'canny_high': 100,
+            'dilate_w': 25,
+            'dilate_h': 3,
+            'area_min': 120,
+            'area_max': 20000
         }
     ]
     
@@ -104,362 +116,8 @@ def interactive_parameter_tuning():
         
         # Aplicar filtro según configuración - NUEVOS MÉTODOS
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        
-        if False and config['filter_type'] == 'template_tubo':
-            # Template matching para tubo (construye máscara al tamaño original)
-            th, tw = 20, 60
-            tubo_template = np.ones((th, tw), dtype=np.uint8) * 255
-            tubo_template = cv2.rectangle(tubo_template, (5, 5), (tw-5, 15), 0, 2)
-            tubo_match = cv2.matchTemplate(gray, tubo_template, cv2.TM_CCOEFF_NORMED)
-            mask = np.zeros_like(gray)
-            # Umbral de similitud
-            y_idx, x_idx = np.where(tubo_match >= 0.6)
-            for (yy, xx) in zip(y_idx, x_idx):
-                cv2.rectangle(mask, (int(xx), int(yy)), (int(xx+tw), int(yy+th)), 255, -1)
-            
-        elif False and config['filter_type'] == 'template_tapa':
-            # Template matching para tapa (construye máscara al tamaño original)
-            th, tw = 40, 25
-            tapa_template = np.ones((th, tw), dtype=np.uint8) * 255
-            tapa_template = cv2.rectangle(tapa_template, (5, 5), (tw-5, th-5), 0, 2)
-            tapa_match = cv2.matchTemplate(gray, tapa_template, cv2.TM_CCOEFF_NORMED)
-            mask = np.zeros_like(gray)
-            y_idx, x_idx = np.where(tapa_match >= 0.55)
-            for (yy, xx) in zip(y_idx, x_idx):
-                cv2.rectangle(mask, (int(xx), int(yy)), (int(xx+tw), int(yy+th)), 255, -1)
-            
-        elif False and config['filter_type'] == 'direccional':
-            # Filtrado direccional - solo líneas horizontales
-            kernel_horizontal = np.array([[-1, -1, -1],
-                                        [ 2,  2,  2],
-                                        [-1, -1, -1]], dtype=np.float32)
-            horizontal_response = cv2.filter2D(gray, -1, kernel_horizontal)
-            horizontal_response = np.clip(horizontal_response, 0, 255).astype(np.uint8)
-            _, mask = cv2.threshold(horizontal_response, 50, 255, cv2.THRESH_BINARY)
-            
-        elif False and config['filter_type'] == 'roi_central':
-            # Análisis solo en ROI central
-            h_img, w_img = gray.shape
-            zona_central = gray[h_img//4:3*h_img//4, w_img//4:3*w_img//4]
-            zona_central_blur = cv2.GaussianBlur(zona_central, (5, 5), 0)
-            zona_central_canny = cv2.Canny(zona_central_blur, 40, 100)
-            mask = np.zeros_like(gray)
-            mask[h_img//4:3*h_img//4, w_img//4:3*w_img//4] = zona_central_canny
-            
-        elif False and config['filter_type'] == 'textura_lbp':
-            # Análisis de texturas LBP simplificado
-            def get_lbp_simple(img):
-                rows, cols = img.shape
-                lbp = np.zeros_like(img)
-                for i in range(1, rows - 1):
-                    for j in range(1, cols - 1):
-                        center = img[i, j]
-                        code = 0
-                        code |= (img[i-1, j-1] >= center) << 7
-                        code |= (img[i-1, j] >= center) << 6
-                        code |= (img[i-1, j+1] >= center) << 5
-                        code |= (img[i, j+1] >= center) << 4
-                        code |= (img[i+1, j+1] >= center) << 3
-                        code |= (img[i+1, j] >= center) << 2
-                        code |= (img[i+1, j-1] >= center) << 1
-                        code |= (img[i, j-1] >= center)
-                        lbp[i, j] = code
-                return lbp
-            lbp = get_lbp_simple(gray)
-            _, mask = cv2.threshold(lbp, 50, 255, cv2.THRESH_BINARY)
-            
-        elif False and config['filter_type'] == 'multicanal':
-            # Diferencias entre canales R, G, B
-            b, g, r = cv2.split(image)
-            diff_rg = cv2.absdiff(r, g)
-            diff_rb = cv2.absdiff(r, b)
-            diff_gb = cv2.absdiff(g, b)
-            multi_diff = cv2.addWeighted(diff_rg, 0.33, diff_rb, 0.33, 0)
-            multi_diff = cv2.addWeighted(multi_diff, 1.0, diff_gb, 0.34, 0)
-            _, mask = cv2.threshold(multi_diff, 15, 255, cv2.THRESH_BINARY)
-        
-        elif False and config['filter_type'] == 'orientation':
-            # Mantener solo bordes con orientación horizontal (gradiente ~90°)
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-            edges = cv2.Canny(blurred, 40, 100)
-            dx = cv2.Sobel(blurred, cv2.CV_32F, 1, 0, ksize=3)
-            dy = cv2.Sobel(blurred, cv2.CV_32F, 0, 1, ksize=3)
-            ang = np.rad2deg(np.arctan2(np.abs(dy), np.abs(dx) + 1e-5))  # 0° vertical, 90° horizontal
-            tol = float(config.get('angle_tol_deg', 20))
-            orient_mask = (ang >= (90 - tol)).astype(np.uint8) * 255
-            mask = cv2.bitwise_and(edges, orient_mask)
-        
-        elif False and config['filter_type'] == 'remove_vertical':
-            # Suprimir líneas verticales largas por apertura morfológica
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-            edges = cv2.Canny(blurred, 40, 100)
-            vlen = int(config.get('vertical_len', 35))
-            kernel_vert = cv2.getStructuringElement(cv2.MORPH_RECT, (1, vlen))
-            verticals = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel_vert, iterations=1)
-            mask = cv2.subtract(edges, verticals)
-        
-        elif False and config['filter_type'] == 'hough_horizontal':
-            # Detectar líneas horizontales con Hough y dibujarlas como máscara
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-            edges = cv2.Canny(blurred, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
-            lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=60,
-                                    minLineLength=int(config.get('min_line_length', 60)),
-                                    maxLineGap=int(config.get('max_line_gap', 15)))
-            mask = np.zeros_like(gray)
-            if lines is not None:
-                for l in lines:
-                    x1, y1, x2, y2 = l[0]
-                    # Mantener casi horizontales
-                    if abs(y2 - y1) <= max(2, int(0.2 * abs(x2 - x1))):
-                        cv2.line(mask, (x1, y1), (x2, y2), 255, 3)
-            # Expandir a regiones
-            kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 3))
-            mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
-        
-        elif False and config['filter_type'] == 'gabor':
-            # Filtro Gabor orientado
-            theta = np.deg2rad(float(config.get('theta_deg', 90)))
-            ksize = int(config.get('ksize', 31))
-            sigma = float(config.get('sigma', 4.0))
-            lambd = float(config.get('lambd', 10.0))
-            gamma = float(config.get('gamma', 0.5))
-            kernel = cv2.getGaborKernel((ksize, ksize), sigma, theta, lambd, gamma, psi=0)
-            resp = cv2.filter2D(gray, cv2.CV_32F, kernel)
-            resp = cv2.normalize(resp, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-            # Umbral automático (Otsu)
-            _, mask = cv2.threshold(resp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
-        elif False and config['filter_type'] == 'close_connect':
-            # Pipeline: quitar verticales y cerrar horizontal
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-            edges = cv2.Canny(blurred, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
-            vlen = int(config.get('vertical_len', 35))
-            hlen = int(config.get('horiz_len', 25))
-            kernel_vert = cv2.getStructuringElement(cv2.MORPH_RECT, (1, vlen))
-            only_verticals = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel_vert, iterations=1)
-            no_verticals = cv2.subtract(edges, only_verticals)
-            kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (hlen, 3))
-            mask = cv2.morphologyEx(no_verticals, cv2.MORPH_CLOSE, kernel_h, iterations=1)
-        
-        elif False and config['filter_type'] == 'fft_notch':
-            # Suprimir banda de frecuencias verticales alrededor de kx=0 (elimina líneas verticales largas)
-            g = gray.astype(np.float32)
-            f = np.fft.fft2(g)
-            fshift = np.fft.fftshift(f)
-            h_img, w_img = g.shape
-            notch_w = int(config.get('notch_width', 8))
-            mask_fft = np.ones((h_img, w_img), dtype=np.float32)
-            cx = w_img // 2
-            mask_fft[:, cx - notch_w: cx + notch_w] = 0.0
-            f_filtered = fshift * mask_fft
-            img_back = np.fft.ifft2(np.fft.ifftshift(f_filtered))
-            img_back = np.abs(img_back)
-            img_back = cv2.normalize(img_back, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-            # Realzar horizontales tras notch
-            blurred = cv2.GaussianBlur(img_back, (5, 5), 0)
-            mask = cv2.Canny(blurred, 40, 100)
-            kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 3))
-            mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
-        
-        elif False and config['filter_type'] == 'hough_rect_assembly':
-            # Ensamblar rectángulos a partir de pares de líneas horizontales
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-            edges = cv2.Canny(blurred, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
-            lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=60,
-                                    minLineLength=int(config.get('min_line_length', 40)),
-                                    maxLineGap=int(config.get('max_line_gap', 20)))
-            horizontals = []
-            if lines is not None:
-                for l in lines:
-                    x1, y1, x2, y2 = l[0]
-                    if abs(y2 - y1) <= max(2, int(0.2 * abs(x2 - x1))):
-                        x_left, x_right = min(x1, x2), max(x1, x2)
-                        horizontals.append((y1, x_left, x_right))
-            mask = np.zeros_like(gray)
-            best_pair = None
-            best_span = 0
-            max_gap = int(config.get('max_y_gap_between_horizontals', 80))
-            for i in range(len(horizontals)):
-                yA, xL_A, xR_A = horizontals[i]
-                for j in range(i+1, len(horizontals)):
-                    yB, xL_B, xR_B = horizontals[j]
-                    dy = abs(yB - yA)
-                    if 5 <= dy <= max_gap:
-                        xL = max(min(xL_A, xR_A), min(xL_B, xR_B))
-                        xR = min(max(xL_A, xR_A), max(xL_B, xR_B))
-                        span = max(0, xR - xL)
-                        if span > best_span and span > 20:
-                            best_span = span
-                            best_pair = (min(yA, yB), max(yA, yB), xL, xR)
-            if best_pair is not None:
-                y_top, y_bot, xL, xR = best_pair
-                # Dibujar rectángulo lleno como máscara
-                cv2.rectangle(mask, (xL, y_top), (xR, y_bot), 255, -1)
-            else:
-                mask = edges
-        
-        elif False and config['filter_type'] == 'clahe_canny':
-            # Mejora de contraste local + Canny
-            clip = float(config.get('clip_limit', 3.0))
-            tiles = int(config.get('tile_grid', 8))
-            clahe = cv2.createCLAHE(clipLimit=clip, tileGridSize=(tiles, tiles))
-            gray_eq = clahe.apply(gray)
-            mask = cv2.Canny(gray_eq, int(config.get('canny_low', 50)), int(config.get('canny_high', 120)))
-            kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 3))
-            mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
-        
-        elif False and config['filter_type'] == 'blackhat_horizontal':
-            # Detectar bandas oscuras horizontales (p.ej., tapa) en fondo claro
-            kw = max(5, int(config.get('kernel_w', 41)))
-            kh = max(3, int(config.get('kernel_h', 5)))
-            se_h = cv2.getStructuringElement(cv2.MORPH_RECT, (kw, kh))
-            bh = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, se_h)
-            # Umbral automático + conexión horizontal
-            _, mask = cv2.threshold(bh, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            pdw = max(5, int(config.get('post_dilate_w', 31)))
-            pdh = max(1, int(config.get('post_dilate_h', 3)))
-            se_d = cv2.getStructuringElement(cv2.MORPH_RECT, (pdw, pdh))
-            mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, se_d, iterations=1)
-        
-        elif False and config['filter_type'] == 'mser':
-            # Regiones MSER sobre una imagen realzada con TopHat horizontal
-            kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 5))
-            th = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_h)
-            try:
-                mser = cv2.MSER_create(_delta=int(config.get('delta', 5)),
-                                       _min_area=int(config.get('min_area', 60)),
-                                       _max_area=int(config.get('max_area', 10000)))
-                regions, bboxes = mser.detectRegions(th)
-                mask = np.zeros_like(gray)
-                for (x, y, w, h) in bboxes:
-                    if w > 10 and h > 8:  # descartar demasiado pequeños
-                        cv2.rectangle(mask, (x, y), (x+w, y+h), 255, -1)
-            except Exception as e:
-                # Fallback si MSER no está disponible en la build
-                mask = th
-        
-        elif False and config['filter_type'] == 'row_projection':
-            # Proyección de bordes por filas para ubicar bandas horizontales
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-            edges = cv2.Canny(blurred, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
-            # Eliminar verticales
-            vlen = int(config.get('vertical_len', 35))
-            kernel_vert = cv2.getStructuringElement(cv2.MORPH_RECT, (1, vlen))
-            only_verticals = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel_vert, iterations=1)
-            edges_nv = cv2.subtract(edges, only_verticals)
-            # Proyección por filas
-            row_sum = edges_nv.sum(axis=1).astype(np.float32)
-            if row_sum.max() > 0:
-                row_sum_norm = row_sum / (row_sum.max() + 1e-6)
-            else:
-                row_sum_norm = row_sum
-            thr = float(config.get('prominence', 0.15))
-            rows_sel = (row_sum_norm >= thr).astype(np.uint8)
-            # Construir máscara por bandas
-            mask = np.zeros_like(gray)
-            h_img, w_img = gray.shape
-            mask[rows_sel.astype(bool), :] = 255
-            # Espesar verticalmente para formar regiones
-            band_th = max(3, int(config.get('min_band_thickness', 8)))
-            kernel_v = cv2.getStructuringElement(cv2.MORPH_RECT, (3, band_th))
-            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel_v, iterations=1)
-            # Suavizar horizontalmente
-            kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 1))
-            mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, kernel_h, iterations=1)
-        
-        elif False and config['filter_type'] == 'row_valley':
-            # Perfil por filas usando percentil robusto en ROI central; detectar valle global
-            h_img, w_img = gray.shape
-            frac = float(config.get('roi_frac_x', 0.6))
-            frac = min(1.0, max(0.2, frac))
-            x0 = int((w_img * (1 - frac)) // 2)
-            x1 = w_img - x0
-            roi = gray[:, x0:x1]
-            q = float(config.get('percentile', 30))
-            row_vals = np.percentile(roi, q=q, axis=1).astype(np.float32)
-            # Suavizado 1D gaussian
-            sigma = float(config.get('smooth_sigma_rows', 5))
-            ksize = int(max(3, 2 * int(3 * sigma) + 1))
-            row_vals_sm = cv2.GaussianBlur(row_vals[:, None], (1, ksize), sigma).ravel()
-            base = float(np.median(row_vals_sm))
-            min_y = int(np.argmin(row_vals_sm))
-            prom = base - float(row_vals_sm[min_y])
-            prom_thr = float(config.get('prom_frac', 0.02)) * max(1.0, base)
-            mask = np.zeros_like(gray)
-            if prom >= prom_thr:
-                half = base - prom * 0.5
-                # Buscar bordes del valle
-                y_top = min_y
-                for yy in range(min_y, -1, -1):
-                    if row_vals_sm[yy] > half:
-                        y_top = yy
-                        break
-                y_bot = min_y
-                for yy in range(min_y, h_img):
-                    if row_vals_sm[yy] > half:
-                        y_bot = yy
-                        break
-                expand = int(config.get('band_expand_rows', 6))
-                y_top = max(0, y_top - expand)
-                y_bot = min(h_img - 1, y_bot + expand)
-                if y_bot > y_top:
-                    mask[y_top:y_bot+1, x0:x1] = 255
-        
-        elif False and config['filter_type'] == 'combo_bh_valley':
-            # Intersección de BlackHat horizontal con banda Row-Valley en ROI central
-            h_img, w_img = gray.shape
-            # BlackHat
-            bh_kw = max(5, int(config.get('bh_kernel_w', 61)))
-            bh_kh = max(3, int(config.get('bh_kernel_h', 5)))
-            se_h = cv2.getStructuringElement(cv2.MORPH_RECT, (bh_kw, bh_kh))
-            bh_resp = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, se_h)
-            _, bh_mask = cv2.threshold(bh_resp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            bh_dw = max(5, int(config.get('bh_dilate_w', 41)))
-            bh_dh = max(1, int(config.get('bh_dilate_h', 3)))
-            se_d = cv2.getStructuringElement(cv2.MORPH_RECT, (bh_dw, bh_dh))
-            bh_mask = cv2.morphologyEx(bh_mask, cv2.MORPH_DILATE, se_d, iterations=1)
 
-            # Row Valley
-            frac = float(config.get('roi_frac_x', 0.6))
-            frac = min(1.0, max(0.2, frac))
-            x0 = int((w_img * (1 - frac)) // 2)
-            x1 = w_img - x0
-            roi = gray[:, x0:x1]
-            q = float(config.get('percentile', 30))
-            row_vals = np.percentile(roi, q=q, axis=1).astype(np.float32)
-            sigma = float(config.get('smooth_sigma_rows', 5))
-            ksize = int(max(3, 2 * int(3 * sigma) + 1))
-            row_vals_sm = cv2.GaussianBlur(row_vals[:, None], (1, ksize), sigma).ravel()
-            base = float(np.median(row_vals_sm))
-            min_y = int(np.argmin(row_vals_sm))
-            prom = base - float(row_vals_sm[min_y])
-            prom_thr = float(config.get('prom_frac', 0.01)) * max(1.0, base)
-            valley_mask = np.zeros_like(gray)
-            if prom >= prom_thr:
-                half = base - prom * 0.5
-                y_top = min_y
-                for yy in range(min_y, -1, -1):
-                    if row_vals_sm[yy] > half:
-                        y_top = yy
-                        break
-                y_bot = min_y
-                for yy in range(min_y, h_img):
-                    if row_vals_sm[yy] > half:
-                        y_bot = yy
-                        break
-                expand = int(config.get('band_expand_rows', 8))
-                y_top = max(0, y_top - expand)
-                y_bot = min(h_img - 1, y_bot + expand)
-                if y_bot > y_top:
-                    valley_mask[y_top:y_bot+1, x0:x1] = 255
-
-            # Combinar: si hay banda valley, intersectar, si no, usar solo BlackHat
-            if np.count_nonzero(valley_mask) > 0:
-                mask = cv2.bitwise_and(bh_mask, valley_mask)
-            else:
-                mask = bh_mask
-        
-        elif config['filter_type'] == 'hsv_hs_hough':
+        if config['filter_type'] == 'hsv_hs_hough':
             # Combinar H y S (con V como anti-blanco) y buscar líneas horizontales (Hough)
             hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
             H, S, V = cv2.split(hsv)
@@ -612,71 +270,6 @@ def interactive_parameter_tuning():
             else:
                 mask = comb
 
-        elif False and config['filter_type'] == 'sobely_pair_hs':
-            # Dos bordes horizontales via gradiente vertical (Sobel-Y) restringido por H+S y anti-blanco
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            H, S, V = cv2.split(hsv)
-            v_max = int(config.get('v_max', 245))
-            s_min = int(config.get('s_min', 20))
-            h_tol = int(config.get('h_tol', 12))
-            h_img, w_img = H.shape
-            frac = float(config.get('roi_frac_x', 0.55))
-            frac = min(1.0, max(0.2, frac))
-            x0 = int((w_img * (1 - frac)) // 2)
-            x1 = w_img - x0
-            roi_h = H[:, x0:x1]
-            roi_s = S[:, x0:x1]
-            roi_v = V[:, x0:x1]
-            valid = roi_s >= max(10, s_min)
-            if np.count_nonzero(valid) > 50:
-                h_vals = roi_h[valid]
-                hist, _ = np.histogram(h_vals, bins=180, range=(0, 180))
-                h_center = int(np.argmax(hist))
-            else:
-                h_center = 0
-            diff = cv2.absdiff(H, np.uint8(h_center))
-            diff2 = cv2.absdiff(diff, np.uint8(180))
-            circ = cv2.min(diff, diff2)
-            mask_h = (circ <= h_tol).astype(np.uint8) * 255
-            mask_s = (S >= s_min).astype(np.uint8) * 255
-            mask_v = (V <= v_max).astype(np.uint8) * 255
-            hs = cv2.bitwise_or(mask_s, mask_h)
-            comb = cv2.bitwise_and(hs, mask_v)
-            # Gradiente vertical restringido a la banda
-            gray_blur = cv2.GaussianBlur(gray, (5, 5), 0)
-            sobely = cv2.Sobel(gray_blur, cv2.CV_32F, 0, 1, ksize=3)
-            sobely = np.abs(sobely)
-            sobely = cv2.normalize(sobely, None, 0, 255, cv2.NORM_MINMAX)
-            sobely = (sobely * (comb.astype(np.float32) / 255.0)).astype(np.uint8)
-            # Energía por fila en ROI
-            sob_roi = sobely[:, x0:x1].astype(np.float32)
-            row_energy = sob_roi.sum(axis=1)
-            sigma = float(config.get('smooth_sigma_rows', 6))
-            ksize = int(max(3, 2 * int(3 * sigma) + 1))
-            row_sm = cv2.GaussianBlur(row_energy[:, None], (1, ksize), sigma).ravel()
-            # Buscar par de picos separados dentro del rango
-            min_sep = int(config.get('min_sep_px', 8))
-            max_sep = int(config.get('max_sep_px', 140))
-            y1_idx = int(np.argmax(row_sm))
-            # Anular vecindad próxima para buscar segundo pico
-            nms = row_sm.copy()
-            sup_rad = max(3, min_sep // 2)
-            nms[max(0, y1_idx - sup_rad):min(h_img, y1_idx + sup_rad + 1)] = 0
-            y2_idx = int(np.argmax(nms))
-            if y1_idx > y2_idx:
-                y_top, y_bot = y2_idx, y1_idx
-            else:
-                y_top, y_bot = y1_idx, y2_idx
-            mask = np.zeros_like(gray)
-            if (y_bot - y_top) >= min_sep and (y_bot - y_top) <= max_sep:
-                expand = int(config.get('band_expand_rows', 8))
-                y_top = max(0, y_top - expand)
-                y_bot = min(h_img - 1, y_bot + expand)
-                cv2.rectangle(mask, (x0, y_top), (x1, y_bot), 255, -1)
-            else:
-                # Fallback: usar mapa de bordes verticales umbralizado
-                _, mask = cv2.threshold(sobely, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
         elif config['filter_type'] == 'sobely_pair_sweep':
             # Buscar par (y, y+dy) que maximiza la energía vertical sumada en ROI, barriendo dy
             hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -744,6 +337,21 @@ def interactive_parameter_tuning():
                 _, mask_roi = cv2.threshold(sob_roi.astype(np.uint8), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
                 mask[:, :] = 0
                 mask[:, x0:x1] = mask_roi
+        
+        elif config['filter_type'] == 'canny_tophat':
+            # TopHat horizontal para resaltar bandas + Canny + dilatación horizontal
+            kw = max(5, int(config.get('kernel_w', 61)))
+            kh = max(3, int(config.get('kernel_h', 5)))
+            se_h = cv2.getStructuringElement(cv2.MORPH_RECT, (kw, kh))
+            gray_blur = cv2.GaussianBlur(gray, (5, 5), 0)
+            tophat = cv2.morphologyEx(gray_blur, cv2.MORPH_TOPHAT, se_h)
+            c_low = int(config.get('canny_low', 40))
+            c_high = int(config.get('canny_high', 100))
+            edges = cv2.Canny(tophat, c_low, c_high)
+            dw = max(5, int(config.get('dilate_w', 25)))
+            dh = max(1, int(config.get('dilate_h', 3)))
+            kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (dw, dh))
+            mask = cv2.morphologyEx(edges, cv2.MORPH_DILATE, kernel_h, iterations=1)
         
         else:
             # Fallback a threshold simple
