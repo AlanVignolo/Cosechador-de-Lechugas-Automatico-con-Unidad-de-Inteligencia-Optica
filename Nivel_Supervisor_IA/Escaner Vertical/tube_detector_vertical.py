@@ -166,25 +166,16 @@ def detect_tube_lines_debug(image, debug=True):
         plt.tight_layout()
         plt.show()
     
-    # PASO 2: Volver a lo básico - baja saturación funciona, solo mejorar el filtrado
+    # PASO 2: Los filtros que funcionaban + detección de líneas rectangulares
     filters = {}
     
-    # Filtro 1: El que funcionaba - baja saturación estricta  
-    _, filters['baja_saturacion_25'] = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY_INV)
+    # Filtro 1: Baja saturación estricta (el que tomaba bien el extremo del tubo)
+    _, filters['baja_saturacion_estricta'] = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY_INV)
     
-    # Filtro 2: Baja saturación original (el que decías que funcionaba)
-    _, filters['baja_saturacion_40'] = cv2.threshold(s_channel, 40, 255, cv2.THRESH_BINARY_INV)
-    
-    # Filtro 3: Baja saturación intermedia
-    _, filters['baja_saturacion_30'] = cv2.threshold(s_channel, 30, 255, cv2.THRESH_BINARY_INV)
-    
-    # Filtro 4: Baja saturación con limpieza simple
-    _, temp_sat = cv2.threshold(s_channel, 35, 255, cv2.THRESH_BINARY_INV)
+    # Filtro 2: Baja saturación limpia (el otro que funcionaba)
+    _, temp_sat = cv2.threshold(s_channel, 30, 255, cv2.THRESH_BINARY_INV)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
     filters['baja_saturacion_limpia'] = cv2.morphologyEx(temp_sat, cv2.MORPH_OPEN, kernel)
-    
-    # Filtro 5: Threshold simple en escala de grises
-    _, filters['threshold_gris'] = cv2.threshold(gray, 140, 255, cv2.THRESH_BINARY)
     
     if debug:
         print("PASO 2: Aplicando filtros para detección de tubos blancos")
@@ -208,12 +199,13 @@ def detect_tube_lines_debug(image, debug=True):
         plt.tight_layout()
         plt.show()
     
-    # PASO 3: Detectar líneas horizontales en cada filtro
+    # PASO 3: Buscar rectángulos específicos - TUBO (horizontal) y TAPA (vertical)
     candidates = []
     
     for filter_name, binary_img in filters.items():
         if debug:
-            print(f"\nAnalizando filtro: {filter_name}")
+            pixels_blancos = cv2.countNonZero(binary_img)
+            print(f"\n{filter_name}: {pixels_blancos} píxeles blancos")
         
         # Encontrar contornos
         contours, _ = cv2.findContours(binary_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -223,80 +215,120 @@ def detect_tube_lines_debug(image, debug=True):
                 print(f"  No se encontraron contornos en {filter_name}")
             continue
         
-        # Analizar cada contorno
-        for i, contour in enumerate(contours):
+        # NUEVA LÓGICA: Buscar rectángulos específicos
+        rectangulos_encontrados = []
+        
+        for contour in contours:
             area = cv2.contourArea(contour)
             if area < 100:  # Filtrar contornos muy pequeños
                 continue
             
             # Obtener rectángulo delimitador
             x, y, w, h = cv2.boundingRect(contour)
-            
-            # Calcular características del contorno
             aspect_ratio = w / h if h > 0 else 0
-            extent = area / (w * h) if (w * h) > 0 else 0
-            center_y = y + h // 2
             
-            # Calcular área relativa respecto a imagen total
-            img_area = w_img * h_img
-            area_ratio = area / img_area
-            
+            # CLASIFICAR TIPO DE RECTÁNGULO
+            tipo_rectangulo = None
             score = 0
             characteristics = []
             
-            # SCORING SIMPLIFICADO - ENFOQUE: SEPARAR TUBO DE FONDO GRANDE
-            
-            # 1. PROBLEMA PRINCIPAL: El fondo es muy grande
-            # Penalizar fuertemente áreas grandes que incluyen fondo
-            if area_ratio > 0.5:  # Más del 50% de la imagen
-                score -= 50  # Penalización muy fuerte
-                characteristics.append(f"incluye_fondo({area_ratio:.2f})")
-            elif area_ratio > 0.3:  # Más del 30%
-                score -= 25
-                characteristics.append(f"área_grande({area_ratio:.2f})")
-            elif 0.01 < area_ratio < 0.2:  # Tamaño más pequeño para solo tubo
-                score += 30  # Reward fuerte para tamaños pequeños
-                characteristics.append(f"área_tubo({area_ratio:.2f})")
-            
-            # 2. Posición central (tubos suelen estar centrados)
-            center_distance = abs(center_y - img_center_y)
-            if center_distance < h_img * 0.3:  # Centrado
+            # TUBO: Rectángulo horizontal (w > h)
+            if aspect_ratio > 1.5:  # Claramente horizontal
+                tipo_rectangulo = "TUBO_HORIZONTAL"
+                score += 25
+                characteristics.append(f"tubo_horizontal({aspect_ratio:.1f})")
+                
+                # Bonus si está en posición central
+                center_y = y + h // 2
+                center_distance = abs(center_y - img_center_y)
+                if center_distance < h_img * 0.4:
+                    score += 20
+                    characteristics.append("centrado")
+                
+                # Tamaño apropiado para tubo
+                if 50 < w < 300 and 20 < h < 100:
+                    score += 15
+                    characteristics.append("tamaño_tubo_ok")
+                    
+            # TAPA: Rectángulo vertical (h > w)  
+            elif aspect_ratio < 0.8:  # Claramente vertical
+                tipo_rectangulo = "TAPA_VERTICAL"
                 score += 20
-                characteristics.append(f"centrado({center_distance:.0f}px)")
+                characteristics.append(f"tapa_vertical({aspect_ratio:.1f})")
+                
+                # Tamaño apropiado para tapa
+                if 20 < w < 80 and 40 < h < 120:
+                    score += 15
+                    characteristics.append("tamaño_tapa_ok")
+                    
+                # Posición apropiada para tapa (puede estar arriba o abajo del tubo)
+                center_y = y + h // 2
+                if center_y < h_img * 0.7:  # No muy abajo
+                    score += 10
+                    characteristics.append("posición_tapa")
             
-            # 3. Forma compacta (evitar formas con muchos huecos)
-            if extent > 0.5:  # Sólido
-                score += 15
-                characteristics.append(f"sólido({extent:.2f})")
+            # CUADRADO: Puede ser parte del tubo
+            elif 0.8 <= aspect_ratio <= 1.2:
+                tipo_rectangulo = "CUADRADO"
+                score += 10
+                characteristics.append(f"cuadrado({aspect_ratio:.1f})")
             
-            # 4. Tamaño mínimo (evitar ruido muy pequeño)
-            if area < 50:
-                score -= 20
-                characteristics.append("muy_pequeño")
-            elif 100 < area < 2000:  # Tamaño ideal para tubo individual
-                score += 15
-                characteristics.append(f"tamaño_ideal({area:.0f}px)")
-            
-            # 5. Bonus simple para baja saturación (lo que funcionaba)
+            # Bonus por filtro que funcionaba
             if 'baja_saturacion' in filter_name:
                 score += 10
-                characteristics.append("filtro_saturación")
+                characteristics.append("filtro_bueno")
             
-            if score > 5:  # Umbral más bajo para considerar candidato
-                candidates.append({
+            # Solo considerar candidatos con score mínimo
+            if score > 15:
+                rectangulos_encontrados.append({
                     'filter': filter_name,
+                    'tipo': tipo_rectangulo,
                     'contour': contour,
                     'bbox': (x, y, w, h),
                     'area': area,
                     'aspect_ratio': aspect_ratio,
-                    'extent': extent,
-                    'center_y': center_y,
+                    'center_y': y + h // 2,
                     'score': score,
                     'characteristics': characteristics
                 })
+        
+        # Agregar a candidatos globales
+        candidates.extend(rectangulos_encontrados)
+        
+        if debug:
+            print(f"  {len(contours)} contornos totales")
+            for rect in rectangulos_encontrados:
+                print(f"    {rect['tipo']}: score={rect['score']}, {rect['characteristics']}")
+        
+        # PASO 3.5: Buscar combinaciones TUBO + TAPA
+        tubos = [r for r in rectangulos_encontrados if r['tipo'] == 'TUBO_HORIZONTAL']
+        tapas = [r for r in rectangulos_encontrados if r['tipo'] == 'TAPA_VERTICAL']
+        
+        if tubos and tapas and debug:
+            print(f"  ¡COMBINACIÓN DETECTADA! {len(tubos)} tubos + {len(tapas)} tapas")
+            
+            # Buscar tapa cerca de tubo
+            for tubo in tubos:
+                tx, ty, tw, th = tubo['bbox']
+                tubo_center_y = ty + th // 2
                 
-                if debug:
-                    print(f"  Candidato #{len(candidates)}: score={score}, características={characteristics}")
+                for tapa in tapas:
+                    px, py, pw, ph = tapa['bbox']
+                    tapa_center_y = py + ph // 2
+                    
+                    distancia_y = abs(tubo_center_y - tapa_center_y)
+                    if distancia_y < 50:  # Tapa cerca del tubo
+                        # Bonus especial para combinación
+                        tubo['score'] += 30
+                        tapa['score'] += 25
+                        tubo['characteristics'].append("con_tapa_cercana")
+                        tapa['characteristics'].append("cerca_de_tubo")
+                        
+                        if debug:
+                            print(f"    Tapa a {distancia_y}px del tubo - ¡BONUS!")
+    
+    if debug:
+        print(f"\nPASO 3: {len(candidates)} candidatos rectangulares encontrados")
     
     # PASO 4: Mostrar mejores candidatos
     if debug and candidates:

@@ -121,41 +121,21 @@ def interactive_parameter_tuning():
     
     print("Imagen capturada. Probando diferentes configuraciones...")
     
-    # Configuraciones SIMPLES - volver a lo básico que funcionaba
+    # Los DOS filtros que funcionaban - enfoque en detección de rectángulos
     configs = [
         {
-            'name': 'Baja Saturación 25 (Estricta)',
+            'name': 'Baja Saturación Estricta (el que tomaba bien el extremo)',
             'saturacion_threshold': 25,
-            'area_min': 50,
-            'area_max': 2000,
+            'area_min': 100,
+            'area_max': 5000,
             'morfologia': False
         },
         {
-            'name': 'Baja Saturación 30 (Intermedia)', 
+            'name': 'Baja Saturación Limpia (el otro que funcionaba)',
             'saturacion_threshold': 30,
-            'area_min': 50,
-            'area_max': 2000,
-            'morfologia': False
-        },
-        {
-            'name': 'Baja Saturación 40 (Original - funcionaba)',
-            'saturacion_threshold': 40,
             'area_min': 100,
-            'area_max': 3000,
-            'morfologia': False
-        },
-        {
-            'name': 'Baja Saturación 35 con Limpieza',
-            'saturacion_threshold': 35,
-            'area_min': 80,
-            'area_max': 2500,
+            'area_max': 5000,
             'morfologia': True
-        },
-        {
-            'name': 'Threshold Gris Simple',
-            'gray_threshold': 140,
-            'area_min': 100,
-            'area_max': 3000
         }
     ]
     
@@ -188,42 +168,99 @@ def interactive_parameter_tuning():
         # Encontrar contornos
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        # Filtrar por área
-        valid_contours = []
+        # ANÁLISIS DE RECTÁNGULOS (igual que en detector principal)
+        rectangulos_encontrados = []
+        tubos = []
+        tapas = []
+        
         for contour in contours:
             area = cv2.contourArea(contour)
+            if area < 100:
+                continue
+            
+            x, y, w, h = cv2.boundingRect(contour)
+            aspect_ratio = w / h if h > 0 else 0
+            
+            # Clasificar rectángulos
+            if aspect_ratio > 1.5:  # TUBO horizontal
+                tipo = "TUBO"
+                tubos.append((contour, x, y, w, h, aspect_ratio))
+            elif aspect_ratio < 0.8:  # TAPA vertical
+                tipo = "TAPA"
+                tapas.append((contour, x, y, w, h, aspect_ratio))
+            else:
+                tipo = "CUADRADO"
+            
             if config['area_min'] <= area <= config['area_max']:
-                valid_contours.append(contour)
+                rectangulos_encontrados.append({
+                    'contour': contour,
+                    'bbox': (x, y, w, h),
+                    'area': area,
+                    'aspect_ratio': aspect_ratio,
+                    'tipo': tipo,
+                    'center_y': y + h // 2
+                })
         
-        print(f"  Contornos encontrados: {len(contours)}")
-        print(f"  Contornos válidos (área {config['area_min']}-{config['area_max']}): {len(valid_contours)}")
+        print(f"  Contornos totales: {len(contours)}")
+        print(f"  Rectángulos válidos: {len(rectangulos_encontrados)}")
+        print(f"  TUBOS (horizontales): {len(tubos)}")
+        print(f"  TAPAS (verticales): {len(tapas)}")
         
-        # Crear imagen resultado
+        # Crear imagen resultado con clasificación por colores
         result_img = image.copy()
         
-        # Dibujar todos los contornos en rojo
-        cv2.drawContours(result_img, contours, -1, (0, 0, 255), 1)
+        # Dibujar según tipo
+        for rect in rectangulos_encontrados:
+            contour = rect['contour']
+            x, y, w, h = rect['bbox']
+            tipo = rect['tipo']
+            
+            if tipo == "TUBO":
+                color = (0, 255, 0)  # Verde para tubos
+                cv2.drawContours(result_img, [contour], -1, color, 2)
+                cv2.putText(result_img, "TUBO", (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+            elif tipo == "TAPA":
+                color = (255, 0, 0)  # Azul para tapas
+                cv2.drawContours(result_img, [contour], -1, color, 2)
+                cv2.putText(result_img, "TAPA", (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+            else:
+                color = (0, 255, 255)  # Amarillo para cuadrados
+                cv2.drawContours(result_img, [contour], -1, color, 1)
         
-        # Dibujar contornos válidos en verde
-        cv2.drawContours(result_img, valid_contours, -1, (0, 255, 0), 2)
-        
-        # Si hay contornos válidos, marcar el más grande
-        if valid_contours:
-            largest = max(valid_contours, key=cv2.contourArea)
-            x, y, w, h = cv2.boundingRect(largest)
+        # Si hay tubos, usar el más centrado como resultado
+        if tubos:
+            h_img = image.shape[0]
+            img_center_y = h_img // 2
+            
+            mejor_tubo = min(tubos, key=lambda t: abs((t[2] + t[4]//2) - img_center_y))
+            _, x, y, w, h, aspect_ratio = mejor_tubo
             center_y = y + h // 2
             
-            cv2.rectangle(result_img, (x, y), (x+w, y+h), (255, 0, 0), 2)
-            cv2.circle(result_img, (x + w//2, center_y), 5, (255, 0, 0), -1)
+            cv2.rectangle(result_img, (x, y), (x+w, y+h), (0, 0, 255), 3)
+            cv2.circle(result_img, (x + w//2, center_y), 8, (0, 0, 255), -1)
             
             results.append({
                 'config': config['name'],
                 'center_y': center_y,
-                'area': cv2.contourArea(largest),
-                'bbox': (x, y, w, h)
+                'area': w * h,
+                'bbox': (x, y, w, h),
+                'tipo': 'TUBO'
             })
             
-            print(f"  Mejor candidato: Y={center_y}, Área={cv2.contourArea(largest):.0f}")
+            print(f"  ¡TUBO DETECTADO! Y={center_y}, Aspect={aspect_ratio:.1f}")
+        elif rectangulos_encontrados:
+            mejor = max(rectangulos_encontrados, key=lambda r: r['area'])
+            x, y, w, h = mejor['bbox']
+            center_y = mejor['center_y']
+            
+            results.append({
+                'config': config['name'],
+                'center_y': center_y,
+                'area': mejor['area'],
+                'bbox': (x, y, w, h),
+                'tipo': mejor['tipo']
+            })
+            print(f"  Mejor candidato ({mejor['tipo']}): Y={center_y}, Área={mejor['area']:.0f}")
         else:
             print(f"  No se encontraron candidatos válidos")
         
