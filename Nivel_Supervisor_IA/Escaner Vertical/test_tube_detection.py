@@ -121,21 +121,54 @@ def interactive_parameter_tuning():
     
     print("Imagen capturada. Probando diferentes configuraciones...")
     
-    # Los DOS filtros que funcionaban - enfoque en detección de rectángulos
+    # NUEVOS FILTROS - BORDES Y SOMBRAS/RELIEVES
     configs = [
         {
-            'name': 'Baja Saturación Estricta (el que tomaba bien el extremo)',
-            'saturacion_threshold': 25,
-            'area_min': 100,
-            'area_max': 5000,
-            'morfologia': False
+            'name': 'Canny Bordes Medio (Recomendado)',
+            'filter_type': 'canny',
+            'canny_low': 50,
+            'canny_high': 120,
+            'area_min': 200,
+            'area_max': 8000
         },
         {
-            'name': 'Baja Saturación Limpia (el otro que funcionaba)',
-            'saturacion_threshold': 30,
+            'name': 'Canny Bordes Suave',
+            'filter_type': 'canny',
+            'canny_low': 30,
+            'canny_high': 80,
+            'area_min': 150,
+            'area_max': 6000
+        },
+        {
+            'name': 'Top-hat Horizontal (Relieves)',
+            'filter_type': 'tophat',
+            'kernel_type': 'horizontal',
+            'kernel_size': (15, 5),
             'area_min': 100,
-            'area_max': 5000,
-            'morfologia': True
+            'area_max': 5000
+        },
+        {
+            'name': 'Top-hat Vertical (Relieves)',
+            'filter_type': 'tophat',
+            'kernel_type': 'vertical', 
+            'kernel_size': (5, 15),
+            'area_min': 100,
+            'area_max': 4000
+        },
+        {
+            'name': 'Bottom-hat Horizontal (Sombras)',
+            'filter_type': 'bottomhat',
+            'kernel_type': 'horizontal',
+            'kernel_size': (15, 5),
+            'area_min': 100,
+            'area_max': 5000
+        },
+        {
+            'name': 'Gradientes Sobel',
+            'filter_type': 'gradientes',
+            'grad_threshold': 30,
+            'area_min': 150,
+            'area_max': 6000
         }
     ]
     
@@ -144,25 +177,40 @@ def interactive_parameter_tuning():
     for i, config in enumerate(configs):
         print(f"\nProbando configuración {i+1}: {config['name']}")
         
-        # Aplicar filtro según configuración - SIMPLIFICADO
-        if 'saturacion_threshold' in config:
-            # Filtro de baja saturación (el que funcionaba)
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            s_channel = hsv[:,:,1]
-            _, mask = cv2.threshold(s_channel, config['saturacion_threshold'], 255, cv2.THRESH_BINARY_INV)
+        # Aplicar filtro según configuración - NUEVOS MÉTODOS
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        if config['filter_type'] == 'canny':
+            # Detección de bordes Canny
+            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+            mask = cv2.Canny(blurred, config['canny_low'], config['canny_high'])
             
-            # Aplicar morfología si está habilitada
-            if config.get('morfologia', False):
-                kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-                mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-                
-        elif 'gray_threshold' in config:
-            # Filtro threshold en gris simple
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            _, mask = cv2.threshold(gray, config['gray_threshold'], 255, cv2.THRESH_BINARY)
+        elif config['filter_type'] == 'tophat':
+            # Top-hat para relieves
+            kernel_size = config['kernel_size']
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
+            mask = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel)
+            # Convertir a binario
+            _, mask = cv2.threshold(mask, 10, 255, cv2.THRESH_BINARY)
+            
+        elif config['filter_type'] == 'bottomhat':
+            # Bottom-hat para sombras
+            kernel_size = config['kernel_size']
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)
+            mask = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, kernel)
+            # Convertir a binario
+            _, mask = cv2.threshold(mask, 10, 255, cv2.THRESH_BINARY)
+            
+        elif config['filter_type'] == 'gradientes':
+            # Gradientes Sobel
+            grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+            grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+            grad_magnitude = np.sqrt(grad_x**2 + grad_y**2)
+            grad_magnitude = np.uint8(np.clip(grad_magnitude, 0, 255))
+            _, mask = cv2.threshold(grad_magnitude, config['grad_threshold'], 255, cv2.THRESH_BINARY)
+            
         else:
-            # Fallback
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # Fallback a threshold simple
             _, mask = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
         
         # Encontrar contornos

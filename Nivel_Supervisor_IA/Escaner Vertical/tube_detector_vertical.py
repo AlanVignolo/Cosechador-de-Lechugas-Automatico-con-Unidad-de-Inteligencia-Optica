@@ -166,38 +166,100 @@ def detect_tube_lines_debug(image, debug=True):
         plt.tight_layout()
         plt.show()
     
-    # PASO 2: Los filtros que funcionaban + detección de líneas rectangulares
+    # PASO 2: DETECCIÓN DE BORDES + SOMBRAS/RELIEVES
     filters = {}
     
-    # Filtro 1: Baja saturación estricta (el que tomaba bien el extremo del tubo)
-    _, filters['baja_saturacion_estricta'] = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY_INV)
+    # MÉTODO 1: DETECCIÓN DE BORDES CON CANNY
+    # Suavizado previo para reducir ruido
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     
-    # Filtro 2: Baja saturación limpia (el otro que funcionaba)
-    _, temp_sat = cv2.threshold(s_channel, 30, 255, cv2.THRESH_BINARY_INV)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    filters['baja_saturacion_limpia'] = cv2.morphologyEx(temp_sat, cv2.MORPH_OPEN, kernel)
+    # Canny con diferentes umbrales
+    filters['canny_suave'] = cv2.Canny(blurred, 30, 80)
+    filters['canny_medio'] = cv2.Canny(blurred, 50, 120) 
+    filters['canny_fuerte'] = cv2.Canny(blurred, 80, 160)
+    
+    # MÉTODO 2: DETECCIÓN DE SOMBRAS Y RELIEVES
+    # Kernel para operaciones morfológicas (forma del tubo esperado)
+    kernel_horizontal = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 5))  # Para tubo horizontal
+    kernel_vertical = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 15))    # Para tapa vertical
+    kernel_circular = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))  # General
+    
+    # Top-hat: Resalta objetos más claros que el fondo (relieves)
+    filters['tophat_horizontal'] = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_horizontal)
+    filters['tophat_vertical'] = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_vertical)
+    
+    # Bottom-hat: Resalta objetos más oscuros que el fondo (sombras)
+    filters['bottomhat_horizontal'] = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, kernel_horizontal)
+    filters['bottomhat_vertical'] = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, kernel_vertical)
+    
+    # MÉTODO 3: COMBINACIÓN BORDES + RELIEVES
+    # Combinar Canny con top-hat para mejorar detección
+    tophat_combined = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_circular)
+    tophat_enhanced = cv2.addWeighted(gray, 0.7, tophat_combined, 0.3, 0)
+    filters['canny_tophat'] = cv2.Canny(tophat_enhanced, 40, 100)
+    
+    # MÉTODO 4: GRADIENTES DIRECCIONALES  
+    # Gradientes para detectar cambios sutiles de intensidad
+    grad_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+    grad_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+    
+    # Magnitud del gradiente
+    grad_magnitude = np.sqrt(grad_x**2 + grad_y**2)
+    grad_magnitude = np.uint8(np.clip(grad_magnitude, 0, 255))
+    
+    # Threshold en gradientes
+    _, filters['gradientes'] = cv2.threshold(grad_magnitude, 30, 255, cv2.THRESH_BINARY)
     
     if debug:
-        print("PASO 2: Aplicando filtros para detección de tubos blancos")
+        print("PASO 2: Aplicando filtros BORDES + SOMBRAS/RELIEVES")
         
-        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-        fig.suptitle('PASO 2: Filtros para Tubos Blancos', fontsize=14)
-        
+        # Mostrar filtros en múltiples ventanas para ver todos
         filter_names = list(filters.keys())
-        for i, (name, filtered) in enumerate(filters.items()):
-            if i < 6:  # Mostrar solo los primeros 6 filtros
-                row, col = divmod(i, 3)
-                axes[row, col].imshow(filtered, cmap='gray')
-                axes[row, col].set_title(f'{name}\n{np.sum(filtered > 0)} píxeles blancos')
-                axes[row, col].axis('off')
         
-        # Ocultar ejes no usados
-        for i in range(len(filters), 6):
-            row, col = divmod(i, 3)
-            axes[row, col].axis('off')
+        # Primera ventana: Filtros de bordes Canny
+        canny_filters = {k: v for k, v in filters.items() if 'canny' in k}
+        if canny_filters:
+            fig1, axes1 = plt.subplots(1, len(canny_filters), figsize=(15, 5))
+            fig1.suptitle('BORDES - Detección Canny', fontsize=14)
+            if len(canny_filters) == 1:
+                axes1 = [axes1]
+            for i, (name, filtered) in enumerate(canny_filters.items()):
+                axes1[i].imshow(filtered, cmap='gray')
+                axes1[i].set_title(f'{name}')
+                axes1[i].axis('off')
+            plt.tight_layout()
+            plt.show()
         
-        plt.tight_layout()
-        plt.show()
+        # Segunda ventana: Filtros de sombras/relieves
+        morpho_filters = {k: v for k, v in filters.items() if 'hat' in k}
+        if morpho_filters:
+            fig2, axes2 = plt.subplots(2, 2, figsize=(12, 10))
+            fig2.suptitle('SOMBRAS/RELIEVES - Top-hat y Bottom-hat', fontsize=14)
+            axes2 = axes2.flatten()
+            for i, (name, filtered) in enumerate(morpho_filters.items()):
+                if i < 4:
+                    axes2[i].imshow(filtered, cmap='gray')
+                    axes2[i].set_title(f'{name}')
+                    axes2[i].axis('off')
+            # Ocultar ejes no usados
+            for i in range(len(morpho_filters), 4):
+                axes2[i].axis('off')
+            plt.tight_layout()
+            plt.show()
+        
+        # Tercera ventana: Gradientes y combinaciones
+        other_filters = {k: v for k, v in filters.items() if 'canny' not in k and 'hat' not in k}
+        if other_filters:
+            fig3, axes3 = plt.subplots(1, len(other_filters), figsize=(10, 5)) 
+            fig3.suptitle('GRADIENTES Y COMBINACIONES', fontsize=14)
+            if len(other_filters) == 1:
+                axes3 = [axes3]
+            for i, (name, filtered) in enumerate(other_filters.items()):
+                axes3[i].imshow(filtered, cmap='gray')
+                axes3[i].set_title(f'{name}')
+                axes3[i].axis('off')
+            plt.tight_layout()
+            plt.show()
     
     # PASO 3: Buscar rectángulos específicos - TUBO (horizontal) y TAPA (vertical)
     candidates = []
@@ -232,51 +294,92 @@ def detect_tube_lines_debug(image, debug=True):
             score = 0
             characteristics = []
             
+            # SCORING PARA FILTROS DE BORDES Y RELIEVES
+            center_y = y + h // 2
+            center_distance = abs(center_y - img_center_y)
+            
             # TUBO: Rectángulo horizontal (w > h)
             if aspect_ratio > 1.5:  # Claramente horizontal
                 tipo_rectangulo = "TUBO_HORIZONTAL"
-                score += 25
+                score += 30  # Bonus alto para tubos
                 characteristics.append(f"tubo_horizontal({aspect_ratio:.1f})")
                 
-                # Bonus si está en posición central
-                center_y = y + h // 2
-                center_distance = abs(center_y - img_center_y)
-                if center_distance < h_img * 0.4:
-                    score += 20
+                # Bonus si está centrado
+                if center_distance < h_img * 0.3:
+                    score += 25
+                    characteristics.append("muy_centrado")
+                elif center_distance < h_img * 0.5:
+                    score += 15
                     characteristics.append("centrado")
                 
                 # Tamaño apropiado para tubo
-                if 50 < w < 300 and 20 < h < 100:
-                    score += 15
+                if 30 < w < 400 and 10 < h < 120:
+                    score += 20
                     characteristics.append("tamaño_tubo_ok")
                     
             # TAPA: Rectángulo vertical (h > w)  
-            elif aspect_ratio < 0.8:  # Claramente vertical
+            elif aspect_ratio < 0.7:  # Claramente vertical
                 tipo_rectangulo = "TAPA_VERTICAL"
-                score += 20
+                score += 25
                 characteristics.append(f"tapa_vertical({aspect_ratio:.1f})")
                 
                 # Tamaño apropiado para tapa
-                if 20 < w < 80 and 40 < h < 120:
+                if 15 < w < 100 and 30 < h < 150:
                     score += 15
                     characteristics.append("tamaño_tapa_ok")
                     
-                # Posición apropiada para tapa (puede estar arriba o abajo del tubo)
-                center_y = y + h // 2
-                if center_y < h_img * 0.7:  # No muy abajo
+                # Posición apropiada para tapa
+                if center_y < h_img * 0.8:  # No muy abajo
                     score += 10
-                    characteristics.append("posición_tapa")
+                    characteristics.append("posición_tapa_ok")
             
-            # CUADRADO: Puede ser parte del tubo
-            elif 0.8 <= aspect_ratio <= 1.2:
+            # CUADRADO: Puede ser parte del tubo o tapa
+            elif 0.7 <= aspect_ratio <= 1.4:
                 tipo_rectangulo = "CUADRADO"
-                score += 10
+                score += 15
                 characteristics.append(f"cuadrado({aspect_ratio:.1f})")
+                
+                # Si está centrado, puede ser tubo visto de frente
+                if center_distance < h_img * 0.3:
+                    score += 10
+                    characteristics.append("cuadrado_centrado")
             
-            # Bonus por filtro que funcionaba
-            if 'baja_saturacion' in filter_name:
+            # BONUS POR TIPO DE FILTRO
+            # Filtros de bordes son muy buenos para formas definidas
+            if 'canny' in filter_name:
+                score += 15
+                characteristics.append("filtro_bordes")
+                
+                # Bonus extra para Canny medio (balance ruido/detección)
+                if 'medio' in filter_name:
+                    score += 5
+                    characteristics.append("canny_optimo")
+                    
+            # Filtros de relieves detectan elevaciones (tubos)
+            elif 'tophat' in filter_name:
+                score += 12
+                characteristics.append("filtro_relieve")
+                
+                # Bonus para orientación correcta
+                if ('horizontal' in filter_name and tipo_rectangulo == "TUBO_HORIZONTAL") or \
+                   ('vertical' in filter_name and tipo_rectangulo == "TAPA_VERTICAL"):
+                    score += 8
+                    characteristics.append("orientación_correcta")
+                    
+            # Filtros de sombras detectan depresiones
+            elif 'bottomhat' in filter_name:
+                score += 8
+                characteristics.append("filtro_sombras")
+                
+            # Gradientes detectan cambios sutiles
+            elif 'gradientes' in filter_name:
                 score += 10
-                characteristics.append("filtro_bueno")
+                characteristics.append("filtro_gradientes")
+            
+            # Penalizar contornos muy pequeños (ruido) en filtros de bordes
+            if ('canny' in filter_name or 'gradientes' in filter_name) and area < 200:
+                score -= 10
+                characteristics.append("posible_ruido")
             
             # Solo considerar candidatos con score mínimo
             if score > 15:
