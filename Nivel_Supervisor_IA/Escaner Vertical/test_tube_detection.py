@@ -94,18 +94,6 @@ def interactive_parameter_tuning():
             'band_expand_rows': 8,
             'area_min': 120,
             'area_max': 20000
-        },
-        {
-            'name': 'TopHat + Canny + Dilate (horizontal)',
-            'filter_type': 'canny_tophat',
-            'kernel_w': 61,
-            'kernel_h': 5,
-            'canny_low': 40,
-            'canny_high': 100,
-            'dilate_w': 25,
-            'dilate_h': 3,
-            'area_min': 120,
-            'area_max': 20000
         }
     ]
     
@@ -154,33 +142,36 @@ def interactive_parameter_tuning():
             comb = cv2.bitwise_and(cv2.bitwise_or(mask_s, mask_h), mask_v)
             comb = cv2.GaussianBlur(comb, (5, 5), 0)
             edges = cv2.Canny(comb, int(config.get('canny_low', 40)), int(config.get('canny_high', 100)))
-            # Hough de líneas y selección de par superior-inferior con solape máximo
+            # Hough de líneas: elegir el par de horizontales más largas con separación razonable
             lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=60,
                                     minLineLength=int(config.get('min_line_length', 60)),
                                     maxLineGap=int(config.get('max_line_gap', 15)))
-            horizontals = []
+            horizontals = []  # (y_mid, xL, xR, length)
             if lines is not None:
                 for l in lines:
                     x1, y1, x2, y2 = l[0]
                     if abs(y2 - y1) <= max(2, int(0.2 * abs(x2 - x1))):
                         xL, xR = min(x1, x2), max(x1, x2)
-                        horizontals.append((y1, xL, xR))
-            # Elegir par con mayor solape y separación razonable
+                        length = float(np.hypot(x2 - x1, y2 - y1))
+                        y_mid = int(round((y1 + y2) / 2.0))
+                        horizontals.append((y_mid, xL, xR, length))
+            # Elegir par con mayor suma de longitudes y separación razonable; requerir solape mínimo
             min_sep = int(config.get('min_sep_px', 8))
             max_sep = int(config.get('max_sep_px', 120))
             best_pair = None
-            best_overlap = 0
+            best_total_len = -1.0
             for i in range(len(horizontals)):
-                yA, xL_A, xR_A = horizontals[i]
+                yA, xL_A, xR_A, lenA = horizontals[i]
                 for j in range(i+1, len(horizontals)):
-                    yB, xL_B, xR_B = horizontals[j]
+                    yB, xL_B, xR_B, lenB = horizontals[j]
                     dy = abs(yB - yA)
                     if min_sep <= dy <= max_sep:
                         xL = max(min(xL_A, xR_A), min(xL_B, xR_B))
                         xR = min(max(xL_A, xR_A), max(xL_B, xR_B))
                         overlap = max(0, xR - xL)
-                        if overlap > best_overlap and overlap > 20:
-                            best_overlap = overlap
+                        total_len = lenA + lenB
+                        if overlap > 20 and total_len > best_total_len:
+                            best_total_len = total_len
                             best_pair = (min(yA, yB), max(yA, yB), xL, xR)
             # Construir máscara final
             if best_pair is not None:
@@ -240,28 +231,31 @@ def interactive_parameter_tuning():
             lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=60,
                                     minLineLength=int(config.get('min_line_length', 60)),
                                     maxLineGap=int(config.get('max_line_gap', 15)))
-            horizontals = []
+            horizontals = []  # (y_mid, xL, xR, length)
             if lines is not None:
                 for l in lines:
                     x1, y1, x2, y2 = l[0]
                     if abs(y2 - y1) <= max(2, int(0.2 * abs(x2 - x1))):
                         xL, xR = min(x1, x2), max(x1, x2)
-                        horizontals.append((y1, xL, xR))
+                        length = float(np.hypot(x2 - x1, y2 - y1))
+                        y_mid = int(round((y1 + y2) / 2.0))
+                        horizontals.append((y_mid, xL, xR, length))
             min_sep = int(config.get('min_sep_px', 8))
             max_sep = int(config.get('max_sep_px', 120))
             best_pair = None
-            best_overlap = 0
+            best_total_len = -1.0
             for i in range(len(horizontals)):
-                yA, xL_A, xR_A = horizontals[i]
+                yA, xL_A, xR_A, lenA = horizontals[i]
                 for j in range(i+1, len(horizontals)):
-                    yB, xL_B, xR_B = horizontals[j]
+                    yB, xL_B, xR_B, lenB = horizontals[j]
                     dy = abs(yB - yA)
                     if min_sep <= dy <= max_sep:
                         xL = max(min(xL_A, xR_A), min(xL_B, xR_B))
                         xR = min(max(xL_A, xR_A), max(xL_B, xR_B))
                         overlap = max(0, xR - xL)
-                        if overlap > best_overlap and overlap > 20:
-                            best_overlap = overlap
+                        total_len = lenA + lenB
+                        if overlap > 20 and total_len > best_total_len:
+                            best_total_len = total_len
                             best_pair = (min(yA, yB), max(yA, yB), xL, xR)
             if best_pair is not None:
                 y_top, y_bot, xL, xR = best_pair
@@ -337,21 +331,6 @@ def interactive_parameter_tuning():
                 _, mask_roi = cv2.threshold(sob_roi.astype(np.uint8), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
                 mask[:, :] = 0
                 mask[:, x0:x1] = mask_roi
-        
-        elif config['filter_type'] == 'canny_tophat':
-            # TopHat horizontal para resaltar bandas + Canny + dilatación horizontal
-            kw = max(5, int(config.get('kernel_w', 61)))
-            kh = max(3, int(config.get('kernel_h', 5)))
-            se_h = cv2.getStructuringElement(cv2.MORPH_RECT, (kw, kh))
-            gray_blur = cv2.GaussianBlur(gray, (5, 5), 0)
-            tophat = cv2.morphologyEx(gray_blur, cv2.MORPH_TOPHAT, se_h)
-            c_low = int(config.get('canny_low', 40))
-            c_high = int(config.get('canny_high', 100))
-            edges = cv2.Canny(tophat, c_low, c_high)
-            dw = max(5, int(config.get('dilate_w', 25)))
-            dh = max(1, int(config.get('dilate_h', 3)))
-            kernel_h = cv2.getStructuringElement(cv2.MORPH_RECT, (dw, dh))
-            mask = cv2.morphologyEx(edges, cv2.MORPH_DILATE, kernel_h, iterations=1)
         
         else:
             # Fallback a threshold simple
