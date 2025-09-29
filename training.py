@@ -82,270 +82,380 @@ class GreenPixelROITrainer:
         
         return image
     
-    def detect_plant_contours(self, image: np.ndarray, debug: bool = False) -> Tuple[List, np.ndarray]:
+    def detect_plant_contour(self, image, debug=False):
         """
-        Detecta contornos de plantas (lechugas y vasos con plantas) en la imagen
-        
-        Args:
-            image: Imagen en formato BGR
-            debug: Si True, muestra imágenes de depuración
-            
-        Returns:
-            Tuple con (lista_de_contornos, máscara_combinada)
+        Detecta contornos de plantas (lechugas) con filtros mejorados
+        que eliminan ruido y distinguen mejor del fondo claro
         """
-        # Extraer ROI primero
-        roi = self.extract_roi(image)
+        if debug:
+            print("=== DETECCIÓN DE CONTORNOS DE PLANTAS ===")
         
-        # Convertir a HSV para mejor detección de verde
-        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        h, w = image.shape[:2]
         
-        # Crear máscara para detectar objetos verdes (plantas)
-        # Rango amplio para capturar diferentes tonos de verde
-        lower_green = np.array([35, 40, 40])  # Verde más amplio
-        upper_green = np.array([85, 255, 255])
-        green_mask = cv2.inRange(hsv, lower_green, upper_green)
+        # 1. Conversión a espacio de color HSV para mejor detección de verdes
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         
-        # También detectar en espacio RGB/BGR
-        b, g, r = cv2.split(roi)
-        # Píxeles donde el verde predomina
-        green_dominant = (g > b * 1.1) & (g > r * 1.1) & (g > 50)
-        green_mask_bgr = green_dominant.astype(np.uint8) * 255
+        # 2. Definir múltiples rangos de verde para lechugas
+        # Rango 1: Verde claro (lechugas jóvenes)
+        lower_green1 = np.array([35, 30, 30])
+        upper_green1 = np.array([85, 255, 255])
         
-        # Combinar ambas máscaras
-        combined_mask = cv2.bitwise_or(green_mask, green_mask_bgr)
+        # Rango 2: Verde más oscuro (lechugas maduras)
+        lower_green2 = np.array([25, 40, 40])
+        upper_green2 = np.array([75, 255, 200])
         
-        # Operaciones morfológicas para limpiar la máscara
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-        combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_CLOSE, kernel)
-        combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_OPEN, kernel)
+        # Crear máscaras para ambos rangos
+        mask1 = cv2.inRange(hsv, lower_green1, upper_green1)
+        mask2 = cv2.inRange(hsv, lower_green2, upper_green2)
         
-        # Aplicar filtro Gaussiano para suavizar
-        combined_mask = cv2.GaussianBlur(combined_mask, (5, 5), 0)
+        # Combinar máscaras
+        green_mask = cv2.bitwise_or(mask1, mask2)
         
-        # Encontrar contornos
-        contours, _ = cv2.findContours(combined_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # 3. Filtrar fondo claro usando canal de saturación
+        # Los fondos claros típicamente tienen baja saturación
+        s_channel = hsv[:,:,1]
+        _, sat_mask = cv2.threshold(s_channel, 25, 255, cv2.THRESH_BINARY)
         
-        # Filtrar contornos por área para eliminar ruido
-        min_area = roi.shape[0] * roi.shape[1] * 0.01  # Al menos 1% del área del ROI
-        max_area = roi.shape[0] * roi.shape[1] * 0.8   # Máximo 80% del área del ROI
+        # Combinar con máscara de verde
+        green_mask = cv2.bitwise_and(green_mask, sat_mask)
         
-        filtered_contours = []
+        # 4. Operaciones morfológicas avanzadas para eliminar ruido
+        # Kernel pequeño para eliminar ruido fino
+        small_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_OPEN, small_kernel)
+        
+        # Kernel mediano para conectar regiones fragmentadas
+        medium_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_CLOSE, medium_kernel)
+        
+        # Kernel grande para suavizar contornos
+        large_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        green_mask = cv2.morphologyEx(green_mask, cv2.MORPH_OPEN, large_kernel)
+        
+        # 5. Filtro de área para eliminar regiones muy pequeñas
+        contours, _ = cv2.findContours(green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # Crear máscara limpia solo con contornos de tamaño adecuado
+        clean_mask = np.zeros_like(green_mask)
+        min_area = (w * h) * 0.001  # Mínimo 0.1% del área de la imagen
+        max_area = (w * h) * 0.3    # Máximo 30% del área de la imagen
+        
+        valid_contours = []
         for contour in contours:
             area = cv2.contourArea(contour)
-            if min_area <= area <= max_area:
-                # Verificar que el contorno tenga una forma razonable (no muy alargado)
-                x, y, w, h = cv2.boundingRect(contour)
-                aspect_ratio = w / h
-                if 0.3 <= aspect_ratio <= 3.0:  # Formas no muy alargadas
-                    filtered_contours.append(contour)
-        
-        # Crear máscara final con los contornos filtrados
-        final_mask = np.zeros(combined_mask.shape, dtype=np.uint8)
-        cv2.fillPoly(final_mask, filtered_contours, 255)
+            if min_area < area < max_area:
+                # Filtro adicional por circularidad/compacidad
+                perimeter = cv2.arcLength(contour, True)
+                if perimeter > 0:
+                    circularity = 4 * np.pi * area / (perimeter * perimeter)
+                    # Las lechugas tienen forma relativamente circular
+                    if circularity > 0.3:  # Más tolerante para formas orgánicas
+                        cv2.drawContours(clean_mask, [contour], -1, 255, -1)
+                        valid_contours.append(contour)
         
         if debug:
-            # Mostrar imágenes de depuración
-            debug_img = roi.copy()
-            cv2.drawContours(debug_img, filtered_contours, -1, (0, 255, 255), 2)
-            
+            print(f"Contornos válidos encontrados: {len(valid_contours)}")
+            # Mostrar resultados paso a paso
             fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-            axes[0,0].imshow(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
-            axes[0,0].set_title('Imagen Original (ROI)')
+            
+            axes[0,0].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            axes[0,0].set_title('Imagen Original')
+            axes[0,0].axis('off')
+            
             axes[0,1].imshow(green_mask, cmap='gray')
-            axes[0,1].set_title('Máscara Verde (HSV)')
-            axes[0,2].imshow(green_mask_bgr, cmap='gray')
-            axes[0,2].set_title('Máscara Verde (BGR)')
-            axes[1,0].imshow(combined_mask, cmap='gray')
-            axes[1,0].set_title('Máscara Combinada')
-            axes[1,1].imshow(final_mask, cmap='gray')
-            axes[1,1].set_title('Máscara Final (Contornos)')
-            axes[1,2].imshow(cv2.cvtColor(debug_img, cv2.COLOR_BGR2RGB))
-            axes[1,2].set_title(f'Contornos Verdes ({len(filtered_contours)})')
+            axes[0,1].set_title('Máscara Verde + Saturación')
+            axes[0,1].axis('off')
             
-            for ax in axes.flat:
-                ax.axis('off')
+            axes[0,2].imshow(clean_mask, cmap='gray')
+            axes[0,2].set_title('Máscara Final Limpia')
+            axes[0,2].axis('off')
+            
+            # Imagen con contornos detectados
+            result_img = image.copy()
+            cv2.drawContours(result_img, valid_contours, -1, (0, 255, 0), 2)
+            axes[1,0].imshow(cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB))
+            axes[1,0].set_title(f'Contornos Detectados ({len(valid_contours)})')
+            axes[1,0].axis('off')
+            
+            # Canal de saturación
+            axes[1,1].imshow(s_channel, cmap='gray')
+            axes[1,1].set_title('Canal Saturación')
+            axes[1,1].axis('off')
+            
+            # Histograma de saturación
+            axes[1,2].hist(s_channel.ravel(), 256, [0,256], alpha=0.7)
+            axes[1,2].set_title('Histograma Saturación')
+            axes[1,2].axvline(x=25, color='r', linestyle='--', label='Umbral')
+            axes[1,2].legend()
+            
             plt.tight_layout()
             plt.show()
         
-        return filtered_contours, final_mask
+        return valid_contours, clean_mask
 
-    def detect_black_contours(self, image: np.ndarray, debug: bool = False) -> Tuple[List, np.ndarray]:
+    def detect_black_contours(self, image, debug=False):
         """
-        Detecta contornos negros/oscuros (vasos vacíos, tierra, etc.)
-        
-        Args:
-            image: Imagen en formato BGR
-            debug: Si True, muestra imágenes de depuración
-            
-        Returns:
-            Tuple con (lista_de_contornos, máscara_combinada)
+        Detecta contornos oscuros (vasos) con filtros mejorados
+        que distinguen vasos del fondo claro y eliminan sombras
         """
-        # Extraer ROI primero
-        roi = self.extract_roi(image)
+        if debug:
+            print("=== DETECCIÓN DE CONTORNOS OSCUROS (VASOS) ===")
         
-        # Convertir a escala de grises
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        h, w = image.shape[:2]
         
-        # Convertir a HSV para mejor detección de oscuros
-        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        # 1. Conversión a diferentes espacios de color para análisis
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
-        # Crear máscara para detectar píxeles muy oscuros
-        # Basado en el canal V (valor/brillo) en HSV
-        v_channel = hsv[:, :, 2]
-        dark_mask_hsv = v_channel <= 80  # Píxeles con bajo brillo
+        # 2. Detección multimétodo de regiones oscuras
         
-        # También detectar en escala de grises
-        dark_mask_gray = gray <= 60  # Píxeles oscuros en escala de grises
+        # Método 1: Umbralización en canal V (brillo)
+        v_channel = hsv[:,:,2]
+        _, dark_mask1 = cv2.threshold(v_channel, 80, 255, cv2.THRESH_BINARY_INV)
         
-        # Detectar en RGB píxeles donde todos los canales son oscuros
-        b, g, r = cv2.split(roi)
-        dark_mask_rgb = (b <= 70) & (g <= 70) & (r <= 70)
+        # Método 2: Umbralización en canal L (luminancia)
+        l_channel = lab[:,:,0]
+        _, dark_mask2 = cv2.threshold(l_channel, 90, 255, cv2.THRESH_BINARY_INV)
         
-        # Combinar todas las máscaras
-        combined_mask = (dark_mask_hsv | dark_mask_gray | dark_mask_rgb).astype(np.uint8) * 255
+        # Método 3: Umbralización adaptativa en escala de grises
+        dark_mask3 = cv2.adaptiveThreshold(
+            gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+            cv2.THRESH_BINARY_INV, 15, 5
+        )
         
-        # Operaciones morfológicas para limpiar la máscara
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-        combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_CLOSE, kernel)
-        combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_OPEN, kernel)
+        # 3. Combinar métodos usando operador AND para mayor precisión
+        dark_mask = cv2.bitwise_and(dark_mask1, dark_mask2)
+        dark_mask = cv2.bitwise_and(dark_mask, dark_mask3)
         
-        # Aplicar filtro Gaussiano para suavizar
-        combined_mask = cv2.GaussianBlur(combined_mask, (5, 5), 0)
+        # 4. Filtrar por saturación para eliminar sombras grises
+        # Los vasos negros tienen baja saturación, pero las sombras también
+        # Usar umbral más restrictivo
+        s_channel = hsv[:,:,1]
+        _, low_sat_mask = cv2.threshold(s_channel, 40, 255, cv2.THRESH_BINARY_INV)
+        dark_mask = cv2.bitwise_and(dark_mask, low_sat_mask)
         
-        # Encontrar contornos
-        contours, _ = cv2.findContours(combined_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # 5. Operaciones morfológicas específicas para vasos
+        # Los vasos son objetos compactos y sólidos
         
-        # Filtrar contornos por área para eliminar ruido
-        min_area = roi.shape[0] * roi.shape[1] * 0.02  # Al menos 2% del área del ROI
-        max_area = roi.shape[0] * roi.shape[1] * 0.9   # Máximo 90% del área del ROI
+        # Eliminar ruido pequeño
+        noise_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        dark_mask = cv2.morphologyEx(dark_mask, cv2.MORPH_OPEN, noise_kernel)
         
-        filtered_contours = []
+        # Rellenar huecos internos (vasos pueden tener reflejos internos)
+        fill_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        dark_mask = cv2.morphologyEx(dark_mask, cv2.MORPH_CLOSE, fill_kernel)
+        
+        # Suavizar bordes
+        smooth_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        dark_mask = cv2.morphologyEx(dark_mask, cv2.MORPH_OPEN, smooth_kernel)
+        
+        # 6. Análisis de contornos con filtros específicos para vasos
+        contours, _ = cv2.findContours(dark_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        valid_contours = []
+        min_area = (w * h) * 0.002  # Mínimo 0.2% del área de la imagen
+        max_area = (w * h) * 0.15   # Máximo 15% del área de la imagen
+        
         for contour in contours:
             area = cv2.contourArea(contour)
-            if min_area <= area <= max_area:
-                # Verificar que el contorno tenga una forma razonable
-                x, y, w, h = cv2.boundingRect(contour)
-                aspect_ratio = w / h
-                if 0.2 <= aspect_ratio <= 5.0:  # Más permisivo para formas de vasos
-                    filtered_contours.append(contour)
+            
+            if min_area < area < max_area:
+                # Análisis de forma para vasos
+                perimeter = cv2.arcLength(contour, True)
+                
+                if perimeter > 0:
+                    # Circularidad (vasos tienden a ser circulares vistos desde arriba)
+                    circularity = 4 * np.pi * area / (perimeter * perimeter)
+                    
+                    # Ratio de aspecto
+                    x, y, w_rect, h_rect = cv2.boundingRect(contour)
+                    aspect_ratio = float(w_rect) / h_rect
+                    
+                    # Solidez (qué tan lleno está el contorno)
+                    hull = cv2.convexHull(contour)
+                    hull_area = cv2.contourArea(hull)
+                    solidity = float(area) / hull_area if hull_area > 0 else 0
+                    
+                    # Filtros específicos para vasos
+                    if (circularity > 0.4 and          # Relativamente circular
+                        0.3 < aspect_ratio < 3.0 and   # No muy alargado
+                        solidity > 0.7):               # Forma sólida
+                        
+                        valid_contours.append(contour)
         
-        # Crear máscara final con los contornos filtrados
-        final_mask = np.zeros(combined_mask.shape, dtype=np.uint8)
-        cv2.fillPoly(final_mask, filtered_contours, 255)
+        # 7. Crear máscara final limpia
+        clean_mask = np.zeros_like(dark_mask)
+        cv2.drawContours(clean_mask, valid_contours, -1, 255, -1)
         
         if debug:
-            # Mostrar imágenes de depuración
-            debug_img = roi.copy()
-            cv2.drawContours(debug_img, filtered_contours, -1, (255, 0, 0), 2)
+            print(f"Contornos oscuros válidos encontrados: {len(valid_contours)}")
+            # Mostrar resultados paso a paso
+            fig, axes = plt.subplots(2, 4, figsize=(20, 10))
             
-            fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-            axes[0,0].imshow(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
-            axes[0,0].set_title('Imagen Original (ROI)')
-            axes[0,1].imshow(dark_mask_hsv, cmap='gray')
-            axes[0,1].set_title('Máscara Oscura (HSV-V)')
-            axes[0,2].imshow(dark_mask_gray, cmap='gray')
-            axes[0,2].set_title('Máscara Oscura (Gris)')
-            axes[1,0].imshow(combined_mask, cmap='gray')
+            axes[0,0].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            axes[0,0].set_title('Imagen Original')
+            axes[0,0].axis('off')
+            
+            axes[0,1].imshow(dark_mask1, cmap='gray')
+            axes[0,1].set_title('Máscara Canal V')
+            axes[0,1].axis('off')
+            
+            axes[0,2].imshow(dark_mask2, cmap='gray')
+            axes[0,2].set_title('Máscara Canal L')
+            axes[0,2].axis('off')
+            
+            axes[0,3].imshow(dark_mask3, cmap='gray')
+            axes[0,3].set_title('Máscara Adaptativa')
+            axes[0,3].axis('off')
+            
+            axes[1,0].imshow(dark_mask, cmap='gray')
             axes[1,0].set_title('Máscara Combinada')
-            axes[1,1].imshow(final_mask, cmap='gray')
-            axes[1,1].set_title('Máscara Final (Contornos)')
-            axes[1,2].imshow(cv2.cvtColor(debug_img, cv2.COLOR_BGR2RGB))
-            axes[1,2].set_title(f'Contornos Negros ({len(filtered_contours)})')
+            axes[1,0].axis('off')
             
-            for ax in axes.flat:
-                ax.axis('off')
+            axes[1,1].imshow(clean_mask, cmap='gray')
+            axes[1,1].set_title('Máscara Final')
+            axes[1,1].axis('off')
+            
+            # Imagen con contornos detectados
+            result_img = image.copy()
+            cv2.drawContours(result_img, valid_contours, -1, (255, 0, 0), 2)
+            axes[1,2].imshow(cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB))
+            axes[1,2].set_title(f'Vasos Detectados ({len(valid_contours)})')
+            axes[1,2].axis('off')
+            
+            # Histograma de brillo
+            axes[1,3].hist(v_channel.ravel(), 256, [0,256], alpha=0.7, color='blue', label='Canal V')
+            axes[1,3].hist(l_channel.ravel(), 256, [0,256], alpha=0.7, color='red', label='Canal L')
+            axes[1,3].set_title('Histogramas de Brillo')
+            axes[1,3].axvline(x=80, color='blue', linestyle='--', label='Umbral V')
+            axes[1,3].axvline(x=90, color='red', linestyle='--', label='Umbral L')
+            axes[1,3].legend()
+            
             plt.tight_layout()
             plt.show()
         
-        return filtered_contours, final_mask
+        return valid_contours, clean_mask
     
-    def count_pixels_in_contours(self, image: np.ndarray, contours: List, contour_mask: np.ndarray,
-                                target_color: str = 'green') -> Dict:
+    def count_pixels_in_contours(self, contours, image_shape, debug=False):
         """
-        Cuenta píxeles de un color específico dentro de los contornos detectados
-        
-        Args:
-            image: Imagen en formato BGR
-            contours: Lista de contornos detectados
-            contour_mask: Máscara de los contornos
-            target_color: 'green' o 'black' para definir qué color contar
-        
-        Returns:
-            Diccionario con estadísticas de píxeles del color objetivo
+        Cuenta píxeles dentro de contornos con análisis detallado
+        y estadísticas mejoradas
         """
-        # Extraer ROI
-        roi = self.extract_roi(image)
+        if debug:
+            print("=== CONTEO DE PÍXELES EN CONTORNOS ===")
         
-        if len(contours) == 0:
-            return {
-                'total_target_pixels': 0,
-                'contour_area': 0,
-                'target_density': 0.0,
-                'num_contours': 0,
-                'color_analyzed': target_color
-            }
+        h, w = image_shape[:2]
+        total_image_pixels = h * w
         
-        if target_color == 'green':
-            # Convertir a HSV para mejor detección de verde
-            hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-            
-            # Definir rango de color verde en HSV
-            lower_green = np.array([40, 50, 50])
-            upper_green = np.array([80, 255, 255])
-            
-            # Crear máscara para píxeles verdes
-            color_mask_hsv = cv2.inRange(hsv, lower_green, upper_green)
-            
-            # También incluir detección en RGB/BGR
-            b, g, r = cv2.split(roi)
-            color_mask_bgr = (g > b * 1.2) & (g > r * 1.2) & (g > 70)
-            color_mask_bgr = color_mask_bgr.astype(np.uint8) * 255
-            
-            # Combinar máscaras de verde
-            combined_color_mask = cv2.bitwise_or(color_mask_hsv, color_mask_bgr)
-            
-        elif target_color == 'black':
-            # Convertir a escala de grises y HSV para detectar píxeles negros
-            gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-            hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-            
-            # Crear máscaras para píxeles negros/oscuros
-            black_mask_gray = gray <= 60
-            v_channel = hsv[:, :, 2]
-            black_mask_hsv = v_channel <= 80
-            
-            b, g, r = cv2.split(roi)
-            black_mask_rgb = (b <= 70) & (g <= 70) & (r <= 70)
-            
-            # Combinar máscaras
-            combined_color_mask = (black_mask_gray | black_mask_hsv | black_mask_rgb).astype(np.uint8) * 255
+        # Crear máscara para todos los contornos
+        combined_mask = np.zeros((h, w), dtype=np.uint8)
         
-        else:
-            raise ValueError("target_color debe ser 'green' o 'black'")
+        contour_info = []
+        total_contour_pixels = 0
         
-        # Aplicar la máscara de contornos para contar solo píxeles del color dentro de los contornos
-        target_in_contours = cv2.bitwise_and(combined_color_mask, contour_mask)
+        for i, contour in enumerate(contours):
+            # Crear máscara individual para este contorno
+            individual_mask = np.zeros((h, w), dtype=np.uint8)
+            cv2.drawContours(individual_mask, [contour], -1, 255, -1)
+            
+            # Contar píxeles en este contorno
+            pixels_in_contour = cv2.countNonZero(individual_mask)
+            total_contour_pixels += pixels_in_contour
+            
+            # Calcular estadísticas adicionales
+            x, y, w_rect, h_rect = cv2.boundingRect(contour)
+            bounding_area = w_rect * h_rect
+            fill_ratio = pixels_in_contour / bounding_area if bounding_area > 0 else 0
+            
+            # Porcentaje respecto a la imagen total
+            percentage_of_image = (pixels_in_contour / total_image_pixels) * 100
+            
+            contour_info.append({
+                'contour_id': i,
+                'pixels': pixels_in_contour,
+                'percentage_of_image': percentage_of_image,
+                'bounding_box': (x, y, w_rect, h_rect),
+                'bounding_area': bounding_area,
+                'fill_ratio': fill_ratio,
+                'area_cv2': cv2.contourArea(contour)
+            })
+            
+            # Añadir a máscara combinada
+            cv2.drawContours(combined_mask, [contour], -1, 255, -1)
         
-        # Contar píxeles
-        total_target_pixels = np.sum(target_in_contours > 0)
-        contour_area = np.sum(contour_mask > 0)
+        # Estadísticas globales
+        total_coverage_percentage = (total_contour_pixels / total_image_pixels) * 100
         
-        # Calcular densidad del color objetivo (porcentaje de píxeles del color en el área de contornos)
-        target_density = (total_target_pixels / contour_area * 100) if contour_area > 0 else 0.0
+        # Análisis de distribución de tamaños
+        pixel_counts = [info['pixels'] for info in contour_info]
         
-        return {
-            'total_target_pixels': int(total_target_pixels),
-            'contour_area': int(contour_area),
-            'target_density': float(target_density),
-            'num_contours': len(contours),
-            'color_analyzed': target_color
+        stats = {
+            'total_contours': len(contours),
+            'total_pixels_in_contours': total_contour_pixels,
+            'total_image_pixels': total_image_pixels,
+            'coverage_percentage': total_coverage_percentage,
+            'average_pixels_per_contour': np.mean(pixel_counts) if pixel_counts else 0,
+            'std_pixels_per_contour': np.std(pixel_counts) if pixel_counts else 0,
+            'min_pixels': np.min(pixel_counts) if pixel_counts else 0,
+            'max_pixels': np.max(pixel_counts) if pixel_counts else 0,
+            'median_pixels': np.median(pixel_counts) if pixel_counts else 0,
+            'contour_details': contour_info
         }
+        
+        if debug:
+            print(f"Total de contornos analizados: {len(contours)}")
+            print(f"Píxeles totales en contornos: {total_contour_pixels:,}")
+            print(f"Píxeles totales de imagen: {total_image_pixels:,}")
+            print(f"Cobertura total: {total_coverage_percentage:.2f}%")
+            print(f"Promedio píxeles por contorno: {stats['average_pixels_per_contour']:.0f}")
+            print(f"Desviación estándar: {stats['std_pixels_per_contour']:.0f}")
+            
+            # Mostrar distribución de tamaños
+            if pixel_counts:
+                fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+                
+                # Histograma de tamaños de contornos
+                axes[0].hist(pixel_counts, bins=min(20, len(pixel_counts)), alpha=0.7, edgecolor='black')
+                axes[0].set_title('Distribución de Tamaños de Contornos')
+                axes[0].set_xlabel('Píxeles por Contorno')
+                axes[0].set_ylabel('Frecuencia')
+                axes[0].grid(True, alpha=0.3)
+                
+                # Gráfico de barras de porcentajes individuales
+                percentages = [info['percentage_of_image'] for info in contour_info]
+                axes[1].bar(range(len(percentages)), percentages, alpha=0.7)
+                axes[1].set_title('Porcentaje de Imagen por Contorno')
+                axes[1].set_xlabel('ID Contorno')
+                axes[1].set_ylabel('Porcentaje de Imagen (%)')
+                axes[1].grid(True, alpha=0.3)
+                
+                # Gráfico de fill ratio
+                fill_ratios = [info['fill_ratio'] for info in contour_info]
+                axes[2].scatter(pixel_counts, fill_ratios, alpha=0.7)
+                axes[2].set_title('Relación Tamaño vs Densidad')
+                axes[2].set_xlabel('Píxeles en Contorno')
+                axes[2].set_ylabel('Fill Ratio')
+                axes[2].grid(True, alpha=0.3)
+                
+                plt.tight_layout()
+                plt.show()
+            
+            # Mostrar detalles de contornos más grandes
+            print("\n--- CONTORNOS MÁS GRANDES ---")
+            sorted_contours = sorted(contour_info, key=lambda x: x['pixels'], reverse=True)
+            for i, info in enumerate(sorted_contours[:5]):  # Top 5
+                print(f"#{i+1}: {info['pixels']:,} píxeles ({info['percentage_of_image']:.2f}%) - "
+                    f"BBox: {info['bounding_box']} - Fill: {info['fill_ratio']:.3f}")
+        
+        return stats, combined_mask
+
     
     def count_green_pixels_in_contours(self, image: np.ndarray, contours: List, contour_mask: np.ndarray,
                                      green_threshold: Tuple[int, int, int] = (40, 70, 40),
                                      sensitivity: float = 1.2) -> Dict:
         """Mantener compatibilidad - usa count_pixels_in_contours"""
-        return self.count_pixels_in_contours(image, contours, contour_mask, 'green')
+        return self.count_pixels_in_contours(image.shape, contours, contour_mask, 'green')
     
     def count_green_pixels(self, image: np.ndarray, 
                           green_threshold: Tuple[int, int, int] = (40, 70, 40),
@@ -488,21 +598,17 @@ class GreenPixelROITrainer:
                 
                 if detect_plants:
                     # Primero intentar detectar contornos verdes (lechuga)
-                    green_contours, green_contour_mask = self.detect_plant_contours(
+                    green_contours, green_contour_mask = self.detect_plant_contour(
                         image, debug=(i == 0)  # Debug solo para la primera imagen
                     )
                     
                     if len(green_contours) > 0:
                         # Hay contornos verdes - analizar píxeles verdes en esos contornos
-                        contour_stats = self.count_pixels_in_contours(
-                            image, green_contours, green_contour_mask, 'green'
-                        )
+                        contour_stats = self.count_pixels_in_contours(image, green_contours, green_contour_mask, 'green')
                         green_count = contour_stats['total_target_pixels']
                         
                         # También contar píxeles negros en los mismos contornos para completar
-                        black_stats = self.count_pixels_in_contours(
-                            image, green_contours, green_contour_mask, 'black'
-                        )
+                        black_stats = self.count_pixels_in_contours(image, green_contours, green_contour_mask, 'black')
                         black_count = black_stats['total_target_pixels']
                         
                         # Guardar estadísticas
@@ -524,15 +630,11 @@ class GreenPixelROITrainer:
                         
                         if len(black_contours) > 0:
                             # Hay contornos negros - analizar píxeles negros en esos contornos
-                            black_stats = self.count_pixels_in_contours(
-                                image, black_contours, black_contour_mask, 'black'
-                            )
+                            black_stats = self.count_pixels_in_contours(image, black_contours, black_contour_mask, 'black')
                             black_count = black_stats['total_target_pixels']
                             
                             # Contar píxeles verdes en los contornos negros (debería ser muy pocos)
-                            green_stats = self.count_pixels_in_contours(
-                                image, black_contours, black_contour_mask, 'green'
-                            )
+                            green_stats = self.count_pixels_in_contours(image, black_contours, black_contour_mask, 'green')
                             green_count = green_stats['total_target_pixels']
                             
                             # Guardar estadísticas
@@ -683,6 +785,69 @@ class GreenPixelROITrainer:
         print(f"  📊 RELACIÓN N/V - Media: {mean_ratio:.2f}, Desv.Std: {std_ratio:.2f}")
         
         return stats
+    def analyze_lettuce_image(self, image_path, debug=True):
+        """
+        Función principal que integra todas las detecciones mejoradas
+        """
+        print("=== ANÁLISIS COMPLETO DE IMAGEN DE LECHUGAS ===")
+        
+        # Cargar imagen
+        image = cv2.imread(image_path)
+        if image is None:
+            raise ValueError(f"No se pudo cargar la imagen: {image_path}")
+        
+        print(f"Imagen cargada: {image.shape[1]}x{image.shape[0]} píxeles")
+        
+        # 1. Detectar plantas (lechugas)
+        print("\n1. Detectando plantas...")
+        plant_contours, plant_mask = self.detect_plant_contour(image, debug=debug)
+        plant_stats, _ = self.count_pixels_in_contours(plant_contours, image.shape, debug=debug)
+        
+        # 2. Detectar vasos
+        print("\n2. Detectando vasos...")
+        vase_contours, vase_mask = self.detect_black_contours(image, debug=debug)
+        vase_stats, _ = self.count_pixels_in_contours(vase_contours, image.shape, debug=debug)
+        
+        # 3. Imagen final con ambas detecciones
+        if debug:
+            result_image = image.copy()
+            cv2.drawContours(result_image, plant_contours, -1, (0, 255, 0), 2)  # Verde para plantas
+            cv2.drawContours(result_image, vase_contours, -1, (255, 0, 0), 2)   # Azul para vasos
+            
+            plt.figure(figsize=(12, 8))
+            plt.imshow(cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB))
+            plt.title(f'Detección Final: {len(plant_contours)} Plantas, {len(vase_contours)} Vasos')
+            plt.axis('off')
+            plt.show()
+        
+        # Resumen final
+        summary = {
+            'plants': {
+                'count': len(plant_contours),
+                'coverage_percentage': plant_stats['coverage_percentage'],
+                'total_pixels': plant_stats['total_pixels_in_contours']
+            },
+            'vases': {
+                'count': len(vase_contours),
+                'coverage_percentage': vase_stats['coverage_percentage'],
+                'total_pixels': vase_stats['total_pixels_in_contours']
+            },
+            'image_info': {
+                'width': image.shape[1],
+                'height': image.shape[0],
+                'total_pixels': image.shape[0] * image.shape[1]
+            }
+        }
+        
+        if debug:
+            print("\n=== RESUMEN FINAL ===")
+            print(f"Plantas detectadas: {summary['plants']['count']}")
+            print(f"Cobertura de plantas: {summary['plants']['coverage_percentage']:.2f}%")
+            print(f"Vasos detectados: {summary['vases']['count']}")
+            print(f"Cobertura de vasos: {summary['vases']['coverage_percentage']:.2f}%")
+        
+        return summary, plant_contours, vase_contours, plant_mask, vase_mask
+
     
     def train_model(self, folder_paths: Dict[str, str], use_contour_detection: bool = True):
         """
