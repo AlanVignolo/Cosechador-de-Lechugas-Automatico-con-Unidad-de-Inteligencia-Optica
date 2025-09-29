@@ -113,13 +113,31 @@ def scan_vertical_manual(robot):
         input_thread = threading.Thread(target=input_loop, daemon=True)
         input_thread.start()
         
-        # Movimiento descendente largo hacia límite inferior
-        result = robot.cmd.move_xy(0, 2000)  # Movimiento hacia abajo (valores positivos)
+        # Obtener dimensiones del workspace para calcular distancia de escaneo
+        dims = robot.get_workspace_dimensions()
+        if dims.get('calibrated'):
+            workspace_height = float(dims.get('height_mm', 0.0))
+            print(f"Usando workspace calibrado: altura={workspace_height:.1f}mm")
+        else:
+            workspace_height = float(RobotConfig.MAX_Y)
+            print(f"Usando altura por defecto: {workspace_height:.1f}mm")
         
-        # Esperar límite inferior o terminación manual
-        limit_message = None
+        # Calcular distancia de escaneo con margen de seguridad (no tocar límite inferior)
+        safety_margin = 10.0  # mm de margen antes del límite
+        scan_distance = workspace_height - safety_margin
+        
+        print(f"Distancia de escaneo: {scan_distance:.1f}mm (con {safety_margin}mm de margen)")
+        
+        # Movimiento descendente hasta cerca del límite inferior (sin tocarlo)
+        result = robot.cmd.move_xy(0, scan_distance)
+        
+        # Esperar completado del movimiento o terminación manual
+        move_completed = False
         if is_scanning[0]:  # Solo si no se terminó manualmente
-            limit_message = robot.cmd.uart.wait_for_limit_specific('V_DOWN', timeout=120.0)
+            try:
+                move_completed = robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=120.0)
+            except Exception:
+                move_completed = False
         
         # Detener hilo de input
         is_scanning[0] = False
@@ -127,13 +145,10 @@ def scan_vertical_manual(robot):
         # Dar tiempo al thread de input para terminar
         time.sleep(0.5)
         
-        if limit_message and ("LIMIT_V_DOWN_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "V_DOWN" in limit_message)):
-            print("Límite inferior alcanzado")
-        elif not is_scanning[0]:
-            print("Escaneo terminado por el usuario")
+        if move_completed:
+            print(f"Escaneo vertical completado: {scan_distance:.1f}mm recorridos")
         else:
-            print("Error: No se alcanzó el límite inferior")
-            return False
+            print("Escaneo terminado (movimiento interrumpido o terminación manual)")
         
         # Correlacionar flags con snapshots
         correlate_flags_with_snapshots_vertical(detection_state)
