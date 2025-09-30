@@ -20,7 +20,7 @@ void motion_profile_init(void) {
 }
 
 uint32_t motion_profile_get_millis(void) {
-	return tick_counter * 2;  // 500Hz = 2ms por tick
+	return tick_counter * 5;  // 200Hz = 5ms por tick
 }
 
 void motion_profile_setup(motion_profile_t* profile,
@@ -155,22 +155,9 @@ uint16_t motion_profile_update(motion_profile_t* profile, int32_t current_pos) {
 		target_speed = profile->target_speed;
 	}
 	
-	// Aplicar cambio gradual
-	int16_t diff = (int16_t)target_speed - (int16_t)profile->current_speed;
-
-	if (diff != 0) {
-		uint16_t max_change = profile->acceleration / 500;
-
-		if (max_change < 1) max_change = 1;
-
-		if (diff > 0 && diff > max_change) {
-			profile->current_speed += max_change;
-		} else if (diff < 0 && -diff > max_change) {
-			profile->current_speed -= max_change;
-		} else {
-			profile->current_speed = target_speed;
-		}
-	}
+	// CAMBIO SUAVE: Aplicar directamente el target_speed calculado por la fórmula cinemática
+	// La protección contra cambios bruscos está en stepper_update_profiles
+	profile->current_speed = target_speed;
 	
 	if (profile->current_speed > profile->max_speed) {
 		profile->current_speed = profile->max_speed;

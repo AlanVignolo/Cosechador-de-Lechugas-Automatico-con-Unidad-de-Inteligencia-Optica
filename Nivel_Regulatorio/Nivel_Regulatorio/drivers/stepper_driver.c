@@ -22,6 +22,11 @@ stepper_axis_t horizontal_axis = {0};
 stepper_axis_t vertical_axis = {0};
 static volatile bool update_speeds_flag = false;
 
+// Flags para procesamiento diferido (fuera de ISR)
+static volatile bool movement_completed_flag = false;
+static volatile bool h_axis_completed = false;
+static volatile bool v_axis_completed = false;
+
 // Variables para alternar HIGH/LOW en interrupciones
 static volatile bool h_step_state = false;  // false=LOW, true=HIGH
 static volatile bool v_step_state = false;  // false=LOW, true=HIGH
@@ -30,13 +35,18 @@ static int32_t abs32(int32_t x) {
 	return (x < 0) ? -x : x;
 }
 
-// Timer4 para actualizaci�n peri�dica de velocidades (200Hz)
+// Timer4 para actualización periódica de velocidades (200Hz)
 ISR(TIMER4_COMPA_vect) {
 	update_speeds_flag = true;
 	motion_profile_tick();  // Incrementar contador para motion profile
+	
+	// Verificar si ambos ejes completaron (procesamiento ligero)
+	if (h_axis_completed && v_axis_completed && !movement_completed_flag) {
+		movement_completed_flag = true;
+	}
 }
 
-// Funci�n para calcular TOP value del timer basado en velocidad deseada
+// Función para calcular TOP value del timer basado en velocidad deseada
 // IMPORTANTE: Calculamos para DOBLE frecuencia (para alternar HIGH/LOW)
 static uint16_t calculate_timer_top(uint16_t steps_per_second) {
 	if (steps_per_second == 0) return 0xFFFF;
@@ -60,25 +70,34 @@ static void update_horizontal_speed(uint16_t speed) {
 		return;
 	}
 	
-	// CAMBIO: No forzar velocidad m�nima
-	// if (speed < MIN_SPEED) speed = MIN_SPEED;
-	
 	uint16_t top_value = calculate_timer_top(speed);
 	
-	// Actualizar OCR1A sin detener el timer (cambio suave)
-	OCR1A = top_value;
-	OCR1B = top_value;
-	
-	// Si el timer no est� corriendo, iniciarlo
+	// Si el timer no está corriendo, iniciarlo
 	if ((TCCR1B & 0x07) == 0) {
+		OCR1A = top_value;
+		OCR1B = top_value;
 		TCCR1A = 0;
 		TCCR1B = (1 << WGM12) | (1 << CS11); // Modo CTC, prescaler 8
 		TIMSK1 |= (1 << OCIE1A);
 		h_step_state = false;  // Empezar con LOW
+	} else {
+		// Timer corriendo: Actualizar de forma SEGURA
+		// Deshabilitar interrupciones temporalmente para cambio atómico
+		uint8_t sreg = SREG;
+		cli();
+		
+		// Si el contador está cerca del compare, esperar al siguiente ciclo
+		if (TCNT1 < (OCR1A - 20) || TCNT1 > (OCR1A + 20)) {
+			OCR1A = top_value;
+			OCR1B = top_value;
+		}
+		// Si no, mantener el valor actual y se actualizará en el siguiente ciclo
+		
+		SREG = sreg;
 	}
 }
 
-// Funci�n para actualizar velocidad del Timer3 (motor vertical)
+// Función para actualizar velocidad del Timer3 (motor vertical)
 static void update_vertical_speed(uint16_t speed) {
 	if (speed == 0) {
 		// Parar Timer3
@@ -90,20 +109,28 @@ static void update_vertical_speed(uint16_t speed) {
 		return;
 	}
 	
-	// CAMBIO: No forzar velocidad m�nima
-	// if (speed < MIN_SPEED) speed = MIN_SPEED;
-	
 	uint16_t top_value = calculate_timer_top(speed);
 	
-	// Actualizar OCR3A sin detener el timer
-	OCR3A = top_value;
-	
-	// Si el timer no est� corriendo, iniciarlo
+	// Si el timer no está corriendo, iniciarlo
 	if ((TCCR3B & 0x07) == 0) {
+		OCR3A = top_value;
 		TCCR3A = 0;
 		TCCR3B = (1 << WGM32) | (1 << CS31); // Modo CTC, prescaler 8
 		TIMSK3 |= (1 << OCIE3A);
 		v_step_state = false;  // Empezar con LOW
+	} else {
+		// Timer corriendo: Actualizar de forma SEGURA
+		// Deshabilitar interrupciones temporalmente para cambio atómico
+		uint8_t sreg = SREG;
+		cli();
+		
+		// Si el contador está cerca del compare, esperar al siguiente ciclo
+		if (TCNT3 < (OCR3A - 20) || TCNT3 > (OCR3A + 20)) {
+			OCR3A = top_value;
+		}
+		// Si no, mantener el valor actual y se actualizará en el siguiente ciclo
+		
+		SREG = sreg;
 	}
 }
 
@@ -125,47 +152,13 @@ ISR(TIMER1_COMPA_vect) {
 			calibration_step_counter++;
 		}
 		
-		// DEBUG: Verificar distancia al objetivo
+		// OPTIMIZADO: Solo verificar si llegamos, marcar flag para procesamiento diferido
 		int32_t h_distance_to_target = abs32(horizontal_axis.current_position - horizontal_axis.target_position);
 		if (h_distance_to_target <= 1) {
 			update_horizontal_speed(0);
 			horizontal_axis.state = STEPPER_IDLE;
 			motion_profile_reset(&horizontal_axis.profile);
-			
-			
-			if (vertical_axis.state == STEPPER_IDLE) {
-				// Calcular distancia en mm desde contadores relativos con mayor precisión
-				int32_t h_relative_mm = (relative_h_counter >= 0) ? 
-					(relative_h_counter + STEPS_PER_MM_H/2) / STEPS_PER_MM_H : 
-					(relative_h_counter - STEPS_PER_MM_H/2) / STEPS_PER_MM_H;
-				int32_t v_relative_mm = (relative_v_counter >= 0) ? 
-					(relative_v_counter + STEPS_PER_MM_V/2) / STEPS_PER_MM_V : 
-					(relative_v_counter - STEPS_PER_MM_V/2) / STEPS_PER_MM_V;
-				
-				char msg[128];
-				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
-				horizontal_axis.current_position, vertical_axis.current_position,
-				relative_h_counter, relative_v_counter, h_relative_mm, v_relative_mm);
-				uart_send_response(msg);
-				
-				// Enviar snapshots si los hay
-				if (snapshot_count > 0) {
-					char snapshot_msg[512];
-					int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
-					
-					for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
-						offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
-							"S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
-					}
-					uart_send_response(snapshot_msg);
-				}
-				
-				// Resetear contadores relativos después de reportar
-				relative_h_counter = 0;
-				relative_v_counter = 0;
-				snapshot_count = 0;
-			}
-			stepper_stop_horizontal();
+			h_axis_completed = true;
 		}
 		} else {
 		PORTB |= (1 << 5) | (1 << 6);
@@ -190,47 +183,13 @@ ISR(TIMER3_COMPA_vect) {
 			calibration_step_counter++;
 		}
 		
-		// DEBUG: Verificar distancia al objetivo
+		// OPTIMIZADO: Solo verificar si llegamos, marcar flag para procesamiento diferido
 		int32_t v_distance_to_target = abs32(vertical_axis.current_position - vertical_axis.target_position);
 		if (v_distance_to_target <= 1) {
 			update_vertical_speed(0);
 			vertical_axis.state = STEPPER_IDLE;
 			motion_profile_reset(&vertical_axis.profile);
-			
-			
-			if (horizontal_axis.state == STEPPER_IDLE) {
-				// Calcular distancia en mm desde contadores relativos con mayor precisión
-				int32_t h_relative_mm = (relative_h_counter >= 0) ? 
-					(relative_h_counter + STEPS_PER_MM_H/2) / STEPS_PER_MM_H : 
-					(relative_h_counter - STEPS_PER_MM_H/2) / STEPS_PER_MM_H;
-				int32_t v_relative_mm = (relative_v_counter >= 0) ? 
-					(relative_v_counter + STEPS_PER_MM_V/2) / STEPS_PER_MM_V : 
-					(relative_v_counter - STEPS_PER_MM_V/2) / STEPS_PER_MM_V;
-				
-				char msg[128];
-				snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
-				horizontal_axis.current_position, vertical_axis.current_position,
-				relative_h_counter, relative_v_counter, h_relative_mm, v_relative_mm);
-				uart_send_response(msg);
-				
-				// Enviar snapshots si los hay
-				if (snapshot_count > 0) {
-					char snapshot_msg[256];
-					int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
-					
-					for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
-						offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
-							"S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
-					}
-					uart_send_response(snapshot_msg);
-				}
-				
-				// Resetear contadores relativos después de reportar
-				relative_h_counter = 0;
-				relative_v_counter = 0;
-				snapshot_count = 0;
-			}
-			stepper_stop_vertical();
+			v_axis_completed = true;
 		}
 		} else {
 		PORTE |= (1 << 3);
@@ -263,10 +222,10 @@ void stepper_init(void) {
 	h_step_state = false;
 	v_step_state = false;
 	
-	// Inicializar m�dulo de motion profile
+	// Inicializar módulo de motion profile
 	motion_profile_init();
 	
-	// Inicializar m�dulo de fines de carrera
+	// Inicializar módulo de fines de carrera
 	limit_switch_init();
 	
 	// Inicializar estados por defecto
@@ -280,11 +239,11 @@ void stepper_init(void) {
 	vertical_axis.current_speed = 0;
 	vertical_axis.state = STEPPER_IDLE;
 	
-	// Configurar Timer4 para actualizaci�n de velocidades (200Hz)
+	// Configurar Timer4 para actualización de velocidades (200Hz)
 	// Timer4 es de 16 bits en ATmega2560
     TCCR4A = 0;
     TCCR4B = (1 << WGM42) | (1 << CS42); // CTC mode, prescaler 256
-    OCR4A = 124; // 16MHz / 256 / 125 = 500Hz (era 311 para 200Hz)
+    OCR4A = 311; // 16MHz / 256 / 312 = ~200Hz (reduce sobrecarga, suficiente para control suave)
     TIMSK4 = (1 << OCIE4A);
 
 	// Habilitar motores por defecto
@@ -393,6 +352,11 @@ void stepper_move_absolute(int32_t h_pos, int32_t v_pos) {
 			}
 		}
 	}
+	
+	// Resetear flags de completado
+	h_axis_completed = (h_distance == 0);
+	v_axis_completed = (v_distance == 0);
+	movement_completed_flag = false;
 	
 	bool movement_started = false;
 	
@@ -507,32 +471,114 @@ void stepper_set_position(int32_t h_pos, int32_t v_pos) {
 	vertical_axis.current_position = v_pos;
 }
 
-// Funci�n para actualizar perfiles de velocidad
+// Función para procesar completado de movimiento (FUERA DE ISR)
+static void process_movement_completed(void) {
+	if (!movement_completed_flag) return;
+	movement_completed_flag = false;
+	
+	// Calcular distancia en mm desde contadores relativos con mayor precisión
+	int32_t h_relative_mm = (relative_h_counter >= 0) ? 
+		(relative_h_counter + STEPS_PER_MM_H/2) / STEPS_PER_MM_H : 
+		(relative_h_counter - STEPS_PER_MM_H/2) / STEPS_PER_MM_H;
+	int32_t v_relative_mm = (relative_v_counter >= 0) ? 
+		(relative_v_counter + STEPS_PER_MM_V/2) / STEPS_PER_MM_V : 
+		(relative_v_counter - STEPS_PER_MM_V/2) / STEPS_PER_MM_V;
+	
+	char msg[128];
+	snprintf(msg, sizeof(msg), "STEPPER_MOVE_COMPLETED:%ld,%ld,REL:%ld,%ld,MM:%ld,%ld",
+		horizontal_axis.current_position, vertical_axis.current_position,
+		relative_h_counter, relative_v_counter, h_relative_mm, v_relative_mm);
+	uart_send_response(msg);
+	
+	// Enviar snapshots si los hay
+	if (snapshot_count > 0) {
+		char snapshot_msg[512];
+		int offset = snprintf(snapshot_msg, sizeof(snapshot_msg), "MOVEMENT_SNAPSHOTS:");
+		
+		for (uint8_t i = 0; i < snapshot_count && i < MAX_SNAPSHOTS; i++) {
+			offset += snprintf(snapshot_msg + offset, sizeof(snapshot_msg) - offset,
+				"S%d=%ld,%ld;", i+1, snapshots[i].h_mm, snapshots[i].v_mm);
+		}
+		uart_send_response(snapshot_msg);
+	}
+	
+	// Resetear contadores relativos después de reportar
+	relative_h_counter = 0;
+	relative_v_counter = 0;
+	snapshot_count = 0;
+	
+	// Resetear flags
+	h_axis_completed = false;
+	v_axis_completed = false;
+}
+
+// Función para actualizar perfiles de velocidad
 void stepper_update_profiles(void) {
+	// PRIMERO: Procesar completado de movimiento (fuera de ISR)
+	process_movement_completed();
+	
 	if (!update_speeds_flag) return;
 	update_speeds_flag = false;
 	
 	limit_switch_update();
 	
-	// Actualizar perfil horizontal si est� en movimiento
+	// Actualizar perfil horizontal si está en movimiento
 	if (motion_profile_is_active(&horizontal_axis.profile)) {
 		uint16_t new_speed = motion_profile_update(&horizontal_axis.profile,
 		horizontal_axis.current_position);
 		
-		// CAMBIO: Solo actualizar si hay cambio significativo o si estamos arrancando
-		if (new_speed != horizontal_axis.current_speed || horizontal_axis.current_speed == 0) {
+		int16_t speed_diff = (int16_t)new_speed - (int16_t)horizontal_axis.current_speed;
+		
+		// Lógica adaptativa: umbral más permisivo durante desaceleración
+		bool should_update = false;
+		
+		if (horizontal_axis.current_speed == 0) {
+			// Siempre actualizar al arrancar
+			should_update = true;
+		} else if (speed_diff < 0) {
+			// DESACELERANDO: Actualizar si cambio > 30 pasos/seg o > 1%
+			int16_t decel_threshold = horizontal_axis.current_speed / 100;
+			if (decel_threshold < 30) decel_threshold = 30;
+			if (-speed_diff > decel_threshold) should_update = true;
+		} else {
+			// ACELERANDO: Umbral normal 2% o 50 pasos/seg
+			int16_t accel_threshold = horizontal_axis.current_speed / 50;
+			if (accel_threshold < 50) accel_threshold = 50;
+			if (speed_diff > accel_threshold) should_update = true;
+		}
+		
+		if (should_update) {
 			horizontal_axis.current_speed = new_speed;
 			update_horizontal_speed(new_speed);
 		}
 	}
 	
-	// Actualizar perfil vertical si est� en movimiento
+	// Actualizar perfil vertical si está en movimiento
 	if (motion_profile_is_active(&vertical_axis.profile)) {
 		uint16_t new_speed = motion_profile_update(&vertical_axis.profile,
 		vertical_axis.current_position);
 		
-		// CAMBIO: Solo actualizar si hay cambio significativo o si estamos arrancando
-		if (new_speed != vertical_axis.current_speed || vertical_axis.current_speed == 0) {
+		int16_t speed_diff = (int16_t)new_speed - (int16_t)vertical_axis.current_speed;
+		
+		// Lógica adaptativa: umbral más permisivo durante desaceleración
+		bool should_update = false;
+		
+		if (vertical_axis.current_speed == 0) {
+			// Siempre actualizar al arrancar
+			should_update = true;
+		} else if (speed_diff < 0) {
+			// DESACELERANDO: Actualizar si cambio > 30 pasos/seg o > 1%
+			int16_t decel_threshold = vertical_axis.current_speed / 100;
+			if (decel_threshold < 30) decel_threshold = 30;
+			if (-speed_diff > decel_threshold) should_update = true;
+		} else {
+			// ACELERANDO: Umbral normal 2% o 50 pasos/seg
+			int16_t accel_threshold = vertical_axis.current_speed / 50;
+			if (accel_threshold < 50) accel_threshold = 50;
+			if (speed_diff > accel_threshold) should_update = true;
+		}
+		
+		if (should_update) {
 			vertical_axis.current_speed = new_speed;
 			update_vertical_speed(new_speed);
 		}

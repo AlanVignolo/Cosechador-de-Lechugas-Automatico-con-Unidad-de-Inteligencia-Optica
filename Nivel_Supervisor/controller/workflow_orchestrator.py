@@ -1190,7 +1190,6 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
                 robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
             except Exception:
                 pass
-            time.sleep(0.1)
 
             # Cambiar brazo a 'movimiento' y esperar a que quede quieto
             res_arm_pp = robot.arm.change_state('movimiento')
@@ -1239,8 +1238,8 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
         first_tube = True
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
-            dx = 0.0
-            # Volver a X≈0 usando posición real de firmware, independientemente del switch
+            
+            # Obtener posición X actual desde firmware SIEMPRE (para cálculo correcto de dx)
             try:
                 fw = robot.cmd.get_current_position_mm()
                 resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
@@ -1255,13 +1254,19 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
                     curr_x_fw = float(robot.get_status()['position']['x'])
             except Exception:
                 curr_x_fw = float(robot.get_status()['position']['x'])
-            if not first_tube:
-                dx = -curr_x_fw
+            
+            # Calcular delta X: siempre volver a X=0 excepto en el primer tubo
+            if first_tube:
+                dx = 0.0  # Primer tubo: ya estamos en X≈0 después del escaneo vertical
+            else:
+                dx = -curr_x_fw  # Tubos siguientes: volver desde posición actual a X=0
+            
             dy = y_target - y_curr
 
             print(f"  -> Tubo {tubo_id}: mover a (X=0.0, Y={y_target:.1f}) con ΔX={dx:.1f}mm, ΔY={dy:.1f}mm")
             if dx != 0.0 and dy != 0.0:
                 print("     Movimiento diagonal entre tubos (retorno a X≈0 + ajuste Y)")
+            
             move_res = robot.cmd.move_xy(dx, dy)
             if not move_res.get('success'):
                 print(f"Error moviendo a tubo {tubo_id}: {move_res}")
@@ -1270,13 +1275,7 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
                 robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
             except Exception:
                 pass
-            # Fallback por tiempo
-            try:
-                v_mm_s = max(1.0, float(RobotConfig.NORMAL_SPEED_V) / float(RobotConfig.STEPS_PER_MM_V))
-                est_t = abs(dy) / v_mm_s + 0.5
-                time.sleep(min(est_t, 10.0))
-            except Exception:
-                time.sleep(1.0)
+            
             y_curr = y_target
 
             try:
@@ -1287,7 +1286,6 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
             if not h_ok:
                 print(f"Escaneo horizontal con errores en tubo {tubo_id}")
             first_tube = False
-            time.sleep(0.2)
 
         # Paso 4: Volver a (0,0)
         if return_home:
