@@ -89,7 +89,6 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         
         # Limpiar ventanas previas que puedan estar abiertas
         cv2.destroyAllWindows()
-        time.sleep(0.2)
         
         # Adquirir y preparar cámara (uso compartido administrado por CameraManager)
         # Adquirir cámara

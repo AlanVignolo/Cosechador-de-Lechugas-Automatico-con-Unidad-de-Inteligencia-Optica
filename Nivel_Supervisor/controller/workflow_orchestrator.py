@@ -1234,7 +1234,24 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
             width_mm = float(RobotConfig.MAX_X)
             height_mm = float(RobotConfig.MAX_Y)
         safety = 10.0
-        y_curr = height_mm
+        
+        # Obtener posición Y actual REAL desde firmware (después del escaneo vertical)
+        try:
+            fw_init = robot.cmd.get_current_position_mm()
+            resp_init = fw_init.get('response', '') if isinstance(fw_init, dict) else str(fw_init)
+            if 'MM:' in resp_init:
+                mm_part_init = resp_init.split('MM:')[1]
+                parts_init = mm_part_init.replace('\n', ' ').split(',')
+                if len(parts_init) >= 2:
+                    y_curr = float(parts_init[1].strip())
+                    print(f"[inicio_completo_hard] Posición Y inicial desde firmware: {y_curr:.1f}mm")
+                else:
+                    y_curr = height_mm
+            else:
+                y_curr = height_mm
+        except Exception:
+            y_curr = height_mm
+        
         first_tube = True
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
