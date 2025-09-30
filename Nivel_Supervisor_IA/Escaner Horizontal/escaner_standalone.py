@@ -337,13 +337,12 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         print(f"[{scan_id}] Sincronizando sistema de detección...")
         time.sleep(0.25)
         
-        # CRÍTICO: Limpiar estado UART para evitar interferencia de movimientos previos
+        # Limpiar solo snapshots previos (NO reset completo que rompe tracking)
         try:
             robot.cmd.uart.clear_last_snapshots()
-            robot.cmd.uart.reset_scanning_state()
-            print(f"[{scan_id}] Estado UART limpiado")
+            print(f"[{scan_id}] Snapshots limpiados")
         except Exception as e:
-            print(f"[{scan_id}] Advertencia: No se pudo limpiar UART: {e}")
+            print(f"[{scan_id}] Advertencia: No se pudo limpiar snapshots: {e}")
 
         # Movimiento hasta el borde derecho seguro (x_edge = width_mm - safety)
         dims = robot.get_workspace_dimensions()
