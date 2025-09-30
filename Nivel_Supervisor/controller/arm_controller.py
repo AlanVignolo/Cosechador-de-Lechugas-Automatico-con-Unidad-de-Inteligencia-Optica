@@ -124,6 +124,13 @@ class ArmController:
         self.logger.debug(f"Stepper completado: {message}")
     
     def get_current_state(self) -> Dict:
+        # Auto-corrección: si el estado es unknown pero la posición coincide con un estado conocido
+        if self.current_state == "unknown":
+            detected = self._determine_state_from_position(self.current_position[0], self.current_position[1])
+            if detected != "unknown":
+                self.logger.info(f"Auto-corrección: estado detectado como '{detected}' desde posición {self.current_position}")
+                self.current_state = detected
+
         return {
             "state": self.current_state,
             "position": self.current_position,
@@ -135,20 +142,54 @@ class ArmController:
         }
     
     def is_in_safe_position(self) -> bool:
-        if self.current_state == "unknown":
-            return False
-            
         # Posiciones seguras para movimientos: "movimiento" y "mover_lechuga"
         safe_states = ["movimiento", "mover_lechuga"]
-        return self.current_state in safe_states
+
+        # Verificar primero por estado conocido
+        if self.current_state in safe_states:
+            return True
+
+        # Si el estado es unknown, verificar por posición física
+        if self.current_state == "unknown":
+            servo1, servo2 = self.current_position
+            tolerance = 10
+
+            for safe_state in safe_states:
+                target_config = ARM_STATES[safe_state]
+                position_matches = (
+                    abs(servo1 - target_config["servo1"]) <= tolerance and
+                    abs(servo2 - target_config["servo2"]) <= tolerance
+                )
+                if position_matches:
+                    # Auto-corregir el estado
+                    self.logger.info(f"Auto-corrección: brazo en estado seguro '{safe_state}' {self.current_position}")
+                    self.current_state = safe_state
+                    return True
+
+        return False
     
     def is_in_movement_position(self) -> bool:
         """Verifica si el brazo está específicamente en posición 'movimiento' (servo1=10°, servo2=10°)"""
+        # Verificar primero por estado conocido
+        if self.current_state == "movimiento":
+            return True
+
+        # Si el estado es unknown, verificar por posición física
         if self.current_state == "unknown":
-            return False
-        
-        # Solo aceptar la posición exacta de movimiento para homing
-        return self.current_state == "movimiento"
+            servo1, servo2 = self.current_position
+            target_config = ARM_STATES["movimiento"]
+            tolerance = 10
+            position_matches = (
+                abs(servo1 - target_config["servo1"]) <= tolerance and
+                abs(servo2 - target_config["servo2"]) <= tolerance
+            )
+            if position_matches:
+                # Auto-corregir el estado
+                self.logger.info(f"Auto-corrección: brazo en posición 'movimiento' {self.current_position}")
+                self.current_state = "movimiento"
+                return True
+
+        return False
     
     def ensure_safe_position(self) -> Dict:
         if self.is_in_safe_position():
@@ -304,29 +345,35 @@ class ArmController:
     
     def _continue_trajectory(self):
         self.current_step_index += 1
-        
+
         # Ejecutar siguiente paso en un hilo separado para no bloquear callbacks
         def execute_next():
+            import time
+            time.sleep(0.05)  # Pequeño delay para evitar race conditions
             self._execute_current_step()
-        
+
         threading.Thread(target=execute_next, daemon=True).start()
     
     def _complete_trajectory(self) -> Dict:
-        self.is_executing_trajectory = False
-        
-        if self.target_state:
-            self.current_state = self.target_state
-            target_config = ARM_STATES[self.target_state]
+        # Guardar target_state antes de limpiarlo
+        final_state = self.target_state
+
+        # Actualizar estado ANTES de limpiar flags
+        if final_state:
+            target_config = ARM_STATES[final_state]
             self.current_position = (target_config["servo1"], target_config["servo2"])
+            self.current_state = final_state
             if target_config["gripper"] != "any":
                 self.gripper_state = target_config["gripper"]
-            
-            self.logger.info(f"Estado cambiado a: {self.target_state}")
-        
+
+            self.logger.info(f"Estado actualizado a: {final_state} pos={self.current_position}")
+
+        # Limpiar flags de ejecución DESPUÉS de actualizar estado
+        self.is_executing_trajectory = False
         self.current_trajectory = None
         self.current_step_index = 0
         self.target_state = None
-        
+
         self.logger.info("Trayectoria completada exitosamente")
         return {"success": True, "message": "Trayectoria completada"}
     
