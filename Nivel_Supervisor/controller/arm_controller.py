@@ -123,7 +123,11 @@ class ArmController:
     def _on_stepper_completed(self, message: str):
         self.logger.debug(f"Stepper completado: {message}")
     
-    def get_current_state(self) -> Dict:
+    def get_current_state(self, force_refresh: bool = False) -> Dict:
+        # Opcionalmente redetectar desde hardware
+        if force_refresh:
+            self._detect_initial_state()
+
         # Auto-corrección: si el estado es unknown pero la posición coincide con un estado conocido
         if self.current_state == "unknown":
             detected = self._determine_state_from_position(self.current_position[0], self.current_position[1])
@@ -152,7 +156,7 @@ class ArmController:
         # Si el estado es unknown, verificar por posición física
         if self.current_state == "unknown":
             servo1, servo2 = self.current_position
-            tolerance = 10
+            tolerance = 5  # Consistente con _determine_state_from_position
 
             for safe_state in safe_states:
                 target_config = ARM_STATES[safe_state]
@@ -178,7 +182,7 @@ class ArmController:
         if self.current_state == "unknown":
             servo1, servo2 = self.current_position
             target_config = ARM_STATES["movimiento"]
-            tolerance = 10
+            tolerance = 5  # Consistente con _determine_state_from_position
             position_matches = (
                 abs(servo1 - target_config["servo1"]) <= tolerance and
                 abs(servo2 - target_config["servo2"]) <= tolerance
@@ -466,14 +470,14 @@ class ArmController:
             self.current_state = "unknown"
 
     def _determine_state_from_position(self, servo1: int, servo2: int) -> str:
-        tolerance = 10
-        
+        tolerance = 5  # Reducida de 10 a 5 para evitar falsos positivos
+
         for state_name, state_config in ARM_STATES.items():
             target_servo1 = state_config["servo1"]
             target_servo2 = state_config["servo2"]
-            
-            if (abs(servo1 - target_servo1) <= tolerance and 
+
+            if (abs(servo1 - target_servo1) <= tolerance and
                 abs(servo2 - target_servo2) <= tolerance):
                 return state_name
-        
+
         return "unknown"
