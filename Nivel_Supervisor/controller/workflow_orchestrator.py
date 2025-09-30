@@ -720,25 +720,22 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             # Ordenar por id natural
             cintas_sorted = sorted(cintas, key=lambda c: c.get('id', 0))
 
-            # PASO 2: Ir a la primera cinta del tubo actual
-            if cintas_sorted:
-                primera_cinta = cintas_sorted[0]
-                x_primera = float(primera_cinta.get('x_mm', 0.0))
-                print(f"  -> Moviendo a primera cinta del tubo: X={x_primera:.1f}mm, Y={y_tubo:.1f}mm")
-                # El brazo ya está en 'mover_lechuga', no necesita espera adicional
-                if not move_abs(x_primera, y_tubo):
-                    return False
+            # PASO 2 y 3: Iterar por todas las cintas del tubo
+            # Flag para saber si debemos movernos (True en primera iteración o si saltamos la anterior)
+            need_move = True
 
-            # PASO 3: Iterar por todas las cintas del tubo
             for idx, cinta in enumerate(cintas_sorted):
                 x_cinta = float(cinta.get('x_mm', 0.0))
                 print(f"\n  -> Cinta #{cinta.get('id','?')}: X={x_cinta:.1f}mm")
 
-                # Mover a la cinta solo si no es la primera (ya estamos ahí)
-                if idx > 0:
-                    # El brazo sigue en 'mover_lechuga', puede moverse directamente
+                # Mover a la cinta si es necesario
+                if need_move:
+                    print(f"     Moviendo a cinta: X={x_cinta:.1f}mm, Y={y_tubo:.1f}mm")
                     if not move_abs(x_cinta, y_tubo):
                         return False
+                    need_move = False  # Ya nos movimos, la siguiente puede venir pre-posicionada
+                else:
+                    print(f"     Ya posicionado en cinta desde movimiento anterior")
 
                 # PASO 4: Aplicar IA "Analizar Cultivo" (simulado por consola)
                 print("     [IA Analizar Cultivo] Estado de la lechuga:")
@@ -750,6 +747,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
 
                 if opt in ['2','3']:
                     print("     → Lechuga no lista o vacío, pasando a siguiente cinta")
+                    need_move = True  # La siguiente cinta necesitará moverse
                     continue
 
                 # PASO 5: Lechuga LISTA → Ejecutar posicionamiento completo (IA H+V)
@@ -824,22 +822,30 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                     print(f"       ❌ ERROR: Brazo no llegó a 'mover_lechuga'")
                     return False
 
-                # PASO 13: Volver al tubo actual para continuar con siguiente cinta
-                print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm) para siguiente cinta")
-                # Obtener X actual después del depósito
-                fwpos_after = _get_curr_pos_mm_from_fw()
-                if fwpos_after is not None:
-                    curr_x_after, _ = fwpos_after
+                # PASO 13: Volver al tubo y posicionarse en la siguiente cinta (si existe)
+                siguiente_cinta_idx = idx + 1
+                if siguiente_cinta_idx < len(cintas_sorted):
+                    # Hay más cintas: moverse directamente a la siguiente en diagonal
+                    siguiente_cinta = cintas_sorted[siguiente_cinta_idx]
+                    x_siguiente = float(siguiente_cinta.get('x_mm', 0.0))
+                    print(f"     → Paso 13: Moviendo directamente a siguiente cinta (X={x_siguiente:.1f}mm, Y={y_tubo:.1f}mm)")
+                    if not move_abs(x_siguiente, y_tubo):
+                        return False
+                    need_move = False  # Ya pre-posicionados para la siguiente cinta
                 else:
-                    status_after = robot.get_status()
-                    curr_x_after = float(status_after['position']['x'])
-                
-                # Volver a Y del tubo (mantener X actual)
-                if not move_abs(curr_x_after, y_tubo):
-                    return False
+                    # No hay más cintas: solo volver a Y del tubo
+                    print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm)")
+                    fwpos_after = _get_curr_pos_mm_from_fw()
+                    if fwpos_after is not None:
+                        curr_x_after, _ = fwpos_after
+                    else:
+                        status_after = robot.get_status()
+                        curr_x_after = float(status_after['position']['x'])
+
+                    if not move_abs(curr_x_after, y_tubo):
+                        return False
 
                 print("     ✓ Cosecha y depósito completados para esta cinta")
-                # Continuar a la siguiente cinta
 
             # Fin de cintas de este tubo
             print(f"== Fin de {nombre_tubo} ==")
