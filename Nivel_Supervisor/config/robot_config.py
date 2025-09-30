@@ -27,10 +27,11 @@ class RobotConfig:
     STEPS_PER_MM_V = 200.0  # pasos por mm vertical
     
     # ---- VELOCIDADES (pasos/segundo) ----
-    NORMAL_SPEED_H = 8000
-    NORMAL_SPEED_V = 12000
+    # Coinciden con firmware: MAX_SPEED_H=10000, MAX_SPEED_V=15000
+    NORMAL_SPEED_H = 10000  # Velocidad máxima horizontal del firmware
+    NORMAL_SPEED_V = 15000  # Velocidad máxima vertical del firmware
     HOMING_SPEED_H = 3000   # Velocidad lenta para homing
-    HOMING_SPEED_V = 8000
+    HOMING_SPEED_V = 8000   # Velocidad lenta para homing
     
     # ---- HOMING ----
     HOMING_DISTANCE_H = 3000  # mm de movimiento para homing

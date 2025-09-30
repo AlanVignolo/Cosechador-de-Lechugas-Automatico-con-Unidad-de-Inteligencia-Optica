@@ -598,12 +598,8 @@ class RobotController:
             
             # 4. Homing final
             print("Paso 4: Homing final...")
-            
-            # Alejarse de los límites para dar espacio al homing
-            print("   Alejandose de limites...")
-            result = self.cmd.move_xy(RobotConfig.apply_x_direction(-50), RobotConfig.apply_y_direction(-50))  # Alejarse de límites
-            if result["success"]:
-                self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=10.0)
+            # NOTA: El robot ya está alejado de los límites después de las mediciones,
+            # no es necesario moverlo más antes del homing
             
             # Limpiar callbacks y colas de mensajes antes del homing final
             self.cmd.uart.set_limit_callback(None)

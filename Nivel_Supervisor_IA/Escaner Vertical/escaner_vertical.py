@@ -187,7 +187,6 @@ def scan_vertical_manual(robot):
                 RobotConfig.NORMAL_SPEED_H,
                 RobotConfig.NORMAL_SPEED_V
             )
-            time.sleep(1.0)
             print("Velocidades reseteadas correctamente")
         except Exception as e:
             print(f"Error reseteando velocidades: {e}")

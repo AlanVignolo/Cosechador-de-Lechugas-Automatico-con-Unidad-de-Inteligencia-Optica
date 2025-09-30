@@ -146,7 +146,6 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
                 robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
             except Exception:
                 pass
-            time.sleep(0.1)
 
             # Cambiar brazo a 'movimiento' y esperar
             res_arm_pp = robot.arm.change_state('movimiento')
@@ -1235,22 +1234,11 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
             height_mm = float(RobotConfig.MAX_Y)
         safety = 10.0
         
-        # Obtener posición Y actual REAL desde firmware (después del escaneo vertical)
-        try:
-            fw_init = robot.cmd.get_current_position_mm()
-            resp_init = fw_init.get('response', '') if isinstance(fw_init, dict) else str(fw_init)
-            if 'MM:' in resp_init:
-                mm_part_init = resp_init.split('MM:')[1]
-                parts_init = mm_part_init.replace('\n', ' ').split(',')
-                if len(parts_init) >= 2:
-                    y_curr = float(parts_init[1].strip())
-                    print(f"[inicio_completo_hard] Posición Y inicial desde firmware: {y_curr:.1f}mm")
-                else:
-                    y_curr = height_mm
-            else:
-                y_curr = height_mm
-        except Exception:
-            y_curr = height_mm
+        # Obtener posición Y actual desde el tracking global del RobotController
+        # (más confiable que consultar firmware después del escaneo vertical)
+        status = robot.get_status()
+        y_curr = float(status['position']['y'])
+        print(f"[inicio_completo_hard] Posición Y inicial desde tracking global: {y_curr:.1f}mm")
         
         first_tube = True
         for tubo_id in sorted(tubos_cfg.keys()):
