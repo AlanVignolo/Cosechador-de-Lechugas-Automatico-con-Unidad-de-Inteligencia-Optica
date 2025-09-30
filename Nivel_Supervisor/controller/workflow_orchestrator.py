@@ -297,21 +297,41 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
     """
     Flujo interactivo de cosecha por tubos y cintas.
 
-    Secuencia:
-    - Verificar brazo en 'mover_lechuga'. Si NO está, mover XY a (X=fin_workspace, Y=tubo1),
-      y allí cambiar brazo a 'mover_lechuga'. Si ya está, mantenerlo.
-    - Para cada tubo (y_mm desde configuracion_tubos):
-        - Para cada cinta (x_mm desde MatrizCintas): ir a (x_mm, y_tubo)
-        - Preguntar por consola estado de la lechuga: [1] lista, [2] no lista, [3] vacío
-        - Si 'no lista' o 'vacío': pasar a siguiente cinta
-        - Si 'lista': ejecutar posicionamiento completo (IA H+V),
-            * Poner estado de lechuga en False (sin lechuga)
-            * Brazo a 'recoger_lechuga' (cerrará gripper)
-            * Setear estado de lechuga en True (con lechuga) y volver a 'mover_lechuga'
-            * Mover a esquina (X=fin_workspace, Y=fin_workspace)
-            * Brazo a 'depositar_lechuga' para soltar
-            * Volver a 'mover_lechuga' y setear estado de lechuga en False
-        - Continuar con la siguiente cinta
+    Secuencia completa:
+    
+    PASO 1: Verificar si brazo está en 'mover_lechuga'
+        - Si NO está: ir a (X=fin_workspace, Y=tubo1) y cambiar a 'mover_lechuga'
+        - Si ya está: continuar
+    
+    PASO 2: Para cada tubo (ordenado por ID):
+        - Ir a la primera cinta del tubo (X=cinta1, Y=tubo)
+        
+    PASO 3: Para cada cinta del tubo (ordenada por ID):
+        - Mover a posición de la cinta (X=cinta, Y=tubo)
+        
+    PASO 4: Aplicar IA "Analizar Cultivo" (simulado por consola):
+        - Opciones: [1] lista, [2] no lista, [3] vacío
+        - Si no lista o vacío: pasar a siguiente cinta
+        
+    PASO 5: Si lechuga LISTA:
+        - Ejecutar posicionamiento completo (IA H+V - opción 10-3 de main_robot)
+        
+    PASO 6: Asegurar flag de lechuga en FALSE (sin lechuga)
+    
+    PASO 7: Cambiar brazo a 'recoger_lechuga'
+    
+    PASO 8: Al terminar movimiento, setear flag en TRUE (con lechuga)
+    
+    PASO 9: Cambiar brazo a 'mover_lechuga' para transporte
+    
+    PASO 10: Ir a esquina de depósito (X=fin, Y=fin)
+    
+    PASO 11: Cambiar brazo a 'depositar_lechuga'
+    
+    PASO 12: Cambiar brazo a 'mover_lechuga' y setear flag en FALSE
+    
+    - Continuar con siguiente cinta del mismo tubo
+    - Al terminar un tubo, ir a cinta 1 del siguiente tubo
     - Al finalizar todos los tubos, volver a (0,0) si return_home
     """
     try:
@@ -379,7 +399,6 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                     robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
                 except Exception:
                     pass
-                time.sleep(0.1)
 
                 # Cambiar brazo a 'movimiento' y esperar
                 res_arm_pp = robot.arm.change_state('movimiento')
@@ -501,9 +520,6 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=timeout_s)
             except Exception:
                 pass
-            # Pequeño delay para asegurar que el callback de posición global se procese
-            import time as _t
-            _t.sleep(0.1)
             return True
 
         # Helper: esperar hasta que la posición global esté cerca del target
@@ -570,13 +586,15 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             print("No hay tubos configurados")
             return False
 
-        # Ir SIEMPRE al punto inicial seguro (X=fin-20, Y=tubo1) en un solo movimiento y luego asegurar brazo en 'mover_lechuga'
+        # PASO 1: Verificar si el brazo está en 'mover_lechuga'
         first_tube_id = sorted(tubos_cfg.keys())[0]
         y_tubo1 = float(tubos_cfg[first_tube_id]['y_mm'])
-        print(f"[cosecha] Moviendo a inicio seguro: X={x_edge:.1f}, Y={y_tubo1:.1f}")
-        if not move_abs(x_edge, y_tubo1):
-            return False
+        
         if robot.arm.current_state != 'mover_lechuga':
+            print("[cosecha] Brazo NO está en 'mover_lechuga'")
+            print(f"[cosecha] Moviendo a posición segura: X={x_edge:.1f}, Y={y_tubo1:.1f}")
+            if not move_abs(x_edge, y_tubo1):
+                return False
             print("[cosecha] Cambiando brazo a 'mover_lechuga'")
             res_arm = robot.arm.change_state('mover_lechuga')
             if not res_arm.get('success'):
@@ -589,7 +607,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 pass
             wait_arm_idle(6.0)
         else:
-            print("[cosecha] Brazo ya en 'mover_lechuga'")
+            print("[cosecha] Brazo ya está en 'mover_lechuga'")
 
         # Instancia de matriz de cintas
         matriz = MatrizCintas()
@@ -600,17 +618,6 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             nombre_tubo = tubos_cfg[tubo_id]['nombre']
             print(f"\n== TUBO {tubo_id} ({nombre_tubo}) Y={y_tubo:.1f}mm ==")
 
-            # Asegurar estar en Y del tubo actual (mantener X actual) solo después de que el brazo esté quieto
-            wait_arm_idle(6.0)
-            fwpos = _get_curr_pos_mm_from_fw()
-            if fwpos is not None:
-                curr_x, _ = fwpos
-            else:
-                status = robot.get_status()
-                curr_x = float(status['position']['x'])
-            if not move_abs(curr_x, y_tubo):
-                return False
-
             # Obtener cintas de este tubo (x_mm)
             cintas = matriz.obtener_cintas_tubo(int(tubo_id))  # list of dicts with x_mm
             if not cintas:
@@ -620,23 +627,28 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             # Ordenar por id natural
             cintas_sorted = sorted(cintas, key=lambda c: c.get('id', 0))
 
-            for cinta in cintas_sorted:
-                x_cinta = float(cinta.get('x_mm', 0.0))
-                print(f"  -> Cinta #{cinta.get('id','?')}: mover a X={x_cinta:.1f}mm (horizontal puro)")
-                # Asegurar brazo quieto antes de mover XY
+            # PASO 2: Ir a la primera cinta del tubo actual
+            if cintas_sorted:
+                primera_cinta = cintas_sorted[0]
+                x_primera = float(primera_cinta.get('x_mm', 0.0))
+                print(f"  -> Moviendo a primera cinta del tubo: X={x_primera:.1f}mm, Y={y_tubo:.1f}mm")
                 wait_arm_idle(6.0)
-                # Mantener Y actual para evitar movimientos diagonales involuntarios
-                fwpos = _get_curr_pos_mm_from_fw()
-                if fwpos is not None:
-                    _, curr_y = fwpos
-                else:
-                    status = robot.get_status()
-                    curr_y = float(status['position']['y'])
-                if not move_abs(x_cinta, curr_y):
+                if not move_abs(x_primera, y_tubo):
                     return False
 
-                # Clasificación interactiva
-                print("     Estado de la lechuga en esta cinta:")
+            # PASO 3: Iterar por todas las cintas del tubo
+            for idx, cinta in enumerate(cintas_sorted):
+                x_cinta = float(cinta.get('x_mm', 0.0))
+                print(f"\n  -> Cinta #{cinta.get('id','?')}: X={x_cinta:.1f}mm")
+                
+                # Mover a la cinta solo si no es la primera (ya estamos ahí)
+                if idx > 0:
+                    wait_arm_idle(6.0)
+                    if not move_abs(x_cinta, y_tubo):
+                        return False
+
+                # PASO 4: Aplicar IA "Analizar Cultivo" (simulado por consola)
+                print("     [IA Analizar Cultivo] Estado de la lechuga:")
                 print("       1) lista    2) no lista    3) vacío")
                 opt = input("       Selecciona (1/2/3): ").strip()
                 if opt not in ['1','2','3']:
@@ -644,16 +656,20 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                     opt = '2'
 
                 if opt in ['2','3']:
-                    print("     → Saltando a la siguiente cinta")
+                    print("     → Lechuga no lista o vacío, pasando a siguiente cinta")
                     continue
 
-                # 'lista' → posicionamiento completo y recolección
-                print("     → Posicionamiento completo (IA H+V)...")
+                # PASO 5: Lechuga LISTA → Ejecutar posicionamiento completo (IA H+V)
+                print("     → Lechuga LISTA - Ejecutando posicionamiento completo (IA H+V)...")
                 if not posicionamiento_completo(robot):
                     print("       Advertencia: Posicionamiento completo falló, continuando...")
 
-                # Preparar brazo para recoger: SIN lechuga
+                # PASO 6: Asegurar flag de lechuga en FALSE (sin lechuga)
+                print("     → Paso 6: Asegurando flag de lechuga en FALSE (sin lechuga)")
                 robot.arm.set_lettuce_state(False)
+                
+                # PASO 7: Cambiar brazo a 'recoger_lechuga'
+                print("     → Paso 7: Cambiando brazo a 'recoger_lechuga'")
                 res_arm = robot.arm.change_state('recoger_lechuga')
                 if not res_arm.get('success'):
                     print(f"       Error moviendo a 'recoger_lechuga': {res_arm}")
@@ -663,8 +679,13 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 except Exception:
                     pass
                 wait_arm_idle(8.0)
-                # Al completarse, setear CON lechuga y volver a transporte
+                
+                # PASO 8: Al terminar movimiento, setear flag en TRUE (con lechuga)
+                print("     → Paso 8: Lechuga recogida - Seteando flag en TRUE")
                 robot.arm.set_lettuce_state(True)
+                
+                # PASO 9: Cambiar brazo a 'mover_lechuga'
+                print("     → Paso 9: Cambiando brazo a 'mover_lechuga' para transporte")
                 res_arm2 = robot.arm.change_state('mover_lechuga')
                 if not res_arm2.get('success'):
                     print(f"       Error moviendo a 'mover_lechuga': {res_arm2}")
@@ -675,11 +696,13 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                     pass
                 wait_arm_idle(6.0)
 
-                # Ir a esquina para soltar: (fin_workspace, fin_workspace)
-                print(f"     → Llevando a esquina para depositar: ({x_edge:.1f},{y_edge:.1f})")
+                # PASO 10: Ir a esquina para depositar (X=fin, Y=fin)
+                print(f"     → Paso 10: Moviendo a esquina de depósito: X={x_edge:.1f}mm, Y={y_edge:.1f}mm")
                 if not move_abs(x_edge, y_edge):
                     return False
-                # Depositar
+                
+                # PASO 11: Cambiar brazo a 'depositar_lechuga'
+                print("     → Paso 11: Cambiando brazo a 'depositar_lechuga'")
                 res_dep = robot.arm.change_state('depositar_lechuga')
                 if not res_dep.get('success'):
                     print(f"       Error en 'depositar_lechuga': {res_dep}")
@@ -689,7 +712,9 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 except Exception:
                     pass
                 wait_arm_idle(6.0)
-                # Volver a transporte sin lechuga
+                
+                # PASO 12: Cambiar brazo a 'mover_lechuga' y setear flag en FALSE
+                print("     → Paso 12: Lechuga depositada - Cambiando a 'mover_lechuga' y flag en FALSE")
                 robot.arm.set_lettuce_state(False)
                 res_back = robot.arm.change_state('mover_lechuga')
                 if not res_back.get('success'):
@@ -700,12 +725,20 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 except Exception:
                     pass
                 wait_arm_idle(6.0)
-                # Volver a la Y del tubo actual antes de seguir con la siguiente cinta
-                status = robot.get_status()
-                curr_x_after_deposit = float(status['position']['x'])
-                if not move_abs(curr_x_after_deposit, y_tubo):
+
+                # PASO 13: Volver al tubo actual para continuar con siguiente cinta
+                print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm) para siguiente cinta")
+                # Obtener X actual después del depósito
+                fwpos_after = _get_curr_pos_mm_from_fw()
+                if fwpos_after is not None:
+                    curr_x_after, _ = fwpos_after
+                else:
+                    status_after = robot.get_status()
+                    curr_x_after = float(status_after['position']['x'])
+                
+                # Volver a Y del tubo (mantener X actual)
+                if not move_abs(curr_x_after, y_tubo):
                     return False
-                # El movimiento absoluto ya espera por COMPLETED; no es necesario polling adicional
 
                 print("     ✓ Cosecha y depósito completados para esta cinta")
                 # Continuar a la siguiente cinta
