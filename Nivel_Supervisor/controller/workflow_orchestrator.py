@@ -69,6 +69,60 @@ def _get_ordered_tubos() -> Dict[int, Dict[str, float]]:
     return {k: cfg[k] for k in sorted(cfg.keys())}
 
 
+def _resync_position_from_firmware(robot) -> bool:
+    """
+    Resincronizar posición global del supervisor desde la posición real del firmware.
+    Útil antes de movimientos críticos como retorno a (0,0) para evitar errores acumulados.
+    
+    Returns:
+        bool: True si la resincronización fue exitosa, False en caso contrario
+    """
+    try:
+        # Consultar posición real del firmware usando comando XY?
+        resp = robot.cmd.get_current_position_mm()
+        resp_str = resp.get('response', '') if isinstance(resp, dict) else str(resp)
+        
+        if 'MM:' in resp_str:
+            mm_part = resp_str.split('MM:')[1]
+            parts = mm_part.replace('\n', ' ').split(',')
+            if len(parts) >= 2:
+                fw_x = float(parts[0].strip())
+                fw_y = float(parts[1].strip())
+                
+                # Obtener posición actual del tracking del supervisor
+                status = robot.get_status()
+                sup_x = float(status['position']['x'])
+                sup_y = float(status['position']['y'])
+                
+                # Calcular diferencia
+                diff_x = abs(fw_x - sup_x)
+                diff_y = abs(fw_y - sup_y)
+                
+                if diff_x > 0.5 or diff_y > 0.5:
+                    print(f"[resync] DESINCRONIZACIÓN DETECTADA:")
+                    print(f"[resync]   Supervisor: X={sup_x:.1f}mm, Y={sup_y:.1f}mm")
+                    print(f"[resync]   Firmware:   X={fw_x:.1f}mm, Y={fw_y:.1f}mm")
+                    print(f"[resync]   Diferencia: ΔX={diff_x:.1f}mm, ΔY={diff_y:.1f}mm")
+                else:
+                    print(f"[resync] Posiciones sincronizadas correctamente (diff < 0.5mm)")
+                
+                # Actualizar tracking global del supervisor con valores del firmware
+                robot.global_position["x"] = fw_x
+                robot.global_position["y"] = fw_y
+                
+                print(f"[resync] Posición actualizada desde firmware: X={fw_x:.1f}mm, Y={fw_y:.1f}mm")
+                return True
+        else:
+            print(f"[resync] No se pudo parsear respuesta del firmware: {resp_str[:100]}")
+            return False
+            
+    except Exception as e:
+        print(f"[resync] Error durante resincronización: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def inicio_completo(robot, return_home: bool = True) -> bool:
     """
     Inicio completo:
@@ -192,6 +246,12 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             height_mm = float(RobotConfig.MAX_Y)
         safety = 10.0
         y_curr = height_mm
+        
+        # Obtener posición Y actual desde tracking global (después del escaneo vertical)
+        status = robot.get_status()
+        y_curr = float(status['position']['y'])
+        print(f"[workflow] Posición Y inicial desde tracking global: {y_curr:.1f}mm")
+        
         first_tube = True
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
@@ -224,13 +284,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
                 robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
             except Exception:
                 pass
-            # Fallback: esperar según distancia/velocidad (por si no llegó COMPLETED)
-            try:
-                v_mm_s = max(1.0, float(RobotConfig.NORMAL_SPEED_V) / float(RobotConfig.STEPS_PER_MM_V))
-                est_t = abs(dy) / v_mm_s + 0.5
-                time.sleep(min(est_t, 10.0))
-            except Exception:
-                time.sleep(1.0)
+            
             # Actualizar Y actual asumido
             y_curr = y_target
 
@@ -247,39 +301,59 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
 
             # Preparar siguiente iteración
             first_tube = False
-            time.sleep(0.2)
 
         # Paso 4: Volver a (0,0)
         if return_home:
-            print("[inicio_completo] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
-            # Usar posición global del supervisor para volver a X≈0
+            print("[workflow] Paso 4/4: Volviendo a (0,0)...")
+            
+            # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
+            # Esto evita errores acumulados de tracking durante escaneos largos
+            print("[workflow] Resincronizando posición desde firmware...")
+            _resync_position_from_firmware(robot)
+            
             try:
                 status_pos = robot.get_status()
                 curr_x = float(status_pos['position']['x'])
+                curr_y = float(status_pos['position']['y'])
             except Exception:
                 curr_x = 0.0
+                curr_y = y_curr
+            
             dx_back = -curr_x
-            dy_back = -y_curr
-            print(f"     ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
-            ret_res = robot.cmd.move_xy(dx_back, dy_back)
-            if not ret_res.get('success'):
-                print(f"Advertencia: No se pudo volver a (0,0): {ret_res}")
-            else:
-                print("Regreso a (0,0) solicitado")
-                # Esperar confirmación y resincronizar estado global desde firmware
-                try:
-                    robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
-                except Exception:
-                    pass
-                try:
-                    ok_resync = robot.resync_global_position_from_firmware()
-                except Exception:
-                    ok_resync = False
-                # Independientemente del resync, fijar supervisor en (0,0) como invariante post-retorno
+            dy_back = -curr_y
+            print(f"     Desde ({curr_x:.1f}, {curr_y:.1f}) -> (0,0): ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
+            
+            # Detectar si ya estamos en (0,0)
+            if abs(dx_back) < 2.0 and abs(dy_back) < 2.0:
+                print("     Ya estamos en (0,0)")
                 try:
                     robot.reset_global_position(0.0, 0.0)
                 except Exception:
                     pass
+            else:
+                ret_res = robot.cmd.move_xy(dx_back, dy_back)
+                if not ret_res.get('success'):
+                    print(f"Advertencia: No se pudo iniciar movimiento a (0,0): {ret_res}")
+                else:
+                    print("Regreso a (0,0) solicitado")
+                    
+                    try:
+                        robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
+                    except Exception:
+                        pass
+                    
+                    # Verificar si llegó realmente a (0,0)
+                    pos_after = robot.get_status()['position']
+                    
+                    if abs(pos_after['x']) < 5.0 and abs(pos_after['y']) < 5.0:
+                        print(f"     ✅ Llegó a (0,0): posición final ({pos_after['x']:.1f}, {pos_after['y']:.1f})")
+                        try:
+                            robot.reset_global_position(0.0, 0.0)
+                        except Exception:
+                            pass
+                    else:
+                        print(f"     ⚠️  NO llegó a (0,0): posición final ({pos_after['x']:.1f}, {pos_after['y']:.1f})")
+                        print(f"     Probablemente tocó un límite. Posición NO reseteada.")
 
         print("[inicio_completo] Secuencia finalizada")
         return True
@@ -773,6 +847,11 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                     pass
                 wait_arm_idle(6.0)
 
+            # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
+            # Esto evita errores acumulados de tracking durante escaneos largos
+            print("[cosecha] Resincronizando posición desde firmware antes de retornar...")
+            _resync_position_from_firmware(robot)
+
             print("[cosecha] Volviendo a (0,0)...")
             if not move_abs(0.0, 0.0, timeout_s=240.0):
                 print("Advertencia: No se pudo volver a (0,0)")
@@ -840,6 +919,12 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
             height_mm = float(RobotConfig.MAX_Y)
         safety = 10.0
         y_curr = height_mm
+        
+        # Obtener posición Y actual desde tracking global (después del escaneo vertical)
+        status = robot.get_status()
+        y_curr = float(status['position']['y'])
+        print(f"[workflow] Posición Y inicial desde tracking global: {y_curr:.1f}mm")
+        
         first_tube = True
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
@@ -868,13 +953,7 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
                 robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=180.0)
             except Exception:
                 pass
-            # Fallback: esperar según distancia/velocidad (por si no llegó COMPLETED)
-            try:
-                v_mm_s = max(1.0, float(RobotConfig.NORMAL_SPEED_V) / float(RobotConfig.STEPS_PER_MM_V))
-                est_t = abs(dy) / v_mm_s + 0.5
-                time.sleep(min(est_t, 10.0))
-            except Exception:
-                time.sleep(1.0)
+            
             # Actualizar Y actual asumido
             y_curr = y_target
 
@@ -891,19 +970,34 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
 
             # Preparar siguiente iteración
             first_tube = False
-            time.sleep(0.2)
 
         # Paso 4: Volver a (0,0)
         if return_home:
             print("[inicio_completo] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
+            
+            # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
+            # Esto evita errores acumulados de tracking durante escaneos largos
+            print("[inicio_completo] Resincronizando posición desde firmware...")
+            _resync_position_from_firmware(robot)
+            
             # Incluir componente X solo si seguimos en límite izquierdo; si no, mover solo Y
             try:
                 lim = robot.cmd.uart.get_limit_status()
                 at_left = bool(lim and lim.get('status', {}).get('H_LEFT', False))
             except Exception:
                 at_left = False
-            dx_back = -(max(0.0, width_mm - safety)) if at_left else 0.0
-            dy_back = -y_curr
+            
+            # Obtener posición actual (ya sincronizada)
+            try:
+                status = robot.get_status()
+                curr_x = float(status['position']['x'])
+                curr_y = float(status['position']['y'])
+            except Exception:
+                curr_x = 0.0
+                curr_y = y_curr
+            
+            dx_back = -curr_x
+            dy_back = -curr_y
             print(f"     ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
             if not ret_res.get('success'):
@@ -1035,6 +1129,12 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             height_mm = float(RobotConfig.MAX_Y)
         safety = 10.0
         y_curr = height_mm
+        
+        # Obtener posición Y actual desde tracking global (después del escaneo vertical)
+        status = robot.get_status()
+        y_curr = float(status['position']['y'])
+        print(f"[workflow] Posición Y inicial desde tracking global: {y_curr:.1f}mm")
+        
         first_tube = True
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
@@ -1090,19 +1190,26 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
 
             # Preparar siguiente iteración
             first_tube = False
-            time.sleep(0.2)
 
         # Paso 4: Volver a (0,0)
         if return_home:
             print("[inicio_simple] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
+            
+            # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
+            # Esto evita errores acumulados de tracking durante escaneos largos
+            print("[inicio_simple] Resincronizando posición desde firmware...")
+            _resync_position_from_firmware(robot)
+            
             # Usar posición global del supervisor para calcular retorno a X≈0
             try:
                 status_pos = robot.get_status()
                 curr_x = float(status_pos['position']['x'])
+                curr_y = float(status_pos['position']['y'])
             except Exception:
                 curr_x = 0.0
+                curr_y = y_curr
             dx_back = -curr_x
-            dy_back = -y_curr
+            dy_back = -curr_y
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
             if not ret_res.get('success'):
                 print(f"Advertencia: No se pudo volver a (0,0): {ret_res}")
@@ -1295,23 +1402,23 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
         # Paso 4: Volver a (0,0)
         if return_home:
             print("[inicio_completo_hard] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
-            # Usar firmware XY? para determinar ΔX de retorno a X≈0
+            
+            # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
+            # Esto evita errores acumulados de tracking durante escaneos largos
+            print("[inicio_completo_hard] Resincronizando posición desde firmware...")
+            _resync_position_from_firmware(robot)
+            
+            # Obtener posición actual (ya sincronizada)
             try:
-                fw = robot.cmd.get_current_position_mm()
-                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
-                if 'MM:' in resp:
-                    mm_part = resp.split('MM:')[1]
-                    parts = mm_part.replace('\n', ' ').split(',')
-                    if len(parts) >= 2:
-                        curr_x_fw = float(parts[0].strip())
-                    else:
-                        curr_x_fw = 0.0
-                else:
-                    curr_x_fw = 0.0
+                status = robot.get_status()
+                curr_x = float(status['position']['x'])
+                curr_y = float(status['position']['y'])
             except Exception:
-                curr_x_fw = 0.0
-            dx_back = -curr_x_fw
-            dy_back = -y_curr
+                curr_x = 0.0
+                curr_y = y_curr
+            
+            dx_back = -curr_x
+            dy_back = -curr_y
             print(f"     ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
             if not ret_res.get('success'):
