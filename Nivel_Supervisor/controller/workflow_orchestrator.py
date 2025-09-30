@@ -1394,32 +1394,26 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
                 h_ok = scan_horizontal_with_live_camera(robot, tubo_id=int(tubo_id))
             except Exception as e:
                 print(f"Error en escáner horizontal (tubo {tubo_id}): {e}")
-                return False
             if not h_ok:
                 print(f"Escaneo horizontal con errores en tubo {tubo_id}")
             first_tube = False
 
         # Paso 4: Volver a (0,0)
         if return_home:
-            print("[inicio_completo_hard] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
+            print("[inicio_completo_hard] Paso 4/4: Volviendo a (0,0)...")
             
-            # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
-            # Esto evita errores acumulados de tracking durante escaneos largos
-            print("[inicio_completo_hard] Resincronizando posición desde firmware...")
-            _resync_position_from_firmware(robot)
-            
-            # Obtener posición actual (ya sincronizada)
+            # Usar tracking del supervisor (más confiable que firmware durante escaneos)
             try:
                 status = robot.get_status()
                 curr_x = float(status['position']['x'])
                 curr_y = float(status['position']['y'])
             except Exception:
                 curr_x = 0.0
-                curr_y = y_curr
+                curr_y = 0.0
             
             dx_back = -curr_x
             dy_back = -curr_y
-            print(f"     ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
+            print(f"     desde ({curr_x:.1f}, {curr_y:.1f}) -> (0,0): ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
             if not ret_res.get('success'):
                 print(f"Advertencia: No se pudo volver a (0,0): {ret_res}")
