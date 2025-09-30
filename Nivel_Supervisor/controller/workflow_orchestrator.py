@@ -69,7 +69,7 @@ def _get_ordered_tubos() -> Dict[int, Dict[str, float]]:
     return {k: cfg[k] for k in sorted(cfg.keys())}
 
 
-def _resync_position_from_firmware(robot) -> bool:
+def _resync_position_from_firmware(robot) -> bool:  # DESHABILITADO: No usar
     """
     Resincronizar posición global del supervisor desde la posición real del firmware.
     Útil antes de movimientos críticos como retorno a (0,0) para evitar errores acumulados.
@@ -309,7 +309,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[workflow] Resincronizando posición desde firmware...")
-            _resync_position_from_firmware(robot)
+            # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking
             
             try:
                 status_pos = robot.get_status()
@@ -850,7 +850,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[cosecha] Resincronizando posición desde firmware antes de retornar...")
-            _resync_position_from_firmware(robot)
+            # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking
 
             print("[cosecha] Volviendo a (0,0)...")
             if not move_abs(0.0, 0.0, timeout_s=240.0):
@@ -978,7 +978,7 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[inicio_completo] Resincronizando posición desde firmware...")
-            _resync_position_from_firmware(robot)
+            # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking
             
             # Incluir componente X solo si seguimos en límite izquierdo; si no, mover solo Y
             try:
@@ -1198,7 +1198,7 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[inicio_simple] Resincronizando posición desde firmware...")
-            _resync_position_from_firmware(robot)
+            # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking
             
             # Usar posición global del supervisor para calcular retorno a X≈0
             try:
