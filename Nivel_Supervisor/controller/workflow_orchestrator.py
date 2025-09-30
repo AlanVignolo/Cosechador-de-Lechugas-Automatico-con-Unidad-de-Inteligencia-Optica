@@ -69,7 +69,7 @@ def _get_ordered_tubos() -> Dict[int, Dict[str, float]]:
     return {k: cfg[k] for k in sorted(cfg.keys())}
 
 
-def _resync_position_from_firmware(robot) -> bool:  # DESHABILITADO: No usar
+def # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking -> bool:  # DESHABILITADO: No usar
     """
     Resincronizar posición global del supervisor desde la posición real del firmware.
     Útil antes de movimientos críticos como retorno a (0,0) para evitar errores acumulados.
@@ -309,7 +309,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[workflow] Resincronizando posición desde firmware...")
-            # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking
+            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
             
             try:
                 status_pos = robot.get_status()
@@ -850,7 +850,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[cosecha] Resincronizando posición desde firmware antes de retornar...")
-            # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking
+            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
 
             print("[cosecha] Volviendo a (0,0)...")
             if not move_abs(0.0, 0.0, timeout_s=240.0):
@@ -978,7 +978,7 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[inicio_completo] Resincronizando posición desde firmware...")
-            # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking
+            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
             
             # Incluir componente X solo si seguimos en límite izquierdo; si no, mover solo Y
             try:
@@ -1198,7 +1198,7 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[inicio_simple] Resincronizando posición desde firmware...")
-            # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking
+            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
             
             # Usar posición global del supervisor para calcular retorno a X≈0
             try:
@@ -1351,27 +1351,18 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
             
-            # Obtener posición X actual desde firmware SIEMPRE (para cálculo correcto de dx)
+            # Obtener posición X actual desde tracking del supervisor (más confiable)
             try:
-                fw = robot.cmd.get_current_position_mm()
-                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
-                if 'MM:' in resp:
-                    mm_part = resp.split('MM:')[1]
-                    parts = mm_part.replace('\n', ' ').split(',')
-                    if len(parts) >= 2:
-                        curr_x_fw = float(parts[0].strip())
-                    else:
-                        curr_x_fw = float(robot.get_status()['position']['x'])
-                else:
-                    curr_x_fw = float(robot.get_status()['position']['x'])
+                status = robot.get_status()
+                curr_x = float(status['position']['x'])
             except Exception:
-                curr_x_fw = float(robot.get_status()['position']['x'])
+                curr_x = 0.0
             
             # Calcular delta X: siempre volver a X=0 excepto en el primer tubo
             if first_tube:
                 dx = 0.0  # Primer tubo: ya estamos en X≈0 después del escaneo vertical
             else:
-                dx = -curr_x_fw  # Tubos siguientes: volver desde posición actual a X=0
+                dx = -curr_x  # Tubos siguientes: volver desde posición actual a X=0
             
             dy = y_target - y_curr
 
