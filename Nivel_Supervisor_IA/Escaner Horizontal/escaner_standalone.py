@@ -515,12 +515,12 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception as e:
             print(f"[{scan_id}] LIMPIEZA: Error reseteando velocidades: {e}")
 
-        # RESET COMPLETO del UART manager para limpiar callbacks y estado de firmware
+        # Limpiar solo snapshots (NO reset completo que rompe tracking de posición)
         try:
-            print(f"[{scan_id}] LIMPIEZA: Reset completo del UART manager...")
-            robot.cmd.uart.reset_scanning_state()
+            print(f"[{scan_id}] LIMPIEZA: Limpiando snapshots finales...")
+            robot.cmd.uart.clear_last_snapshots()
         except Exception as e:
-            print(f"Error en reset del UART manager: {e}")
+            print(f"Error limpiando snapshots: {e}")
 
         # No resetear completamente el camera manager: se conserva para otros módulos
         
