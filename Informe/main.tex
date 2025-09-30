@@ -2,9 +2,9 @@
 \usepackage[
   a4paper,
   margin=1.5cm,
-  top=70pt,
-  headheight=30pt,
-]{geometry}  
+  top=82pt,
+  headheight=42pt,
+]{geometry}
 
 % Paquetes
 \usepackage[spanish]{babel}
@@ -71,12 +71,13 @@
 {\Huge \textbf{Proyecto Final de Estudios} \\ [1cm] 
 Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artificial}}
 \author{Brenda Gudiño \\ Alan Vignolo}
-\date{Fecha de presentación \\ XX/XX/2025}
+\date{Fecha de presentación\par XX/XX/2025}
 
 \begin{document}
+\setkeys{Gin}{draft=false}
 
 \maketitle
-\tableofcontents
+\tableofcontents 
 \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -117,7 +118,7 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \section{Fundamentos de Visión Artificial y Aprendizaje Profundo}
 \input{02_MarcoTeorico/2.2_vision_ia/procesamiento_imagenes}
 \input{02_MarcoTeorico/2.2_vision_ia/deteccion_contornos}
-\input{02_MarcoTeorico/2.2_vision_ia/procesamiento_imagenes.tex}
+\input{02_MarcoTeorico/2.2_vision_ia/analisis_morfologico}
 \input{02_MarcoTeorico/2.2_vision_ia/metricas_evaluacion}
 
 \section{Cinemática de Robots Cartesianos}
@@ -229,46 +230,21 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 
 \section{Inteligencia Artificial y Visión por Computadora}
 
-\subsection{Arquitectura General del Sistema de IA}
-\input{03_Desarrollo/3.5_ia_vision/arquitectura_ia}
-\input{03_Desarrollo/3.5_ia_vision/pipeline_procesamiento}
+\subsection{Arquitectura y Pipeline de Procesamiento}
+\input{03_Desarrollo/3.5_ia_vision/arquitectura_general}
+\input{03_Desarrollo/3.5_ia_vision/hardware_preprocesamiento}
 
-\subsection{Sistema de Visión Artificial}
-\input{03_Desarrollo/3.5_ia_vision/hardware_camara}
-\input{03_Desarrollo/3.5_ia_vision/preprocesamiento}
-\input{03_Desarrollo/3.5_ia_vision/analisis_morfologico}
+\subsection{Sistema de Posicionamiento Visual}
+\input{03_Desarrollo/3.5_ia_vision/deteccion_cintas}
+\input{03_Desarrollo/3.5_ia_vision/calibracion_correccion}
 
-\subsection{Calibración Espacial del Sistema}
-\input{03_Desarrollo/3.5_ia_vision/calibracion_pixel_mm}
-\input{03_Desarrollo/3.5_ia_vision/ecuaciones_transformacion}
-\input{03_Desarrollo/3.5_ia_vision/validacion_estadistica}
+\subsection{Sistema de Clasificación de Cultivos}
+\input{03_Desarrollo/3.5_ia_vision/deteccion_clasificacion}
+\input{03_Desarrollo/3.5_ia_vision/analisis_estadistico}
 
-\subsection{Red Neuronal Convolucional para Clasificación}
-\input{03_Desarrollo/3.5_ia_vision/arquitectura_cnn}
-\input{03_Desarrollo/3.5_ia_vision/funcion_perdida}
-\input{03_Desarrollo/3.5_ia_vision/metricas_desempeno}
-\input{03_Desarrollo/3.5_ia_vision/justificacion_arquitectura}
-
-\subsection{Mapeo Inteligente del Entorno}
-\input{03_Desarrollo/3.5_ia_vision/algoritmo_exploracion}
-\input{03_Desarrollo/3.5_ia_vision/sincronizacion_imagen_posicion}
-\input{03_Desarrollo/3.5_ia_vision/cooldown_espacial}
-\input{03_Desarrollo/3.5_ia_vision/matriz_cultivo}
-
-\subsection{Optimización de Trayectorias}
-\input{03_Desarrollo/3.5_ia_vision/tsp_adaptado}
-\input{03_Desarrollo/3.5_ia_vision/funcion_objetivo}
-\input{03_Desarrollo/3.5_ia_vision/heuristicas}
-
-\subsection{Algoritmos de Corrección de Posición}
-\input{03_Desarrollo/3.5_ia_vision/correccion_horizontal_vertical}
-\input{03_Desarrollo/3.5_ia_vision/criterio_convergencia}
-\input{03_Desarrollo/3.5_ia_vision/precision_alcanzada}
-
-\subsection{Integración de Módulos de IA}
-\input{03_Desarrollo/3.5_ia_vision/arquitectura_modular}
-\input{03_Desarrollo/3.5_ia_vision/logging_monitoreo}
-\input{03_Desarrollo/3.5_ia_vision/calibracion_automatica}
+\subsection{Mapeo y Optimización de Rutas} 
+\input{03_Desarrollo/3.5_ia_vision/mapeo_navegacion}
+\input{03_Desarrollo/3.5_ia_vision/optimizacion_trayectorias}
 
 \section{Interfaz de Usuario y Supervisión}
 \input{03_Desarrollo/3.6_interfaz/diseno_interfaz}

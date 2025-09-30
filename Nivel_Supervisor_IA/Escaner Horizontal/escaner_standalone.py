@@ -89,7 +89,6 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         
         # Limpiar ventanas previas que puedan estar abiertas
         cv2.destroyAllWindows()
-        time.sleep(0.2)
         
         # Adquirir y preparar cámara (uso compartido administrado por CameraManager)
         # Adquirir cámara
@@ -250,17 +249,6 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                                 print(f"[{scan_id}] Aviso: cámara sin frames (esperando)")
                                 printed_none_once = True
                             time.sleep(0.05)
-                            # Watchdog: si en los primeros 2s no llegaron frames, reiniciar stream una vez
-                            if (time.time() - start_ts) > 2.0 and frame_count == 0:
-                                try:
-                                    print(f"[{scan_id}] Watchdog: reiniciando stream de video por falta de frames")
-                                    camera_mgr.stop_stream_ref()
-                                    time.sleep(0.2)
-                                    camera_mgr.start_stream_ref(fps=6)
-                                    # reiniciar temporizador de watchdog
-                                    start_ts = time.time()
-                                except Exception as wd_err:
-                                    print(f"[{scan_id}] Error reiniciando stream (watchdog): {wd_err}")
                             continue
                         
                         frame_count += 1
@@ -298,14 +286,6 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 print(f"[{scan_id}] HILO DE VIDEO TERMINADO: frames={frame_count}, detecciones={detection_count}")
                 pass
         
-        # KILLER DE THREADS ZOMBIE ANTES DE INICIAR NUEVO ESCANEO
-        # Pre-escaneo: limpieza mínima de threads zombie
-        zombie_count = 0
-        for thread in threading.enumerate():
-            if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
-                if thread.is_alive():
-                    zombie_count += 1
-        
         # Iniciar hilo de video con nombre único
         video_thread_name = f"VideoScanThread_{scan_id}"
         video_thread = threading.Thread(target=video_loop, name=video_thread_name)
@@ -320,52 +300,27 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         else:
             print(f"[{scan_id}] ERROR: Hilo de video NO está vivo tras iniciar")
         
-        # Pequeño warm-up: esperar a que llegue el primer frame válido
+        # Verificación rápida de que el stream está funcionando
+        print(f"[{scan_id}] Verificando stream de video...")
         warmup_start = time.time()
         first_frame_ok = False
-        while time.time() - warmup_start < 2.0:
+        while time.time() - warmup_start < 0.5:  # Solo 500ms
             try:
-                test_frame = camera_mgr.get_latest_video_frame(timeout=0.2)
+                test_frame = camera_mgr.get_latest_video_frame(timeout=0.1)
                 if test_frame is not None:
                     first_frame_ok = True
+                    print(f"[{scan_id}] Stream de video confirmado")
                     break
             except Exception:
                 pass
             time.sleep(0.05)
+        
         if not first_frame_ok:
-            print(f"[{scan_id}] Aviso: Cámara sin frames tras warm-up. Reiniciando stream de video...")
-            try:
-                camera_mgr.stop_stream_ref()
-                time.sleep(0.3)
-                if not camera_mgr.start_stream_ref(fps=6):
-                    print(f"[{scan_id}] Error: No se pudo reiniciar stream de video")
-                else:
-                    # Segundo warm-up
-                    warmup_start2 = time.time()
-                    while time.time() - warmup_start2 < 2.0:
-                        test_frame = camera_mgr.get_latest_video_frame(timeout=0.2)
-                        if test_frame is not None:
-                            first_frame_ok = True
-                            break
-                        time.sleep(0.05)
-            except Exception as re_err:
-                print(f"[{scan_id}] Error reiniciando stream: {re_err}")
-            if not first_frame_ok:
-                print(f"[{scan_id}] Error: Sin frames tras reintento de stream. Abortando escaneo para evitar hilos colgados.")
-                # Detener video de forma controlada y liberar
-                is_scanning[0] = False
-                try:
-                    cv2.destroyAllWindows()
-                    cv2.waitKey(1)
-                except:
-                    pass
-                try:
-                    camera_mgr.stop_stream_ref()
-                    time.sleep(0.2)
-                    camera_mgr.release("escaner_standalone")
-                except:
-                    pass
-                return False
+            print(f"[{scan_id}] Error: Stream de video no disponible")
+            is_scanning[0] = False
+            camera_mgr.stop_stream_ref()
+            camera_mgr.release("escaner_standalone")
+            return False
         
         # Comprobación previa: si estamos en límite izquierdo, retroceder un poco a la derecha
         try:
@@ -378,37 +333,17 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception:
             pass
 
-        # CRÍTICO: Esperar a que el hilo de detección esté realmente funcionando
-        # antes de iniciar el movimiento para evitar perder detecciones al inicio
-        print(f"[{scan_id}] Esperando estabilización completa del sistema de detección...")
-        detection_ready = False
-        detection_wait_start = time.time()
+        # Pequeño delay para sincronización hilo de video
+        print(f"[{scan_id}] Sincronizando sistema de detección...")
+        time.sleep(0.25)
         
-        # Esperar hasta 3 segundos adicionales a que el hilo procese al menos 5 frames
-        while time.time() - detection_wait_start < 3.0 and not detection_ready:
-            try:
-                # Verificar que el hilo de video esté procesando frames activamente
-                test_frame = camera_mgr.get_latest_video_frame(timeout=0.1)
-                if test_frame is not None:
-                    # Dar tiempo para que procese varios frames consecutivos
-                    time.sleep(0.5)
-                    test_frame2 = camera_mgr.get_latest_video_frame(timeout=0.1)
-                    if test_frame2 is not None:
-                        print(f"[{scan_id}] Sistema de detección estabilizado y listo")
-                        detection_ready = True
-                        break
-            except Exception:
-                pass
-            time.sleep(0.1)
-        
-        if not detection_ready:
-            print(f"[{scan_id}] Advertencia: Sistema de detección no completamente estable, continuando...")
-        
-        # Limpiar snapshots previos antes de iniciar el movimiento principal
+        # CRÍTICO: Limpiar estado UART para evitar interferencia de movimientos previos
         try:
             robot.cmd.uart.clear_last_snapshots()
-        except Exception:
-            pass
+            robot.cmd.uart.reset_scanning_state()
+            print(f"[{scan_id}] Estado UART limpiado")
+        except Exception as e:
+            print(f"[{scan_id}] Advertencia: No se pudo limpiar UART: {e}")
 
         # Movimiento hasta el borde derecho seguro (x_edge = width_mm - safety)
         dims = robot.get_workspace_dimensions()
@@ -552,21 +487,6 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         else:
             pass
         
-        # BUSCAR Y TERMINAR THREADS ZOMBIE
-        zombie_threads = []
-        for thread in threading.enumerate():
-            if thread.name.startswith("VideoScanThread") and thread != threading.current_thread():
-                if thread.is_alive():
-                    zombie_threads.append(thread)
-                    print(f"[{scan_id}] LIMPIEZA: ⚠️ Thread zombie encontrado: {thread.name}")
-        
-        if zombie_threads:
-            # Intentar cerrar ventanas asociadas a threads zombie
-            cv2.destroyAllWindows()
-            for _ in range(20):
-                cv2.waitKey(1)
-                time.sleep(0.01)
-
         # PARAR VIDEO STREAM (referenciado) Y LIBERAR USO
         try:
             camera_mgr.stop_stream_ref()
@@ -591,7 +511,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 RobotConfig.NORMAL_SPEED_H,
                 RobotConfig.NORMAL_SPEED_V
             )
-            time.sleep(1.0)
+            time.sleep(0.5)  # Reducido de 1.0s - suficiente para que firmware procese
             print(f"[{scan_id}] LIMPIEZA: Velocidades reseteadas correctamente")
         except Exception as e:
             print(f"[{scan_id}] LIMPIEZA: Error reseteando velocidades: {e}")
