@@ -757,17 +757,23 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print("     → Paso 8: Lechuga recogida - Seteando flag en TRUE")
                 robot.arm.set_lettuce_state(True)
                 
+                # Esperar a que termine completamente la trayectoria de recoger_lechuga
+                print("     → Esperando finalización completa de 'recoger_lechuga'...")
+                time.sleep(2.0)
+                
+                
                 # PASO 9: Cambiar brazo a 'mover_lechuga'
                 print("     → Paso 9: Cambiando brazo a 'mover_lechuga' para transporte")
                 res_arm2 = robot.arm.change_state('mover_lechuga')
                 if not res_arm2.get('success'):
                     print(f"       Error moviendo a 'mover_lechuga': {res_arm2}")
                     return False
+                print(f"     → Brazo cambiado exitosamente a 'mover_lechuga'")
                 try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
+                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=15.0)
                 except Exception:
                     pass
-                wait_arm_idle(6.0)
+                wait_arm_idle(8.0)
 
                 # PASO 10: Ir a esquina para depositar (X=fin, Y=fin)
                 print(f"     → Paso 10: Moviendo a esquina de depósito: X={x_edge:.1f}mm, Y={y_edge:.1f}mm")
