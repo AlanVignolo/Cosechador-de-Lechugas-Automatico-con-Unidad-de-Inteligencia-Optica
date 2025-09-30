@@ -69,7 +69,7 @@ def _get_ordered_tubos() -> Dict[int, Dict[str, float]]:
     return {k: cfg[k] for k in sorted(cfg.keys())}
 
 
-def # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking -> bool:  # DESHABILITADO: No usar
+def _resync_position_from_firmware_DISABLED(robot) -> bool:  # NO USAR - Rompe tracking
     """
     Resincronizar posición global del supervisor desde la posición real del firmware.
     Útil antes de movimientos críticos como retorno a (0,0) para evitar errores acumulados.
