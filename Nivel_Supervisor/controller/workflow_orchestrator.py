@@ -206,14 +206,11 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             if not res_arm_pp.get('success'):
                 print(f"Error: no se pudo cambiar brazo a 'movimiento': {res_arm_pp}")
                 return False
-            t0 = time.time()
-            while time.time() - t0 < 6.0:
-                try:
-                    if not getattr(robot.arm, 'is_executing_trajectory', False):
-                        break
-                except Exception:
-                    break
-                time.sleep(0.05)
+
+            # Esperar a que REALMENTE llegue al estado 'movimiento'
+            if not wait_for_arm_state('movimiento', timeout_s=20.0):
+                print(f"Error: Brazo no llegó a 'movimiento'")
+                return False
 
         # Paso 1: Homing
         print("[inicio_completo] Paso 1/4: Homing...")
@@ -632,6 +629,30 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             print("[wait_arm_idle] Aviso: brazo aún en movimiento tras timeout; continuando con cuidado")
             return False
 
+        # Helper: esperar hasta que el brazo esté en un estado específico
+        def wait_for_arm_state(target_state: str, timeout_s: float = 20.0) -> bool:
+            """Espera hasta que el brazo esté realmente en el estado objetivo"""
+            import time as _t
+            t0 = _t.time()
+            print(f"       [wait_for_arm_state] Esperando estado '{target_state}'...")
+
+            while _t.time() - t0 < timeout_s:
+                try:
+                    # Verificar que NO esté ejecutando trayectoria
+                    if not getattr(robot.arm, 'is_executing_trajectory', False):
+                        # Verificar que esté en el estado correcto
+                        if robot.arm.current_state == target_state:
+                            elapsed = _t.time() - t0
+                            print(f"       [wait_for_arm_state] ✅ Estado '{target_state}' alcanzado en {elapsed:.1f}s")
+                            return True
+                except Exception as e:
+                    print(f"       [wait_for_arm_state] ⚠️  Exception: {e}")
+                    pass
+                _t.sleep(0.1)
+
+            print(f"       [wait_for_arm_state] ❌ Timeout esperando '{target_state}' (actual: {robot.arm.current_state})")
+            return False
+
         # Helper: posicionamiento completo (opción main_robot 10-3)
         def posicionamiento_completo(robot):
             try:
@@ -674,11 +695,10 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print(f"No se pudo ir a 'mover_lechuga': {res_arm}")
                 return False
             # Esperar confirmación de fin de trayectoria por UART y luego idle
-            try:
-                robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
-            except Exception:
-                pass
-            wait_arm_idle(6.0)
+            # Esperar a que llegue al estado 'mover_lechuga'
+            if not wait_for_arm_state('mover_lechuga', timeout_s=20.0):
+                print(f"Error: Brazo no llegó a 'mover_lechuga'")
+                return False
         else:
             print("[cosecha] Brazo ya está en 'mover_lechuga'")
 
@@ -705,7 +725,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 primera_cinta = cintas_sorted[0]
                 x_primera = float(primera_cinta.get('x_mm', 0.0))
                 print(f"  -> Moviendo a primera cinta del tubo: X={x_primera:.1f}mm, Y={y_tubo:.1f}mm")
-                wait_arm_idle(6.0)
+                # El brazo ya está en 'mover_lechuga', no necesita espera adicional
                 if not move_abs(x_primera, y_tubo):
                     return False
 
@@ -713,10 +733,10 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             for idx, cinta in enumerate(cintas_sorted):
                 x_cinta = float(cinta.get('x_mm', 0.0))
                 print(f"\n  -> Cinta #{cinta.get('id','?')}: X={x_cinta:.1f}mm")
-                
+
                 # Mover a la cinta solo si no es la primera (ya estamos ahí)
                 if idx > 0:
-                    wait_arm_idle(6.0)
+                    # El brazo sigue en 'mover_lechuga', puede moverse directamente
                     if not move_abs(x_cinta, y_tubo):
                         return False
 
@@ -745,35 +765,34 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print("     → Paso 7: Cambiando brazo a 'recoger_lechuga'")
                 res_arm = robot.arm.change_state('recoger_lechuga')
                 if not res_arm.get('success'):
-                    print(f"       Error moviendo a 'recoger_lechuga': {res_arm}")
+                    print(f"       ❌ Error iniciando transición a 'recoger_lechuga': {res_arm}")
                     return False
-                try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=12.0)
-                except Exception:
-                    pass
-                wait_arm_idle(8.0)
-                
+
+                # Esperar a que REALMENTE llegue al estado 'recoger_lechuga'
+                if not wait_for_arm_state('recoger_lechuga', timeout_s=20.0):
+                    print(f"       ❌ ERROR: Brazo no llegó a 'recoger_lechuga'")
+                    return False
+
                 # PASO 8: Al terminar movimiento, setear flag en TRUE (con lechuga)
                 print("     → Paso 8: Lechuga recogida - Seteando flag en TRUE")
                 robot.arm.set_lettuce_state(True)
-                
-                # Esperar a que termine completamente la trayectoria de recoger_lechuga
-                print("     → Esperando finalización completa de 'recoger_lechuga'...")
-                time.sleep(2.0)
                 
                 
                 # PASO 9: Cambiar brazo a 'mover_lechuga'
                 print("     → Paso 9: Cambiando brazo a 'mover_lechuga' para transporte")
                 res_arm2 = robot.arm.change_state('mover_lechuga')
+
                 if not res_arm2.get('success'):
-                    print(f"       Error moviendo a 'mover_lechuga': {res_arm2}")
+                    print(f"       ❌ ERROR iniciando transición a 'mover_lechuga': {res_arm2}")
                     return False
-                print(f"     → Brazo cambiado exitosamente a 'mover_lechuga'")
-                try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=15.0)
-                except Exception:
-                    pass
-                wait_arm_idle(8.0)
+
+                # Esperar a que REALMENTE llegue al estado 'mover_lechuga'
+                if not wait_for_arm_state('mover_lechuga', timeout_s=20.0):
+                    print(f"       ❌ ERROR: Brazo no llegó a 'mover_lechuga'")
+                    return False
+
+                print(f"     → ✅ Brazo confirmado en 'mover_lechuga', listo para mover XY")
+
 
                 # PASO 10: Ir a esquina para depositar (X=fin, Y=fin)
                 print(f"     → Paso 10: Moviendo a esquina de depósito: X={x_edge:.1f}mm, Y={y_edge:.1f}mm")
@@ -784,26 +803,26 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print("     → Paso 11: Cambiando brazo a 'depositar_lechuga'")
                 res_dep = robot.arm.change_state('depositar_lechuga')
                 if not res_dep.get('success'):
-                    print(f"       Error en 'depositar_lechuga': {res_dep}")
+                    print(f"       ❌ Error iniciando transición a 'depositar_lechuga': {res_dep}")
                     return False
-                try:
-                    robot.cmd.uart.wait_for_action_completion("GRIPPER_ACTION", timeout=10.0)
-                except Exception:
-                    pass
-                wait_arm_idle(6.0)
+
+                # Esperar a que REALMENTE llegue al estado 'depositar_lechuga'
+                if not wait_for_arm_state('depositar_lechuga', timeout_s=20.0):
+                    print(f"       ❌ ERROR: Brazo no llegó a 'depositar_lechuga'")
+                    return False
                 
                 # PASO 12: Cambiar brazo a 'mover_lechuga' y setear flag en FALSE
                 print("     → Paso 12: Lechuga depositada - Cambiando a 'mover_lechuga' y flag en FALSE")
                 robot.arm.set_lettuce_state(False)
                 res_back = robot.arm.change_state('mover_lechuga')
                 if not res_back.get('success'):
-                    print(f"       Error volviendo a 'mover_lechuga': {res_back}")
+                    print(f"       ❌ Error iniciando transición a 'mover_lechuga': {res_back}")
                     return False
-                try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
-                except Exception:
-                    pass
-                wait_arm_idle(6.0)
+
+                # Esperar a que REALMENTE llegue al estado 'mover_lechuga'
+                if not wait_for_arm_state('mover_lechuga', timeout_s=20.0):
+                    print(f"       ❌ ERROR: Brazo no llegó a 'mover_lechuga'")
+                    return False
 
                 # PASO 13: Volver al tubo actual para continuar con siguiente cinta
                 print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm) para siguiente cinta")
@@ -847,11 +866,9 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             if not res_arm_end.get('success'):
                 print(f"Advertencia: No se pudo poner brazo en 'movimiento': {res_arm_end}")
             else:
-                try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
-                except Exception:
-                    pass
-                wait_arm_idle(6.0)
+                # Esperar a que llegue al estado 'movimiento'
+                if not wait_for_arm_state('movimiento', timeout_s=20.0):
+                    print(f"Advertencia: Brazo no llegó a 'movimiento', continuando con cuidado")
 
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
