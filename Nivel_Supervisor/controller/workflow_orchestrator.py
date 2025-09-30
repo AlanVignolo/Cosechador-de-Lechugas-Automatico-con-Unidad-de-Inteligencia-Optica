@@ -393,9 +393,9 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
     PASO 8: Al terminar movimiento, setear flag en TRUE (con lechuga)
     
     PASO 9: Cambiar brazo a 'mover_lechuga' para transporte
-    
-    PASO 10: Ir a esquina de depósito (X=fin, Y=fin)
-    
+
+    PASO 10: Ir a posición de depósito (X=fin, Y=fin-250mm)
+
     PASO 11: Cambiar brazo a 'depositar_lechuga'
     
     PASO 12: Cambiar brazo a 'mover_lechuga' y setear flag en FALSE
@@ -535,8 +535,12 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         x_edge = max(0.0, width_mm - edge_backoff_mm)
         y_edge = max(0.0, height_mm - edge_backoff_mm)
 
+        # Posición de depósito: X en el borde, Y a 250mm del borde
+        y_deposit = max(0.0, y_edge - 250.0)
+
         print(f"[cosecha] Workspace: width={width_mm:.1f}mm, height={height_mm:.1f}mm")
-        print(f"[cosecha] Edges: x_edge={x_edge:.1f}mm, y_edge={y_edge:.1f}mm")
+        print(f"[cosecha] Borde seguro: x_edge={x_edge:.1f}mm, y_edge={y_edge:.1f}mm")
+        print(f"[cosecha] Posición de depósito: X={x_edge:.1f}mm, Y={y_deposit:.1f}mm")
 
         # Helper: obtener posición actual desde firmware (preferido) o supervisor
         def _get_curr_pos_mm_from_fw() -> Optional[Tuple[float, float]]:
@@ -792,9 +796,9 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print(f"     → ✅ Brazo confirmado en 'mover_lechuga', listo para mover XY")
 
 
-                # PASO 10: Ir a esquina para depositar (X=fin, Y=fin)
-                print(f"     → Paso 10: Moviendo a esquina de depósito: X={x_edge:.1f}mm, Y={y_edge:.1f}mm")
-                if not move_abs(x_edge, y_edge):
+                # PASO 10: Ir a posición de depósito (X=fin, Y=fin-250mm)
+                print(f"     → Paso 10: Moviendo a posición de depósito: X={x_edge:.1f}mm, Y={y_deposit:.1f}mm")
+                if not move_abs(x_edge, y_deposit):
                     return False
                 
                 # PASO 11: Cambiar brazo a 'depositar_lechuga'
