@@ -51,18 +51,20 @@ class VerticalScanner:
             self.camera_mgr.release("escaner_vertical")
         print("Cámara liberada")
 
-    def is_tube_complete(self, y_superior, y_inferior, frame_height, margin=10):
+    def is_tube_complete(self, y_superior, y_inferior, frame_height, margin=10, min_height=80):
         """
-        Verifica si el tubo está COMPLETO (ambas líneas visibles)
+        Verifica si el tubo está COMPLETO (ambas líneas visibles y separadas)
 
         Args:
             y_superior: Coordenada Y de línea superior
             y_inferior: Coordenada Y de línea inferior
             frame_height: Altura del frame
             margin: Margen de seguridad desde los bordes (píxeles)
+            min_height: Altura mínima del tubo en píxeles (default: 80px)
 
         Returns:
             bool: True si ambas líneas están completamente dentro del frame
+                  y tienen la separación mínima requerida
         """
         if y_superior is None or y_inferior is None:
             return False
@@ -71,7 +73,11 @@ class VerticalScanner:
         superior_visible = (y_superior >= margin)
         inferior_visible = (y_inferior <= frame_height - margin)
 
-        return superior_visible and inferior_visible
+        # Verificar distancia mínima entre líneas (altura del tubo)
+        altura_tubo = y_inferior - y_superior
+        altura_suficiente = (altura_tubo >= min_height)
+
+        return superior_visible and inferior_visible and altura_suficiente
 
     def process_detection_state(self, is_complete, detection_state, robot):
         """
@@ -149,7 +155,7 @@ class VerticalScanner:
             print(f"Error en send_flag: {e}")
             return None
 
-    def video_loop(self, robot, detection_state):
+    def video_loop(self, robot, detection_state, min_tube_height_px=80):
         """Bucle de video para procesamiento continuo"""
         print("Iniciando bucle de video...")
 
@@ -180,7 +186,8 @@ class VerticalScanner:
                 y_sup, y_inf, centro_y, info = detectar_lineas_tubo(frame_procesado, debug=False)
 
                 # Determinar si el tubo está completo
-                tube_complete = self.is_tube_complete(y_sup, y_inf, frame_procesado.shape[0])
+                tube_complete = self.is_tube_complete(y_sup, y_inf, frame_procesado.shape[0], 
+                                                      min_height=min_tube_height_px)
 
                 # Procesar estado y generar flags
                 self.process_detection_state(tube_complete, detection_state, robot)
@@ -190,10 +197,11 @@ class VerticalScanner:
                     cv2.line(frame_procesado, (0, y_sup), (frame_procesado.shape[1], y_sup), (0, 0, 255), 2)
                     cv2.line(frame_procesado, (0, y_inf), (frame_procesado.shape[1], y_inf), (0, 255, 0), 2)
 
+                    altura_tubo = y_inf - y_sup
                     status_color = (0, 255, 0) if tube_complete else (0, 165, 255)
                     status_text = "COMPLETO" if tube_complete else "CORTADO"
-                    cv2.putText(frame_procesado, status_text, (10, 30),
-                               cv2.FONT_HERSHEY_SIMPLEX, 1, status_color, 2)
+                    cv2.putText(frame_procesado, f"{status_text} (h={altura_tubo}px)", (10, 30),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
                 else:
                     cv2.putText(frame_procesado, "NO DETECTADO", (10, 30),
                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
@@ -211,12 +219,18 @@ class VerticalScanner:
         cv2.destroyAllWindows()
         print(f"Bucle de video terminado. Frames procesados: {frame_count}")
 
-    def start_scanning_with_movement(self, robot):
+    def start_scanning_with_movement(self, robot, min_tube_height_px=80):
         """
         Inicia el escaneo vertical con movimiento
+        
+        Args:
+            robot: Instancia del RobotController
+            min_tube_height_px: Altura mínima del tubo en píxeles (default: 80px)
         """
         print("\n" + "="*60)
         print("INICIANDO ESCANEO VERTICAL CON SISTEMA DE FLAGS")
+        print("="*60)
+        print(f"Altura mínima del tubo: {min_tube_height_px} píxeles")
         print("="*60)
 
         # Verificar homing
@@ -257,7 +271,7 @@ class VerticalScanner:
             self.is_scanning = True
             video_thread = threading.Thread(
                 target=self.video_loop,
-                args=(robot, detection_state),
+                args=(robot, detection_state, min_tube_height_px),
                 daemon=True
             )
             video_thread.start()
