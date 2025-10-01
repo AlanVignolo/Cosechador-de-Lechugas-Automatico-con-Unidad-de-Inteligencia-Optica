@@ -489,32 +489,45 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             if not res_home.get('success'):
                 print(f"[cosecha] Error en homing: {res_home.get('message')}")
                 return False
-        # Antes de calcular y mover, resincronizar posición global desde firmware para evitar usar estado viejo
-        did_resync = False
-        try:
-            if robot.resync_global_position_from_firmware():
-                st_sync = robot.get_status()
-                print(f"[cosecha] Posición resincronizada: X={st_sync['position']['x']:.1f}mm, Y={st_sync['position']['y']:.1f}mm")
-                did_resync = True
-        except Exception:
+        # Verificar estado actual del supervisor
+        st_current = robot.get_status()
+        current_x = st_current['position']['x']
+        current_y = st_current['position']['y']
+        is_homed = st_current.get('is_homed', False)
+
+        print(f"[cosecha] Posición actual del supervisor: X={current_x:.1f}mm, Y={current_y:.1f}mm (Homed: {is_homed})")
+
+        # Solo hacer resync si NO está homed (posición no confiable)
+        if not is_homed:
+            print("[cosecha] Robot NO homed - Intentando resincronizar desde firmware...")
             did_resync = False
-        if not did_resync:
-            st_nosync = robot.get_status()
-            print(f"[cosecha] Aviso: no se pudo resincronizar. Usando estado supervisor: X={st_nosync['position']['x']:.1f}mm, Y={st_nosync['position']['y']:.1f}mm")
-            # Si estamos exactamente en (0, -height) por tracking invertido, corregir a (0,0)
-            dims_chk = robot.get_workspace_dimensions()
             try:
-                height_chk = float(dims_chk.get('height_mm', 0.0)) if dims_chk.get('calibrated') else float(RobotConfig.MAX_Y)
-            except Exception:
-                height_chk = float(RobotConfig.MAX_Y)
-            y_bad = st_nosync['position']['y']
-            x_bad = st_nosync['position']['x']
-            if abs(x_bad - 0.0) <= 2.0 and abs(abs(y_bad) - height_chk) <= 2.0:
-                print("[cosecha] Corrección automática: interpretando estado (0, -height) como (0,0) tras retorno previo")
+                if robot.resync_global_position_from_firmware():
+                    st_sync = robot.get_status()
+                    print(f"[cosecha] Posición resincronizada: X={st_sync['position']['x']:.1f}mm, Y={st_sync['position']['y']:.1f}mm")
+                    did_resync = True
+            except Exception as e:
+                print(f"[cosecha] Error en resync: {e}")
+                did_resync = False
+            if not did_resync:
+                st_nosync = robot.get_status()
+                print(f"[cosecha] Aviso: no se pudo resincronizar. Usando estado supervisor: X={st_nosync['position']['x']:.1f}mm, Y={st_nosync['position']['y']:.1f}mm")
+                # Si estamos exactamente en (0, -height) por tracking invertido, corregir a (0,0)
+                dims_chk = robot.get_workspace_dimensions()
                 try:
-                    robot.reset_global_position(0.0, 0.0)
+                    height_chk = float(dims_chk.get('height_mm', 0.0)) if dims_chk.get('calibrated') else float(RobotConfig.MAX_Y)
                 except Exception:
-                    pass
+                    height_chk = float(RobotConfig.MAX_Y)
+                y_bad = st_nosync['position']['y']
+                x_bad = st_nosync['position']['x']
+                if abs(x_bad - 0.0) <= 2.0 and abs(abs(y_bad) - height_chk) <= 2.0:
+                    print("[cosecha] Corrección automática: interpretando estado (0, -height) como (0,0) tras retorno previo")
+                    try:
+                        robot.reset_global_position(0.0, 0.0)
+                    except Exception:
+                        pass
+        else:
+            print(f"[cosecha] Robot homed - Usando posición confiable del supervisor (no resync)")
 
         # Obtener dimensiones del workspace
         dims = robot.get_workspace_dimensions()
@@ -709,8 +722,12 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         # Instancia de matriz de cintas
         matriz = MatrizCintas()
 
+        # Flag global para saber si debemos movernos (persiste entre tubos)
+        need_move = True
+
         # Iterar por tubos
-        for tubo_id in sorted(tubos_cfg.keys()):
+        tubos_list = sorted(tubos_cfg.keys())
+        for tubo_idx, tubo_id in enumerate(tubos_list):
             y_tubo = float(tubos_cfg[tubo_id]['y_mm'])
             nombre_tubo = tubos_cfg[tubo_id]['nombre']
             print(f"\n== TUBO {tubo_id} ({nombre_tubo}) Y={y_tubo:.1f}mm ==")
@@ -723,10 +740,6 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
 
             # Ordenar por id natural
             cintas_sorted = sorted(cintas, key=lambda c: c.get('id', 0))
-
-            # PASO 2 y 3: Iterar por todas las cintas del tubo
-            # Flag para saber si debemos movernos (True en primera iteración o si saltamos la anterior)
-            need_move = True
 
             for idx, cinta in enumerate(cintas_sorted):
                 x_cinta = float(cinta.get('x_mm', 0.0))
@@ -826,28 +839,58 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                     print(f"       ❌ ERROR: Brazo no llegó a 'mover_lechuga'")
                     return False
 
-                # PASO 13: Volver al tubo y posicionarse en la siguiente cinta (si existe)
+                # PASO 13: Optimizar movimiento al siguiente objetivo
                 siguiente_cinta_idx = idx + 1
                 if siguiente_cinta_idx < len(cintas_sorted):
-                    # Hay más cintas: moverse directamente a la siguiente en diagonal
+                    # Caso 1: Hay más cintas en el MISMO tubo
                     siguiente_cinta = cintas_sorted[siguiente_cinta_idx]
                     x_siguiente = float(siguiente_cinta.get('x_mm', 0.0))
-                    print(f"     → Paso 13: Moviendo directamente a siguiente cinta (X={x_siguiente:.1f}mm, Y={y_tubo:.1f}mm)")
+                    print(f"     → Paso 13: Moviendo directamente a siguiente cinta del mismo tubo (X={x_siguiente:.1f}mm, Y={y_tubo:.1f}mm)")
                     if not move_abs(x_siguiente, y_tubo):
                         return False
                     need_move = False  # Ya pre-posicionados para la siguiente cinta
                 else:
-                    # No hay más cintas: solo volver a Y del tubo
-                    print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm)")
-                    fwpos_after = _get_curr_pos_mm_from_fw()
-                    if fwpos_after is not None:
-                        curr_x_after, _ = fwpos_after
-                    else:
-                        status_after = robot.get_status()
-                        curr_x_after = float(status_after['position']['x'])
+                    # Caso 2: Es la última cinta del tubo actual
+                    siguiente_tubo_idx = tubo_idx + 1
+                    if siguiente_tubo_idx < len(tubos_list):
+                        # Hay un siguiente tubo: moverse directamente a su primera cinta
+                        siguiente_tubo_id = tubos_list[siguiente_tubo_idx]
+                        y_siguiente_tubo = float(tubos_cfg[siguiente_tubo_id]['y_mm'])
 
-                    if not move_abs(curr_x_after, y_tubo):
-                        return False
+                        # Obtener primera cinta del siguiente tubo
+                        cintas_siguiente_tubo = matriz.obtener_cintas_tubo(int(siguiente_tubo_id))
+                        if cintas_siguiente_tubo:
+                            cintas_siguiente_sorted = sorted(cintas_siguiente_tubo, key=lambda c: c.get('id', 0))
+                            primera_cinta_siguiente = cintas_siguiente_sorted[0]
+                            x_primera_siguiente = float(primera_cinta_siguiente.get('x_mm', 0.0))
+
+                            print(f"     → Paso 13: Moviendo directamente a primera cinta del siguiente tubo (X={x_primera_siguiente:.1f}mm, Y={y_siguiente_tubo:.1f}mm)")
+                            if not move_abs(x_primera_siguiente, y_siguiente_tubo):
+                                return False
+                            # Marcar que el siguiente tubo ya no necesita moverse en su primera iteración
+                            need_move = False
+                        else:
+                            # Siguiente tubo sin cintas: solo volver a Y del tubo actual
+                            print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm)")
+                            fwpos_after = _get_curr_pos_mm_from_fw()
+                            if fwpos_after is not None:
+                                curr_x_after, _ = fwpos_after
+                            else:
+                                status_after = robot.get_status()
+                                curr_x_after = float(status_after['position']['x'])
+                            if not move_abs(curr_x_after, y_tubo):
+                                return False
+                    else:
+                        # No hay más tubos: solo volver a Y del tubo actual
+                        print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm)")
+                        fwpos_after = _get_curr_pos_mm_from_fw()
+                        if fwpos_after is not None:
+                            curr_x_after, _ = fwpos_after
+                        else:
+                            status_after = robot.get_status()
+                            curr_x_after = float(status_after['position']['x'])
+                        if not move_abs(curr_x_after, y_tubo):
+                            return False
 
                 print("     ✓ Cosecha y depósito completados para esta cinta")
 
