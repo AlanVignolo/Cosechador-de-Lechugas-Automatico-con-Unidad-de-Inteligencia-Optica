@@ -166,173 +166,185 @@ def detect_tube_lines_debug(image, debug=True):
         plt.tight_layout()
         plt.show()
     
-    # PASO 2: DETECCIÓN DE BORDES + SOMBRAS/RELIEVES
+    # PASO 2: ENFOQUE EN CANAL S (SATURACIÓN) - Donde se distingue mejor el tubo
     filters = {}
-    
-    # MÉTODO 1: DETECCIÓN DE BORDES CON CANNY
-    # Suavizado previo para reducir ruido
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    
-    # Canny con diferentes umbrales
-    filters['canny_suave'] = cv2.Canny(blurred, 30, 80)
-    filters['canny_medio'] = cv2.Canny(blurred, 50, 120) 
-    filters['canny_fuerte'] = cv2.Canny(blurred, 80, 160)
-    
-    # MÉTODO 2: DETECCIÓN DE SOMBRAS Y RELIEVES
-    # Kernel para operaciones morfológicas (forma del tubo esperado)
-    kernel_horizontal = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 5))  # Para tubo horizontal
-    kernel_vertical = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 15))    # Para tapa vertical
-    kernel_circular = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))  # General
-    
-    # Top-hat: Resalta objetos más claros que el fondo (relieves)
-    filters['tophat_horizontal'] = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_horizontal)
-    filters['tophat_vertical'] = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_vertical)
-    
-    # Bottom-hat: Resalta objetos más oscuros que el fondo (sombras)
-    filters['bottomhat_horizontal'] = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, kernel_horizontal)
-    filters['bottomhat_vertical'] = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, kernel_vertical)
-    
-    # MÉTODO 3: COMBINACIÓN BORDES + RELIEVES
-    # Combinar Canny con top-hat para mejorar detección
-    tophat_combined = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, kernel_circular)
-    tophat_enhanced = cv2.addWeighted(gray, 0.7, tophat_combined, 0.3, 0)
-    filters['canny_tophat'] = cv2.Canny(tophat_enhanced, 40, 100)
-    
-    # MÉTODO 4: TEMPLATE MATCHING
-    # Crear plantillas simples del tubo y tapa
-    tubo_template = np.ones((20, 60), dtype=np.uint8) * 255  # Rectángulo horizontal
-    tubo_template = cv2.rectangle(tubo_template, (5, 5), (55, 15), 0, 2)  # Borde del tubo
-    
-    tapa_template = np.ones((40, 25), dtype=np.uint8) * 255  # Rectángulo vertical
-    tapa_template = cv2.rectangle(tapa_template, (5, 5), (20, 35), 0, 2)  # Borde de la tapa
-    
-    # Template matching
-    tubo_match = cv2.matchTemplate(gray, tubo_template, cv2.TM_CCOEFF_NORMED)
-    tapa_match = cv2.matchTemplate(gray, tapa_template, cv2.TM_CCOEFF_NORMED)
-    
-    # Threshold para matches
-    _, filters['template_tubo'] = cv2.threshold((tubo_match * 255).astype(np.uint8), 100, 255, cv2.THRESH_BINARY)
-    _, filters['template_tapa'] = cv2.threshold((tapa_match * 255).astype(np.uint8), 80, 255, cv2.THRESH_BINARY)
-    
-    # MÉTODO 5: ANÁLISIS DE TEXTURAS (LBP)
-    def get_lbp_simple(image, radius=1):
-        """LBP simplificado para detectar texturas"""
-        rows, cols = image.shape
-        lbp = np.zeros_like(image)
-        
-        for i in range(radius, rows - radius):
-            for j in range(radius, cols - radius):
-                center = image[i, j]
-                code = 0
-                code |= (image[i-1, j-1] >= center) << 7
-                code |= (image[i-1, j] >= center) << 6
-                code |= (image[i-1, j+1] >= center) << 5
-                code |= (image[i, j+1] >= center) << 4
-                code |= (image[i+1, j+1] >= center) << 3
-                code |= (image[i+1, j] >= center) << 2
-                code |= (image[i+1, j-1] >= center) << 1
-                code |= (image[i, j-1] >= center) << 0
-                lbp[i, j] = code
-        return lbp
-    
-    lbp = get_lbp_simple(gray)
-    # Buscar texturas uniformes (tubo liso vs madera texturada)
-    _, filters['textura_lbp'] = cv2.threshold(lbp, 50, 255, cv2.THRESH_BINARY)
-    
-    # MÉTODO 6: FILTRADO DIRECCIONAL ESPECÍFICO
-    # Kernel para detectar solo líneas horizontales (suprimir verticales)
-    kernel_horizontal_only = np.array([[-1, -1, -1],
-                                     [ 2,  2,  2],
-                                     [-1, -1, -1]], dtype=np.float32)
-    
-    horizontal_response = cv2.filter2D(gray, -1, kernel_horizontal_only)
-    horizontal_response = np.clip(horizontal_response, 0, 255).astype(np.uint8)
-    _, filters['solo_horizontales'] = cv2.threshold(horizontal_response, 50, 255, cv2.THRESH_BINARY)
-    
-    # MÉTODO 7: ANÁLISIS POR REGIONES (ROI)
-    # Dividir imagen en 3 zonas y analizar centro (evitar bordes con madera)
-    h_img, w_img = gray.shape
-    zona_central = gray[h_img//4:3*h_img//4, w_img//4:3*w_img//4]  # Solo centro
-    
-    # Aplicar Canny solo en zona central
-    zona_central_blur = cv2.GaussianBlur(zona_central, (5, 5), 0)
-    zona_central_canny = cv2.Canny(zona_central_blur, 40, 100)
-    
-    # Expandir resultado a imagen completa
-    filters['roi_central'] = np.zeros_like(gray)
-    filters['roi_central'][h_img//4:3*h_img//4, w_img//4:3*w_img//4] = zona_central_canny
-    
-    # MÉTODO 8: COMBINACIÓN MULTICANAL
-    # Aprovechar diferencias sutiles en R, G, B
-    b, g, r = cv2.split(image)
-    
-    # Diferencia entre canales para resaltar objetos
-    diff_rg = cv2.absdiff(r, g)
-    diff_rb = cv2.absdiff(r, b)
-    diff_gb = cv2.absdiff(g, b)
-    
-    # Combinar diferencias
-    multi_diff = cv2.addWeighted(diff_rg, 0.33, diff_rb, 0.33, 0)
-    multi_diff = cv2.addWeighted(multi_diff, 1.0, diff_gb, 0.34, 0)
-    
-    _, filters['multicanal_diff'] = cv2.threshold(multi_diff, 15, 255, cv2.THRESH_BINARY)
+
+    if debug:
+        print("\n=== ANÁLISIS DE SATURACIÓN (Canal S) ===")
+        print("El tubo blanco tiene BAJA saturación")
+        print("El fondo madera tiene MAYOR saturación")
+
+    # MÉTODO 1: UMBRALIZACIÓN ADAPTIVA EN CANAL S
+    # El tubo blanco opaco tiene saturación MUY BAJA (casi 0)
+    # La madera tiene saturación más alta
+
+    # Invertir canal S para que objetos blancos/grises tengan valores altos
+    s_invertido = 255 - s_channel
+
+    # Diferentes umbrales en canal S
+    _, filters['s_baja_sat_1'] = cv2.threshold(s_invertido, 180, 255, cv2.THRESH_BINARY)  # Muy estricto
+    _, filters['s_baja_sat_2'] = cv2.threshold(s_invertido, 160, 255, cv2.THRESH_BINARY)  # Medio
+    _, filters['s_baja_sat_3'] = cv2.threshold(s_invertido, 140, 255, cv2.THRESH_BINARY)  # Permisivo
+
+    # Umbralización adaptativa en canal S
+    filters['s_adaptativo'] = cv2.adaptiveThreshold(s_invertido, 255,
+                                                     cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                                     cv2.THRESH_BINARY, 21, -5)
+
+    # MÉTODO 2: COMBINACIÓN S + V (Saturación + Brillo)
+    # Tubo blanco: Baja saturación + Alto brillo
+    mask_bajo_s = s_channel < 40  # Saturación muy baja
+    mask_alto_v = v_channel > 150  # Brillo alto
+    filters['s_bajo_v_alto'] = ((mask_bajo_s & mask_alto_v) * 255).astype(np.uint8)
+
+    # MÉTODO 3: DIFERENCIA ENTRE CANAL S Y V
+    # En objetos blancos: V alto, S bajo → diferencia grande
+    diff_v_s = cv2.absdiff(v_channel, s_channel)
+    _, filters['diff_v_menos_s'] = cv2.threshold(diff_v_s, 100, 255, cv2.THRESH_BINARY)
+
+    # MÉTODO 4: ANÁLISIS ESTADÍSTICO LOCAL EN CANAL S
+    # Buscar regiones uniformemente blancas (varianza baja en S)
+    s_blur = cv2.GaussianBlur(s_channel, (15, 15), 0)
+    s_variance = cv2.absdiff(s_channel, s_blur)
+    # Invertir: donde hay poca varianza (tubo uniforme) → blanco
+    s_variance_inv = 255 - s_variance
+    _, filters['s_uniforme'] = cv2.threshold(s_variance_inv, 200, 255, cv2.THRESH_BINARY)
+
+    # MÉTODO 5: DETECCIÓN DE BORDES EN CANAL S
+    # Los bordes del tubo son más visibles en canal S
+    s_blurred = cv2.GaussianBlur(s_channel, (5, 5), 0)
+    filters['s_canny_suave'] = cv2.Canny(s_blurred, 20, 60)
+    filters['s_canny_medio'] = cv2.Canny(s_blurred, 30, 80)
+
+    # MÉTODO 6: MORFOLOGÍA EN CANAL S
+    # Cerrar gaps en regiones de baja saturación
+    kernel_rect = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 5))
+    s_morph = cv2.morphologyEx(filters['s_baja_sat_2'], cv2.MORPH_CLOSE, kernel_rect)
+    filters['s_morfologia'] = s_morph
+
+    # MÉTODO 7: GRADIENTES EN CANAL S
+    # Detectar bordes usando Sobel en canal S
+    s_sobelx = cv2.Sobel(s_channel, cv2.CV_64F, 1, 0, ksize=3)
+    s_sobely = cv2.Sobel(s_channel, cv2.CV_64F, 0, 1, ksize=3)
+    s_sobel_mag = np.sqrt(s_sobelx**2 + s_sobely**2)
+    s_sobel_mag = np.clip(s_sobel_mag, 0, 255).astype(np.uint8)
+    _, filters['s_gradientes'] = cv2.threshold(s_sobel_mag, 20, 255, cv2.THRESH_BINARY)
+
+    # MÉTODO 8: OPERACIONES MORFOLÓGICAS AVANZADAS
+    # Opening: Elimina ruido pequeño, mantiene estructuras grandes
+    kernel_opening = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    s_opening = cv2.morphologyEx(filters['s_baja_sat_2'], cv2.MORPH_OPEN, kernel_opening)
+
+    # Luego closing: Cierra gaps internos
+    kernel_closing = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 7))
+    s_opening_closing = cv2.morphologyEx(s_opening, cv2.MORPH_CLOSE, kernel_closing)
+    filters['s_open_close'] = s_opening_closing
+
+    # MÉTODO 9: COMBINACIÓN S + GRADIENTES
+    # Zonas de baja saturación + bordes detectados
+    s_mask = filters['s_baja_sat_2']
+    s_edges = filters['s_canny_medio']
+    # Dilatar bordes para capturar región interna
+    kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    s_edges_dilated = cv2.dilate(s_edges, kernel_dilate, iterations=2)
+    # Combinar: regiones de baja saturación dentro de bordes detectados
+    filters['s_mask_edges'] = cv2.bitwise_and(s_mask, s_edges_dilated)
+
+    # MÉTODO 10: ANÁLISIS DE REGIONES CONECTADAS EN CANAL S
+    # Encontrar componentes conexas en máscara de baja saturación
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(filters['s_baja_sat_2'], connectivity=8)
+
+    # Filtrar por área y aspecto (buscar tubo horizontal)
+    tubo_mask = np.zeros_like(filters['s_baja_sat_2'])
+    for i in range(1, num_labels):  # Ignorar fondo (label 0)
+        area = stats[i, cv2.CC_STAT_AREA]
+        x = stats[i, cv2.CC_STAT_LEFT]
+        y = stats[i, cv2.CC_STAT_TOP]
+        w = stats[i, cv2.CC_STAT_WIDTH]
+        h = stats[i, cv2.CC_STAT_HEIGHT]
+
+        # Filtros para tubo: área razonable, aspecto horizontal
+        if area > 500 and w > h * 1.2:  # Horizontal
+            tubo_mask[labels == i] = 255
+
+    filters['s_componentes'] = tubo_mask
     
     if debug:
-        print("PASO 2: Aplicando MÚLTIPLES ENFOQUES de detección")
+        print("PASO 2: Aplicando filtros basados en CANAL S (Saturación)")
         print(f"Total de filtros: {len(filters)}")
-        
-        # Ventana 1: Template Matching y Direccional
-        template_filters = {k: v for k, v in filters.items() if 'template' in k or 'horizontales' in k}
-        if template_filters:
-            fig1, axes1 = plt.subplots(1, len(template_filters), figsize=(12, 4))
-            fig1.suptitle('TEMPLATE MATCHING Y FILTRADO DIRECCIONAL', fontsize=14)
-            if len(template_filters) == 1:
+
+        # Ventana 1: Umbrales en Canal S
+        threshold_filters = {k: v for k, v in filters.items() if 's_baja_sat' in k or 's_adaptativo' in k}
+        if threshold_filters:
+            n = len(threshold_filters)
+            fig1, axes1 = plt.subplots(1, n, figsize=(5*n, 5))
+            fig1.suptitle('FILTRO 1: Umbrales en Canal S (Baja Saturación = Blanco)', fontsize=14)
+            if n == 1:
                 axes1 = [axes1]
-            for i, (name, filtered) in enumerate(template_filters.items()):
+            for i, (name, filtered) in enumerate(threshold_filters.items()):
                 axes1[i].imshow(filtered, cmap='gray')
-                axes1[i].set_title(f'{name}')
+                axes1[i].set_title(f'{name}\nPíxeles: {cv2.countNonZero(filtered)}')
                 axes1[i].axis('off')
             plt.tight_layout()
             plt.show()
-        
-        # Ventana 2: Análisis de Texturas y ROI
-        texture_filters = {k: v for k, v in filters.items() if 'textura' in k or 'roi' in k or 'multicanal' in k}
-        if texture_filters:
-            fig2, axes2 = plt.subplots(1, len(texture_filters), figsize=(12, 4))
-            fig2.suptitle('TEXTURAS, ROI Y MULTICANAL', fontsize=14)
-            if len(texture_filters) == 1:
+
+        # Ventana 2: Combinaciones S+V
+        combo_filters = {k: v for k, v in filters.items() if 'bajo_v_alto' in k or 'diff_v' in k or 'uniforme' in k}
+        if combo_filters:
+            n = len(combo_filters)
+            fig2, axes2 = plt.subplots(1, n, figsize=(5*n, 5))
+            fig2.suptitle('FILTRO 2: Combinaciones S+V y Uniformidad', fontsize=14)
+            if n == 1:
                 axes2 = [axes2]
-            for i, (name, filtered) in enumerate(texture_filters.items()):
+            for i, (name, filtered) in enumerate(combo_filters.items()):
                 axes2[i].imshow(filtered, cmap='gray')
-                axes2[i].set_title(f'{name}')
+                axes2[i].set_title(f'{name}\nPíxeles: {cv2.countNonZero(filtered)}')
                 axes2[i].axis('off')
             plt.tight_layout()
             plt.show()
-        
-        # Ventana 3: Métodos anteriores (bordes, sombras)
-        previous_filters = {k: v for k, v in filters.items() if 'canny' in k or 'hat' in k}
-        if previous_filters:
-            n_filters = len(previous_filters)
-            cols = min(4, n_filters)
-            rows = (n_filters + cols - 1) // cols
-            
-            fig3, axes3 = plt.subplots(rows, cols, figsize=(15, 4*rows))
-            fig3.suptitle('MÉTODOS ANTERIORES - Bordes y Sombras/Relieves', fontsize=14)
-            
-            if rows == 1:
-                axes3 = [axes3] if cols == 1 else axes3
-            else:
-                axes3 = axes3.flatten()
-            
-            for i, (name, filtered) in enumerate(previous_filters.items()):
+
+        # Ventana 3: Bordes en Canal S
+        edge_filters = {k: v for k, v in filters.items() if 's_canny' in k or 's_gradientes' in k}
+        if edge_filters:
+            n = len(edge_filters)
+            fig3, axes3 = plt.subplots(1, n, figsize=(5*n, 5))
+            fig3.suptitle('FILTRO 3: Detección de Bordes en Canal S', fontsize=14)
+            if n == 1:
+                axes3 = [axes3]
+            for i, (name, filtered) in enumerate(edge_filters.items()):
                 axes3[i].imshow(filtered, cmap='gray')
-                axes3[i].set_title(f'{name}')
+                axes3[i].set_title(f'{name}\nPíxeles: {cv2.countNonZero(filtered)}')
                 axes3[i].axis('off')
-            
-            # Ocultar ejes no usados
-            for i in range(len(previous_filters), rows * cols):
-                axes3[i].axis('off')
-            
+            plt.tight_layout()
+            plt.show()
+
+        # Ventana 4: Morfología
+        morph_filters = {k: v for k, v in filters.items() if 'morfologia' in k or 'open_close' in k or 'mask_edges' in k}
+        if morph_filters:
+            n = len(morph_filters)
+            fig4, axes4 = plt.subplots(1, n, figsize=(5*n, 5))
+            fig4.suptitle('FILTRO 4: Operaciones Morfológicas', fontsize=14)
+            if n == 1:
+                axes4 = [axes4]
+            for i, (name, filtered) in enumerate(morph_filters.items()):
+                axes4[i].imshow(filtered, cmap='gray')
+                axes4[i].set_title(f'{name}\nPíxeles: {cv2.countNonZero(filtered)}')
+                axes4[i].axis('off')
+            plt.tight_layout()
+            plt.show()
+
+        # Ventana 5: Componentes Conexas
+        component_filters = {k: v for k, v in filters.items() if 'componentes' in k}
+        if component_filters:
+            n = len(component_filters)
+            fig5, axes5 = plt.subplots(1, n, figsize=(5*n, 5))
+            fig5.suptitle('FILTRO 5: Análisis de Componentes Conexas', fontsize=14)
+            if n == 1:
+                axes5 = [axes5]
+            for i, (name, filtered) in enumerate(component_filters.items()):
+                axes5[i].imshow(filtered, cmap='gray')
+                axes5[i].set_title(f'{name}\nPíxeles: {cv2.countNonZero(filtered)}')
+                axes5[i].axis('off')
             plt.tight_layout()
             plt.show()
     
@@ -419,42 +431,51 @@ def detect_tube_lines_debug(image, debug=True):
                     score += 10
                     characteristics.append("cuadrado_centrado")
             
-            # BONUS POR TIPO DE FILTRO
-            # Filtros de bordes son muy buenos para formas definidas
-            if 'canny' in filter_name:
-                score += 15
-                characteristics.append("filtro_bordes")
-                
-                # Bonus extra para Canny medio (balance ruido/detección)
-                if 'medio' in filter_name:
+            # BONUS POR TIPO DE FILTRO - Priorizar filtros basados en Canal S
+            if 's_componentes' in filter_name:
+                # Máxima confianza: análisis inteligente de regiones
+                score += 40
+                characteristics.append("filtro_componentes_s")
+
+            elif 's_open_close' in filter_name or 's_morfologia' in filter_name:
+                # Alta confianza: morfología en canal S
+                score += 35
+                characteristics.append("filtro_morfologia_s")
+
+            elif 's_mask_edges' in filter_name:
+                # Buena confianza: combinación de máscara + bordes
+                score += 30
+                characteristics.append("filtro_s_bordes_combinado")
+
+            elif 's_bajo_v_alto' in filter_name or 'diff_v' in filter_name:
+                # Buena confianza: combinaciones S+V
+                score += 28
+                characteristics.append("filtro_s_v_combinado")
+
+            elif 's_baja_sat' in filter_name:
+                # Confianza media-alta: umbral directo en S
+                score += 25
+                characteristics.append("filtro_umbral_s")
+
+                # Bonus para umbral medio (balance)
+                if '_2' in filter_name:
                     score += 5
-                    characteristics.append("canny_optimo")
-                    
-            # Filtros de relieves detectan elevaciones (tubos)
-            elif 'tophat' in filter_name:
-                score += 12
-                characteristics.append("filtro_relieve")
-                
-                # Bonus para orientación correcta
-                if ('horizontal' in filter_name and tipo_rectangulo == "TUBO_HORIZONTAL") or \
-                   ('vertical' in filter_name and tipo_rectangulo == "TAPA_VERTICAL"):
-                    score += 8
-                    characteristics.append("orientación_correcta")
-                    
-            # Filtros de sombras detectan depresiones
-            elif 'bottomhat' in filter_name:
-                score += 8
-                characteristics.append("filtro_sombras")
-                
-            # Gradientes detectan cambios sutiles
-            elif 'gradientes' in filter_name:
-                score += 10
-                characteristics.append("filtro_gradientes")
-            
-            # Penalizar contornos muy pequeños (ruido) en filtros de bordes
-            if ('canny' in filter_name or 'gradientes' in filter_name) and area < 200:
-                score -= 10
-                characteristics.append("posible_ruido")
+                    characteristics.append("umbral_s_optimo")
+
+            elif 's_adaptativo' in filter_name or 's_uniforme' in filter_name:
+                # Confianza media: análisis adaptativo
+                score += 22
+                characteristics.append("filtro_adaptativo_s")
+
+            elif 's_canny' in filter_name or 's_gradientes' in filter_name:
+                # Confianza media: bordes en canal S
+                score += 20
+                characteristics.append("filtro_bordes_s")
+
+            # Penalizar contornos muy pequeños (ruido)
+            if area < 300:
+                score -= 15
+                characteristics.append("area_pequeña")
             
             # Solo considerar candidatos con score mínimo
             if score > 15:
