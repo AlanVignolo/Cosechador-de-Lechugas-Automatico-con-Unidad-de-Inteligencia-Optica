@@ -1,6 +1,7 @@
 """
 Script de Detección de Bordes usando HSV + Threshold
 Basado en el método de tape_detector_vertical/horizontal
+MEJORADO: Solo ajustes en filtros de color para eliminar sombras
 """
 
 import cv2
@@ -25,7 +26,7 @@ class EdgeDetectorHSV:
         """
         Detecta bordes usando múltiples métodos combinados con reducción de ruido
         Detecta tanto zonas verdes (lechuga) como zonas negras (cinta/vaso oscuro)
-        Robusto contra sombras y variaciones de iluminación
+        MEJORADO: Filtros de color más estrictos para eliminar sombras
         Alta definición en los bordes
         
         Returns:
@@ -36,9 +37,10 @@ class EdgeDetectorHSV:
         # Método 1: HSV para detectar vegetación verde (lechuga)
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         
-        # Rango ESTRICTO para detectar solo verde intenso (no sombras verdosas)
-        lower_green = np.array([35, 50, 50])
-        upper_green = np.array([80, 255, 255])
+        # AJUSTE 1: Rango BALANCEADO para verde - Detecta verde válido sin sombras
+        # S=55 permite verde con algo de sombra pero rechaza sombras grises
+        lower_green = np.array([35, 55, 50])  # CAMBIO: S=55 (equilibrado), V=50
+        upper_green = np.array([85, 255, 255])  # H hasta 85 para captar más verdes
         mask_green = cv2.inRange(hsv, lower_green, upper_green)
         
         # Método 2: MEJORADO - Detectar zonas negras REALES, NO sombras
@@ -47,14 +49,16 @@ class EdgeDetectorHSV:
         v_channel = hsv[:, :, 2]
         s_channel = hsv[:, :, 1]
         
-        # 2A: Negro REAL debe ser MUY oscuro (no sombras grises)
-        _, mask_very_dark_gray = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY_INV)
-        _, mask_very_dark_v = cv2.threshold(v_channel, 55, 255, cv2.THRESH_BINARY_INV)
+        # 2A: AJUSTE 2: Negro BALANCEADO - Detecta negro con reflejos leves
+        # Umbrales intermedios: detecta negro con algo de reflexión pero no sombras grises (70-120)
+        _, mask_very_dark_gray = cv2.threshold(gray, 55, 255, cv2.THRESH_BINARY_INV)  # CAMBIO: 55 (balanceado)
+        _, mask_very_dark_v = cv2.threshold(v_channel, 60, 255, cv2.THRESH_BINARY_INV)  # CAMBIO: 60 (balanceado)
         
-        # 2B: Negro por análisis BGR - TODOS los canales deben ser MUY bajos
-        mask_dark_b = cv2.inRange(b, 0, 65)
-        mask_dark_g = cv2.inRange(g, 0, 65)
-        mask_dark_r = cv2.inRange(r, 0, 65)
+        # 2B: AJUSTE 3: Negro por análisis BGR - Umbrales MODERADOS
+        # Permite algo de reflexión en negro (hasta 60) pero rechaza sombras (>70)
+        mask_dark_b = cv2.inRange(b, 0, 60)  # CAMBIO: 60 (moderado)
+        mask_dark_g = cv2.inRange(g, 0, 60)  # CAMBIO: 60 (moderado)
+        mask_dark_r = cv2.inRange(r, 0, 60)  # CAMBIO: 60 (moderado)
         
         mask_dark_bgr = cv2.bitwise_and(mask_dark_b, mask_dark_g)
         mask_dark_bgr = cv2.bitwise_and(mask_dark_bgr, mask_dark_r)
@@ -66,23 +70,33 @@ class EdgeDetectorHSV:
         std_r = np.abs(r.astype(np.float32) - mean_channels)
         channel_variance = (std_b + std_g + std_r) / 3
         
-        _, mask_low_variance = cv2.threshold(channel_variance.astype(np.uint8), 15, 255, cv2.THRESH_BINARY_INV)
+        # AJUSTE 4: Umbral de varianza MODERADO (permite algo de variación por reflejos)
+        _, mask_low_variance = cv2.threshold(channel_variance.astype(np.uint8), 18, 255, cv2.THRESH_BINARY_INV)  # CAMBIO: 18 (moderado)
         
         # 2D: Combinar: debe ser oscuro Y baja varianza Y saturación baja
         mask_dark_temp = cv2.bitwise_or(mask_very_dark_gray, mask_very_dark_v)
         mask_dark = cv2.bitwise_or(mask_dark_temp, mask_dark_bgr)
         
-        # Filtro de saturación MUY ESTRICTO
-        _, mask_very_low_sat = cv2.threshold(s_channel, 50, 255, cv2.THRESH_BINARY_INV)
+        # AJUSTE 5: Filtro de saturación MODERADO (permite negro con leve color por reflexión)
+        _, mask_very_low_sat = cv2.threshold(s_channel, 50, 255, cv2.THRESH_BINARY_INV)  # CAMBIO: 50 (moderado)
         
         # Negro = (oscuro) AND (baja_saturación) AND (baja_variancia)
         mask_dark_filtered = cv2.bitwise_and(mask_dark, mask_very_low_sat)
         mask_dark_final = cv2.bitwise_and(mask_dark_filtered, mask_low_variance)
         
+        # AJUSTE 6: NUEVO - Test adicional: MAX(R,G,B) debe ser muy bajo
+        max_bgr = np.maximum(np.maximum(b, g), r)
+        _, mask_true_black = cv2.threshold(max_bgr, 50, 255, cv2.THRESH_BINARY_INV)  # Filtro de negro verdadero
+        mask_dark_final = cv2.bitwise_and(mask_dark_final, mask_true_black)
+        
         # 2E: Eliminar sombras por rango de intensidad
         _, mask_not_shadow = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
         mask_not_shadow = cv2.bitwise_not(mask_not_shadow)
         mask_dark_final = cv2.bitwise_and(mask_dark_final, mask_not_shadow)
+        
+        # AJUSTE 7: Limpieza SUAVE del ruido negro (no eliminar partes válidas)
+        kernel_clean = np.ones((3, 3), np.uint8)
+        mask_dark_final = cv2.morphologyEx(mask_dark_final, cv2.MORPH_OPEN, kernel_clean, iterations=1)  # CAMBIO: iterations=1
         
         # 2F: Detección Sobel SOLO en zonas MUY oscuras confirmadas
         sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
@@ -103,10 +117,11 @@ class EdgeDetectorHSV:
         lower_half_mask = np.zeros_like(gray)
         lower_half_mask[h_img//2:, :] = 255
         
-        _, mask_dark_permissive = cv2.threshold(gray, 75, 255, cv2.THRESH_BINARY_INV)
+        # AJUSTE 8: Umbral MODERADO para zona inferior (captura más cinta negra)
+        _, mask_dark_permissive = cv2.threshold(gray, 70, 255, cv2.THRESH_BINARY_INV)  # CAMBIO: 70 (moderado)
         mask_dark_lower = cv2.bitwise_and(mask_dark_permissive, lower_half_mask)
         
-        _, mask_low_sat_permissive = cv2.threshold(s_channel, 70, 255, cv2.THRESH_BINARY_INV)
+        _, mask_low_sat_permissive = cv2.threshold(s_channel, 65, 255, cv2.THRESH_BINARY_INV)  # CAMBIO: 65 (moderado)
         mask_dark_lower = cv2.bitwise_and(mask_dark_lower, mask_low_sat_permissive)
         
         kernel_vertical = np.ones((15, 3), np.uint8)
@@ -529,6 +544,7 @@ def process_images(input_folder, output_folder, threshold=50, min_area=500, show
     print(f"\n{'='*60}")
     print(f"Procesando {len(image_files)} imágenes")
     print(f"Threshold: {threshold}, Área mínima: {min_area}")
+    print(f"MEJORAS: Filtros de color ajustados para eliminar sombras")
     print(f"{'='*60}\n")
     
     for img_path in image_files:
