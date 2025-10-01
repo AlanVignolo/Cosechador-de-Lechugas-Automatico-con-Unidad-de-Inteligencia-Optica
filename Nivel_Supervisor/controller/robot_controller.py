@@ -260,7 +260,6 @@ class RobotController:
             
             # Deshabilitar heartbeat molesto durante homing
             self.cmd.uart.send_command("HB:0")
-            time.sleep(0.2)
             
             print("Configurando velocidades de homing...")
             result = self.cmd.set_velocities(
@@ -355,20 +354,9 @@ class RobotController:
             if not result["success"]:
                 return {"success": False, "message": "Error en offset"}
             
-            # Esperar que complete el movimiento - usar método simple de timeout en lugar de eventos
+            # Esperar que complete el movimiento de offset
             print("Esperando completar movimiento de offset...")
-            time.sleep(3.0)  # Dar tiempo suficiente para que complete el movimiento de offset
-            
-            # Verificar si llegaron mensajes de completado
-            completed = True  # Asumir que se completó después del delay
-            
-            # Opcionalmente drenar la cola de mensajes para limpiar
-            try:
-                while True:
-                    msg = self.cmd.uart.message_queue.get_nowait()
-                    self.logger.debug(f"Mensaje drenado durante offset: {msg}")
-            except:
-                pass
+            self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=10.0)
             
             self.current_position = {"x": 0.0, "y": 0.0}
             self.reset_global_position(0.0, 0.0)
@@ -543,7 +531,6 @@ class RobotController:
             
             # Configurar velocidades de homing
             self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
-            time.sleep(0.5)
             
             direction_x = RobotConfig.get_workspace_measure_direction_x()
             print(f"   Moviendo X={direction_x}mm hacia límite izquierdo")
@@ -554,9 +541,7 @@ class RobotController:
             if limit_message:
                 print("   Límite izquierdo alcanzado")
                 
-                # Dar un momento para que se procese el mensaje STEPPER_EMERGENCY_STOP
-                time.sleep(1.0)
-                
+                # El mensaje STEPPER_EMERGENCY_STOP ya fue procesado por el callback enhanced_process_emergency_stop
                 if captured_distances["horizontal_mm"] is not None:
                     h_distance = captured_distances["horizontal_mm"]
                     print(f"      Distancia total horizontal: {h_distance:.1f}mm")
@@ -569,11 +554,10 @@ class RobotController:
             # IMPORTANTE: Alejarse un poco del límite horizontal antes de mover verticalmente
             print("   Alejándose del límite horizontal...")
             self.cmd.move_xy(RobotConfig.apply_x_direction(-20), 0)  # 20mm hacia el centro
-            time.sleep(1.0)
+            self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=5.0)
             
             # Configurar velocidades de homing
             self.cmd.set_velocities(RobotConfig.HOMING_SPEED_H, RobotConfig.HOMING_SPEED_V)
-            time.sleep(0.5)
             
             # Usar distancia del config
             direction_y = RobotConfig.get_workspace_measure_direction_y()
@@ -585,9 +569,7 @@ class RobotController:
             if limit_message:
                 print("   Límite inferior alcanzado")
                 
-                # Dar un momento para que se procese el mensaje STEPPER_EMERGENCY_STOP
-                time.sleep(1.0)
-                
+                # El mensaje STEPPER_EMERGENCY_STOP ya fue procesado por el callback enhanced_process_emergency_stop
                 if captured_distances["vertical_mm"] is not None:
                     v_distance = captured_distances["vertical_mm"]
                     print(f"      Distancia total vertical: {v_distance:.1f}mm")
@@ -616,12 +598,8 @@ class RobotController:
             
             # 4. Homing final
             print("Paso 4: Homing final...")
-            
-            # Alejarse de los límites para dar espacio al homing
-            print("   Alejandose de limites...")
-            result = self.cmd.move_xy(RobotConfig.apply_x_direction(-50), RobotConfig.apply_y_direction(-50))  # Alejarse de límites
-            if result["success"]:
-                time.sleep(3.0)  # Dar tiempo para completar movimiento
+            # NOTA: El robot ya está alejado de los límites después de las mediciones,
+            # no es necesario moverlo más antes del homing
             
             # Limpiar callbacks y colas de mensajes antes del homing final
             self.cmd.uart.set_limit_callback(None)
