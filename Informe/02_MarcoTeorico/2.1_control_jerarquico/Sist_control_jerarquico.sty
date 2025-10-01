@@ -1,0 +1,21 @@
+El marco teórico de los sistemas de control jerárquicos (SCH) se sustenta en el principio de descomposición-coordinación para la gestión de sistemas dinámicos complejos de alta dimensionalidad. Este enfoque se basa en la conceptualización de un sistema global como un conjunto de subsistemas o niveles de control interconectados. Estos niveles se organizan verticalmente, lo que permite una asignación específica de tareas basada en la prioridad decisional, el alcance operacional y el horizonte temporal de control, resultando en una mejora significativa de la eficiencia, confiabilidad y adaptabilidad del sistema integral.
+
+Un sistema de control jerárquico constituye, fundamentalmente, una estructura de control distribuida. La acción de control final es el resultado de una secuencia de decisiones concatenadas a lo largo de la pirámide, donde la información y las consignas fluyen verticalmente.
+a estructura jerárquica se diferencia rigurosamente por las funciones, la frecuencia de operación y los modelos de proceso utilizados en cada estrato:
+\begin{enumerate}
+
+\item Nivel estratégico o de planificación: establece los objetivos globales y define la política de funcionamiento del sistema. Opera en horizontes temporales largos y toma en cuenta información agregada.
+
+\item Nivel táctico o de supervisión: Calcula y ajusta las consignas y parámetros para los controladores básicos (Nivel 1) con el fin de optimizar el rendimiento de un proceso o equipo específico (ej. maximizar rendimiento, minimizar consumo energético).
+
+\item Nivel operativo o de regulación local: implementa las acciones de control directo sobre los actuadores. Funciona en escalas de tiempo cortas y debe garantizar estabilidad y respuesta rápida.
+
+\end{enumerate}
+La adopción de una arquitectura de control jerárquica ofrece ventajas distintivas que justifican su uso en sistemas complejos:
+\begin{itemize}
+    \item Gestión de la Complejidad Dimensional: Permite abordar sistemas de gran escala al descomponer el problema de control multivariable en tareas más simples y manejables a nivel de subsistema.
+    \item Confiabilidad y Robustez: Incrementa la resiliencia operativa, ya que el fallo localizado de un controlador en un nivel inferior solo afecta a un subsistema local, previniendo el colapso de la operación integral de la planta.
+    \item Modularidad y Escalabilidad: Facilita la adición, modificación o reemplazo de subsistemas o unidades de control sin generar un impacto sistémico en el resto de la jerarquía.
+    \item Eficiencia Operacional: Permite la aplicación de diferentes horizontes temporales y estrategias de control especializadas en cada nivel, optimizando tanto la estabilidad (Nivel 1) como la eficiencia global (Niveles 2 y 3).
+\end{itemize}
+Es crucial diferenciar el control jerárquico del control centralizado puro. Aunque el flujo de información y comando es vertical, el control jerárquico opera bajo un paradigma de control distribuido. El nivel superior impone únicamente las metas u objetivos macro. La implementación, la corrección de errores en corto plazo y la gestión de la dinámica local son responsabilidades inherentes y autónomas de los controladores ubicados en los niveles inferiores.
