@@ -15,10 +15,11 @@ import numpy as np
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'config'))
 
-from camera_manager import get_camera_manager
-from robot_controller import RobotController
-from config.robot_config import RobotConfig
+# Solo importar lo que NO depende de robot_controller
 from detector_canny_s_combinado import detectar_lineas_tubo
+
+# Lazy imports (se importan cuando se necesitan)
+# camera_manager, RobotConfig se importan en las funciones
 
 class VerticalScanner:
     def __init__(self):
