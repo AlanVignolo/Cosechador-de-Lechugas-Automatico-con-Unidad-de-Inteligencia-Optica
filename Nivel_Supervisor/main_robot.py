@@ -976,33 +976,26 @@ def menu_interactivo(uart_manager, robot):
                 print("="*60)
                 print("Este modo detecta automáticamente cuando el tubo está COMPLETO")
                 print("(ambas líneas superior e inferior visibles)")
-                print("\nASEGÚRATE DE QUE:")
-                print("- El robot está en posición inicial (Y=0)")
-                print("- La cámara está conectada y funcionando")
-                print("- Hay espacio libre para el movimiento vertical")
+                print()
+                print("INICIANDO ESCANEADO...")
                 print("-"*60)
 
-                confirmar = input("¿Continuar con el escaneado? (s/N): ")
-
-                if confirmar.lower() == 's':
-                    try:
-                        success = scan_vertical_with_flags(robot)
-                        if success:
-                            print("\n" + "="*60)
-                            print("ESCANEADO VERTICAL AUTOMÁTICO COMPLETADO")
-                            print("="*60)
-                        else:
-                            print("\n" + "="*60)
-                            print("EL ESCANEADO SE COMPLETÓ CON ERRORES")
-                            print("="*60)
-                    except KeyboardInterrupt:
-                        print("\nEscaneado vertical automático interrumpido por el usuario")
-                    except Exception as e:
-                        print(f"Error durante el escaneado vertical automático: {e}")
-                        import traceback
-                        traceback.print_exc()
-                else:
-                    print("Escaneado cancelado por el usuario")
+                try:
+                    success = scan_vertical_with_flags(robot)
+                    if success:
+                        print("\n" + "="*60)
+                        print("ESCANEADO VERTICAL AUTOMÁTICO COMPLETADO")
+                        print("="*60)
+                    else:
+                        print("\n" + "="*60)
+                        print("EL ESCANEADO SE COMPLETÓ CON ERRORES")
+                        print("="*60)
+                except KeyboardInterrupt:
+                    print("\nEscaneado vertical automático interrumpido por el usuario")
+                except Exception as e:
+                    print(f"Error durante el escaneado vertical automático: {e}")
+                    import traceback
+                    traceback.print_exc()
 
                 # Mensaje de seguridad
                 print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
