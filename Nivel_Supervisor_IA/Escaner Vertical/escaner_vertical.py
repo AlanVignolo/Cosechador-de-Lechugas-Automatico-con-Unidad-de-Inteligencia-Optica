@@ -372,20 +372,90 @@ class VerticalScanner:
         if not segments:
             print("No se detectaron tubos completos")
         else:
-            print(f"Se detectaron {len(segments)} segmentos de tubo completo:")
-            print(f"{'#':<3} {'Flag Inicio':<12} {'Flag Fin':<12} {'Y Inicio (mm)':<15} {'Y Fin (mm)':<15}")
-            print("-" * 60)
+            print(f"Se detectaron {len(segments)} tubo(s) final(es):")
+            print(f"{'#':<3} {'Centro Y (mm)':<15} {'Y Inicio (mm)':<15} {'Y Fin (mm)':<15} {'Fusionadas':<12}")
+            print("-" * 70)
 
             for i, seg in enumerate(segments, 1):
-                start_flag = seg.get('start_flag', 'N/A')
-                end_flag = seg.get('end_flag', 'N/A')
                 y_start = seg.get('start_pos_real', 'N/A')
                 y_end = seg.get('end_pos_real', 'N/A')
-
-                print(f"{i:<3} {start_flag:<12} {end_flag:<12} {y_start!s:<15} {y_end!s:<15}")
+                merged_count = seg.get('merged_count', 1)
+                
+                # Calcular centro
+                if y_start != 'N/A' and y_end != 'N/A':
+                    center = seg.get('center_y', (y_start + y_end) / 2)
+                    print(f"{i:<3} {center:<15.1f} {y_start:<15.1f} {y_end:<15.1f} {merged_count:<12}")
+                else:
+                    print(f"{i:<3} {'N/A':<15} {y_start!s:<15} {y_end!s:<15} {merged_count:<12}")
 
         print(f"{'='*60}")
         return segments
+
+def merge_close_detections(segments, max_distance_mm=100):
+    """
+    Agrupa detecciones cercanas y calcula el valor medio
+    
+    Args:
+        segments: Lista de segmentos detectados
+        max_distance_mm: Distancia máxima para considerar detecciones como el mismo tubo
+        
+    Returns:
+        Lista de segmentos fusionados con posiciones promediadas
+    """
+    if not segments:
+        return []
+    
+    # Filtrar segmentos que tienen posiciones reales
+    valid_segments = [s for s in segments if 'start_pos_real' in s and 'end_pos_real' in s]
+    
+    if not valid_segments:
+        return []
+    
+    # Ordenar por posición de inicio
+    sorted_segments = sorted(valid_segments, key=lambda s: s['start_pos_real'])
+    
+    merged = []
+    current_group = [sorted_segments[0]]
+    
+    for seg in sorted_segments[1:]:
+        # Calcular centro del segmento actual y del último en el grupo
+        last_center = (current_group[-1]['start_pos_real'] + current_group[-1]['end_pos_real']) / 2
+        current_center = (seg['start_pos_real'] + seg['end_pos_real']) / 2
+        
+        # Si está cerca, agregar al grupo actual
+        if abs(current_center - last_center) <= max_distance_mm:
+            current_group.append(seg)
+        else:
+            # Fusionar el grupo actual y empezar uno nuevo
+            merged.append(_merge_segment_group(current_group))
+            current_group = [seg]
+    
+    # Fusionar el último grupo
+    if current_group:
+        merged.append(_merge_segment_group(current_group))
+    
+    return merged
+
+def _merge_segment_group(group):
+    """Fusiona un grupo de segmentos calculando promedios"""
+    if len(group) == 1:
+        return group[0]
+    
+    # Calcular promedios
+    avg_start = sum(s['start_pos_real'] for s in group) / len(group)
+    avg_end = sum(s['end_pos_real'] for s in group) / len(group)
+    avg_center = (avg_start + avg_end) / 2
+    
+    # Crear segmento fusionado
+    merged_segment = {
+        'start_pos_real': avg_start,
+        'end_pos_real': avg_end,
+        'center_y': avg_center,
+        'merged_count': len(group),
+        'original_segments': group
+    }
+    
+    return merged_segment
 
 def correlate_flags_with_snapshots_vertical(detection_state):
     """Correlacionar flags con snapshots para obtener posiciones Y reales"""
@@ -428,6 +498,23 @@ def correlate_flags_with_snapshots_vertical(detection_state):
                 print(f"   TUBO #{i+1}: Y_inicio={segment['start_pos_real']:.1f}mm, Y_fin={segment['end_pos_real']:.1f}mm")
 
         print("Correlación completada")
+        
+        # Fusionar detecciones cercanas
+        print("\nFUSIONANDO DETECCIONES CERCANAS...")
+        merged_segments = merge_close_detections(detection_state['tube_segments'], max_distance_mm=100)
+        
+        if merged_segments:
+            print(f"Detecciones originales: {len(detection_state['tube_segments'])}")
+            print(f"Detecciones fusionadas: {len(merged_segments)}")
+            
+            # Reemplazar segmentos con los fusionados
+            detection_state['tube_segments'] = merged_segments
+            
+            print("\nTUBOS FINALES (después de fusión):")
+            for i, seg in enumerate(merged_segments, 1):
+                merged_count = seg.get('merged_count', 1)
+                center = seg.get('center_y', (seg['start_pos_real'] + seg['end_pos_real']) / 2)
+                print(f"   TUBO #{i}: Centro Y={center:.1f}mm (fusionó {merged_count} detección/es)")
 
     except Exception as e:
         print(f"Error en correlación: {e}")
