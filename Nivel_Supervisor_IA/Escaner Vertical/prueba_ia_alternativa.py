@@ -174,10 +174,12 @@ def proyeccion_horizontal(imagen):
     s_inv = 255 - s
 
     # Proyección horizontal (suma por fila)
-    proyeccion = np.sum(s_inv, axis=1)
+    proyeccion = np.sum(s_inv, axis=1).astype(np.float32)
 
-    # Suavizar proyección
-    proyeccion_suave = cv2.GaussianBlur(proyeccion.reshape(-1, 1), (15, 15), 0).ravel()
+    # Suavizar proyección con convolución 1D
+    kernel_size = 15
+    kernel = cv2.getGaussianKernel(kernel_size, 0)
+    proyeccion_suave = np.convolve(proyeccion, kernel.ravel(), mode='same')
 
     # Encontrar picos (filas con alta intensidad)
     mean_proj = np.mean(proyeccion_suave)
