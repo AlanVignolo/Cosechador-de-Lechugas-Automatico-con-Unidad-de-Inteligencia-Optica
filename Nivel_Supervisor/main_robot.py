@@ -67,21 +67,38 @@ except Exception as e:
     SCANNER_HORIZONTAL_AVAILABLE = False
 
 # Importar escáner vertical manual
-SCANNER_VERTICAL_AVAILABLE = False
+SCANNER_VERTICAL_MANUAL_AVAILABLE = False
 scan_vertical_manual = None
 
 try:
-    print("Intentando importar escáner vertical...")
+    print("Intentando importar escáner vertical manual...")
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
-    from escaner_vertical import scan_vertical_manual
-    SCANNER_VERTICAL_AVAILABLE = True
+    from escaner_vertical_manual import scan_vertical_manual
+    SCANNER_VERTICAL_MANUAL_AVAILABLE = True
     print("Escáner vertical manual importado exitosamente")
 except ImportError as e:
-    print(f"Error importando escáner vertical: {e}")
-    SCANNER_VERTICAL_AVAILABLE = False
+    print(f"Error importando escáner vertical manual: {e}")
+    SCANNER_VERTICAL_MANUAL_AVAILABLE = False
 except Exception as e:
-    print(f"Error inesperado en import de escáner vertical: {e}")
-    SCANNER_VERTICAL_AVAILABLE = False
+    print(f"Error inesperado en import de escáner vertical manual: {e}")
+    SCANNER_VERTICAL_MANUAL_AVAILABLE = False
+
+# Importar escáner vertical automático con IA
+SCANNER_VERTICAL_AUTO_AVAILABLE = False
+scan_vertical_with_flags = None
+
+try:
+    print("Intentando importar escáner vertical automático...")
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
+    from escaner_vertical import scan_vertical_with_flags
+    SCANNER_VERTICAL_AUTO_AVAILABLE = True
+    print("Escáner vertical automático importado exitosamente")
+except ImportError as e:
+    print(f"Error importando escáner vertical automático: {e}")
+    SCANNER_VERTICAL_AUTO_AVAILABLE = False
+except Exception as e:
+    print(f"Error inesperado en import de escáner vertical automático: {e}")
+    SCANNER_VERTICAL_AUTO_AVAILABLE = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -753,11 +770,12 @@ def menu_interactivo(uart_manager, robot):
         print(f"11. Toggle Lechuga {'ON' if lettuce_on else 'OFF'} (Estado: {'Con lechuga' if lettuce_on else 'Sin lechuga'})")
         print("12. Escaneado horizontal con camara en vivo")
         print("13. Escaneado vertical manual (flags por usuario)")
+        print("14. Escaneado vertical AUTOMATICO con IA (deteccion de tubo)")
         print("-"*60)
         print("0.  Salir")
         print("-"*60)
-        
-        opcion = input("Selecciona opción (0-13): ")
+
+        opcion = input("Selecciona opción (0-14): ")
 
         if opcion == '1':
             x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
@@ -932,25 +950,64 @@ def menu_interactivo(uart_manager, robot):
             else:
                 print("Escáner horizontal no disponible. Verificar imports.")
         elif opcion == '13':
-            if SCANNER_VERTICAL_AVAILABLE:
+            if SCANNER_VERTICAL_MANUAL_AVAILABLE:
                 try:
                     success = scan_vertical_manual(robot)
                     if success:
-                        print("Escaneado vertical completado exitosamente")
+                        print("Escaneado vertical manual completado exitosamente")
                     else:
-                        print("El escaneado vertical se completó con errores")
+                        print("El escaneado vertical manual se completó con errores")
                 except KeyboardInterrupt:
-                    print("\nEscaneado vertical interrumpido por el usuario")
+                    print("\nEscaneado vertical manual interrumpido por el usuario")
                 except Exception as e:
-                    print(f"Error durante el escaneado vertical: {e}")
+                    print(f"Error durante el escaneado vertical manual: {e}")
                     import traceback
                     traceback.print_exc()
-                
+
                 # Mensaje de seguridad
                 print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
                 print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
             else:
-                print("Escáner vertical no disponible. Verificar imports.")
+                print("Escáner vertical manual no disponible. Verificar imports.")
+        elif opcion == '14':
+            if SCANNER_VERTICAL_AUTO_AVAILABLE:
+                print("\n" + "="*60)
+                print("ESCÁNER VERTICAL AUTOMÁTICO CON IA")
+                print("="*60)
+                print("Este modo detecta automáticamente cuando el tubo está COMPLETO")
+                print("(ambas líneas superior e inferior visibles)")
+                print("\nASEGÚRATE DE QUE:")
+                print("- El robot está en posición inicial (Y=0)")
+                print("- La cámara está conectada y funcionando")
+                print("- Hay espacio libre para el movimiento vertical")
+                print("-"*60)
+
+                confirmar = input("¿Continuar con el escaneado? (s/N): ")
+
+                if confirmar.lower() == 's':
+                    try:
+                        success = scan_vertical_with_flags(robot)
+                        if success:
+                            print("\n" + "="*60)
+                            print("ESCANEADO VERTICAL AUTOMÁTICO COMPLETADO")
+                            print("="*60)
+                        else:
+                            print("\n" + "="*60)
+                            print("EL ESCANEADO SE COMPLETÓ CON ERRORES")
+                            print("="*60)
+                    except KeyboardInterrupt:
+                        print("\nEscaneado vertical automático interrumpido por el usuario")
+                    except Exception as e:
+                        print(f"Error durante el escaneado vertical automático: {e}")
+                        import traceback
+                        traceback.print_exc()
+                else:
+                    print("Escaneado cancelado por el usuario")
+
+                # Mensaje de seguridad
+                print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
+            else:
+                print("Escáner vertical automático no disponible. Verificar imports.")
         elif opcion == '0':
             print("Saliendo...")
             break
