@@ -208,8 +208,20 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
     Movimiento: relativo con robot.cmd.move_xy(dx, dy).
     """
     try:
-        if scan_vertical_manual is None or scan_horizontal_with_live_camera is None:
-            print("Error: Escáneres no disponibles (import fallido)")
+        # Verificar disponibilidad de escáneres
+        errores = []
+        if scan_vertical_manual is None:
+            errores.append("Escáner vertical")
+        if scan_horizontal_with_live_camera is None:
+            errores.append("Escáner horizontal")
+
+        if errores:
+            print(f"Error: Módulos no disponibles: {', '.join(errores)}")
+            print("Verifica que los archivos existan:")
+            if scan_vertical_manual is None:
+                print(f"  - {ESC_V_DIR}/escaner_vertical.py")
+            if scan_horizontal_with_live_camera is None:
+                print(f"  - {ESC_H_DIR}/escaner_standalone.py")
             return False
 
         # Asegurar brazo seguro
