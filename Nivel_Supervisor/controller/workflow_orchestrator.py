@@ -585,47 +585,20 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
 
         print(f"[cosecha] Posición actual del supervisor: X={current_x:.1f}mm, Y={current_y:.1f}mm (Homed: {is_homed})")
 
-        # Solo hacer resync si NO está homed Y la posición NO es (0,0)
-        # Si ya está en (0,0), asumimos que es correcto (acaba de hacer homing)
-        if not is_homed and not (abs(current_x) < 2.0 and abs(current_y) < 2.0):
-            print("[cosecha] Robot NO homed y posición no es (0,0) - Intentando resincronizar desde firmware...")
-            did_resync = False
-            try:
-                if robot.resync_global_position_from_firmware():
-                    st_sync = robot.get_status()
-                    print(f"[cosecha] Posición resincronizada: X={st_sync['position']['x']:.1f}mm, Y={st_sync['position']['y']:.1f}mm")
-                    did_resync = True
-            except Exception as e:
-                print(f"[cosecha] Error en resync: {e}")
-                did_resync = False
-            if not did_resync:
-                st_nosync = robot.get_status()
-                print(f"[cosecha] Aviso: no se pudo resincronizar. Usando estado supervisor: X={st_nosync['position']['x']:.1f}mm, Y={st_nosync['position']['y']:.1f}mm")
-                # Si estamos exactamente en (0, -height) por tracking invertido, corregir a (0,0)
-                dims_chk = robot.get_workspace_dimensions()
-                try:
-                    height_chk = float(dims_chk.get('height_mm', 0.0)) if dims_chk.get('calibrated') else float(RobotConfig.MAX_Y)
-                except Exception:
-                    height_chk = float(RobotConfig.MAX_Y)
-                y_bad = st_nosync['position']['y']
-                x_bad = st_nosync['position']['x']
-                if abs(x_bad - 0.0) <= 2.0 and abs(abs(y_bad) - height_chk) <= 2.0:
-                    print("[cosecha] Corrección automática: interpretando estado (0, -height) como (0,0) tras retorno previo")
-                    try:
-                        robot.reset_global_position(0.0, 0.0)
-                    except Exception:
-                        pass
-        elif abs(current_x) < 2.0 and abs(current_y) < 2.0:
-            print(f"[cosecha] Robot en (0,0) - Asumiendo posición correcta (probablemente acabó de hacer homing)")
-            # IMPORTANTE: Forzar sincronización del firmware con supervisor en (0,0)
-            print("[cosecha] Sincronizando firmware: forzando reset a (0,0)...")
-            try:
-                robot.reset_global_position(0.0, 0.0)
-                print("[cosecha] ✓ Firmware sincronizado correctamente")
-            except Exception as e:
-                print(f"[cosecha] ⚠ Error sincronizando firmware: {e}")
-        else:
-            print(f"[cosecha] Robot homed - Usando posición confiable del supervisor (no resync)")
+        # REGLA SIMPLE: Si NO está homed, NO continuar
+        if not is_homed:
+            print("=" * 60)
+            print("❌ ERROR: Robot NO está homed")
+            print("=" * 60)
+            print("Para ejecutar cosecha interactiva, el robot DEBE estar homed.")
+            print("Por favor ejecuta primero:")
+            print("  - Opción 2: Inicio completo (homing + escaneos)")
+            print("  - O desde el menú principal: Opción 5 -> Homing")
+            print("=" * 60)
+            return False
+
+        # Si está homed, confiar 100% en la posición del supervisor
+        print(f"[cosecha] ✓ Robot homed - Usando posición del supervisor (confiable)")
 
         # Obtener dimensiones del workspace
         dims = robot.get_workspace_dimensions()
@@ -1012,11 +985,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not wait_for_arm_state('movimiento', timeout_s=20.0):
                     print(f"Advertencia: Brazo no llegó a 'movimiento', continuando con cuidado")
 
-            # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
-            # Esto evita errores acumulados de tracking durante escaneos largos
-            print("[cosecha] Resincronizando posición desde firmware antes de retornar...")
-            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
-
+            # Volver a origen usando tracking del supervisor (confiable)
             print("[cosecha] Volviendo a (0,0)...")
             if not move_abs(0.0, 0.0, timeout_s=240.0):
                 print("Advertencia: No se pudo volver a (0,0)")
