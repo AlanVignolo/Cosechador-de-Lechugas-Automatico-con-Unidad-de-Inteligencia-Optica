@@ -614,6 +614,13 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                         pass
         elif abs(current_x) < 2.0 and abs(current_y) < 2.0:
             print(f"[cosecha] Robot en (0,0) - Asumiendo posición correcta (probablemente acabó de hacer homing)")
+            # IMPORTANTE: Forzar sincronización del firmware con supervisor en (0,0)
+            print("[cosecha] Sincronizando firmware: forzando reset a (0,0)...")
+            try:
+                robot.reset_global_position(0.0, 0.0)
+                print("[cosecha] ✓ Firmware sincronizado correctamente")
+            except Exception as e:
+                print(f"[cosecha] ⚠ Error sincronizando firmware: {e}")
         else:
             print(f"[cosecha] Robot homed - Usando posición confiable del supervisor (no resync)")
 
