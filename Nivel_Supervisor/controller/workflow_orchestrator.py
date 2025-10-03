@@ -119,10 +119,13 @@ def _clasificar_lechuga_automatico() -> str:
         print(f"       🤖 IA detectó: {clase} (confianza: {confianza:.1%})")
 
         # Mapear clase a opción
-        if clase == 'LECHUGA':
+        # Cualquier variante de LECHUGA (LECHUGA_GRANDE, LECHUGA_MEDIA, LECHUGAS, etc.) = lista
+        if 'LECHUGA' in clase.upper():
             return '1'  # Lista para cosechar
         elif clase in ['VASO_NEGRO', 'VASO_VACIO', 'VASOS']:
             return '3'  # Vacío
+        elif 'PLANTIN' in clase.upper():
+            return '2'  # No lista (plantín)
         else:
             return '2'  # No lista (otros estados)
 
