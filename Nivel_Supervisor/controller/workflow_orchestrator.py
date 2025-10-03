@@ -668,21 +668,11 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
 
         # Helper: mover a posición absoluta
         def move_abs(x_target: float, y_target: float, timeout_s: float = 180.0):
-            fw_pos = _get_curr_pos_mm_from_fw()
-            if fw_pos is not None:
-                curr_x, curr_y = fw_pos
-            else:
-                status = robot.get_status()
-                curr_x = float(status['position']['x'])
-                curr_y = float(status['position']['y'])
-                # Corrección robusta: si parece (0, -height) anómalo tras un retorno, tomar (0,0)
-                try:
-                    dims_m = robot.get_workspace_dimensions()
-                    height_m = float(dims_m.get('height_mm', 0.0)) if dims_m.get('calibrated') else float(RobotConfig.MAX_Y)
-                except Exception:
-                    height_m = float(RobotConfig.MAX_Y)
-                if abs(curr_x) <= 5.0 and abs(abs(curr_y) - height_m) <= 5.0:
-                    curr_x, curr_y = 0.0, 0.0
+            # SIEMPRE usar el tracking del supervisor (confiable y actualizado con cada movimiento)
+            # El firmware puede tener tracking interno incorrecto, pero nosotros sabemos la posición real
+            status = robot.get_status()
+            curr_x = float(status['position']['x'])
+            curr_y = float(status['position']['y'])
             dx = x_target - curr_x
             dy = y_target - curr_y
             # Evitar movimientos mínimos (ruido en tracking)
