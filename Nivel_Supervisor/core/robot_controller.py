@@ -328,8 +328,10 @@ class RobotController:
             print("Esperando completar movimiento de offset...")
             self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=10.0)
             
+            # Establecer posición lógica de origen sin resetear el tracking global
             self.current_position = {"x": 0.0, "y": 0.0}
-            self.reset_global_position(0.0, 0.0)
+            # Importante: NO resetear self.global_position aquí. El tracking global
+            # debe mantenerse únicamente por deltas de movimiento o resync explícito.
             self.is_homed = True
             
             print("Guardando referencia de homing...")
@@ -603,8 +605,9 @@ class RobotController:
 
             time.sleep(3.0)
 
+            # Establecer origen lógico sin resetear el tracking global
             self.current_position = {"x": 0.0, "y": 0.0}
-            self.reset_global_position(0.0, 0.0)
+            # Importante: NO resetear self.global_position aquí
             self.is_homed = True
 
             result = self.cmd.set_velocities(RobotConfig.NORMAL_SPEED_H, RobotConfig.NORMAL_SPEED_V)

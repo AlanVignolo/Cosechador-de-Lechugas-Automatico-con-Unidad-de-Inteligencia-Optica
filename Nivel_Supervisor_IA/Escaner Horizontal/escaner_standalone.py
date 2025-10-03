@@ -14,6 +14,8 @@ import numpy as np
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'config'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Correccion Posicion Horizontal'))
+from core.camera_manager import get_camera_manager
+from config.robot_config import RobotConfig
 
 def scan_horizontal_with_live_camera(robot, tubo_id=None):
     """
@@ -67,10 +69,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
     print(f"Tubo seleccionado: {selected_tubo['nombre']} (Y={selected_tubo['y_mm']}mm)")
     
     try:
-        # Importar solo lo necesario dentro de la función
-        from camera_manager import get_camera_manager
-        from config.robot_config import RobotConfig
-        
+        # Importar solo lo necesario dentro de la función (ya importado a nivel módulo)
         camera_mgr = get_camera_manager()
         detections = []
         is_scanning = [False]  # Lista para que sea mutable en el hilo
@@ -124,7 +123,6 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         
         # Sistema de tracking de estados para flags
         # Parámetros de debouncing y límites
-        from config.robot_config import RobotConfig
         MAX_FLAGS = RobotConfig.MAX_SNAPSHOTS * 2
         DETECT_ON_FRAMES = 5    # Debounce más robusto para INICIO
         DETECT_OFF_FRAMES = 5   # Debounce más robusto para FIN
@@ -327,8 +325,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         if dims.get('calibrated'):
             width_mm = float(dims.get('width_mm', 0.0))
         else:
-            from config.robot_config import RobotConfig as _RC
-            width_mm = float(_RC.MAX_X)
+            width_mm = float(RobotConfig.MAX_X)
         safety = 20.0
         x_edge = max(0.0, width_mm - safety)
         try:
@@ -351,8 +348,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         if not move_completed:
             # Fallback por tiempo estimado según velocidad configurada
             try:
-                from config.robot_config import RobotConfig as _RC
-                h_mm_s = max(1.0, float(_RC.NORMAL_SPEED_H) / float(_RC.STEPS_PER_MM_H))
+                h_mm_s = max(1.0, float(RobotConfig.NORMAL_SPEED_H) / float(RobotConfig.STEPS_PER_MM_H))
                 est_t = abs(dx) / h_mm_s + 0.5
                 time.sleep(min(est_t, 10.0))
             except Exception:
