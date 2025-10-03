@@ -123,7 +123,7 @@ except Exception as e:
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(name)s - %(levelname)s - %(message)s'
 )
 HOMING_DATA_FILE = os.path.join(os.path.dirname(__file__), 'homing_reference.json')
 

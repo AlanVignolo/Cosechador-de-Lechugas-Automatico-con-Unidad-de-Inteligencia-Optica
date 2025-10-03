@@ -235,7 +235,7 @@ class RobotController:
             
             def on_limit_touched(message):
                 limit_touched["type"] = message
-                print(f"Límite detectado: {message}")
+                # Límite detectado (mensaje silencioso para evitar duplicados)
             
             self.cmd.uart.set_limit_callback(on_limit_touched)
             
@@ -552,7 +552,7 @@ class RobotController:
             limit_touched = {"type": None}
             def on_limit_touched_final(message):
                 limit_touched["type"] = message
-                print(f"      Límite detectado: {message}")
+                # Límite detectado (mensaje silencioso para evitar duplicados)
 
             self.cmd.uart.set_limit_callback(on_limit_touched_final)
 

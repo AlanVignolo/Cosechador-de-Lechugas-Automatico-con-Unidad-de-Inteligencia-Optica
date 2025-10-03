@@ -244,7 +244,9 @@ class UARTManager:
                     display_y_mm = RobotConfig.display_y_distance(rel_v_mm)
                     display_x_steps = RobotConfig.display_x_distance(rel_h_steps)
                     display_y_steps = RobotConfig.display_y_distance(rel_v_steps)
-                    print(f"📍 Movimiento completado - Distancia relativa: X={display_x_mm}mm ({display_x_steps} pasos), Y={display_y_mm}mm ({display_y_steps} pasos)")
+                    # Mensaje de movimiento completado (solo si es significativo)
+                    if abs(rel_h_mm) > 0 or abs(rel_v_mm) > 0:
+                        print(f"Movimiento: X={display_x_mm}mm, Y={display_y_mm}mm")
         except Exception as e:
             if RobotConfig.VERBOSE_LOGGING:
                 self.logger.warning(f"Error procesando mensaje de movimiento: {e}")
@@ -258,7 +260,7 @@ class UARTManager:
                 rel_h_mm = int(parts[4].split(':')[1])
                 rel_v_mm = int(parts[5])
                 
-                print(f"🚨 PARADA DE EMERGENCIA - Movido hasta parada: X={rel_h_mm}mm ({rel_h_steps} pasos), Y={rel_v_mm}mm ({rel_v_steps} pasos)")
+                print(f"Parada de emergencia: X={rel_h_mm}mm, Y={rel_v_mm}mm")
         except Exception as e:
             if RobotConfig.VERBOSE_LOGGING:
                 self.logger.warning(f"Error procesando mensaje de parada de emergencia: {e}")
