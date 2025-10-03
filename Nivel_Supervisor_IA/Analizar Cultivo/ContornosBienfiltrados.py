@@ -179,7 +179,6 @@ class EdgeDetectorOptimized:
                 binary_filtered[labels == i] = 255
                 kept += 1
         
-        print(f"  Componentes mantenidos: {kept}")
         #self.save_step("21_components_filtered", binary_filtered, 
         #              f"Filtrados por área ({kept} mantenidos)")
         
@@ -458,7 +457,6 @@ class EdgeDetectorOptimized:
         steps_folder.mkdir(parents=True, exist_ok=True)
         summary_folder.mkdir(parents=True, exist_ok=True)
         
-        print(f"\nGuardando en: {base_folder}")
         
         # Guardar pasos individuales
         for step_name, step_data in self.steps.items():
@@ -482,7 +480,6 @@ class EdgeDetectorOptimized:
         # Crear grid resumen
         self.create_summary_grid(summary_folder, image_name)
         
-        print(f"✓ Guardado completo")
     
     def create_summary_grid(self, summary_folder, image_name):
         """Grid resumen con pasos clave"""
@@ -523,7 +520,6 @@ class EdgeDetectorOptimized:
         
         grid_path = summary_folder / f"{image_name}_summary_grid.jpg"
         cv2.imwrite(str(grid_path), grid)
-        print(f"  ✓ Grid: {grid_path.name}")
 
 
 def process_images(input_folder, output_folder):

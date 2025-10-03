@@ -1,156 +1,131 @@
 class RobotConfig:
-    # =================================
-    # CONFIGURACIÓN PRINCIPAL DEL ROBOT
-    # =================================
-    
-    # ---- INVERSIÓN DE EJES ----
-    # Cambiar estas flags para invertir direcciones sin modificar código
-    X_AXIS_INVERTED = False  # False = firmware ya actualizado para coincidir con supervisor (X+ izquierda)
-    Y_AXIS_INVERTED = False  # False = normal (arriba es negativo)
-    
-    # ---- PLATAFORMA ----
-    # Cambiar esta variable para alternar entre plataformas
+    # Inversión de ejes
+    X_AXIS_INVERTED = False  # False = normal (izquierda positivo)
+    Y_AXIS_INVERTED = False  # False = normal (arriba negativo)
+
+    # Plataforma
     PLATFORM = 'RASPBERRY_PI'  # 'WINDOWS' o 'RASPBERRY_PI'
-    
-    # ---- COMUNICACIÓN ----
-    # Puertos seriales por plataforma
+
+    # Puertos seriales
     SERIAL_PORTS = {
         'WINDOWS': 'COM15',
-        'RASPBERRY_PI': '/dev/ttyUSB0'  # o /dev/ttyACM0 dependiendo del adaptador
+        'RASPBERRY_PI': '/dev/ttyUSB0'
     }
-    
+
     BAUD_RATE = 115200
     TIMEOUT = 2.0
-    
-    # ---- CONVERSIONES MECÁNICAS ----
-    STEPS_PER_MM_H = 40.0   # pasos por mm horizontal
-    STEPS_PER_MM_V = 200.0  # pasos por mm vertical
-    
-    # ---- VELOCIDADES (pasos/segundo) ----
-    # Coinciden con firmware: MAX_SPEED_H=10000, MAX_SPEED_V=15000
-    NORMAL_SPEED_H = 10000  # Velocidad máxima horizontal del firmware
-    NORMAL_SPEED_V = 15000  # Velocidad máxima vertical del firmware
-    HOMING_SPEED_H = 3000   # Velocidad lenta para homing
-    HOMING_SPEED_V = 8000   # Velocidad lenta para homing
-    
-    # ---- HOMING ----
-    HOMING_DISTANCE_H = 3000  # mm de movimiento para homing
-    HOMING_DISTANCE_V = 5000  # mm de movimiento para homing
-    HOME_OFFSET_H = 10        # mm de offset desde límites
-    HOME_OFFSET_V = 10        # mm de offset desde límites
-    
-    # ---- WORKSPACE ----
+
+    # Conversiones mecánicas
+    STEPS_PER_MM_H = 40.0
+    STEPS_PER_MM_V = 200.0
+
+    # Velocidades (pasos/segundo)
+    NORMAL_SPEED_H = 10000
+    NORMAL_SPEED_V = 15000
+    HOMING_SPEED_H = 3000
+    HOMING_SPEED_V = 8000
+
+    # Homing
+    HOMING_DISTANCE_H = 3000  # mm
+    HOMING_DISTANCE_V = 5000  # mm
+    HOME_OFFSET_H = 10  # mm desde límites
+    HOME_OFFSET_V = 10  # mm desde límites
+
+    # Workspace
     MAX_X = 1800  # mm
     MAX_Y = 1000  # mm
-    
-    # ---- LOGGING Y DEBUG ----
-    VERBOSE_LOGGING = False   # Reducir mensajes spam
-    SHOW_UART_EVENTS = False  # Mostrar eventos UART detallados
-    SHOW_MOVEMENT_COMPLETE = True  # Mostrar completado de movimientos
-    
-    # ---- SNAPSHOTS (capacidad firmware) ----
-    # Debe coincidir con MAX_SNAPSHOTS del firmware. Usado para calcular límite de flags por movimiento.
+
+    # Logging
+    VERBOSE_LOGGING = False
+    SHOW_UART_EVENTS = False
+    SHOW_MOVEMENT_COMPLETE = True
+
+    # Snapshots (debe coincidir con firmware)
     MAX_SNAPSHOTS = 30
-    
-    # =================================
-    # MÉTODOS AUXILIARES PARA DIRECCIONES
-    # =================================
-    
+
     @classmethod
     def apply_x_direction(cls, distance):
         """Aplica inversión de eje X si está habilitada"""
         return distance if not cls.X_AXIS_INVERTED else -distance
-    
+
     @classmethod
     def apply_y_direction(cls, distance):
         """Aplica inversión de eje Y si está habilitada"""
         return distance if not cls.Y_AXIS_INVERTED else -distance
-    
+
     @classmethod
     def get_homing_direction_x(cls):
-        """Dirección para ir hacia límite derecho (considerando inversión)"""
-        # Queremos ir hacia la DERECHA (límite RIGHT)
+        """Dirección hacia límite derecho"""
         return cls.apply_x_direction(-cls.HOMING_DISTANCE_H)
-    
+
     @classmethod
     def get_homing_direction_y(cls):
-        """Dirección para ir hacia límite superior (considerando inversión)"""
-        # Queremos ir hacia ARRIBA (límite UP)
+        """Dirección hacia límite superior"""
         return cls.apply_y_direction(-cls.HOMING_DISTANCE_V)
-    
+
     @classmethod
     def get_home_offset_x(cls):
-        """Offset desde límite derecho hacia izquierda (considerando inversión)"""
-        # Offset hacia la IZQUIERDA desde límite derecho
+        """Offset desde límite derecho hacia izquierda"""
         return cls.apply_x_direction(cls.HOME_OFFSET_H)
-    
+
     @classmethod
     def get_home_offset_y(cls):
-        """Offset desde límite superior hacia abajo (considerando inversión)"""
-        # Offset hacia ABAJO desde límite superior
+        """Offset desde límite superior hacia abajo"""
         return cls.apply_y_direction(cls.HOME_OFFSET_V)
-    
+
     @classmethod
     def get_workspace_measure_direction_x(cls):
-        """Dirección para medir workspace horizontal (hacia izquierda)"""
-        # Para medir, vamos hacia la IZQUIERDA (límite LEFT)
+        """Dirección para medir workspace horizontal"""
         return cls.apply_x_direction(cls.HOMING_DISTANCE_H)
-    
+
     @classmethod
     def get_workspace_measure_direction_y(cls):
-        """Dirección para medir workspace vertical (hacia abajo)"""
-        # Para medir, vamos hacia ABAJO (límite DOWN)
+        """Dirección para medir workspace vertical"""
         return cls.apply_y_direction(cls.HOMING_DISTANCE_V)
-    
+
     @classmethod
     def display_x_position(cls, internal_x):
-        """Convierte posición interna X a valor mostrado al usuario"""
+        """Convierte posición interna X a valor mostrado"""
         return -internal_x if cls.X_AXIS_INVERTED else internal_x
-    
+
     @classmethod
     def display_y_position(cls, internal_y):
-        """Convierte posición interna Y a valor mostrado al usuario"""
+        """Convierte posición interna Y a valor mostrado"""
         return -internal_y if cls.Y_AXIS_INVERTED else internal_y
-    
+
     @classmethod
     def display_x_distance(cls, internal_distance):
-        """Convierte distancia interna X a valor mostrado al usuario"""
+        """Convierte distancia interna X a valor mostrado"""
         return -internal_distance if cls.X_AXIS_INVERTED else internal_distance
-    
+
     @classmethod
     def display_y_distance(cls, internal_distance):
-        """Convierte distancia interna Y a valor mostrado al usuario"""
+        """Convierte distancia interna Y a valor mostrado"""
         return -internal_distance if cls.Y_AXIS_INVERTED else internal_distance
-    
-    # =================================
-    # MÉTODOS AUXILIARES PARA PLATAFORMA
-    # =================================
-    
+
     @classmethod
     def get_serial_port(cls):
-        """Obtiene el puerto serial apropiado según la plataforma configurada"""
+        """Obtiene el puerto serial según plataforma"""
         return cls.SERIAL_PORTS.get(cls.PLATFORM, cls.SERIAL_PORTS['WINDOWS'])
-    
+
     @classmethod
     def auto_detect_platform(cls):
-        """Detecta automáticamente la plataforma y actualiza PLATFORM"""
+        """Detecta automáticamente la plataforma"""
         import platform
         system = platform.system().lower()
-        
+
         if system == 'windows':
             cls.PLATFORM = 'WINDOWS'
         elif system == 'linux':
-            # En Raspberry Pi también es Linux
             cls.PLATFORM = 'RASPBERRY_PI'
         else:
-            # Fallback a Windows por defecto
             cls.PLATFORM = 'WINDOWS'
-        
+
         return cls.PLATFORM
-    
+
     @classmethod
     def get_platform_info(cls):
-        """Obtiene información de la plataforma actual"""
+        """Información de la plataforma actual"""
         import platform
         return {
             'configured_platform': cls.PLATFORM,
@@ -159,15 +134,11 @@ class RobotConfig:
             'auto_detect_result': cls.auto_detect_platform() if hasattr(cls, '_temp_auto_detect') else None
         }
 
-# =================================
-# CONFIGURACIÓN PARA IA Y CORRECCIÓN DE POSICIÓN
-# =================================
-
-# Parámetros para corrección de posición basada en IA
+# Parámetros para corrección de posición con IA
 AI_TEST_PARAMS = {
-    'camera_index': 0,  # Cámara disponible en índice 0
+    'camera_index': 0,
     'max_iterations': 10,
     'tolerance_mm': 1.0,
-    'offset_x_mm': -40.0,  # Offset horizontal en milÃ­metros
-    'offset_y_mm': -8.0   # Offset vertical en milÃ­metros
+    'offset_x_mm': -40.0,
+    'offset_y_mm': -8.0
 }
