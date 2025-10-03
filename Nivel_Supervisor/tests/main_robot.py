@@ -60,7 +60,7 @@ scan_horizontal_with_live_camera = None
 
 try:
     print("Intentando importar escáner horizontal...")
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
     from escaner_standalone import scan_horizontal_with_live_camera
     SCANNER_HORIZONTAL_AVAILABLE = True
     print("Escáner horizontal autónomo importado exitosamente")
@@ -77,7 +77,7 @@ scan_vertical_manual = None
 
 try:
     print("Intentando importar escáner vertical manual...")
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
     from escaner_vertical_manual import scan_vertical_manual
     SCANNER_VERTICAL_MANUAL_AVAILABLE = True
     print("Escáner vertical manual importado exitosamente")
@@ -94,7 +94,7 @@ scan_vertical_with_flags = None
 
 try:
     print("Intentando importar escáner vertical automático...")
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
     SCANNER_VERTICAL_AUTO_AVAILABLE = True
     print("Escáner vertical automático importado exitosamente")
 except ImportError as e:
@@ -110,7 +110,7 @@ clasificar_imagen = None
 
 try:
     print("Intentando importar módulo de clasificación...")
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Analizar Cultivo'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Analizar Cultivo'))
     from Clasificador_integrado import clasificar_imagen
     CLASIFICACION_AVAILABLE = True
     print("Módulo de clasificación importado exitosamente")
