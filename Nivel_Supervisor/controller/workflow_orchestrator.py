@@ -582,9 +582,10 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
 
         print(f"[cosecha] Posición actual del supervisor: X={current_x:.1f}mm, Y={current_y:.1f}mm (Homed: {is_homed})")
 
-        # Solo hacer resync si NO está homed (posición no confiable)
-        if not is_homed:
-            print("[cosecha] Robot NO homed - Intentando resincronizar desde firmware...")
+        # Solo hacer resync si NO está homed Y la posición NO es (0,0)
+        # Si ya está en (0,0), asumimos que es correcto (acaba de hacer homing)
+        if not is_homed and not (abs(current_x) < 2.0 and abs(current_y) < 2.0):
+            print("[cosecha] Robot NO homed y posición no es (0,0) - Intentando resincronizar desde firmware...")
             did_resync = False
             try:
                 if robot.resync_global_position_from_firmware():
@@ -611,6 +612,8 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                         robot.reset_global_position(0.0, 0.0)
                     except Exception:
                         pass
+        elif abs(current_x) < 2.0 and abs(current_y) < 2.0:
+            print(f"[cosecha] Robot en (0,0) - Asumiendo posición correcta (probablemente acabó de hacer homing)")
         else:
             print(f"[cosecha] Robot homed - Usando posición confiable del supervisor (no resync)")
 
