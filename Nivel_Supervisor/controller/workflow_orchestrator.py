@@ -37,11 +37,11 @@ if ANALIZAR_DIR not in sys.path:
 
 # Import scanners and config
 try:
-    from escaner_vertical import scan_vertical_manual  # Vertical (manual flags)
-    print("✓ Escáner vertical importado")
+    from escaner_vertical_manual import scan_vertical_manual  # Vertical (manual flags)
+    print("✓ Escáner vertical manual importado")
 except Exception as e:
     scan_vertical_manual = None
-    print(f"⚠ Advertencia: No se pudo importar escáner vertical: {e}")
+    print(f"⚠ Advertencia: No se pudo importar escáner vertical manual: {e}")
 
 try:
     from escaner_standalone import scan_horizontal_with_live_camera  # Horizontal (flags + snapshots)
@@ -219,7 +219,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             print(f"Error: Módulos no disponibles: {', '.join(errores)}")
             print("Verifica que los archivos existan:")
             if scan_vertical_manual is None:
-                print(f"  - {ESC_V_DIR}/escaner_vertical.py")
+                print(f"  - {ESC_V_DIR}/escaner_vertical_manual.py")
             if scan_horizontal_with_live_camera is None:
                 print(f"  - {ESC_H_DIR}/escaner_standalone.py")
             return False
