@@ -1019,63 +1019,52 @@ def menu_interactivo(uart_manager, robot):
                 print("\n" + "="*60)
                 print("CLASIFICACIÓN DE LECHUGA - IA DETECCIÓN DE PLANTA")
                 print("="*60)
-                print("Se tomará una foto con la cámara y se clasificará")
-                print("-"*60)
 
-                confirmar = input("¿Deseas tomar la foto y clasificar? (s/n): ").strip().lower()
+                try:
+                    # Obtener el gestor de cámara
+                    camera_mgr = get_camera_manager()
 
-                if confirmar == 's':
-                    print("\n📷 Capturando imagen...")
+                    # Intentar inicializar la cámara si no está activa
+                    if not camera_mgr.is_camera_active():
+                        print("Inicializando cámara...")
+                        camera_mgr.initialize_camera()
 
-                    try:
-                        # Obtener el gestor de cámara
-                        camera_mgr = get_camera_manager()
+                    print("📷 Capturando imagen...")
+                    # Capturar imagen
+                    frame = camera_mgr.capture_frame()
 
-                        # Intentar inicializar la cámara si no está lista
-                        if not camera_mgr.is_camera_ready():
-                            print("Inicializando cámara...")
-                            camera_mgr.initialize_camera()
+                    if frame is None:
+                        print("❌ No se pudo capturar la imagen de la cámara")
+                        continue
 
-                        # Capturar imagen
-                        frame = camera_mgr.capture_frame()
+                    # Guardar imagen temporalmente
+                    import cv2
+                    temp_image_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Analizar Cultivo', 'temp_clasificacion.jpg')
+                    cv2.imwrite(temp_image_path, frame)
+                    print(f"✓ Imagen guardada")
 
-                        if frame is None:
-                            print("❌ No se pudo capturar la imagen de la cámara")
-                            input("\nPresiona Enter para continuar...")
-                            continue
+                    # Clasificar la imagen
+                    print("🔄 Clasificando imagen...")
+                    resultado = clasificar_imagen(temp_image_path)
 
-                        # Guardar imagen temporalmente
-                        import cv2
-                        temp_image_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Analizar Cultivo', 'temp_clasificacion.jpg')
-                        cv2.imwrite(temp_image_path, frame)
-                        print(f"✓ Imagen guardada en: {temp_image_path}")
+                    # Mostrar resultado
+                    print("\n" + "="*60)
+                    print("RESULTADO DE LA CLASIFICACIÓN")
+                    print("="*60)
+                    print(f"Clase predicha: {resultado['clase']}")
+                    print(f"Confianza: {resultado['confianza']:.2%}")
 
-                        # Clasificar la imagen
-                        print("\n🔄 Clasificando imagen...")
-                        resultado = clasificar_imagen(temp_image_path)
+                    if 'probabilidades' in resultado:
+                        print("\nProbabilidades por clase:")
+                        for clase, prob in resultado['probabilidades'].items():
+                            print(f"  - {clase}: {prob:.2%}")
 
-                        # Mostrar resultado
-                        print("\n" + "="*60)
-                        print("RESULTADO DE LA CLASIFICACIÓN")
-                        print("="*60)
-                        print(f"Clase predicha: {resultado['clase']}")
-                        print(f"Confianza: {resultado['confianza']:.2%}")
+                    print("="*60)
 
-                        if 'probabilidades' in resultado:
-                            print("\nProbabilidades por clase:")
-                            for clase, prob in resultado['probabilidades'].items():
-                                print(f"  - {clase}: {prob:.2%}")
-
-                        print("="*60)
-
-                    except Exception as e:
-                        print(f"\n❌ Error durante la clasificación: {e}")
-                        import traceback
-                        traceback.print_exc()
-                else:
-                    print("Clasificación cancelada")
-
-                input("\nPresiona Enter para continuar...")
+                except Exception as e:
+                    print(f"\n❌ Error durante la clasificación: {e}")
+                    import traceback
+                    traceback.print_exc()
             else:
                 print("Módulo de clasificación no disponible. Verificar imports.")
         elif opcion == '0':
