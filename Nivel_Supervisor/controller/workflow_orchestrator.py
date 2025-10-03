@@ -51,6 +51,15 @@ try:
 except Exception as e:
     config_tubos = None
 
+# Import clasificador de plantas (IA Analizar Cultivo)
+try:
+    from Clasificador_integrado import clasificar_imagen
+    CLASIFICADOR_DISPONIBLE = True
+except Exception as e:
+    clasificar_imagen = None
+    CLASIFICADOR_DISPONIBLE = False
+    print(f"⚠ Advertencia: No se pudo importar clasificador de plantas: {e}")
+
 # Import MatrizCintas (cintas X por tubo)
 try:
     from matriz_cintas import MatrizCintas
@@ -59,6 +68,62 @@ except Exception:
 
 # Import configs
 from config.robot_config import RobotConfig
+from camera_manager import get_camera_manager
+
+
+def _clasificar_lechuga_automatico() -> str:
+    """
+    Usa la IA de clasificación para determinar el estado de la lechuga.
+
+    Returns:
+        '1' = lechuga lista (LECHUGA)
+        '2' = no lista (otros estados de lechuga)
+        '3' = vacío (VASO_NEGRO, VASO_VACIO, VASOS)
+    """
+    if not CLASIFICADOR_DISPONIBLE:
+        print("       ⚠ Clasificador no disponible, usando input manual")
+        opt = input("       Selecciona (1/2/3): ").strip()
+        return opt if opt in ['1','2','3'] else '2'
+
+    try:
+        import cv2
+        import os
+
+        # Capturar imagen
+        camera_mgr = get_camera_manager()
+        if not camera_mgr.is_camera_active():
+            camera_mgr.initialize_camera()
+
+        frame = camera_mgr.capture_frame()
+        if frame is None:
+            print("       ⚠ No se pudo capturar imagen, usando input manual")
+            opt = input("       Selecciona (1/2/3): ").strip()
+            return opt if opt in ['1','2','3'] else '2'
+
+        # Guardar imagen temporalmente
+        temp_path = os.path.join(ANALIZAR_DIR, 'temp_workflow_clasificacion.jpg')
+        cv2.imwrite(temp_path, frame)
+
+        # Clasificar
+        resultado = clasificar_imagen(temp_path)
+        clase = resultado.get('clase', 'DESCONOCIDO')
+        confianza = resultado.get('confianza', 0)
+
+        print(f"       🤖 IA detectó: {clase} (confianza: {confianza:.1%})")
+
+        # Mapear clase a opción
+        if clase == 'LECHUGA':
+            return '1'  # Lista para cosechar
+        elif clase in ['VASO_NEGRO', 'VASO_VACIO', 'VASOS']:
+            return '3'  # Vacío
+        else:
+            return '2'  # No lista (otros estados)
+
+    except Exception as e:
+        print(f"       ⚠ Error en clasificación automática: {e}")
+        print("       Usando input manual")
+        opt = input("       Selecciona (1/2/3): ").strip()
+        return opt if opt in ['1','2','3'] else '2'
 
 
 def _get_ordered_tubos() -> Dict[int, Dict[str, float]]:
@@ -379,8 +444,9 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
     PASO 3: Para cada cinta del tubo (ordenada por ID):
         - Mover a posición de la cinta (X=cinta, Y=tubo)
         
-    PASO 4: Aplicar IA "Analizar Cultivo" (simulado por consola):
-        - Opciones: [1] lista, [2] no lista, [3] vacío
+    PASO 4: Aplicar IA "Analizar Cultivo" (clasificación automática):
+        - Captura imagen con cámara
+        - Clasifica: LECHUGA (lista), VASO (vacío), otros (no lista)
         - Si no lista o vacío: pasar a siguiente cinta
         
     PASO 5: Si lechuga LISTA:
@@ -754,21 +820,22 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 else:
                     print(f"     Ya posicionado en cinta desde movimiento anterior")
 
-                # PASO 4: Aplicar IA "Analizar Cultivo" (simulado por consola)
-                print("     [IA Analizar Cultivo] Estado de la lechuga:")
-                print("       1) lista    2) no lista    3) vacío")
-                opt = input("       Selecciona (1/2/3): ").strip()
-                if opt not in ['1','2','3']:
-                    print("       Opción inválida, se asume 'no lista'")
-                    opt = '2'
+                # PASO 4: Aplicar IA "Analizar Cultivo" (clasificación automática)
+                print("     [IA Analizar Cultivo] Clasificando estado de la lechuga...")
+                opt = _clasificar_lechuga_automatico()
 
-                if opt in ['2','3']:
-                    print("     → Lechuga no lista o vacío, pasando a siguiente cinta")
+                if opt == '3':
+                    print("     → VACÍO detectado, pasando a siguiente cinta")
+                    need_move = True  # La siguiente cinta necesitará moverse
+                    continue
+                elif opt == '2':
+                    print("     → Lechuga NO LISTA, pasando a siguiente cinta")
                     need_move = True  # La siguiente cinta necesitará moverse
                     continue
 
                 # PASO 5: Lechuga LISTA → Ejecutar posicionamiento completo (IA H+V)
-                print("     → Lechuga LISTA - Ejecutando posicionamiento completo (IA H+V)...")
+                print("     ✅ LECHUGA LISTA detectada - Iniciando cosecha...")
+                print("     → Ejecutando posicionamiento completo (IA H+V)...")
                 if not posicionamiento_completo(robot):
                     print("       Advertencia: Posicionamiento completo falló, continuando...")
 
