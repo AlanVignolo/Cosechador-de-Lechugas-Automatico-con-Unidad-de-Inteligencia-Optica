@@ -38,23 +38,30 @@ if ANALIZAR_DIR not in sys.path:
 # Import scanners and config
 try:
     from escaner_vertical import scan_vertical_manual  # Vertical (manual flags)
+    print("✓ Escáner vertical importado")
 except Exception as e:
     scan_vertical_manual = None
+    print(f"⚠ Advertencia: No se pudo importar escáner vertical: {e}")
 
 try:
     from escaner_standalone import scan_horizontal_with_live_camera  # Horizontal (flags + snapshots)
+    print("✓ Escáner horizontal importado")
 except Exception as e:
     scan_horizontal_with_live_camera = None
+    print(f"⚠ Advertencia: No se pudo importar escáner horizontal: {e}")
 
 try:
     from configuracion_tubos import config_tubos
+    print("✓ Configuración de tubos importada")
 except Exception as e:
     config_tubos = None
+    print(f"⚠ Advertencia: No se pudo importar configuración de tubos: {e}")
 
 # Import clasificador de plantas (IA Analizar Cultivo)
 try:
     from Clasificador_integrado import clasificar_imagen
     CLASIFICADOR_DISPONIBLE = True
+    print("✓ Clasificador de plantas importado")
 except Exception as e:
     clasificar_imagen = None
     CLASIFICADOR_DISPONIBLE = False
