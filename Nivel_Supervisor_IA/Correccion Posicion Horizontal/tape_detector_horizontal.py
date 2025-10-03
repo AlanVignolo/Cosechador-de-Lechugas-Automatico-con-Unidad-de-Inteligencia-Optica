@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import json
 import matplotlib.pyplot as plt
-import threading
 import time
 import os
 import sys
@@ -10,7 +9,7 @@ from typing import List, Tuple, Optional, Dict, Any
 
 # Importar el gestor de cámara centralizado
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor'))
-from camera_manager import get_camera_manager
+from core.camera_manager import get_camera_manager
 
 # Cache global para recordar qué cámara funciona
 _working_camera_cache = None
