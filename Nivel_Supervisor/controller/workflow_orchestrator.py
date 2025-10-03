@@ -69,7 +69,7 @@ def _get_ordered_tubos() -> Dict[int, Dict[str, float]]:
     return {k: cfg[k] for k in sorted(cfg.keys())}
 
 
-def _resync_position_from_firmware(robot) -> bool:
+def _resync_position_from_firmware_DISABLED(robot) -> bool:  # NO USAR - Rompe tracking
     """
     Resincronizar posición global del supervisor desde la posición real del firmware.
     Útil antes de movimientos críticos como retorno a (0,0) para evitar errores acumulados.
@@ -206,14 +206,11 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             if not res_arm_pp.get('success'):
                 print(f"Error: no se pudo cambiar brazo a 'movimiento': {res_arm_pp}")
                 return False
-            t0 = time.time()
-            while time.time() - t0 < 6.0:
-                try:
-                    if not getattr(robot.arm, 'is_executing_trajectory', False):
-                        break
-                except Exception:
-                    break
-                time.sleep(0.05)
+
+            # Esperar a que REALMENTE llegue al estado 'movimiento'
+            if not wait_for_arm_state('movimiento', timeout_s=20.0):
+                print(f"Error: Brazo no llegó a 'movimiento'")
+                return False
 
         # Paso 1: Homing
         print("[inicio_completo] Paso 1/4: Homing...")
@@ -309,7 +306,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[workflow] Resincronizando posición desde firmware...")
-            _resync_position_from_firmware(robot)
+            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
             
             try:
                 status_pos = robot.get_status()
@@ -396,9 +393,9 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
     PASO 8: Al terminar movimiento, setear flag en TRUE (con lechuga)
     
     PASO 9: Cambiar brazo a 'mover_lechuga' para transporte
-    
-    PASO 10: Ir a esquina de depósito (X=fin, Y=fin)
-    
+
+    PASO 10: Ir a posición de depósito (X=fin, Y=fin-250mm)
+
     PASO 11: Cambiar brazo a 'depositar_lechuga'
     
     PASO 12: Cambiar brazo a 'mover_lechuga' y setear flag en FALSE
@@ -492,32 +489,45 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             if not res_home.get('success'):
                 print(f"[cosecha] Error en homing: {res_home.get('message')}")
                 return False
-        # Antes de calcular y mover, resincronizar posición global desde firmware para evitar usar estado viejo
-        did_resync = False
-        try:
-            if robot.resync_global_position_from_firmware():
-                st_sync = robot.get_status()
-                print(f"[cosecha] Posición resincronizada: X={st_sync['position']['x']:.1f}mm, Y={st_sync['position']['y']:.1f}mm")
-                did_resync = True
-        except Exception:
+        # Verificar estado actual del supervisor
+        st_current = robot.get_status()
+        current_x = st_current['position']['x']
+        current_y = st_current['position']['y']
+        is_homed = st_current.get('is_homed', False)
+
+        print(f"[cosecha] Posición actual del supervisor: X={current_x:.1f}mm, Y={current_y:.1f}mm (Homed: {is_homed})")
+
+        # Solo hacer resync si NO está homed (posición no confiable)
+        if not is_homed:
+            print("[cosecha] Robot NO homed - Intentando resincronizar desde firmware...")
             did_resync = False
-        if not did_resync:
-            st_nosync = robot.get_status()
-            print(f"[cosecha] Aviso: no se pudo resincronizar. Usando estado supervisor: X={st_nosync['position']['x']:.1f}mm, Y={st_nosync['position']['y']:.1f}mm")
-            # Si estamos exactamente en (0, -height) por tracking invertido, corregir a (0,0)
-            dims_chk = robot.get_workspace_dimensions()
             try:
-                height_chk = float(dims_chk.get('height_mm', 0.0)) if dims_chk.get('calibrated') else float(RobotConfig.MAX_Y)
-            except Exception:
-                height_chk = float(RobotConfig.MAX_Y)
-            y_bad = st_nosync['position']['y']
-            x_bad = st_nosync['position']['x']
-            if abs(x_bad - 0.0) <= 2.0 and abs(abs(y_bad) - height_chk) <= 2.0:
-                print("[cosecha] Corrección automática: interpretando estado (0, -height) como (0,0) tras retorno previo")
+                if robot.resync_global_position_from_firmware():
+                    st_sync = robot.get_status()
+                    print(f"[cosecha] Posición resincronizada: X={st_sync['position']['x']:.1f}mm, Y={st_sync['position']['y']:.1f}mm")
+                    did_resync = True
+            except Exception as e:
+                print(f"[cosecha] Error en resync: {e}")
+                did_resync = False
+            if not did_resync:
+                st_nosync = robot.get_status()
+                print(f"[cosecha] Aviso: no se pudo resincronizar. Usando estado supervisor: X={st_nosync['position']['x']:.1f}mm, Y={st_nosync['position']['y']:.1f}mm")
+                # Si estamos exactamente en (0, -height) por tracking invertido, corregir a (0,0)
+                dims_chk = robot.get_workspace_dimensions()
                 try:
-                    robot.reset_global_position(0.0, 0.0)
+                    height_chk = float(dims_chk.get('height_mm', 0.0)) if dims_chk.get('calibrated') else float(RobotConfig.MAX_Y)
                 except Exception:
-                    pass
+                    height_chk = float(RobotConfig.MAX_Y)
+                y_bad = st_nosync['position']['y']
+                x_bad = st_nosync['position']['x']
+                if abs(x_bad - 0.0) <= 2.0 and abs(abs(y_bad) - height_chk) <= 2.0:
+                    print("[cosecha] Corrección automática: interpretando estado (0, -height) como (0,0) tras retorno previo")
+                    try:
+                        robot.reset_global_position(0.0, 0.0)
+                    except Exception:
+                        pass
+        else:
+            print(f"[cosecha] Robot homed - Usando posición confiable del supervisor (no resync)")
 
         # Obtener dimensiones del workspace
         dims = robot.get_workspace_dimensions()
@@ -538,8 +548,12 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
         x_edge = max(0.0, width_mm - edge_backoff_mm)
         y_edge = max(0.0, height_mm - edge_backoff_mm)
 
+        # Posición de depósito: X en el borde, Y a 250mm del borde
+        y_deposit = max(0.0, y_edge - 250.0)
+
         print(f"[cosecha] Workspace: width={width_mm:.1f}mm, height={height_mm:.1f}mm")
-        print(f"[cosecha] Edges: x_edge={x_edge:.1f}mm, y_edge={y_edge:.1f}mm")
+        print(f"[cosecha] Borde seguro: x_edge={x_edge:.1f}mm, y_edge={y_edge:.1f}mm")
+        print(f"[cosecha] Posición de depósito: X={x_edge:.1f}mm, Y={y_deposit:.1f}mm")
 
         # Helper: obtener posición actual desde firmware (preferido) o supervisor
         def _get_curr_pos_mm_from_fw() -> Optional[Tuple[float, float]]:
@@ -632,6 +646,30 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             print("[wait_arm_idle] Aviso: brazo aún en movimiento tras timeout; continuando con cuidado")
             return False
 
+        # Helper: esperar hasta que el brazo esté en un estado específico
+        def wait_for_arm_state(target_state: str, timeout_s: float = 20.0) -> bool:
+            """Espera hasta que el brazo esté realmente en el estado objetivo"""
+            import time as _t
+            t0 = _t.time()
+            print(f"       [wait_for_arm_state] Esperando estado '{target_state}'...")
+
+            while _t.time() - t0 < timeout_s:
+                try:
+                    # Verificar que NO esté ejecutando trayectoria
+                    if not getattr(robot.arm, 'is_executing_trajectory', False):
+                        # Verificar que esté en el estado correcto
+                        if robot.arm.current_state == target_state:
+                            elapsed = _t.time() - t0
+                            print(f"       [wait_for_arm_state] ✅ Estado '{target_state}' alcanzado en {elapsed:.1f}s")
+                            return True
+                except Exception as e:
+                    print(f"       [wait_for_arm_state] ⚠️  Exception: {e}")
+                    pass
+                _t.sleep(0.1)
+
+            print(f"       [wait_for_arm_state] ❌ Timeout esperando '{target_state}' (actual: {robot.arm.current_state})")
+            return False
+
         # Helper: posicionamiento completo (opción main_robot 10-3)
         def posicionamiento_completo(robot):
             try:
@@ -674,19 +712,22 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print(f"No se pudo ir a 'mover_lechuga': {res_arm}")
                 return False
             # Esperar confirmación de fin de trayectoria por UART y luego idle
-            try:
-                robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
-            except Exception:
-                pass
-            wait_arm_idle(6.0)
+            # Esperar a que llegue al estado 'mover_lechuga'
+            if not wait_for_arm_state('mover_lechuga', timeout_s=20.0):
+                print(f"Error: Brazo no llegó a 'mover_lechuga'")
+                return False
         else:
             print("[cosecha] Brazo ya está en 'mover_lechuga'")
 
         # Instancia de matriz de cintas
         matriz = MatrizCintas()
 
+        # Flag global para saber si debemos movernos (persiste entre tubos)
+        need_move = True
+
         # Iterar por tubos
-        for tubo_id in sorted(tubos_cfg.keys()):
+        tubos_list = sorted(tubos_cfg.keys())
+        for tubo_idx, tubo_id in enumerate(tubos_list):
             y_tubo = float(tubos_cfg[tubo_id]['y_mm'])
             nombre_tubo = tubos_cfg[tubo_id]['nombre']
             print(f"\n== TUBO {tubo_id} ({nombre_tubo}) Y={y_tubo:.1f}mm ==")
@@ -700,25 +741,18 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             # Ordenar por id natural
             cintas_sorted = sorted(cintas, key=lambda c: c.get('id', 0))
 
-            # PASO 2: Ir a la primera cinta del tubo actual
-            if cintas_sorted:
-                primera_cinta = cintas_sorted[0]
-                x_primera = float(primera_cinta.get('x_mm', 0.0))
-                print(f"  -> Moviendo a primera cinta del tubo: X={x_primera:.1f}mm, Y={y_tubo:.1f}mm")
-                wait_arm_idle(6.0)
-                if not move_abs(x_primera, y_tubo):
-                    return False
-
-            # PASO 3: Iterar por todas las cintas del tubo
             for idx, cinta in enumerate(cintas_sorted):
                 x_cinta = float(cinta.get('x_mm', 0.0))
                 print(f"\n  -> Cinta #{cinta.get('id','?')}: X={x_cinta:.1f}mm")
-                
-                # Mover a la cinta solo si no es la primera (ya estamos ahí)
-                if idx > 0:
-                    wait_arm_idle(6.0)
+
+                # Mover a la cinta si es necesario
+                if need_move:
+                    print(f"     Moviendo a cinta: X={x_cinta:.1f}mm, Y={y_tubo:.1f}mm")
                     if not move_abs(x_cinta, y_tubo):
                         return False
+                    need_move = False  # Ya nos movimos, la siguiente puede venir pre-posicionada
+                else:
+                    print(f"     Ya posicionado en cinta desde movimiento anterior")
 
                 # PASO 4: Aplicar IA "Analizar Cultivo" (simulado por consola)
                 print("     [IA Analizar Cultivo] Estado de la lechuga:")
@@ -730,6 +764,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
 
                 if opt in ['2','3']:
                     print("     → Lechuga no lista o vacío, pasando a siguiente cinta")
+                    need_move = True  # La siguiente cinta necesitará moverse
                     continue
 
                 # PASO 5: Lechuga LISTA → Ejecutar posicionamiento completo (IA H+V)
@@ -745,76 +780,119 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print("     → Paso 7: Cambiando brazo a 'recoger_lechuga'")
                 res_arm = robot.arm.change_state('recoger_lechuga')
                 if not res_arm.get('success'):
-                    print(f"       Error moviendo a 'recoger_lechuga': {res_arm}")
+                    print(f"       ❌ Error iniciando transición a 'recoger_lechuga': {res_arm}")
                     return False
-                try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=12.0)
-                except Exception:
-                    pass
-                wait_arm_idle(8.0)
-                
+
+                # Esperar a que REALMENTE llegue al estado 'recoger_lechuga'
+                if not wait_for_arm_state('recoger_lechuga', timeout_s=20.0):
+                    print(f"       ❌ ERROR: Brazo no llegó a 'recoger_lechuga'")
+                    return False
+
                 # PASO 8: Al terminar movimiento, setear flag en TRUE (con lechuga)
                 print("     → Paso 8: Lechuga recogida - Seteando flag en TRUE")
                 robot.arm.set_lettuce_state(True)
                 
+                
                 # PASO 9: Cambiar brazo a 'mover_lechuga'
                 print("     → Paso 9: Cambiando brazo a 'mover_lechuga' para transporte")
                 res_arm2 = robot.arm.change_state('mover_lechuga')
-                if not res_arm2.get('success'):
-                    print(f"       Error moviendo a 'mover_lechuga': {res_arm2}")
-                    return False
-                try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
-                except Exception:
-                    pass
-                wait_arm_idle(6.0)
 
-                # PASO 10: Ir a esquina para depositar (X=fin, Y=fin)
-                print(f"     → Paso 10: Moviendo a esquina de depósito: X={x_edge:.1f}mm, Y={y_edge:.1f}mm")
-                if not move_abs(x_edge, y_edge):
+                if not res_arm2.get('success'):
+                    print(f"       ❌ ERROR iniciando transición a 'mover_lechuga': {res_arm2}")
+                    return False
+
+                # Esperar a que REALMENTE llegue al estado 'mover_lechuga'
+                if not wait_for_arm_state('mover_lechuga', timeout_s=20.0):
+                    print(f"       ❌ ERROR: Brazo no llegó a 'mover_lechuga'")
+                    return False
+
+                print(f"     → ✅ Brazo confirmado en 'mover_lechuga', listo para mover XY")
+
+
+                # PASO 10: Ir a posición de depósito (X=fin, Y=fin-250mm)
+                print(f"     → Paso 10: Moviendo a posición de depósito: X={x_edge:.1f}mm, Y={y_deposit:.1f}mm")
+                if not move_abs(x_edge, y_deposit):
                     return False
                 
                 # PASO 11: Cambiar brazo a 'depositar_lechuga'
                 print("     → Paso 11: Cambiando brazo a 'depositar_lechuga'")
                 res_dep = robot.arm.change_state('depositar_lechuga')
                 if not res_dep.get('success'):
-                    print(f"       Error en 'depositar_lechuga': {res_dep}")
+                    print(f"       ❌ Error iniciando transición a 'depositar_lechuga': {res_dep}")
                     return False
-                try:
-                    robot.cmd.uart.wait_for_action_completion("GRIPPER_ACTION", timeout=10.0)
-                except Exception:
-                    pass
-                wait_arm_idle(6.0)
+
+                # Esperar a que REALMENTE llegue al estado 'depositar_lechuga'
+                if not wait_for_arm_state('depositar_lechuga', timeout_s=20.0):
+                    print(f"       ❌ ERROR: Brazo no llegó a 'depositar_lechuga'")
+                    return False
                 
                 # PASO 12: Cambiar brazo a 'mover_lechuga' y setear flag en FALSE
                 print("     → Paso 12: Lechuga depositada - Cambiando a 'mover_lechuga' y flag en FALSE")
                 robot.arm.set_lettuce_state(False)
                 res_back = robot.arm.change_state('mover_lechuga')
                 if not res_back.get('success'):
-                    print(f"       Error volviendo a 'mover_lechuga': {res_back}")
+                    print(f"       ❌ Error iniciando transición a 'mover_lechuga': {res_back}")
                     return False
-                try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
-                except Exception:
-                    pass
-                wait_arm_idle(6.0)
 
-                # PASO 13: Volver al tubo actual para continuar con siguiente cinta
-                print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm) para siguiente cinta")
-                # Obtener X actual después del depósito
-                fwpos_after = _get_curr_pos_mm_from_fw()
-                if fwpos_after is not None:
-                    curr_x_after, _ = fwpos_after
-                else:
-                    status_after = robot.get_status()
-                    curr_x_after = float(status_after['position']['x'])
-                
-                # Volver a Y del tubo (mantener X actual)
-                if not move_abs(curr_x_after, y_tubo):
+                # Esperar a que REALMENTE llegue al estado 'mover_lechuga'
+                if not wait_for_arm_state('mover_lechuga', timeout_s=20.0):
+                    print(f"       ❌ ERROR: Brazo no llegó a 'mover_lechuga'")
                     return False
+
+                # PASO 13: Optimizar movimiento al siguiente objetivo
+                siguiente_cinta_idx = idx + 1
+                if siguiente_cinta_idx < len(cintas_sorted):
+                    # Caso 1: Hay más cintas en el MISMO tubo
+                    siguiente_cinta = cintas_sorted[siguiente_cinta_idx]
+                    x_siguiente = float(siguiente_cinta.get('x_mm', 0.0))
+                    print(f"     → Paso 13: Moviendo directamente a siguiente cinta del mismo tubo (X={x_siguiente:.1f}mm, Y={y_tubo:.1f}mm)")
+                    if not move_abs(x_siguiente, y_tubo):
+                        return False
+                    need_move = False  # Ya pre-posicionados para la siguiente cinta
+                else:
+                    # Caso 2: Es la última cinta del tubo actual
+                    siguiente_tubo_idx = tubo_idx + 1
+                    if siguiente_tubo_idx < len(tubos_list):
+                        # Hay un siguiente tubo: moverse directamente a su primera cinta
+                        siguiente_tubo_id = tubos_list[siguiente_tubo_idx]
+                        y_siguiente_tubo = float(tubos_cfg[siguiente_tubo_id]['y_mm'])
+
+                        # Obtener primera cinta del siguiente tubo
+                        cintas_siguiente_tubo = matriz.obtener_cintas_tubo(int(siguiente_tubo_id))
+                        if cintas_siguiente_tubo:
+                            cintas_siguiente_sorted = sorted(cintas_siguiente_tubo, key=lambda c: c.get('id', 0))
+                            primera_cinta_siguiente = cintas_siguiente_sorted[0]
+                            x_primera_siguiente = float(primera_cinta_siguiente.get('x_mm', 0.0))
+
+                            print(f"     → Paso 13: Moviendo directamente a primera cinta del siguiente tubo (X={x_primera_siguiente:.1f}mm, Y={y_siguiente_tubo:.1f}mm)")
+                            if not move_abs(x_primera_siguiente, y_siguiente_tubo):
+                                return False
+                            # Marcar que el siguiente tubo ya no necesita moverse en su primera iteración
+                            need_move = False
+                        else:
+                            # Siguiente tubo sin cintas: solo volver a Y del tubo actual
+                            print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm)")
+                            fwpos_after = _get_curr_pos_mm_from_fw()
+                            if fwpos_after is not None:
+                                curr_x_after, _ = fwpos_after
+                            else:
+                                status_after = robot.get_status()
+                                curr_x_after = float(status_after['position']['x'])
+                            if not move_abs(curr_x_after, y_tubo):
+                                return False
+                    else:
+                        # No hay más tubos: solo volver a Y del tubo actual
+                        print(f"     → Paso 13: Volviendo al tubo (Y={y_tubo:.1f}mm)")
+                        fwpos_after = _get_curr_pos_mm_from_fw()
+                        if fwpos_after is not None:
+                            curr_x_after, _ = fwpos_after
+                        else:
+                            status_after = robot.get_status()
+                            curr_x_after = float(status_after['position']['x'])
+                        if not move_abs(curr_x_after, y_tubo):
+                            return False
 
                 print("     ✓ Cosecha y depósito completados para esta cinta")
-                # Continuar a la siguiente cinta
 
             # Fin de cintas de este tubo
             print(f"== Fin de {nombre_tubo} ==")
@@ -841,16 +919,14 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             if not res_arm_end.get('success'):
                 print(f"Advertencia: No se pudo poner brazo en 'movimiento': {res_arm_end}")
             else:
-                try:
-                    robot.cmd.uart.wait_for_action_completion("SERVO_MOVE", timeout=10.0)
-                except Exception:
-                    pass
-                wait_arm_idle(6.0)
+                # Esperar a que llegue al estado 'movimiento'
+                if not wait_for_arm_state('movimiento', timeout_s=20.0):
+                    print(f"Advertencia: Brazo no llegó a 'movimiento', continuando con cuidado")
 
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[cosecha] Resincronizando posición desde firmware antes de retornar...")
-            _resync_position_from_firmware(robot)
+            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
 
             print("[cosecha] Volviendo a (0,0)...")
             if not move_abs(0.0, 0.0, timeout_s=240.0):
@@ -978,7 +1054,7 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[inicio_completo] Resincronizando posición desde firmware...")
-            _resync_position_from_firmware(robot)
+            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
             
             # Incluir componente X solo si seguimos en límite izquierdo; si no, mover solo Y
             try:
@@ -1198,7 +1274,7 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
             # Esto evita errores acumulados de tracking durante escaneos largos
             print("[inicio_simple] Resincronizando posición desde firmware...")
-            _resync_position_from_firmware(robot)
+            # # _resync_position_from_firmware(robot)  # DESHABILITADO: Rompe tracking  # DESHABILITADO: Rompe tracking
             
             # Usar posición global del supervisor para calcular retorno a X≈0
             try:
@@ -1351,27 +1427,18 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
         for tubo_id in sorted(tubos_cfg.keys()):
             y_target = float(tubos_cfg[tubo_id]['y_mm'])
             
-            # Obtener posición X actual desde firmware SIEMPRE (para cálculo correcto de dx)
+            # Obtener posición X actual desde tracking del supervisor (más confiable)
             try:
-                fw = robot.cmd.get_current_position_mm()
-                resp = fw.get('response', '') if isinstance(fw, dict) else str(fw)
-                if 'MM:' in resp:
-                    mm_part = resp.split('MM:')[1]
-                    parts = mm_part.replace('\n', ' ').split(',')
-                    if len(parts) >= 2:
-                        curr_x_fw = float(parts[0].strip())
-                    else:
-                        curr_x_fw = float(robot.get_status()['position']['x'])
-                else:
-                    curr_x_fw = float(robot.get_status()['position']['x'])
+                status = robot.get_status()
+                curr_x = float(status['position']['x'])
             except Exception:
-                curr_x_fw = float(robot.get_status()['position']['x'])
+                curr_x = 0.0
             
             # Calcular delta X: siempre volver a X=0 excepto en el primer tubo
             if first_tube:
                 dx = 0.0  # Primer tubo: ya estamos en X≈0 después del escaneo vertical
             else:
-                dx = -curr_x_fw  # Tubos siguientes: volver desde posición actual a X=0
+                dx = -curr_x  # Tubos siguientes: volver desde posición actual a X=0
             
             dy = y_target - y_curr
 
@@ -1394,32 +1461,26 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
                 h_ok = scan_horizontal_with_live_camera(robot, tubo_id=int(tubo_id))
             except Exception as e:
                 print(f"Error en escáner horizontal (tubo {tubo_id}): {e}")
-                return False
             if not h_ok:
                 print(f"Escaneo horizontal con errores en tubo {tubo_id}")
             first_tube = False
 
         # Paso 4: Volver a (0,0)
         if return_home:
-            print("[inicio_completo_hard] Paso 4/4: Volviendo a (0,0) en un único movimiento...")
+            print("[inicio_completo_hard] Paso 4/4: Volviendo a (0,0)...")
             
-            # CRÍTICO: Resincronizar posición desde firmware antes de calcular retorno
-            # Esto evita errores acumulados de tracking durante escaneos largos
-            print("[inicio_completo_hard] Resincronizando posición desde firmware...")
-            _resync_position_from_firmware(robot)
-            
-            # Obtener posición actual (ya sincronizada)
+            # Usar tracking del supervisor (más confiable que firmware durante escaneos)
             try:
                 status = robot.get_status()
                 curr_x = float(status['position']['x'])
                 curr_y = float(status['position']['y'])
             except Exception:
                 curr_x = 0.0
-                curr_y = y_curr
+                curr_y = 0.0
             
             dx_back = -curr_x
             dy_back = -curr_y
-            print(f"     ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
+            print(f"     desde ({curr_x:.1f}, {curr_y:.1f}) -> (0,0): ΔX={dx_back:.1f}mm, ΔY={dy_back:.1f}mm")
             ret_res = robot.cmd.move_xy(dx_back, dy_back)
             if not ret_res.get('success'):
                 print(f"Advertencia: No se pudo volver a (0,0): {ret_res}")

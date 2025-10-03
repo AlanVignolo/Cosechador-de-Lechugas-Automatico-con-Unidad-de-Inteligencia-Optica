@@ -244,11 +244,21 @@ class RobotController:
         
         try:
             print("Verificando posición del brazo...")
+            # Forzar refresh desde hardware para tener posición real
+            arm_status = self.arm.get_current_state(force_refresh=True)
+            current_pos = arm_status['position']
+            current_state = arm_status['state']
+
+            print(f"  Posición actual: servo1={current_pos[0]}°, servo2={current_pos[1]}°")
+            print(f"  Estado detectado: {current_state}")
+
             if not self.arm.is_in_movement_position():
-                print("  BRAZO NO ESTÁ EN POSICIÓN DE MOVIMIENTO (servo1=10°, servo2=10°)")
-                print("  Por seguridad, mueve el brazo manualmente antes de hacer homing")
-                return {"success": False, "message": "Brazo no está en posición de movimiento. Configura servo1=10°, servo2=10° antes de hacer homing."}
-            print(" Brazo en posición de movimiento")
+                print(f"  ❌ BRAZO NO ESTÁ EN POSICIÓN DE MOVIMIENTO")
+                print(f"  Se requiere: servo1=10°±5°, servo2=10°±5°")
+                print(f"  Actual: servo1={current_pos[0]}°, servo2={current_pos[1]}°")
+                print(f"  Por seguridad, usa la opción 9 (Menú avanzado del brazo) para mover a 'movimiento'")
+                return {"success": False, "message": f"Brazo no está en posición de movimiento. Actual: ({current_pos[0]}, {current_pos[1]})"}
+            print("  ✅ Brazo en posición de movimiento")
             
             limit_touched = {"type": None}
             

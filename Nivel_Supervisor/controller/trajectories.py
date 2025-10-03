@@ -406,7 +406,7 @@ class TrajectoryDefinitions:
     def depositar_lechuga_to_movimiento():
         """Ir de depositar lechuga a posición segura"""
         safe_state = ARM_STATES["movimiento"]
-        
+
         return {
             "name": "depositar_lechuga_to_movimiento",
             "description": "Ir a posición segura desde depósito",
