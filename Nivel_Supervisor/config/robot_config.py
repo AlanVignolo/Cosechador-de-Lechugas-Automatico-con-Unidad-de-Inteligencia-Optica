@@ -169,5 +169,5 @@ AI_TEST_PARAMS = {
     'max_iterations': 10,
     'tolerance_mm': 1.0,
     'offset_x_mm': -40.0,  # Offset horizontal en milÃ­metros
-    'offset_y_mm': -8.0   # Offset vertical en milÃ­metros
+    'offset_y_mm': -10.0   # Offset vertical en milÃ­metros
 }

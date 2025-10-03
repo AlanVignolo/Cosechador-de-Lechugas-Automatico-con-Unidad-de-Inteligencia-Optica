@@ -31,8 +31,8 @@ def capturar_imagen():
 
         # Recortar ROI
         alto, ancho = frame_rotado.shape[:2]
-        x1 = int(ancho * 0.2)
-        x2 = int(ancho * 0.8)
+        x1 = int(ancho * 0.25)
+        x2 = int(ancho * 0.75)
         y1 = int(alto * 0.3)
         y2 = int(alto * 0.7)
 

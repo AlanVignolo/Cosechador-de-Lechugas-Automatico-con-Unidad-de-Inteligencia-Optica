@@ -272,6 +272,14 @@ class TrajectoryDefinitions:
                     "action": "open",
                     "description": "Asegurar gripper abierto antes de mover"
                 },
+                
+                {
+                    "type": "arm_move",
+                    "servo1": 25,
+                    "servo2": 160,
+                    "time_ms": 1000,
+                    "description": "Elevar brazo a posición intermedia"
+                },
                 {
                     "type": "arm_move",
                     "servo1": 0,

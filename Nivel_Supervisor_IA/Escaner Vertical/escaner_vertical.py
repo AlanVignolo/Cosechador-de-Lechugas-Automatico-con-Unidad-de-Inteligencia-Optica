@@ -51,7 +51,7 @@ class VerticalScanner:
             self.camera_mgr.release("escaner_vertical")
         print("Cámara liberada")
 
-    def is_tube_complete(self, y_superior, y_inferior, frame_height, margin=10, min_height=80):
+    def is_tube_complete(self, y_superior, y_inferior, frame_height, margin=10, min_height=180):
         """
         Verifica si el tubo está COMPLETO (ambas líneas visibles y separadas)
 
