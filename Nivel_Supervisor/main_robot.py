@@ -90,7 +90,6 @@ scan_vertical_with_flags = None
 try:
     print("Intentando importar escáner vertical automático...")
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
-    from escaner_vertical import scan_vertical_with_flags
     SCANNER_VERTICAL_AUTO_AVAILABLE = True
     print("Escáner vertical automático importado exitosamente")
 except ImportError as e:
@@ -100,14 +99,27 @@ except Exception as e:
     print(f"Error inesperado en import de escáner vertical automático: {e}")
     SCANNER_VERTICAL_AUTO_AVAILABLE = False
 
+# Importar módulo de clasificación de plantas
+CLASIFICACION_AVAILABLE = False
+clasificar_imagen = None
+
+try:
+    print("Intentando importar módulo de clasificación...")
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Analizar Cultivo'))
+    from Clasificador_integrado import clasificar_imagen
+    CLASIFICACION_AVAILABLE = True
+    print("Módulo de clasificación importado exitosamente")
+except ImportError as e:
+    print(f"Error importando módulo de clasificación: {e}")
+    CLASIFICACION_AVAILABLE = False
+except Exception as e:
+    print(f"Error inesperado en import de clasificación: {e}")
+    CLASIFICACION_AVAILABLE = False
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-
-logger = logging.getLogger(__name__)
-
-# Archivo para persistencia del homing
 HOMING_DATA_FILE = os.path.join(os.path.dirname(__file__), 'homing_reference.json')
 
 # Variable global para estado de lechuga
@@ -771,11 +783,12 @@ def menu_interactivo(uart_manager, robot):
         print("12. Escaneado horizontal con camara en vivo")
         print("13. Escaneado vertical manual (flags por usuario)")
         print("14. Escaneado vertical AUTOMATICO con IA (deteccion de tubo)")
+        print("15. Clasificar lechugas (IA - Deteccion de planta)")
         print("-"*60)
         print("0.  Salir")
         print("-"*60)
 
-        opcion = input("Selecciona opción (0-14): ")
+        opcion = input("Selecciona opción (0-15): ")
 
         if opcion == '1':
             x = input("Posición X (mm) [Enter mantiene actual]: ").strip()
@@ -1001,6 +1014,70 @@ def menu_interactivo(uart_manager, robot):
                 print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
             else:
                 print("Escáner vertical automático no disponible. Verificar imports.")
+        elif opcion == '15':
+            if CLASIFICACION_AVAILABLE:
+                print("\n" + "="*60)
+                print("CLASIFICACIÓN DE LECHUGA - IA DETECCIÓN DE PLANTA")
+                print("="*60)
+                print("Se tomará una foto con la cámara y se clasificará")
+                print("-"*60)
+
+                confirmar = input("¿Deseas tomar la foto y clasificar? (s/n): ").strip().lower()
+
+                if confirmar == 's':
+                    print("\n📷 Capturando imagen...")
+
+                    try:
+                        # Obtener el gestor de cámara
+                        camera_mgr = get_camera_manager()
+
+                        # Intentar inicializar la cámara si no está lista
+                        if not camera_mgr.is_camera_ready():
+                            print("Inicializando cámara...")
+                            camera_mgr.initialize_camera()
+
+                        # Capturar imagen
+                        frame = camera_mgr.capture_frame()
+
+                        if frame is None:
+                            print("❌ No se pudo capturar la imagen de la cámara")
+                            input("\nPresiona Enter para continuar...")
+                            continue
+
+                        # Guardar imagen temporalmente
+                        import cv2
+                        temp_image_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Analizar Cultivo', 'temp_clasificacion.jpg')
+                        cv2.imwrite(temp_image_path, frame)
+                        print(f"✓ Imagen guardada en: {temp_image_path}")
+
+                        # Clasificar la imagen
+                        print("\n🔄 Clasificando imagen...")
+                        resultado = clasificar_imagen(temp_image_path)
+
+                        # Mostrar resultado
+                        print("\n" + "="*60)
+                        print("RESULTADO DE LA CLASIFICACIÓN")
+                        print("="*60)
+                        print(f"Clase predicha: {resultado['clase']}")
+                        print(f"Confianza: {resultado['confianza']:.2%}")
+
+                        if 'probabilidades' in resultado:
+                            print("\nProbabilidades por clase:")
+                            for clase, prob in resultado['probabilidades'].items():
+                                print(f"  - {clase}: {prob:.2%}")
+
+                        print("="*60)
+
+                    except Exception as e:
+                        print(f"\n❌ Error durante la clasificación: {e}")
+                        import traceback
+                        traceback.print_exc()
+                else:
+                    print("Clasificación cancelada")
+
+                input("\nPresiona Enter para continuar...")
+            else:
+                print("Módulo de clasificación no disponible. Verificar imports.")
         elif opcion == '0':
             print("Saliendo...")
             break

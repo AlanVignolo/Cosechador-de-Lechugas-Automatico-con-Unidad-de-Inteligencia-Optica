@@ -51,15 +51,14 @@ class EdgeDetectorOptimized:
         mask_black = cv2.bitwise_or(mask_black, 
                                      cv2.bitwise_and(mask_black, mask_not_pure_gray))
         
-        # Limpieza suave
         kernel_small = np.ones((3, 3), np.uint8)
         mask_black = cv2.morphologyEx(mask_black, cv2.MORPH_OPEN, kernel_small, iterations=2)
         mask_black = cv2.morphologyEx(mask_black, cv2.MORPH_CLOSE, kernel_small, iterations=2)
-        #self.save_step("04_black_cleaned", mask_black, "Negro limpiado")
+        self.save_step("04_black_cleaned", mask_black, "Negro limpiado")
         
         # Extensión de negro por conectividad vertical
         mask_black_extended = self.extend_black_vertically(mask_black, gray, h_img)
-        s#elf.save_step("05_black_extended", mask_black_extended, "Negro extendido verticalmente")
+        self.save_step("05_black_extended", mask_black_extended, "Negro extendido verticalmente")
         
         # ============= VERDE MEJORADO =============
         print("\n[2] Detección de VERDE mejorada")

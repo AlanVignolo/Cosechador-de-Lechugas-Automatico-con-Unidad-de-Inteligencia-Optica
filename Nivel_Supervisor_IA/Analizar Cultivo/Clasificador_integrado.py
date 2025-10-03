@@ -9,7 +9,7 @@ from pathlib import Path
 
 # Importar el clasificador original
 from ClasificadorImagen import ImageClassifier
-from ContornosBIenFIltrados import EdgeDetectorOptimized
+from ContornosBienfiltrados import EdgeDetectorOptimized
 
 
 class ClasificadorSimple:
