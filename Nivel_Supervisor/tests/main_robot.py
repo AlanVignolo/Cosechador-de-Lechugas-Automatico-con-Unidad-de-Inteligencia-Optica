@@ -3,6 +3,11 @@ import sys
 import time
 import threading
 import json
+import os
+
+# Agregar el directorio padre (Nivel_Supervisor) al path para imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from venv import logger
 from hardware.uart_manager import UARTManager
 from hardware.command_manager import CommandManager
@@ -12,7 +17,6 @@ from config.robot_config import RobotConfig
 from robot.trajectories import TrajectoryDefinitions, get_trajectory_time_estimate
 from core.camera_manager import get_camera_manager
 # Importar módulos de IA para corrección de posición
-import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Horizontal'))
