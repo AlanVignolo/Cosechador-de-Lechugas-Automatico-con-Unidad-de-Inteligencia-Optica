@@ -3,6 +3,7 @@ import sys
 import time
 import threading
 import json
+from venv import logger
 from controller.uart_manager import UARTManager  
 from controller.command_manager import CommandManager
 from controller.arm_controller import ArmController
