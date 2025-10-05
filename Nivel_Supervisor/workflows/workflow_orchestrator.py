@@ -980,15 +980,20 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not wait_for_arm_state('movimiento', timeout_s=20.0):
                     print(f"Advertencia: Brazo no llegó a 'movimiento', continuando con cuidado")
 
-            # Luego mover a borde seguro en X, manteniendo Y actual
-            print(f"[cosecha] Moviendo a borde seguro: X={x_edge:.1f}, Y={y_actual:.1f}")
+            # Paso 1: Mover a borde seguro en X, manteniendo Y actual
+            print(f"[cosecha] Paso 1/3: Moviendo a borde seguro X={x_edge:.1f}, manteniendo Y={y_actual:.1f}")
             if not move_abs(x_edge, y_actual, timeout_s=240.0):
                 print("Advertencia: No se pudo mover a borde seguro")
 
-            # Finalmente volver a (0,0)
-            print("[cosecha] Volviendo a (0,0)...")
+            # Paso 2: Bajar a Y=0, manteniendo X en borde seguro
+            print(f"[cosecha] Paso 2/3: Bajando a Y=0.0, manteniendo X={x_edge:.1f}")
+            if not move_abs(x_edge, 0.0, timeout_s=240.0):
+                print("Advertencia: No se pudo bajar a Y=0")
+
+            # Paso 3: Mover a X=0 (ya estamos en Y=0)
+            print(f"[cosecha] Paso 3/3: Moviendo a X=0.0 (origen)")
             if not move_abs(0.0, 0.0, timeout_s=240.0):
-                print("Advertencia: No se pudo volver a (0,0)")
+                print("Advertencia: No se pudo llegar al origen (0,0)")
 
         print("[cosecha] Flujo completado")
         return True
