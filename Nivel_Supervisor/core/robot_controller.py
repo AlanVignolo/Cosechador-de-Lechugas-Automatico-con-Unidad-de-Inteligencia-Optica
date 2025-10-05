@@ -36,33 +36,46 @@ class RobotController:
         
     def _request_system_status(self):
         self.logger.info("Solicitando estado inicial del sistema...")
-
         limits_result = self.cmd.check_limits()
         if limits_result["success"]:
             self.logger.info(f"Estado límites: {limits_result['response']}")
     
     def _setup_position_tracking(self):
         self.cmd.uart.set_stepper_callbacks(None, self._on_movement_completed)
-    
-    def _on_movement_completed(self, message: str):
+        # Asegurar que también contabilizamos deltas cuando hay paradas de emergencia
         try:
-            clean_message = message.split('\n')[0]
-            parts = clean_message.split(',')
-            if len(parts) >= 6:
-                rel_h_mm = float(parts[4].split(':')[1])
-                rel_v_mm = float(parts[5])
+            if not getattr(self.cmd.uart, "_supervisor_em_stop_wrapped", False):
+                original_em_stop = self.cmd.uart._process_emergency_stop
 
-                self.global_position["x"] += rel_h_mm
-                self.global_position["y"] += rel_v_mm
+                def _supervisor_emergency_wrapper(message: str):
+                    try:
+                        # Ejecutar lógica original (logs/prints)
+                        original_em_stop(message)
+                    finally:
+                        # Sumar deltas reales reportados por el firmware en emergencias
+                        try:
+                            clean_message = message.split('\n')[0]
+                            parts = clean_message.split(',')
+                            if len(parts) >= 6:
+                                rel_h_mm = float(parts[4].split(':')[1])
+                                rel_v_mm = float(parts[5])
 
-                self._save_current_position()
-                
-                display_x = RobotConfig.display_x_position(self.global_position['x'])
-                display_y = RobotConfig.display_y_position(self.global_position['y'])
-                self.logger.info(f"Posición global actualizada: X={display_x}mm, Y={display_y}mm")
-                
+                                self.global_position["x"] += rel_h_mm
+                                self.global_position["y"] += rel_v_mm
+
+                                self._save_current_position()
+
+                                display_x = RobotConfig.display_x_position(self.global_position['x'])
+                                display_y = RobotConfig.display_y_position(self.global_position['y'])
+                                self.logger.info(f"Posición global actualizada (emergencia): X={display_x}mm, Y={display_y}mm")
+                        except Exception as e:
+                            self.logger.warning(f"Error actualizando posición por emergencia: {e}")
+
+                self.cmd.uart._process_emergency_stop = _supervisor_emergency_wrapper
+                setattr(self.cmd.uart, "_supervisor_em_stop_wrapped", True)
         except Exception as e:
-            self.logger.warning(f"Error actualizando posición global: {e}")
+            # No bloquear si por algún motivo no se puede envolver
+            self.logger.warning(f"No se pudo registrar wrapper de emergencia: {e}")
     
     def reset_global_position(self, x: float = 0.0, y: float = 0.0):
         self.global_position["x"] = x
