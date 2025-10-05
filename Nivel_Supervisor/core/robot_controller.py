@@ -48,28 +48,27 @@ class RobotController:
                 original_em_stop = self.cmd.uart._process_emergency_stop
 
                 def _supervisor_emergency_wrapper(message: str):
+                    # Sumar deltas reales reportados por el firmware en emergencias
                     try:
-                        # Ejecutar lógica original (logs/prints)
-                        original_em_stop(message)
+                        clean_message = message.split('\n')[0]
+                        parts = clean_message.split(',')
+                        if len(parts) >= 6:
+                            rel_h_mm = float(parts[4].split(':')[1])
+                            rel_v_mm = float(parts[5])
+
+                            self.global_position["x"] += rel_h_mm
+                            self.global_position["y"] += rel_v_mm
+
+                            self._save_current_position()
+
+                            display_x = RobotConfig.display_x_position(self.global_position['x'])
+                            display_y = RobotConfig.display_y_position(self.global_position['y'])
+                            self.logger.info(f"Posición global actualizada (emergencia): X={display_x}mm, Y={display_y}mm")
+                    except Exception as e:
+                        self.logger.warning(f"Error actualizando posición por emergencia: {e}")
                     finally:
-                        # Sumar deltas reales reportados por el firmware en emergencias
-                        try:
-                            clean_message = message.split('\n')[0]
-                            parts = clean_message.split(',')
-                            if len(parts) >= 6:
-                                rel_h_mm = float(parts[4].split(':')[1])
-                                rel_v_mm = float(parts[5])
-
-                                self.global_position["x"] += rel_h_mm
-                                self.global_position["y"] += rel_v_mm
-
-                                self._save_current_position()
-
-                                display_x = RobotConfig.display_x_position(self.global_position['x'])
-                                display_y = RobotConfig.display_y_position(self.global_position['y'])
-                                self.logger.info(f"Posición global actualizada (emergencia): X={display_x}mm, Y={display_y}mm")
-                        except Exception as e:
-                            self.logger.warning(f"Error actualizando posición por emergencia: {e}")
+                        # Ejecutar lógica original (logs/prints) DESPUÉS de actualizar
+                        original_em_stop(message)
 
                 self.cmd.uart._process_emergency_stop = _supervisor_emergency_wrapper
                 setattr(self.cmd.uart, "_supervisor_em_stop_wrapped", True)
@@ -359,11 +358,10 @@ class RobotController:
             
             print("Esperando completar movimiento de offset...")
             self.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=10.0)
-            
-            # Establecer posición lógica de origen sin resetear el tracking global
+
+            # Establecer origen (0,0) - resetear AMBAS posiciones
             self.current_position = {"x": 0.0, "y": 0.0}
-            # Importante: NO resetear self.global_position aquí. El tracking global
-            # debe mantenerse únicamente por deltas de movimiento o resync explícito.
+            self.global_position = {"x": 0.0, "y": 0.0}
             self.is_homed = True
             
             print("Guardando referencia de homing...")
@@ -637,9 +635,9 @@ class RobotController:
 
             time.sleep(3.0)
 
-            # Establecer origen lógico sin resetear el tracking global
+            # Establecer origen (0,0) - resetear AMBAS posiciones
             self.current_position = {"x": 0.0, "y": 0.0}
-            # Importante: NO resetear self.global_position aquí
+            self.global_position = {"x": 0.0, "y": 0.0}
             self.is_homed = True
 
             result = self.cmd.set_velocities(RobotConfig.NORMAL_SPEED_H, RobotConfig.NORMAL_SPEED_V)
