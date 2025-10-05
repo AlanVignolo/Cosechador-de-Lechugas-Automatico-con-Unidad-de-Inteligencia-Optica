@@ -32,11 +32,9 @@ class ClasificadorSimple:
         
         self.stats_json_path = stats_json_path
         
-        # Inicializar detector y clasificador
-        print("Inicializando clasificador...")
+        # Inicializar detector y clasificador (silencioso)
         self.detector = EdgeDetectorOptimized()
         self.classifier = ImageClassifier(self.detector, self.stats_json_path)
-        print("✓ Clasificador listo (recorte automático: 10%)\n")
     
     def clasificar(self, imagen_path, guardar_resultados=False, carpeta_salida=None):
         """

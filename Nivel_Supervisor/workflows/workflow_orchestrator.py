@@ -108,7 +108,7 @@ def _clasificar_lechuga_automatico() -> str:
         clase = resultado.get('clase', 'DESCONOCIDO')
         confianza = resultado.get('confianza', 0)
 
-        print(f"       IA detectó: {clase} (confianza: {confianza:.1%})")
+        print(f"       IA: {clase} ({confianza:.1%})")
 
         if 'LECHUGA' in clase.upper():
             return '1'
@@ -120,8 +120,7 @@ def _clasificar_lechuga_automatico() -> str:
             return '2'
 
     except Exception as e:
-        print(f"       Error en clasificación automática: {e}")
-        print("       Usando input manual")
+        print(f"       Error IA: {e} - Modo manual")
         opt = input("       Selecciona (1/2/3): ").strip()
         return opt if opt in ['1','2','3'] else '2'
 
@@ -738,19 +737,19 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 else:
                     print(f"     Ya posicionado en cinta desde movimiento anterior")
 
-                print("     [IA Analizar Cultivo] Clasificando estado de la lechuga...")
+                print("     [Clasificando...]")
                 opt = _clasificar_lechuga_automatico()
 
                 if opt == '3':
-                    print("     → VACÍO detectado, pasando a siguiente cinta")
+                    print("     → VACÍO - siguiente cinta")
                     need_move = True
                     continue
                 elif opt == '2':
-                    print("     → Lechuga NO LISTA, pasando a siguiente cinta")
+                    print("     → NO LISTA - siguiente cinta")
                     need_move = True
                     continue
 
-                print("     LECHUGA LISTA detectada - Iniciando cosecha...")
+                print("     → LECHUGA LISTA - Iniciando cosecha...")
                 print("     → Ejecutando posicionamiento completo (IA H+V)...")
                 if not posicionamiento_completo(robot):
                     print("       Advertencia: Posicionamiento completo falló, continuando...")

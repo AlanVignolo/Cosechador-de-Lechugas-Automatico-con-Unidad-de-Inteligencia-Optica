@@ -17,10 +17,6 @@ class EdgeDetectorOptimized:
     
     def detect_edges(self, image):
         """Detección optimizada con menos filtros"""
-        print("\n" + "="*70)
-        print("DETECCIÓN OPTIMIZADA")
-        print("="*70)
-        
         # ============= PREPARACIÓN =============
         h_img, w_img = image.shape[:2]
         
@@ -36,8 +32,6 @@ class EdgeDetectorOptimized:
         #self.save_step("02_gray", gray, "Escala de grises")
         
         # ============= NEGRO MEJORADO =============
-        print("\n[1] Detección de NEGRO mejorada")
-        
         # Método 1: Valores muy bajos (más permisivo)
         mask_black_v = (v < 70).astype(np.uint8) * 255  # Era 50, ahora 70
         mask_black_gray = (gray < 65).astype(np.uint8) * 255  # Era 45, ahora 65
@@ -61,8 +55,6 @@ class EdgeDetectorOptimized:
         self.save_step("05_black_extended", mask_black_extended, "Negro extendido verticalmente")
         
         # ============= VERDE MEJORADO =============
-        print("\n[2] Detección de VERDE mejorada")
-        
         # HSV más amplio (incluye verdes claros y amarillentos)
         lower_green = np.array([30, 25, 30])  # H más bajo, S más bajo
         upper_green = np.array([95, 255, 255])  # H más alto
@@ -88,8 +80,6 @@ class EdgeDetectorOptimized:
         #self.save_step("09_green_cleaned", mask_green, "Verde limpiado")
         
         # ============= COMBINACIÓN =============
-        print("\n[3] Combinación")
-        
         mask_combined = cv2.bitwise_or(mask_black_extended, mask_green)
         #self.save_step("10_combined", mask_combined, "Negro + Verde")
         
@@ -110,8 +100,6 @@ class EdgeDetectorOptimized:
         #self.save_step("13_morph_vertical", mask_combined, "Cierre vertical")
         
         # ============= CANNY Y BORDES (MEJORADO) =============
-        print("\n[4] Bordes Canny (solo en vacíos pequeños)")
-        
         blurred = cv2.GaussianBlur(gray, (3, 3), 0.5)
         edges = cv2.Canny(blurred, 35, 85)
         #self.save_step("14_canny_edges", edges, "Bordes Canny brutos")
@@ -149,10 +137,7 @@ class EdgeDetectorOptimized:
         #self.save_step("19_binary_with_edges", binary, "Máscara + Canny en huecos pequeños")
         
         # ============= COMPONENTES =============
-        print("\n[5] Filtrado de componentes")
-        
         num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(binary, connectivity=8)
-        print(f"  Componentes detectados: {num_labels-1}")
         
         # Visualización de componentes
         components_colored = np.zeros((binary.shape[0], binary.shape[1], 3), dtype=np.uint8)
@@ -188,11 +173,8 @@ class EdgeDetectorOptimized:
         #self.save_step("22_final_binary", binary_filtered, "Imagen binaria FINAL")
         
         # ============= CONTORNOS CON DOBLE FILTRO =============
-        print("\n[6] Contornos con filtro de bordes mejorado")
-        
-        contours, _ = cv2.findContours(binary_filtered, cv2.RETR_EXTERNAL, 
+        contours, _ = cv2.findContours(binary_filtered, cv2.RETR_EXTERNAL,
                                        cv2.CHAIN_APPROX_NONE)
-        print(f"  Contornos detectados: {len(contours)}")
         
         # Filtrar contornos
         center_point = (w_img // 2, h_img // 2)
@@ -208,25 +190,19 @@ class EdgeDetectorOptimized:
             if contains_center:
                 # Si encierra el centro, SIEMPRE se mantiene
                 filtered_contours.append(contour)
-                print(f"    ✓ Contorno {idx+1}: Mantiene (encierra centro, área={int(area)})")
             else:
                 # Verificar si toca bordes de la IMAGEN (no el margen)
                 touches_image_border = self.touches_image_border(contour, h_img, w_img)
-                
+
                 if touches_image_border:
                     rejection_reasons.append(f"Contorno {idx+1}: toca borde de imagen")
-                    print(f"    ✗ Contorno {idx+1}: Descartado (toca borde imagen, área={int(area)})")
                     continue
-                
+
                 # Verificar distancia al margen interno
                 if self.is_contour_away_from_edges(contour, h_img, w_img, margin_percent=0.12):
                     filtered_contours.append(contour)
-                    print(f"    ✓ Contorno {idx+1}: Mantiene (alejado de bordes, área={int(area)})")
                 else:
                     rejection_reasons.append(f"Contorno {idx+1}: cerca del margen interno")
-                    print(f"    ✗ Contorno {idx+1}: Descartado (cerca margen, área={int(area)})")
-        
-        print(f"  Contornos después de filtro: {len(filtered_contours)}")
         
         # Crear set de IDs para comparación rápida
         filtered_contour_ids = set(id(c) for c in filtered_contours)
@@ -263,13 +239,9 @@ class EdgeDetectorOptimized:
         result = image.copy()
         cv2.drawContours(result, smoothed_contours, -1, (0, 255, 255), 2)
         cv2.circle(result, center_point, 10, (255, 0, 255), -1)
-        self.save_step("24_contours_final", result, 
+        self.save_step("24_contours_final", result,
               f"Contornos FINALES ({len(smoothed_contours)})")
-        
-        print("\n" + "="*70)
-        print(f"COMPLETADO: {len(self.steps)} pasos")
-        print("="*70)
-        
+
         return binary_filtered, smoothed_contours
     
     def extend_black_vertically(self, mask_black, gray, height):
@@ -342,11 +314,7 @@ class EdgeDetectorOptimized:
         Retorna lista de diccionarios con estadísticas.
         """
         stats_list = []
-        
-        print("\n" + "="*70)
-        print("ESTADÍSTICAS POR CONTORNO")
-        print("="*70)
-        
+
         for idx, contour in enumerate(contours):
             # Crear máscara para este contorno
             mask_contour = np.zeros(gray.shape, dtype=np.uint8)
@@ -385,18 +353,6 @@ class EdgeDetectorOptimized:
             }
             
             stats_list.append(stats)
-            
-            # Imprimir estadísticas
-            print(f"\nContorno {idx+1}:")
-            print(f"  Área: {stats['area']:.0f} px²")
-            print(f"  Píxeles totales: {total_pixels}")
-            print(f"  Píxeles verdes: {green_pixels} ({green_ratio:.1%})")
-            print(f"  Píxeles negros: {black_pixels} ({black_ratio:.1%})")
-            print(f"  Media intensidad: {mean_intensity:.1f}")
-            print(f"  Desv. estándar: {std_intensity:.1f}")
-            print(f"  Clasificación: {contour_class}")
-        
-        print("\n" + "="*70)
         
         # ⭐ LÍNEA CRÍTICA PARA EL ANÁLISIS ESTADÍSTICO ⭐
         self.last_contour_stats = stats_list
