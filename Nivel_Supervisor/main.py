@@ -7,7 +7,7 @@ import logging
 from hardware.uart_manager import UARTManager
 from hardware.command_manager import CommandManager
 from core.robot_controller import RobotController
-from workflows.workflow_orchestrator import inicio_completo, inicio_simple, inicio_completo_hard, cosecha_interactiva
+from workflows.workflow_orchestrator import homing_simple, inicio_completo, inicio_simple, inicio_completo_hard, cosecha_interactiva
 from config.robot_config import RobotConfig
 from core.camera_manager import get_camera_manager
 
@@ -29,10 +29,11 @@ def run_menu(robot: RobotController):
         print("2. Inicio completo (homing -> escaneo vertical -> escaneos horizontales -> volver a 0,0)")
         print("3. Inicio completo HARD (calibración completa -> escaneo vertical -> escaneos horizontales -> volver a 0,0)")
         print("4. Cosecha interactiva (clasificación manual lista/no lista/vacío + recolección y depósito)")
+        print("5. Homing simple (solo tocar límites y establecer origen)")
         print("0. Salir")
         print("-" * 60)
 
-        opcion = input("Selecciona opción (0-4): ").strip()
+        opcion = input("Selecciona opción (0-5): ").strip()
 
         if opcion == '1':
             print("\nINICIANDO 'INICIO SIMPLE'...")
@@ -62,6 +63,13 @@ def run_menu(robot: RobotController):
                 print("Cosecha interactiva finalizada correctamente")
             else:
                 print("Cosecha interactiva finalizada con errores")
+        elif opcion == '5':
+            print("\nINICIANDO 'HOMING SIMPLE'...")
+            ok = homing_simple(robot)
+            if ok:
+                print("Homing simple finalizado correctamente")
+            else:
+                print("Homing simple finalizado con errores")
         elif opcion == '0':
             print("Saliendo del menú de acciones automáticas...")
             break

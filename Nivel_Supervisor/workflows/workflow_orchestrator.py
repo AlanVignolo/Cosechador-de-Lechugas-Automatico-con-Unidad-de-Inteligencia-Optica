@@ -207,6 +207,61 @@ def _resync_position_from_firmware_DISABLED(robot) -> bool:
         return False
 
 
+def homing_simple(robot) -> bool:
+    """
+    Ejecuta homing simple del robot (tocar límites derecho y superior para establecer origen).
+
+    Pre-requisitos:
+    - Brazo debe estar en posición de movimiento (servo1=10°, servo2=10°)
+
+    Returns:
+        bool: True si el homing fue exitoso, False en caso contrario
+    """
+    print("\n" + "="*60)
+    print("HOMING SIMPLE")
+    print("="*60)
+
+    try:
+        # Verificar que el brazo esté en posición de movimiento
+        arm_status = robot.arm.get_current_state(force_refresh=True)
+        if not robot.arm.is_in_movement_position():
+            current_pos = arm_status['position']
+            print(f"❌ ERROR: Brazo NO está en posición de movimiento")
+            print(f"   Actual: servo1={current_pos[0]}°, servo2={current_pos[1]}°")
+            print(f"   Requerido: servo1=10°±5°, servo2=10°±5°")
+            print(f"   Por favor mueve el brazo a posición de movimiento primero")
+            return False
+
+        print("✓ Brazo en posición de movimiento")
+        print("\nIniciando secuencia de homing...")
+
+        # Ejecutar homing
+        result = robot.home_robot()
+
+        if result["success"]:
+            print("\n" + "="*60)
+            print("✓ HOMING COMPLETADO EXITOSAMENTE")
+            print("="*60)
+            position = result.get('position', {'x': 0, 'y': 0})
+            print(f"Posición de origen establecida: X={position['x']:.1f}mm, Y={position['y']:.1f}mm")
+            return True
+        else:
+            print("\n" + "="*60)
+            print("❌ ERROR EN HOMING")
+            print("="*60)
+            print(f"Mensaje: {result.get('message', 'Error desconocido')}")
+            return False
+
+    except Exception as e:
+        print("\n" + "="*60)
+        print("❌ EXCEPCIÓN DURANTE HOMING")
+        print("="*60)
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def inicio_completo(robot, return_home: bool = True) -> bool:
     """
     Inicio completo:
