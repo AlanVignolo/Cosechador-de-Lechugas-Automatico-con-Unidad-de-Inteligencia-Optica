@@ -125,7 +125,15 @@ def clasificar_imagen(imagen_path, stats_json=None, guardar=False):
 
     # Inicializar solo la primera vez
     if _clasificador_singleton is None:
+        print(f"[DEBUG] Inicializando clasificador con stats_json={stats_json}")
         _clasificador_singleton = ClasificadorSimple(stats_json)
+        # Verificar qué estadísticas se cargaron
+        stats_info = _clasificador_singleton.classifier.stats
+        if stats_info:
+            lechugas_green = stats_info.get('LECHUGAS', {}).get('green_ratio', {}).get('mean', 'N/A')
+            print(f"[DEBUG] Estadísticas cargadas - LECHUGAS green_ratio mean: {lechugas_green}")
+        else:
+            print("[DEBUG] ERROR: No se cargaron estadísticas")
 
     return _clasificador_singleton.clasificar(imagen_path, guardar_resultados=guardar)
 
