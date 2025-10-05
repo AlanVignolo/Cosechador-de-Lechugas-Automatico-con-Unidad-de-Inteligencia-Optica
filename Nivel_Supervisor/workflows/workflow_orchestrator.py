@@ -964,19 +964,14 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             print(f"== Fin de {nombre_tubo} ==")
 
         if return_home:
-            fwpos_end = _get_curr_pos_mm_from_fw()
-            if fwpos_end is not None:
-                _, y_actual = fwpos_end
-            else:
-                st_end = robot.get_status()
-                y_actual = float(st_end['position']['y'])
+            # Obtener posición actual del supervisor (actualizada por callbacks)
+            st_end = robot.get_status()
+            x_actual = float(st_end['position']['x'])
+            y_actual = float(st_end['position']['y'])
 
-            print(f"[cosecha] Preparando retorno: mover a borde seguro X={x_edge:.1f}, Y={y_actual:.1f}")
-            if not move_abs(x_edge, y_actual, timeout_s=240.0):
-                print("Advertencia: No se pudo mover a borde seguro antes de volver a (0,0)")
-            else:
-                pass
+            print(f"[cosecha] Posición actual: X={x_actual:.1f}mm, Y={y_actual:.1f}mm")
 
+            # Primero poner brazo en posición de movimiento
             print("[cosecha] Poniendo brazo en 'movimiento' para retorno al origen")
             res_arm_end = robot.arm.change_state('movimiento')
             if not res_arm_end.get('success'):
@@ -985,6 +980,12 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not wait_for_arm_state('movimiento', timeout_s=20.0):
                     print(f"Advertencia: Brazo no llegó a 'movimiento', continuando con cuidado")
 
+            # Luego mover a borde seguro en X, manteniendo Y actual
+            print(f"[cosecha] Moviendo a borde seguro: X={x_edge:.1f}, Y={y_actual:.1f}")
+            if not move_abs(x_edge, y_actual, timeout_s=240.0):
+                print("Advertencia: No se pudo mover a borde seguro")
+
+            # Finalmente volver a (0,0)
             print("[cosecha] Volviendo a (0,0)...")
             if not move_abs(0.0, 0.0, timeout_s=240.0):
                 print("Advertencia: No se pudo volver a (0,0)")
