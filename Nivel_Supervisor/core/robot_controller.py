@@ -427,6 +427,7 @@ class RobotController:
     def get_status(self) -> Dict:
         return {
             "homed": self.is_homed,
+            "is_homed": self.is_homed,
             "position": self.global_position,
             "arm": {
                 "servo1": self.arm_servo1_pos,
