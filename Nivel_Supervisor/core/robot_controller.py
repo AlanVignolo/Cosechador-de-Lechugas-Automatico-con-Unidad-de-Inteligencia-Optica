@@ -77,6 +77,25 @@ class RobotController:
             # No bloquear si por algún motivo no se puede envolver
             self.logger.warning(f"No se pudo registrar wrapper de emergencia: {e}")
     
+    def _on_movement_completed(self, message: str):
+        try:
+            clean_message = message.split('\n')[0]
+            parts = clean_message.split(',')
+            if len(parts) >= 6:
+                rel_h_mm = float(parts[4].split(':')[1])
+                rel_v_mm = float(parts[5])
+
+                self.global_position["x"] += rel_h_mm
+                self.global_position["y"] += rel_v_mm
+
+                self._save_current_position()
+
+                display_x = RobotConfig.display_x_position(self.global_position['x'])
+                display_y = RobotConfig.display_y_position(self.global_position['y'])
+                self.logger.info(f"Posición global actualizada: X={display_x}mm, Y={display_y}mm")
+        except Exception as e:
+            self.logger.warning(f"Error actualizando posición global: {e}")
+    
     def reset_global_position(self, x: float = 0.0, y: float = 0.0):
         self.global_position["x"] = x
         self.global_position["y"] = y
