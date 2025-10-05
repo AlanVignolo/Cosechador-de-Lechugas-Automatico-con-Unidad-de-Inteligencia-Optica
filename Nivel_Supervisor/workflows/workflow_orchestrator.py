@@ -69,6 +69,20 @@ try:
 except Exception:
     MatrizCintas = None
 
+# Importar módulo de corrección de posición con IA
+POSICIONAMIENTO_DIR = os.path.join(IA_DIR, 'Posicionamiento')
+if POSICIONAMIENTO_DIR not in sys.path:
+    sys.path.append(POSICIONAMIENTO_DIR)
+
+try:
+    from posicionamiento_ia import test_position_correction_direct
+    POSICIONAMIENTO_DISPONIBLE = True
+    print("Posicionamiento con IA importado")
+except Exception as e:
+    test_position_correction_direct = None
+    POSICIONAMIENTO_DISPONIBLE = False
+    print(f"Advertencia: No se pudo importar posicionamiento con IA: {e}")
+
 from config.robot_config import RobotConfig
 from core.camera_manager import get_camera_manager
 
@@ -667,16 +681,34 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
             return False
 
         def posicionamiento_completo(robot):
-            try:
-                from main_robot import test_full_position_correction
-            except Exception as e:
-                print(f"No se pudo importar posicionamiento completo: {e}")
+            """Ejecuta corrección de posición con IA (Horizontal + Vertical)"""
+            if not POSICIONAMIENTO_DISPONIBLE:
+                print("       Módulo de posicionamiento no disponible")
                 return False
+
             try:
-                test_full_position_correction(robot)
-                return True
+                # Parámetros para corrección de posición
+                camera_index = 0  # Índice de cámara por defecto
+                max_iterations = 3  # Máximo 3 iteraciones
+                tolerance_mm = 5.0  # Tolerancia de 5mm
+
+                print("       Ejecutando corrección H+V...")
+                result = test_position_correction_direct(
+                    robot,
+                    camera_index,
+                    max_iterations,
+                    tolerance_mm
+                )
+
+                if result.get('success'):
+                    print(f"       ✓ Posicionamiento completado: {result.get('message', 'OK')}")
+                    return True
+                else:
+                    print(f"       ✗ Posicionamiento falló: {result.get('message', 'Error desconocido')}")
+                    return False
+
             except Exception as e:
-                print(f"Error ejecutando posicionamiento completo: {e}")
+                print(f"       Error ejecutando posicionamiento: {e}")
                 return False
 
         if not robot.arm.is_in_safe_position():

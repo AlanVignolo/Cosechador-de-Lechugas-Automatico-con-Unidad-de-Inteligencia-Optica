@@ -101,7 +101,6 @@ class ImageClassifier:
         
         # Verificar si hay contornos
         if not contours or len(contours) == 0:
-            print(f"[DEBUG] Sin contornos detectados -> clasificado como VASOS")
             return {
                 'predicted_class': 'VASOS',
                 'confidence': 0.95,
@@ -111,12 +110,10 @@ class ImageClassifier:
 
         # Obtener estadísticas del contorno principal
         if not hasattr(self.detector, 'last_contour_stats') or not self.detector.last_contour_stats:
-            print(f"[DEBUG] ERROR: No hay estadísticas de contornos disponibles")
             return {'error': 'No se pudieron calcular estadísticas de contornos'}
 
         # Usar el primer contorno (el más relevante)
         contour_stats = self.detector.last_contour_stats[0]
-        print(f"[DEBUG] Contorno detectado - green_ratio: {contour_stats.get('green_ratio', 0):.2%}, black_ratio: {contour_stats.get('black_ratio', 0):.2%}")
         
         # Clasificar basándose en las estadísticas
         predicted_class, confidence = self._classify_by_stats(contour_stats)
