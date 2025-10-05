@@ -971,8 +971,13 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
 
             print(f"[cosecha] Posición actual: X={x_actual:.1f}mm, Y={y_actual:.1f}mm")
 
-            # Primero poner brazo en posición de movimiento
-            print("[cosecha] Poniendo brazo en 'movimiento' para retorno al origen")
+            # Paso 1: Primero mover a borde seguro en X, manteniendo Y actual
+            print(f"[cosecha] Paso 1/3: Moviendo a borde seguro X={x_edge:.1f}, Y={y_actual:.1f}")
+            if not move_abs(x_edge, y_actual, timeout_s=240.0):
+                print("Advertencia: No se pudo mover a borde seguro")
+
+            # Paso 2: Poner brazo en posición de movimiento
+            print("[cosecha] Paso 2/3: Poniendo brazo en 'movimiento' para retorno al origen")
             res_arm_end = robot.arm.change_state('movimiento')
             if not res_arm_end.get('success'):
                 print(f"Advertencia: No se pudo poner brazo en 'movimiento': {res_arm_end}")
@@ -980,20 +985,24 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 if not wait_for_arm_state('movimiento', timeout_s=20.0):
                     print(f"Advertencia: Brazo no llegó a 'movimiento', continuando con cuidado")
 
-            # Paso 1: Mover a borde seguro en X, manteniendo Y actual
-            print(f"[cosecha] Paso 1/3: Moviendo a borde seguro X={x_edge:.1f}, manteniendo Y={y_actual:.1f}")
-            if not move_abs(x_edge, y_actual, timeout_s=240.0):
-                print("Advertencia: No se pudo mover a borde seguro")
+            # Paso 3: Ir directo a (0,0) en un solo movimiento simultáneo X e Y
+            print(f"[cosecha] Paso 3/3: Volviendo a origen (0,0)")
+            st_before_return = robot.get_status()
+            curr_x = float(st_before_return['position']['x'])
+            curr_y = float(st_before_return['position']['y'])
+            dx = 0.0 - curr_x
+            dy = 0.0 - curr_y
 
-            # Paso 2: Bajar a Y=0, manteniendo X en borde seguro
-            print(f"[cosecha] Paso 2/3: Bajando a Y=0.0, manteniendo X={x_edge:.1f}")
-            if not move_abs(x_edge, 0.0, timeout_s=240.0):
-                print("Advertencia: No se pudo bajar a Y=0")
-
-            # Paso 3: Mover a X=0 (ya estamos en Y=0)
-            print(f"[cosecha] Paso 3/3: Moviendo a X=0.0 (origen)")
-            if not move_abs(0.0, 0.0, timeout_s=240.0):
-                print("Advertencia: No se pudo llegar al origen (0,0)")
+            print(f"[cosecha] Movimiento final: desde ({curr_x:.1f},{curr_y:.1f}) a (0,0) → ΔX={dx:.1f}mm, ΔY={dy:.1f}mm")
+            res = robot.cmd.move_xy(dx, dy)
+            if res.get('success'):
+                try:
+                    robot.cmd.uart.wait_for_action_completion("STEPPER_MOVE", timeout=240.0)
+                    print("[cosecha] ✓ Origen (0,0) alcanzado")
+                except Exception as e:
+                    print(f"Advertencia: Error esperando llegada a origen: {e}")
+            else:
+                print(f"Advertencia: No se pudo iniciar movimiento a origen: {res}")
 
         print("[cosecha] Flujo completado")
         return True
