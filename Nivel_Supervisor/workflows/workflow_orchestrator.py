@@ -101,7 +101,8 @@ def _clasificar_lechuga_automatico() -> str:
             opt = input("       Selecciona (1/2/3): ").strip()
             return opt if opt in ['1','2','3'] else '2'
 
-        temp_path = os.path.join(ANALIZAR_DIR, 'temp_workflow_clasificacion.jpg')
+        # Usar /tmp para evitar problemas con espacios en nombres de carpetas
+        temp_path = '/tmp/temp_workflow_clasificacion_claudio.jpg'
         cv2.imwrite(temp_path, frame)
 
         resultado = clasificar_imagen(temp_path)

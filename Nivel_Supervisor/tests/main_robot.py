@@ -1042,10 +1042,13 @@ def menu_interactivo(uart_manager, robot):
                         print("❌ No se pudo capturar la imagen de la cámara")
                         continue
 
-                    # Guardar imagen temporalmente
+                    # Guardar imagen temporalmente (usar /tmp para evitar problemas con espacios)
                     import cv2
-                    temp_image_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Analizar Cultivo', 'temp_clasificacion.jpg')
-                    cv2.imwrite(temp_image_path, frame)
+                    temp_image_path = '/tmp/temp_clasificacion_claudio.jpg'
+                    success = cv2.imwrite(temp_image_path, frame)
+                    if not success:
+                        print(f"❌ Error guardando imagen en {temp_image_path}")
+                        continue
                     print(f"✓ Imagen guardada")
 
                     # Clasificar la imagen
