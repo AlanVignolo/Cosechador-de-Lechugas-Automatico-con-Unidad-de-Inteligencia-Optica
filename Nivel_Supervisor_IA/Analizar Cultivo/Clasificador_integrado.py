@@ -21,17 +21,19 @@ class ClasificadorSimple:
     def __init__(self, stats_json_path=None):
         """
         Inicializa el clasificador
-        
+
         Args:
             stats_json_path: Ruta al JSON de estadísticas (opcional)
                            Si no se proporciona, usa la ruta por defecto
         """
-        # Ruta por defecto al JSON de estadísticas
+        # Ruta por defecto al JSON de estadísticas (relativa al archivo actual)
         if stats_json_path is None:
-            stats_json_path = '/home/brenda/Documents/validation/estadisticas_grupos/estadisticas_completas.json'
-        
+            import os
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            stats_json_path = os.path.join(current_dir, 'estadisticas_completas.json')
+
         self.stats_json_path = stats_json_path
-        
+
         # Inicializar detector y clasificador (silencioso)
         self.detector = EdgeDetectorOptimized()
         self.classifier = ImageClassifier(self.detector, self.stats_json_path)
@@ -94,29 +96,38 @@ class ClasificadorSimple:
 
 
 # ============================================================================
-# FUNCIÓN RÁPIDA PARA USO DIRECTO
+# FUNCIÓN RÁPIDA PARA USO DIRECTO (CON SINGLETON)
 # ============================================================================
+
+# Singleton global del clasificador
+_clasificador_singleton = None
 
 def clasificar_imagen(imagen_path, stats_json=None, guardar=False):
     """
     Función rápida para clasificar una imagen sin crear objeto
     Aplica recorte automático del 10% en cada lado
-    
+    Usa un singleton para evitar reinicializar el clasificador en cada llamada
+
     Args:
         imagen_path: Ruta a la imagen
         stats_json: Ruta al JSON de estadísticas (None = usa default)
         guardar: Si guardar resultados visuales
-    
+
     Returns:
         dict con 'clase', 'confianza', 'detalles'
-    
+
     Ejemplo:
         resultado = clasificar_imagen('mi_imagen.jpg')
         print(f"Clase: {resultado['clase']}")
         print(f"Confianza: {resultado['confianza']:.1f}%")
     """
-    clasificador = ClasificadorSimple(stats_json)
-    return clasificador.clasificar(imagen_path, guardar_resultados=guardar)
+    global _clasificador_singleton
+
+    # Inicializar solo la primera vez
+    if _clasificador_singleton is None:
+        _clasificador_singleton = ClasificadorSimple(stats_json)
+
+    return _clasificador_singleton.clasificar(imagen_path, guardar_resultados=guardar)
 
 
 # ============================================================================
