@@ -70,16 +70,25 @@ except Exception:
     MatrizCintas = None
 
 # Importar módulo de corrección de posición con IA
-POSICIONAMIENTO_DIR = os.path.join(IA_DIR, 'Posicionamiento')
-if POSICIONAMIENTO_DIR not in sys.path:
-    sys.path.append(POSICIONAMIENTO_DIR)
+TESTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'tests')
+if TESTS_DIR not in sys.path:
+    sys.path.append(TESTS_DIR)
+
+# Importar también las carpetas de corrección H y V
+CORRECCION_H_DIR = os.path.join(IA_DIR, 'Correccion Posicion Horizontal')
+CORRECCION_V_DIR = os.path.join(IA_DIR, 'Correccion Posicion Vertical')
+if CORRECCION_H_DIR not in sys.path:
+    sys.path.append(CORRECCION_H_DIR)
+if CORRECCION_V_DIR not in sys.path:
+    sys.path.append(CORRECCION_V_DIR)
 
 try:
-    from posicionamiento_ia import test_position_correction_direct
+    from main_robot import test_position_correction_direct, AI_TEST_PARAMS
     POSICIONAMIENTO_DISPONIBLE = True
     print("Posicionamiento con IA importado")
 except Exception as e:
     test_position_correction_direct = None
+    AI_TEST_PARAMS = None
     POSICIONAMIENTO_DISPONIBLE = False
     print(f"Advertencia: No se pudo importar posicionamiento con IA: {e}")
 
@@ -687,10 +696,15 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 return False
 
             try:
-                # Parámetros para corrección de posición
-                camera_index = 0  # Índice de cámara por defecto
-                max_iterations = 3  # Máximo 3 iteraciones
-                tolerance_mm = 5.0  # Tolerancia de 5mm
+                # Usar parámetros de AI_TEST_PARAMS si están disponibles, sino valores por defecto
+                if AI_TEST_PARAMS:
+                    camera_index = AI_TEST_PARAMS.get('camera_index', 0)
+                    max_iterations = AI_TEST_PARAMS.get('max_iterations', 3)
+                    tolerance_mm = AI_TEST_PARAMS.get('tolerance_mm', 5.0)
+                else:
+                    camera_index = 0
+                    max_iterations = 3
+                    tolerance_mm = 5.0
 
                 print("       Ejecutando corrección H+V...")
                 result = test_position_correction_direct(
@@ -701,14 +715,16 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 )
 
                 if result.get('success'):
-                    print(f"       ✓ Posicionamiento completado: {result.get('message', 'OK')}")
+                    print(f"       ✓ Corrección completada: {result.get('message', 'OK')}")
                     return True
                 else:
-                    print(f"       ✗ Posicionamiento falló: {result.get('message', 'Error desconocido')}")
+                    print(f"       ✗ Corrección falló: {result.get('message', 'Error')}")
                     return False
 
             except Exception as e:
-                print(f"       Error ejecutando posicionamiento: {e}")
+                print(f"       Error ejecutando corrección: {e}")
+                import traceback
+                traceback.print_exc()
                 return False
 
         if not robot.arm.is_in_safe_position():
