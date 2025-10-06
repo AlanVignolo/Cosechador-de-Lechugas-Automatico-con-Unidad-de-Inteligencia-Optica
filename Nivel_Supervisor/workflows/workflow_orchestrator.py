@@ -98,55 +98,63 @@ from core.camera_manager import get_camera_manager
 
 def _clasificar_lechuga_automatico() -> str:
     """
-    Usa la IA de clasificación para determinar el estado de la lechuga.
+    Clasificación MANUAL de lechuga por consola (IA comentada).
 
     Returns:
         '1' = lechuga lista (LECHUGA)
         '2' = no lista (otros estados de lechuga)
         '3' = vacío (VASO_NEGRO, VASO_VACIO, VASOS)
     """
-    if not CLASIFICADOR_DISPONIBLE:
-        print("       Clasificador no disponible, usando input manual")
-        opt = input("       Selecciona (1/2/3): ").strip()
-        return opt if opt in ['1','2','3'] else '2'
+    # ========== IA COMENTADA - MODO MANUAL ==========
+    print("       Clasificación manual (IA deshabilitada)")
+    print("       1 = Lechuga lista")
+    print("       2 = No lista")
+    opt = input("       Selecciona (1/2): ").strip()
+    return opt if opt in ['1','2'] else '2'
 
-    try:
-        import cv2
-        import os
-
-        camera_mgr = get_camera_manager()
-        if not camera_mgr.is_camera_active():
-            camera_mgr.initialize_camera()
-
-        frame = camera_mgr.capture_frame()
-        if frame is None:
-            print("       No se pudo capturar imagen, usando input manual")
-            opt = input("       Selecciona (1/2/3): ").strip()
-            return opt if opt in ['1','2','3'] else '2'
-
-        # Usar /tmp para evitar problemas con espacios en nombres de carpetas
-        temp_path = '/tmp/temp_workflow_clasificacion_claudio.jpg'
-        cv2.imwrite(temp_path, frame)
-
-        resultado = clasificar_imagen(temp_path)
-        clase = resultado.get('clase', 'DESCONOCIDO')
-        confianza = resultado.get('confianza', 0)
-
-        print(f"       IA: {clase} ({confianza:.1%})")
-
-        if 'LECHUGA' in clase.upper():
-            return '1'
-        elif clase in ['VASO_NEGRO', 'VASO_VACIO', 'VASOS']:
-            return '3'
-        elif 'PLANTIN' in clase.upper():
-            return '2'
-        else:
-            return '2'
-
-    except Exception as e:
-        print(f"       Error IA: {e} - Modo manual")
-        opt = input("       Selecciona (1/2/3): ").strip()
-        return opt if opt in ['1','2','3'] else '2'
+    # ========== CÓDIGO IA ORIGINAL (COMENTADO) ==========
+    # if not CLASIFICADOR_DISPONIBLE:
+    #     print("       Clasificador no disponible, usando input manual")
+    #     opt = input("       Selecciona (1/2/3): ").strip()
+    #     return opt if opt in ['1','2','3'] else '2'
+    #
+    # try:
+    #     import cv2
+    #     import os
+    #
+    #     camera_mgr = get_camera_manager()
+    #     if not camera_mgr.is_camera_active():
+    #         camera_mgr.initialize_camera()
+    #
+    #     frame = camera_mgr.capture_frame()
+    #     if frame is None:
+    #         print("       No se pudo capturar imagen, usando input manual")
+    #         opt = input("       Selecciona (1/2/3): ").strip()
+    #         return opt if opt in ['1','2','3'] else '2'
+    #
+    #     # Usar /tmp para evitar problemas con espacios en nombres de carpetas
+    #     temp_path = '/tmp/temp_workflow_clasificacion_claudio.jpg'
+    #     cv2.imwrite(temp_path, frame)
+    #
+    #     resultado = clasificar_imagen(temp_path)
+    #     clase = resultado.get('clase', 'DESCONOCIDO')
+    #     confianza = resultado.get('confianza', 0)
+    #
+    #     print(f"       IA: {clase} ({confianza:.1%})")
+    #
+    #     if 'LECHUGA' in clase.upper():
+    #         return '1'
+    #     elif clase in ['VASO_NEGRO', 'VASO_VACIO', 'VASOS']:
+    #         return '3'
+    #     elif 'PLANTIN' in clase.upper():
+    #         return '2'
+    #     else:
+    #         return '2'
+    #
+    # except Exception as e:
+    #     print(f"       Error IA: {e} - Modo manual")
+    #     opt = input("       Selecciona (1/2/3): ").strip()
+    #     return opt if opt in ['1','2','3'] else '2'
 
 
 def _get_ordered_tubos() -> Dict[int, Dict[str, float]]:
@@ -844,11 +852,7 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print("     [Clasificando...]")
                 opt = _clasificar_lechuga_automatico()
 
-                if opt == '3':
-                    print("     → VACÍO - siguiente cinta")
-                    need_move = True
-                    continue
-                elif opt == '2':
+                if opt == '2':
                     print("     → NO LISTA - siguiente cinta")
                     need_move = True
                     continue
