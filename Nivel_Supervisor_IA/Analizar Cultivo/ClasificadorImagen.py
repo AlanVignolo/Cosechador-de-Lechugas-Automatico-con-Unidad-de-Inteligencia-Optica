@@ -38,8 +38,7 @@ class ImageClassifier:
         if os.path.exists(self.stats_json_path):
             self.load_statistics()
         else:
-            print(f"ADVERTENCIA: No se encontró archivo de estadísticas en: {stats_json_path}")
-            print("El clasificador trabajará con valores predeterminados")
+            # Archivo de estadísticas no encontrado, usar valores predeterminados
             self._create_default_stats()
     
     def load_statistics(self):
@@ -47,9 +46,8 @@ class ImageClassifier:
         try:
             with open(self.stats_json_path, 'r', encoding='utf-8') as f:
                 self.stats = json.load(f)
-            print(f"Estadísticas cargadas desde: {self.stats_json_path}")
         except Exception as e:
-            print(f"Error cargando estadísticas: {e}")
+            # Error cargando estadísticas, usar valores predeterminados
             self._create_default_stats()
     
     def _create_default_stats(self):
@@ -109,11 +107,11 @@ class ImageClassifier:
                 'reason': 'No se detectaron contornos (vaso vacío)',
                 'statistics': None
             }
-        
+
         # Obtener estadísticas del contorno principal
         if not hasattr(self.detector, 'last_contour_stats') or not self.detector.last_contour_stats:
             return {'error': 'No se pudieron calcular estadísticas de contornos'}
-        
+
         # Usar el primer contorno (el más relevante)
         contour_stats = self.detector.last_contour_stats[0]
         
@@ -206,23 +204,10 @@ class ImageClassifier:
         cv2.imwrite(result_path, result_img)
     
     def print_classification_result(self, result):
-        """Imprime el resultado de clasificación de forma legible"""
+        """Imprime el resultado de clasificación de forma resumida"""
         if 'error' in result:
             print(f"ERROR: {result['error']}")
             return
-        
-        print("\n" + "="*70)
-        print("RESULTADO DE CLASIFICACIÓN")
-        print("="*70)
-        print(f"Clase predicha: {result['predicted_class']}")
-        print(f"Confianza: {result['confidence']:.1%}")
-        
-        if result.get('statistics'):
-            stats = result['statistics']
-            print(f"\nEstadísticas del contorno:")
-            print(f"  Píxeles verdes: {stats.get('green_pixels', 0)}")
-            print(f"  Píxeles negros: {stats.get('black_pixels', 0)}")
-            print(f"  Ratio verde: {stats.get('green_ratio', 0):.2%}")
-            print(f"  Ratio negro: {stats.get('black_ratio', 0):.2%}")
-        
-        print("="*70 + "\n")
+
+        # Solo mostrar resultado principal y confianza
+        print(f"Clase: {result['predicted_class']} | Confianza: {result['confidence']:.1%}")
