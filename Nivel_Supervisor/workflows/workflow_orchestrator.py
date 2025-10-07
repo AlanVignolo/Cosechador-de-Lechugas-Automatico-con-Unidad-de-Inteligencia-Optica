@@ -35,11 +35,11 @@ if ANALIZAR_DIR not in sys.path:
     sys.path.append(ANALIZAR_DIR)
 
 try:
-    from escaner_vertical_manual import scan_vertical_manual
-    print("Escáner vertical manual importado")
+    from escaner_vertical import scan_vertical_with_flags
+    print("Escáner vertical con IA importado")
 except Exception as e:
-    scan_vertical_manual = None
-    print(f"Advertencia: No se pudo importar escáner vertical manual: {e}")
+    scan_vertical_with_flags = None
+    print(f"Advertencia: No se pudo importar escáner vertical con IA: {e}")
 
 try:
     from escaner_standalone import scan_horizontal_with_live_camera
@@ -98,63 +98,55 @@ from core.camera_manager import get_camera_manager
 
 def _clasificar_lechuga_automatico() -> str:
     """
-    Clasificación MANUAL de lechuga por consola (IA comentada).
+    Usa la IA de clasificación para determinar el estado de la lechuga.
 
     Returns:
         '1' = lechuga lista (LECHUGA)
         '2' = no lista (otros estados de lechuga)
         '3' = vacío (VASO_NEGRO, VASO_VACIO, VASOS)
     """
-    # ========== IA COMENTADA - MODO MANUAL ==========
-    print("       Clasificación manual (IA deshabilitada)")
-    print("       1 = Lechuga lista")
-    print("       2 = No lista")
-    opt = input("       Selecciona (1/2): ").strip()
-    return opt if opt in ['1','2'] else '2'
+    if not CLASIFICADOR_DISPONIBLE:
+        print("       Clasificador no disponible, usando input manual")
+        opt = input("       Selecciona (1/2/3): ").strip()
+        return opt if opt in ['1','2','3'] else '2'
 
-    # ========== CÓDIGO IA ORIGINAL (COMENTADO) ==========
-    # if not CLASIFICADOR_DISPONIBLE:
-    #     print("       Clasificador no disponible, usando input manual")
-    #     opt = input("       Selecciona (1/2/3): ").strip()
-    #     return opt if opt in ['1','2','3'] else '2'
-    #
-    # try:
-    #     import cv2
-    #     import os
-    #
-    #     camera_mgr = get_camera_manager()
-    #     if not camera_mgr.is_camera_active():
-    #         camera_mgr.initialize_camera()
-    #
-    #     frame = camera_mgr.capture_frame()
-    #     if frame is None:
-    #         print("       No se pudo capturar imagen, usando input manual")
-    #         opt = input("       Selecciona (1/2/3): ").strip()
-    #         return opt if opt in ['1','2','3'] else '2'
-    #
-    #     # Usar /tmp para evitar problemas con espacios en nombres de carpetas
-    #     temp_path = '/tmp/temp_workflow_clasificacion_claudio.jpg'
-    #     cv2.imwrite(temp_path, frame)
-    #
-    #     resultado = clasificar_imagen(temp_path)
-    #     clase = resultado.get('clase', 'DESCONOCIDO')
-    #     confianza = resultado.get('confianza', 0)
-    #
-    #     print(f"       IA: {clase} ({confianza:.1%})")
-    #
-    #     if 'LECHUGA' in clase.upper():
-    #         return '1'
-    #     elif clase in ['VASO_NEGRO', 'VASO_VACIO', 'VASOS']:
-    #         return '3'
-    #     elif 'PLANTIN' in clase.upper():
-    #         return '2'
-    #     else:
-    #         return '2'
-    #
-    # except Exception as e:
-    #     print(f"       Error IA: {e} - Modo manual")
-    #     opt = input("       Selecciona (1/2/3): ").strip()
-    #     return opt if opt in ['1','2','3'] else '2'
+    try:
+        import cv2
+        import os
+
+        camera_mgr = get_camera_manager()
+        if not camera_mgr.is_camera_active():
+            camera_mgr.initialize_camera()
+
+        frame = camera_mgr.capture_frame()
+        if frame is None:
+            print("       No se pudo capturar imagen, usando input manual")
+            opt = input("       Selecciona (1/2/3): ").strip()
+            return opt if opt in ['1','2','3'] else '2'
+
+        # Usar /tmp para evitar problemas con espacios en nombres de carpetas
+        temp_path = '/tmp/temp_workflow_clasificacion_claudio.jpg'
+        cv2.imwrite(temp_path, frame)
+
+        resultado = clasificar_imagen(temp_path)
+        clase = resultado.get('clase', 'DESCONOCIDO')
+        confianza = resultado.get('confianza', 0)
+
+        print(f"       IA: {clase} ({confianza:.1%})")
+
+        if 'LECHUGA' in clase.upper():
+            return '1'
+        elif clase in ['VASO_NEGRO', 'VASO_VACIO', 'VASOS']:
+            return '3'
+        elif 'PLANTIN' in clase.upper():
+            return '2'
+        else:
+            return '2'
+
+    except Exception as e:
+        print(f"       Error IA: {e} - Modo manual")
+        opt = input("       Selecciona (1/2/3): ").strip()
+        return opt if opt in ['1','2','3'] else '2'
 
 
 def _get_ordered_tubos() -> Dict[int, Dict[str, float]]:
@@ -274,7 +266,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
     """
     Inicio completo:
     1) Homing
-    2) Escaneo vertical (manual de flags) sin tocar switch superior
+    2) Escaneo vertical (con IA) sin tocar switch superior
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
        - Evitar tocar switch derecho: no se posiciona en el límite derecho
        - Entre tubos, mover en diagonal (derecha + Y objetivo)
@@ -284,7 +276,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
     """
     try:
         errores = []
-        if scan_vertical_manual is None:
+        if scan_vertical_with_flags is None:
             errores.append("Escáner vertical")
         if scan_horizontal_with_live_camera is None:
             errores.append("Escáner horizontal")
@@ -292,8 +284,8 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
         if errores:
             print(f"Error: Módulos no disponibles: {', '.join(errores)}")
             print("Verifica que los archivos existan:")
-            if scan_vertical_manual is None:
-                print(f"  - {ESC_V_DIR}/escaner_vertical_manual.py")
+            if scan_vertical_with_flags is None:
+                print(f"  - {ESC_V_DIR}/escaner_vertical.py")
             if scan_horizontal_with_live_camera is None:
                 print(f"  - {ESC_H_DIR}/escaner_standalone.py")
             return False
@@ -370,8 +362,8 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             print(f"Error en homing: {res_home.get('message')}")
             return False
 
-        print("[inicio_completo] Paso 2/4: Escaneo vertical (manual)...")
-        v_ok = scan_vertical_manual(robot)
+        print("[inicio_completo] Paso 2/4: Escaneo vertical (con IA)...")
+        v_ok = scan_vertical_with_flags(robot)
         if not v_ok:
             print("Escaneo vertical con errores")
             return False
@@ -852,7 +844,11 @@ def cosecha_interactiva(robot, return_home: bool = True) -> bool:
                 print("     [Clasificando...]")
                 opt = _clasificar_lechuga_automatico()
 
-                if opt == '2':
+                if opt == '3':
+                    print("     → VACÍO - siguiente cinta")
+                    need_move = True
+                    continue
+                elif opt == '2':
                     print("     → NO LISTA - siguiente cinta")
                     need_move = True
                     continue
@@ -1023,13 +1019,13 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
     """
     Inicio completo (LEGACY - calibración del workspace):
     1) Calibración completa del workspace (homing + medida)
-    2) Escaneo vertical (manual de flags)
+    2) Escaneo vertical (con IA)
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
        - Mover en diagonal entre tubos: back-off X desde límite izquierdo + ΔY al siguiente tubo
     4) Volver a (0,0) con un solo movimiento
     """
     try:
-        if scan_vertical_manual is None or scan_horizontal_with_live_camera is None:
+        if scan_vertical_with_flags is None or scan_horizontal_with_live_camera is None:
             print("Error: Escáneres no disponibles (import fallido)")
             return False
 
@@ -1045,8 +1041,8 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
             print(f"Error en homing: {res_home.get('message')}")
             return False
 
-        print("[inicio_completo] Paso 2/4: Escaneo vertical (manual)...")
-        v_ok = scan_vertical_manual(robot)
+        print("[inicio_completo] Paso 2/4: Escaneo vertical (con IA)...")
+        v_ok = scan_vertical_with_flags(robot)
         if not v_ok:
             print("Escaneo vertical con errores")
             return False
@@ -1152,7 +1148,7 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
     """
     Inicio simple (robot ya referenciado):
     1) Ir a (0,0) sin hacer homing
-    2) Escaneo vertical (manual de flags) sin tocar switch superior
+    2) Escaneo vertical (con IA) sin tocar switch superior
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
        - Evitar tocar switch derecho: no se posiciona en el límite derecho
        - Entre tubos, mover en diagonal (derecha + Y objetivo)
@@ -1161,7 +1157,7 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
     Movimiento: relativo con robot.cmd.move_xy(dx, dy).
     """
     try:
-        if scan_vertical_manual is None or scan_horizontal_with_live_camera is None:
+        if scan_vertical_with_flags is None or scan_horizontal_with_live_camera is None:
             print("Error: Escáneres no disponibles (import fallido)")
             return False
 
@@ -1230,8 +1226,8 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             time.sleep(0.1)
             _wait_until_position(0.0, 0.0)
 
-        print("[inicio_simple] Paso 2/4: Escaneo vertical (manual)...")
-        v_ok = scan_vertical_manual(robot)
+        print("[inicio_simple] Paso 2/4: Escaneo vertical (con IA)...")
+        v_ok = scan_vertical_with_flags(robot)
         if not v_ok:
             print("Escaneo vertical con errores")
             return False
@@ -1340,13 +1336,13 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
     """
     Inicio completo con homing completo (calibración del workspace):
     1) Calibración completa del workspace (homing + medida)
-    2) Escaneo vertical (manual de flags)
+    2) Escaneo vertical (con IA)
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
        - Mover en diagonal entre tubos: back-off X desde límite izquierdo + ΔY al siguiente tubo
     4) Volver a (0,0) con un solo movimiento
     """
     try:
-        if scan_vertical_manual is None or scan_horizontal_with_live_camera is None:
+        if scan_vertical_with_flags is None or scan_horizontal_with_live_camera is None:
             print("Error: Escáneres no disponibles (import fallido)")
             return False
 
@@ -1422,8 +1418,8 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
             print(f"Error en calibración: {calib.get('message')}")
             return False
 
-        print("[inicio_completo_hard] Paso 2/4: Escaneo vertical (manual)...")
-        v_ok = scan_vertical_manual(robot)
+        print("[inicio_completo_hard] Paso 2/4: Escaneo vertical (con IA)...")
+        v_ok = scan_vertical_with_flags(robot)
         if not v_ok:
             print("Escaneo vertical con errores")
             return False
