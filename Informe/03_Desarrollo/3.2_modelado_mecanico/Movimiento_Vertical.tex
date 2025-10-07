@@ -1,0 +1,142 @@
+\subsubsection{Selección de varilla trapezoidal}
+
+\paragraph{Datos de diseño}
+El sistema de elevación vertical debe soportar una carga total de 1.2\,kg (lechuga y accesorios) a lo largo de una varilla de 2\,m de longitud. La varilla está fijada por su extremo superior y la carga se desplaza a lo largo de ella mediante una tuerca, trabajando por lo tanto a tracción. Se adopta un factor de seguridad de 4 para contemplar cargas dinámicas, desalineaciones y degradación del sistema con el uso.
+
+\paragraph{Análisis de pandeo por carga crítica de Euler}
+Aunque la varilla trabaja principalmente a tracción, es necesario verificar la estabilidad estructural frente a posibles cargas de compresión durante maniobras o situaciones no previstas. Considerando que la varilla tiene ambos extremos empotrados, la carga crítica de Euler se calcula como:
+
+\begin{equation}
+P_{\text{cr}} = \frac{\pi^2 \cdot E \cdot I}{(K \cdot L)^2}
+\label{eq:euler_pandeo}
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item $E = 200$\,GPa = 200\,000\,N/mm$^2$ (módulo de Young del acero)
+    \item $I$ = momento de inercia de la sección transversal de la varilla
+    \item $L = 2\,000$\,mm (longitud de la varilla)
+    \item $K = 0.5$ (factor de longitud efectiva para ambos extremos empotrados)
+\end{itemize}
+
+La carga admisible debe satisfacer:
+\begin{equation}
+P_{\text{adm}} = \frac{P_{\text{cr}}}{FS} > W
+\end{equation}
+
+donde $W = m \cdot g = 1.2\,\text{kg} \cdot 9.81\,\text{m/s}^2 = 11.77$\,N es el peso a soportar, y $FS = 4$ es el factor de seguridad adoptado.
+
+Por lo tanto:
+\[P_{\text{adm}} > 11.77\,\text{N} \cdot 4 = 47.08\,\text{N}\]
+
+\paragraph{Selección del diámetro}
+Tras evaluar diferentes diámetros comerciales de varillas trapezoidales de acero, se selecciona una varilla TR16$\times$4 (diámetro nominal 16\,mm, paso 4\,mm).
+
+Para una varilla de diámetro exterior $d_e = 16$\,mm, el momento de inercia de la sección circular es:
+\[I = \frac{\pi \cdot d_e^4}{64} = \frac{\pi \cdot 16^4}{64} = 3\,217\,\text{mm}^4\]
+
+Sustituyendo en la ecuación~(\ref{eq:euler_pandeo}) con $K = 0.5$ para extremos empotrados:
+\[P_{\text{cr}} = \frac{\pi^2 \cdot 200\,000\,\text{N/mm}^2 \cdot 3\,217\,\text{mm}^4}{(0.5 \cdot 2\,000\,\text{mm})^2} = \frac{6\,341\,481\,520}{1\,000\,000} = 6\,341\,\text{N}\]
+
+La carga admisible resulta:
+\[P_{\text{adm}} = \frac{6\,341\,\text{N}}{4} = 1\,585\,\text{N} > 47.08\,\text{N}\]
+
+Se verifica que la varilla seleccionada cumple ampliamente con los requerimientos de resistencia, proporcionando un margen de seguridad de aproximadamente 33.7 veces la carga mínima requerida, garantizando la integridad estructural del sistema incluso ante condiciones adversas.
+
+\subsubsection{Cálculo de torque motor para accionamiento vertical}
+
+\paragraph{Selección del tipo de motor}
+Se selecciona un motor paso a paso (PaP) debido a:
+\begin{itemize}
+    \item Alta precisión de posicionamiento sin necesidad de encoder
+    \item Capacidad de mantener torque en reposo (holding torque)
+    \item Control de velocidad preciso para movimientos verticales controlados
+    \item Compatibilidad con la resolución requerida de 200 pasos/mm
+\end{itemize}
+
+\paragraph{Parámetros de operación}
+El sistema debe operar con los siguientes parámetros:
+\begin{itemize}
+    \item Velocidad lineal máxima: 75\,mm/s
+    \item Resolución: 200 pasos/mm
+    \item Paso de varilla: 4\,mm
+    \item Velocidad angular correspondiente: $\omega = \frac{v_{\text{lineal}}}{\text{paso}} \cdot 60 = \frac{75\,\text{mm/s}}{4\,\text{mm}} \cdot 60 \approx 1\,125$\,rpm
+\end{itemize}
+
+Sin embargo, considerando microstepping y factores operacionales, la velocidad nominal de trabajo se establece en aproximadamente 563\,rpm.
+
+\paragraph{Análisis de torque en varillas trapezoidales}
+El torque requerido para mover una carga mediante una varilla trapezoidal se compone de dos componentes: el torque necesario para vencer la fricción en la rosca y el torque para vencer la fricción en el collarín del soporte.
+
+El torque para subir una carga se calcula como:
+\begin{equation}
+T_{\text{subida}} = \frac{F \cdot d_m}{2} \cdot k_R + \frac{F \cdot \mu_c \cdot d_c}{2}
+\label{eq:torque_subida}
+\end{equation}
+
+El torque para bajar una carga se calcula como:
+\begin{equation}
+T_{\text{bajada}} = \frac{F \cdot d_m}{2} \cdot k_L + \frac{F \cdot \mu_c \cdot d_c}{2}
+\label{eq:torque_bajada}
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item $F = 1.2\,\text{kg} \cdot 9.81\,\text{m/s}^2 = 11.77$\,N (carga a mover)
+    \item $d_m = 14$\,mm (diámetro medio de la varilla TR16$\times$4)
+    \item $d_c \approx 26$\,mm (diámetro medio del collarín/tuerca)
+    \item $\mu_c = 0.2$ (coeficiente de fricción acero-acero para rosca trapezoidal lubricada)
+    \item $k_R = 1.3$ (factor de rosca para subida, incluye efecto de cuña y fricción)
+    \item $k_L = 0.6$ (factor de rosca para bajada)
+\end{itemize}
+
+Sustituyendo valores en las ecuaciones~(\ref{eq:torque_subida}) y~(\ref{eq:torque_bajada}):
+
+\[T_{\text{subida}} = \frac{11.77 \cdot 14}{2} \cdot 1.3 + \frac{11.77 \cdot 0.2 \cdot 26}{2} = 107.2 + 30.6 = 137.8\,\text{Nmm}\]
+
+\[T_{\text{bajada}} = \frac{11.77 \cdot 14}{2} \cdot 0.6 + \frac{11.77 \cdot 0.2 \cdot 26}{2} = 49.4 + 30.6 = 80.0\,\text{Nmm}\]
+
+El torque de diseño se toma como el mayor de ambos:
+\[T_{\text{base}} = \max(T_{\text{subida}}, T_{\text{bajada}}) = 137.8\,\text{Nmm} = 0.138\,\text{Nm}\]
+
+\paragraph{Aplicación de factores de seguridad}
+Se aplican los siguientes factores correctivos:
+
+\begin{enumerate}
+    \item \textbf{Factor por fricción adicional en roscas trapezoidales ($f_1 = 2.5$):} Las roscas trapezoidales presentan pérdidas significativas por fricción que no están completamente capturadas en las ecuaciones simplificadas. Estas pérdidas se deben a:
+    \begin{itemize}
+        \item La geometría de los canales trapezoidales, que generan mayor área de contacto y fricción entre los flancos de la rosca y la tuerca
+        \item El efecto de acuñamiento de la rosca durante el movimiento, especialmente pronunciado en roscas trapezoidales comparado con roscas de bolas
+        \item El roce continuo metal-metal entre la tuerca y toda la longitud de la rosca, que genera calentamiento y puede aumentar la fricción
+        \item Pérdidas adicionales por desalineación a lo largo de los 2\,m de varilla
+        \item Variaciones en la calidad de la lubricación durante la vida útil del sistema
+    \end{itemize}
+    Este factor es consistente con valores reportados en literatura técnica para transmisiones por tornillo trapezoidal de longitud considerable.
+    
+    \item \textbf{Factor de seguridad por caída de torque con velocidad ($f_2 = 1.3$):} Los motores paso a paso experimentan una reducción significativa del torque disponible al aumentar la velocidad de rotación, como se observa en las curvas dinámicas. Este factor garantiza torque suficiente a 563\,rpm.
+\end{enumerate}
+
+El torque motor requerido resulta:
+\begin{equation}
+T_{\text{motor}} = T_{\text{base}} \cdot f_1 \cdot f_2 = 0.138 \cdot 2.5 \cdot 1.3 = 0.45\,\text{Nm}
+\label{eq:torque_motor_vertical}
+\end{equation}
+
+\paragraph{Selección del motor paso a paso}
+Considerando la velocidad de operación de 563\,rpm, se verifica en la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema34}) que se requiere un torque disponible de al menos 0.45\,Nm.
+
+Se selecciona un motor \textbf{NEMA 34 Medium} con las siguientes especificaciones:
+\begin{itemize}
+    \item Alimentación: 24\,V / 4.5\,A
+    \item Torque de retención (holding torque): $>$ 3\,Nm
+    \item Torque a 563\,rpm: $\approx$ 0.88\,Nm (según curva dinámica)
+\end{itemize}
+
+El motor seleccionado proporciona un margen de seguridad de aproximadamente 1.96 veces el torque requerido a la velocidad de operación, garantizando movimientos suaves y seguros durante toda la operación del sistema, incluyendo situaciones de carga máxima y fricción elevada.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{img/Nema34.png}
+    \caption{Curva dinámica torque-velocidad del motor paso a paso NEMA 34 Medium. Se observa que a 563\,rpm el torque disponible es de aproximadamente 0.88\,Nm, superando el requerimiento calculado de 0.45\,Nm.}
+    \label{fig:Curva_din_nema34}
+\end{figure}
