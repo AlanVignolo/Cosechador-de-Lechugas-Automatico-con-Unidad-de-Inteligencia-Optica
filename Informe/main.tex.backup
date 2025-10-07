@@ -175,6 +175,189 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{03_Desarrollo/3.2_modelado_mecanico/seleccion_servos}
 
 \subsection{Modelado CAD y Fabricación}
+\usepackage[
+  a4paper,
+  margin=1.5cm,
+  top=82pt,
+  headheight=42pt,
+]{geometry}
+
+% Paquetes
+\usepackage[spanish]{babel}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsmath,eqparbox}
+\usepackage{array}
+\usepackage{bm}
+\usepackage{blindtext}
+\usepackage{caption}
+\usepackage[makeroom]{cancel}
+\usepackage{euscript}[mathcal]
+\usepackage{enumitem}
+\usepackage{fontenc}
+\usepackage{gensymb}
+\usepackage{graphicx}
+\usepackage{lastpage}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{verbatim}
+\usepackage{comment}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+\excludecomment{debug}
+
+% Renombrar figuras
+\renewcommand{\figurename}{Fig.}
+\captionsetup{font=footnotesize}
+
+% Cabecera y pie de página
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead{}
+\fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
+\fancyhead[C]{317 - Autómatas y Control Discreto \\ \hspace{0.5pt} \\ \textbf{Proyecto Final de Estudios: Robot cosechador automático}}
+\fancyhead[R]{Brenda Gudiño \\ Alan Vignolo \\ \hspace{0.5pt}}
+
+\fancyfoot{}
+\fancyfoot[R]{Página \thepage \hspace{2pt} de \pageref{LastPage}} 
+
+\fancypagestyle{plain}{
+\fancyhead{}
+\fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
+\fancyhead[C]{Proyecto final de estudios \\ \hspace{0.5pt} \\ \textbf{Robot cosechador automático}}
+\fancyhead[R]{Brenda Gudiño \\ Alan Vignolo  \\ \hspace{0.5pt}}
+\fancyfoot{}
+\fancyfoot[R]{Página \thepage \hspace{2pt} de \pageref{LastPage}} 
+}
+
+% Formato de índice y capítulos
+\renewcommand*\contentsname{Índice}
+\titleformat{\chapter}[block]
+  {\normalfont\huge\bfseries}{\thechapter.}{1em}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{10pt}
+
+% Portada
+\title{
+\includegraphics[scale = 0.3]{logo_uncuyo.png} \\ [2cm]
+{\Huge \textbf{Proyecto Final de Estudios} \\ [1cm] 
+Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artificial}}
+\author{Brenda Gudiño \\ Alan Vignolo}
+\date{Fecha de presentación \\ XX/XX/2025}
+
+\begin{document}
+\setkeys{Gin}{draft=false}
+
+\maketitle
+\tableofcontents 
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% RESUMEN
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+\input{00_Resumen/resumen}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPÍTULO 1: INTRODUCCIÓN
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Introducción}
+
+\section{Contexto y Motivación}
+\input{01_Introduccion/contexto_motivacion}
+
+\section{Objetivos del Proyecto}
+\input{01_Introduccion/objetivos}
+
+\section{Alcance y Limitaciones}
+\input{01_Introduccion/alcance_limitaciones}
+
+\section{Estructura del Documento}
+\input{01_Introduccion/estructura_documento}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPÍTULO 2: MARCO TEÓRICO
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Marco Teórico}
+
+\section{Sistemas de Control Jerárquico}
+\input{02_MarcoTeorico/2.1_control_jerarquico/Sist_control_jerarquico}
+
+\section{Fundamentos de Visión Artificial y Aprendizaje Profundo}
+\input{02_MarcoTeorico/2.2_vision_ia/procesamiento_imagenes}
+\input{02_MarcoTeorico/2.2_vision_ia/deteccion_contornos}
+\input{02_MarcoTeorico/2.2_vision_ia/analisis_morfologico}
+\input{02_MarcoTeorico/2.2_vision_ia/metricas_evaluacion}
+
+\section{Cinemática de Robots Cartesianos}
+\input{02_MarcoTeorico/2.3_cinematica/modelado_cinematico}
+\input{02_MarcoTeorico/2.3_cinematica/espacios_trabajo}
+\input{02_MarcoTeorico/2.3_cinematica/analisis_trayectorias}
+
+\section{Sistemas de Transmisión Mecánica}
+\input{02_MarcoTeorico/2.4_transmision/correa_poleas}
+\input{02_MarcoTeorico/2.4_transmision/husillo_tuerca}
+\input{02_MarcoTeorico/2.4_transmision/rodamientos_guias}
+
+\section{Control de Motores Paso a Paso}
+\input{02_MarcoTeorico/2.5_motores/principio_funcionamiento}
+\input{02_MarcoTeorico/2.5_motores/modos_operacion}
+\input{02_MarcoTeorico/2.5_motores/drivers_electronica}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CAPÍTULO 3: DESARROLLO DEL SISTEMA
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Desarrollo del Sistema}
+
+\section{Arquitectura General del Sistema}
+\input{03_Desarrollo/3.1_arquitectura_general/diagrama_bloques}
+\input{03_Desarrollo/3.1_arquitectura_general/interaccion_niveles}
+\input{03_Desarrollo/3.1_arquitectura_general/flujo_informacion}
+\input{03_Desarrollo/3.1_arquitectura_general/maquina_estados_global}
+
+\section{Modelado y Diseño Mecánico}
+
+\subsection{Especificaciones de Diseño y Restricciones}
+\input{03_Desarrollo/3.2_modelado_mecanico/especificaciones_diseno}
+\subsection{Sistema de movimiento vertical}
+\input{03_Desarrollo/3.2_modelado_mecanico/Movimiento_Vertical.tex}
+\subsection{Sistema de movimiento horizontal}
+\input{03_Desarrollo/3.2_modelado_mecanico/Movimiento_Horizontal.tex}
+\subsection{Modelado 3D}
+\input{03_Desarrollo/3.2_modelado_mecanico/Modelado_3d}
+
+
+\subsection{Análisis Cinemático del Sistema}
+\input{03_Desarrollo/3.2_modelado_mecanico/grados_libertad}
+\input{03_Desarrollo/3.2_modelado_mecanico/ecuaciones_movimiento}
+\input{03_Desarrollo/3.2_modelado_mecanico/espacio_trabajo}
+
+\subsection{Diseño Estructural}
+%\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_materiales}
+\input{03_Desarrollo/3.2_modelado_mecanico/calculos_resistencia}
+%\input{03_Desarrollo/3.2_modelado_mecanico/estructura_soporte}
+
+\subsection{Sistema de Movimiento Horizontal}
+\input{03_Desarrollo/3.2_modelado_mecanico/dimensionamiento_correa}
+%\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_poleas}
+\input{03_Desarrollo/3.2_modelado_mecanico/calculo_cargas_horizontal}
+
+\subsection{Sistema de Movimiento Vertical}
+\input{03_Desarrollo/3.2_modelado_mecanico/analisis_husillo}
+%\input{03_Desarrollo/3.2_modelado_mecanico/calculo_torque}
+\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_guias}
+
+\subsection{Brazo Robótico}
+\input{03_Desarrollo/3.2_modelado_mecanico/configuracion_brazo}
+\input{03_Desarrollo/3.2_modelado_mecanico/cinematica_brazo}
+\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_servos}
+
+\subsection{Modelado CAD y Fabricación}
 %\input{03_Desarrollo/3.2_modelado_mecanico/diseno_piezas_3d}
 \input{03_Desarrollo/3.2_modelado_mecanico/tecnologia_impresion}
 \input{03_Desarrollo/3.2_modelado_mecanico/tolerancias_ajustes}
