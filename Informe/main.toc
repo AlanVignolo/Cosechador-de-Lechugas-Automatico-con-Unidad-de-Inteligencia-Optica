@@ -10,139 +10,143 @@
 \contentsline {section}{\numberline {2.2}Fundamentos de Visión Artificial y Aprendizaje Profundo}{5}{section.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}Procesamiento Digital de Imágenes}{5}{subsection.2.2.1}%
 \contentsline {subsubsection}{Representación Digital de Imágenes}{5}{subsubsection*.3}%
-\contentsline {subsubsection}{Espacios de Color y Transformaciones}{5}{subsubsection*.5}%
-\contentsline {subsubsection}{Umbralización y Segmentación}{7}{subsubsection*.7}%
-\contentsline {subsubsection}{Operaciones Morfológicas}{8}{subsubsection*.9}%
-\contentsline {subsubsection}{Calibración y Transformación de Coordenadas}{9}{subsubsection*.11}%
-\contentsline {subsection}{\numberline {2.2.2}Detección y Análisis de Contornos}{11}{subsection.2.2.2}%
-\contentsline {subsubsection}{Definición Matemática de Contorno}{11}{subsubsection*.13}%
-\contentsline {subsubsection}{Algoritmos de Detección de Contornos}{11}{subsubsection*.14}%
-\contentsline {subsubsection}{Aproximación y Simplificación de Contornos}{12}{subsubsection*.16}%
-\contentsline {subsubsection}{Descriptores Geométricos de Contornos}{13}{subsubsection*.18}%
-\contentsline {subsubsection}{Filtrado de Contornos}{15}{subsubsection*.20}%
-\contentsline {subsubsection}{Análisis de Regiones Internas}{16}{subsubsection*.22}%
-\contentsline {subsubsection}{Invariancia a Transformaciones}{17}{subsubsection*.23}%
-\contentsline {subsection}{\numberline {2.2.3}Clasificación Basada en Análisis Morfológico}{17}{subsection.2.2.3}%
-\contentsline {subsubsection}{Fundamentos de Clasificación por Umbrales}{17}{subsubsection*.24}%
-\contentsline {subsubsection}{Análisis Estadístico para Determinación de Umbrales}{18}{subsubsection*.26}%
-\contentsline {subsubsection}{Clasificación Multi-Criterio}{20}{subsubsection*.28}%
-\contentsline {subsubsection}{Análisis de Separabilidad de Clases}{20}{subsubsection*.30}%
-\contentsline {subsubsection}{Análisis de Error y Desempeño}{21}{subsubsection*.32}%
-\contentsline {subsubsection}{Validación Estadística del Clasificador}{22}{subsubsection*.33}%
-\contentsline {subsubsection}{Robustez y Generalización}{23}{subsubsection*.35}%
-\contentsline {subsubsection}{Ventajas y Limitaciones del Enfoque Morfológico}{24}{subsubsection*.36}%
-\contentsline {subsection}{\numberline {2.2.4}Métricas de Evaluación para Sistemas de Clasificación}{25}{subsection.2.2.4}%
-\contentsline {subsubsection}{Matriz de Confusión}{25}{subsubsection*.37}%
-\contentsline {subsubsection}{Exactitud (Accuracy)}{26}{subsubsection*.39}%
-\contentsline {subsubsection}{Precisión (Precision)}{26}{subsubsection*.40}%
-\contentsline {subsubsection}{Exhaustividad (Recall/Sensitivity)}{27}{subsubsection*.41}%
-\contentsline {subsubsection}{F-Score}{27}{subsubsection*.42}%
-\contentsline {subsubsection}{Métricas Agregadas Multiclase}{28}{subsubsection*.44}%
-\contentsline {subsubsection}{Métricas de Error Absoluto}{29}{subsubsection*.45}%
-\contentsline {subsubsection}{Coeficiente de Determinación}{30}{subsubsection*.47}%
-\contentsline {subsubsection}{Métricas de Confiabilidad}{30}{subsubsection*.48}%
-\contentsline {subsubsection}{Métricas de Robustez}{30}{subsubsection*.49}%
-\contentsline {subsubsection}{Selección de Métricas según Aplicación}{31}{subsubsection*.51}%
-\contentsline {section}{\numberline {2.3}Cinemática de Robots Cartesianos}{32}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Sistemas de Transmisión Mecánica}{32}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Control de Motores Paso a Paso}{32}{section.2.5}%
-\contentsline {chapter}{\numberline {3}Desarrollo del Sistema}{33}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Arquitectura General del Sistema}{33}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Modelado y Diseño Mecánico}{33}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Especificaciones de Diseño y Restricciones}{33}{subsection.3.2.1}%
-\contentsline {subsubsection}{Descripción General del Sistema}{33}{subsubsection*.52}%
-\contentsline {subsubsection}{Configuración Estructural}{33}{subsubsection*.53}%
-\contentsline {subsubsection}{Cargas del Sistema}{34}{subsubsection*.54}%
-\contentsline {paragraph}{Cargas del eje horizontal:}{34}{paragraph*.55}%
-\contentsline {paragraph}{Cargas del eje vertical:}{34}{paragraph*.56}%
-\contentsline {subsubsection}{Especificaciones Cinemáticas}{34}{subsubsection*.57}%
-\contentsline {subsection}{\numberline {3.2.2}Análisis Cinemático del Sistema}{35}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Diseño Estructural}{35}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Sistema de Movimiento Horizontal}{35}{subsection.3.2.4}%
-\contentsline {subsection}{\numberline {3.2.5}Sistema de Movimiento Vertical}{35}{subsection.3.2.5}%
-\contentsline {subsection}{\numberline {3.2.6}Brazo Robótico}{35}{subsection.3.2.6}%
-\contentsline {subsection}{\numberline {3.2.7}Modelado CAD y Fabricación}{35}{subsection.3.2.7}%
-\contentsline {section}{\numberline {3.3}Sistema de Control de Bajo Nivel (Nivel Regulatorio)}{35}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Arquitectura del Nivel Regulatorio}{35}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Hardware de Control - Arduino Mega 2560}{35}{subsection.3.3.2}%
-\contentsline {subsection}{\numberline {3.3.3}Selección y Dimensionamiento de Actuadores}{35}{subsection.3.3.3}%
-\contentsline {subsection}{\numberline {3.3.4}Sensores de Seguridad}{35}{subsection.3.3.4}%
-\contentsline {subsection}{\numberline {3.3.5}Control de Movimiento}{35}{subsection.3.3.5}%
-\contentsline {subsection}{\numberline {3.3.6}Protocolo de Comunicación UART}{35}{subsection.3.3.6}%
-\contentsline {section}{\numberline {3.4}Sistema de Supervisión y Alta Gestión (Nivel Supervisor)}{35}{section.3.4}%
-\contentsline {subsection}{\numberline {3.4.1}Arquitectura del Nivel Supervisor}{35}{subsection.3.4.1}%
-\contentsline {subsection}{\numberline {3.4.2}Hardware Supervisor - Raspberry Pi 4}{35}{subsection.3.4.2}%
-\contentsline {subsection}{\numberline {3.4.3}Máquina de Estados Supervisora}{35}{subsection.3.4.3}%
-\contentsline {subsection}{\numberline {3.4.4}Coordinación con Nivel Regulatorio}{35}{subsection.3.4.4}%
-\contentsline {section}{\numberline {3.5}Inteligencia Artificial y Visión por Computadora}{35}{section.3.5}%
-\contentsline {subsection}{\numberline {3.5.1}Arquitectura y Pipeline de Procesamiento}{35}{subsection.3.5.1}%
-\contentsline {subsubsection}{Arquitectura Modular del Sistema}{35}{subsubsection*.59}%
-\contentsline {subsubsection}{Pipeline General de Procesamiento}{37}{subsubsection*.61}%
-\contentsline {subsubsection}{Sistema de Adquisición Visual}{39}{subsubsection*.63}%
-\contentsline {subsubsection}{Preprocesamiento de Imágenes}{39}{subsubsection*.65}%
-\contentsline {subsubsection}{Segmentación por Umbralización}{40}{subsubsection*.66}%
-\contentsline {subsubsection}{Refinamiento Morfológico}{41}{subsubsection*.67}%
-\contentsline {subsubsection}{Detección y Análisis de Contornos}{41}{subsubsection*.68}%
-\contentsline {subsection}{\numberline {3.5.2}Sistema de Posicionamiento Visual}{42}{subsection.3.5.2}%
-\contentsline {subsubsection}{Fundamento del Sistema de Posicionamiento Visual}{42}{subsubsection*.69}%
-\contentsline {subsubsection}{Metodología de Detección}{43}{subsubsection*.71}%
-\contentsline {subsubsection}{Evaluación de Calidad del Contorno}{43}{subsubsection*.72}%
-\contentsline {subsubsection}{Sistema de Scoring Multicriteria}{44}{subsubsection*.73}%
-\contentsline {subsubsection}{Cálculo de Desviación}{44}{subsubsection*.74}%
-\contentsline {subsubsection}{Discriminación de Orientación}{45}{subsubsection*.75}%
-\contentsline {subsubsection}{Desempeño del Algoritmo}{45}{subsubsection*.76}%
-\contentsline {subsubsection}{Fundamentación de la Calibración Espacial}{45}{subsubsection*.77}%
-\contentsline {subsubsection}{Metodología de Calibración}{46}{subsubsection*.78}%
-\contentsline {subsubsection}{Resultados de Calibración}{46}{subsubsection*.79}%
-\contentsline {subsubsection}{Validación Estadística del Sistema}{47}{subsubsection*.80}%
-\contentsline {subsubsection}{Algoritmo de Corrección Iterativa}{47}{subsubsection*.82}%
-\contentsline {subsubsection}{Criterio de Convergencia}{48}{subsubsection*.83}%
-\contentsline {subsubsection}{Análisis de Desempeño}{48}{subsubsection*.84}%
-\contentsline {subsection}{\numberline {3.5.3}Sistema de Clasificación de Cultivos}{49}{subsection.3.5.3}%
-\contentsline {subsubsection}{Objetivo y Enfoque del Sistema de Clasificación}{49}{subsubsection*.86}%
-\contentsline {subsubsection}{Fundamento de la Segmentación Cromática}{49}{subsubsection*.87}%
-\contentsline {subsubsection}{Refinamiento de la Máscara de Segmentación}{50}{subsubsection*.89}%
-\contentsline {subsubsection}{Detección y Filtrado de Contornos}{50}{subsubsection*.90}%
-\contentsline {subsubsection}{Extracción del Descriptor de Área}{51}{subsubsection*.91}%
-\contentsline {subsubsection}{Casos Especiales y Manejo de Ambigüedades}{51}{subsubsection*.92}%
-\contentsline {subsubsection}{Construcción del Dataset de Calibración}{52}{subsubsection*.94}%
-\contentsline {subsubsection}{Análisis Estadístico de Áreas}{52}{subsubsection*.95}%
-\contentsline {subsubsection}{Evaluación de Separabilidad entre Clases}{53}{subsubsection*.97}%
-\contentsline {subsubsection}{Determinación del Umbral Óptimo de Clasificación}{53}{subsubsection*.98}%
-\contentsline {subsubsection}{Zona de Incertidumbre y Confianza de Clasificación}{54}{subsubsection*.99}%
-\contentsline {subsubsection}{Validación Experimental del Clasificador}{54}{subsubsection*.100}%
-\contentsline {subsubsection}{Métricas de Desempeño}{54}{subsubsection*.102}%
-\contentsline {subsubsection}{Análisis de Errores}{55}{subsubsection*.103}%
-\contentsline {subsection}{\numberline {3.5.4}Mapeo y Optimización de Rutas}{55}{subsection.3.5.4}%
-\contentsline {subsubsection}{Estrategia de Exploración Sistemática}{55}{subsubsection*.104}%
-\contentsline {subsubsection}{Sincronización entre Visión y Movimiento}{56}{subsubsection*.106}%
-\contentsline {subsubsection}{Mecanismo de Cooldown Espacial}{56}{subsubsection*.107}%
-\contentsline {subsubsection}{Estructura de Datos del Mapa}{57}{subsubsection*.108}%
-\contentsline {subsubsection}{Actualización Dinámica durante Cosecha}{58}{subsubsection*.109}%
-\contentsline {subsubsection}{Persistencia de Datos}{58}{subsubsection*.110}%
-\contentsline {subsubsection}{Formulación del Problema de Optimización}{58}{subsubsection*.111}%
-\contentsline {subsubsection}{Modelo de Tiempo de Movimiento}{59}{subsubsection*.112}%
-\contentsline {subsubsection}{Algoritmo Heurístico del Vecino Más Cercano}{59}{subsubsection*.113}%
-\contentsline {subsubsection}{Refinamiento mediante Optimización 2-opt}{60}{subsubsection*.114}%
-\contentsline {subsubsection}{Heurística Específica de Agrupamiento por Filas}{60}{subsubsection*.115}%
-\contentsline {subsubsection}{Resultados Comparativos}{61}{subsubsection*.116}%
-\contentsline {subsubsection}{Eficiencia Operativa Global}{61}{subsubsection*.117}%
-\contentsline {section}{\numberline {3.6}Interfaz de Usuario y Supervisión}{61}{section.3.6}%
-\contentsline {section}{\numberline {3.7}Montaje e Integración}{61}{section.3.7}%
-\contentsline {chapter}{\numberline {4}Pruebas y Resultados}{71}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Metodología de Pruebas}{71}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Pruebas del Sistema Mecánico}{71}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Pruebas del Sistema de Control}{71}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Pruebas del Sistema de IA}{71}{section.4.4}%
-\contentsline {section}{\numberline {4.5}Pruebas de Integración}{71}{section.4.5}%
-\contentsline {section}{\numberline {4.6}Análisis de Resultados}{71}{section.4.6}%
-\contentsline {chapter}{\numberline {5}Conclusiones y Trabajo Futuro}{72}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Conclusiones Generales}{72}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Aportes del Proyecto}{72}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Trabajo Futuro}{72}{section.5.3}%
-\contentsline {chapter}{\numberline {A}Diagramas Eléctricos Completos}{73}{appendix.Alph1}%
-\contentsline {chapter}{\numberline {B}Código Fuente Relevante}{74}{appendix.Alph2}%
-\contentsline {chapter}{\numberline {C}Especificaciones Técnicas de Componentes}{75}{appendix.Alph3}%
-\contentsline {chapter}{\numberline {D}Manual de Usuario}{76}{appendix.Alph4}%
-\contentsline {chapter}{\numberline {E}Hojas de Datos}{77}{appendix.Alph5}%
-\contentsline {chapter}{Referencias}{78}{appendix*.118}%
+\contentsline {subsubsection}{Espacios de Color y Transformaciones}{5}{subsubsection*.4}%
+\contentsline {subsubsection}{Umbralización y Segmentación}{6}{subsubsection*.5}%
+\contentsline {subsubsection}{Operaciones Morfológicas}{7}{subsubsection*.6}%
+\contentsline {subsubsection}{Calibración y Transformación de Coordenadas}{8}{subsubsection*.7}%
+\contentsline {subsection}{\numberline {2.2.2}Detección y Análisis de Contornos}{9}{subsection.2.2.2}%
+\contentsline {subsubsection}{Definición Matemática de Contorno}{10}{subsubsection*.8}%
+\contentsline {subsubsection}{Algoritmo de Detección de Contornos de Suzuki-Abe}{10}{subsubsection*.9}%
+\contentsline {subsubsection}{Descriptores Geométricos de Contornos}{11}{subsubsection*.10}%
+\contentsline {subsubsection}{Filtrado de Contornos}{11}{subsubsection*.11}%
+\contentsline {subsubsection}{Análisis de Regiones Parciales del Contorno}{12}{subsubsection*.12}%
+\contentsline {subsubsection}{Métricas de Forma para Clasificación}{13}{subsubsection*.13}%
+\contentsline {subsubsection}{Análisis Estadístico de Píxeles Internos}{13}{subsubsection*.14}%
+\contentsline {subsubsection}{Score Combinado para Selección}{14}{subsubsection*.15}%
+\contentsline {subsubsection}{Componentes Conectados}{14}{subsubsection*.16}%
+\contentsline {subsection}{\numberline {2.2.3}Clasificación Basada en Análisis Morfológico}{15}{subsection.2.2.3}%
+\contentsline {subsubsection}{Fundamentos de Clasificación por Umbrales}{15}{subsubsection*.17}%
+\contentsline {subsubsection}{Análisis Estadístico para Determinación de Umbrales}{15}{subsubsection*.18}%
+\contentsline {subsubsection}{Clasificación Multi-Criterio con Ratios de Color}{16}{subsubsection*.19}%
+\contentsline {subsubsection}{Distancia Euclidiana Normalizada}{16}{subsubsection*.20}%
+\contentsline {subsubsection}{Ejemplo: Clasificación de Cultivos}{17}{subsubsection*.21}%
+\contentsline {subsubsection}{Análisis de Separabilidad de Clases}{18}{subsubsection*.22}%
+\contentsline {subsubsection}{Validación Estadística del Clasificador}{18}{subsubsection*.23}%
+\contentsline {subsubsection}{Robustez y Generalización}{19}{subsubsection*.24}%
+\contentsline {subsubsection}{Ventajas y Limitaciones del Enfoque Morfológico}{19}{subsubsection*.25}%
+\contentsline {subsubsection}{Técnicas Adicionales para Robustez}{20}{subsubsection*.26}%
+\contentsline {subsection}{\numberline {2.2.4}Métricas de Evaluación para Sistemas de Clasificación}{21}{subsection.2.2.4}%
+\contentsline {subsubsection}{Matriz de Confusión}{21}{subsubsection*.27}%
+\contentsline {subsubsection}{Exactitud (Accuracy)}{21}{subsubsection*.29}%
+\contentsline {subsubsection}{Precisión (Precision)}{22}{subsubsection*.30}%
+\contentsline {subsubsection}{Exhaustividad (Recall/Sensitivity)}{23}{subsubsection*.31}%
+\contentsline {subsubsection}{F-Score}{23}{subsubsection*.32}%
+\contentsline {subsubsection}{Métricas Agregadas Multiclase}{23}{subsubsection*.34}%
+\contentsline {subsubsection}{Métricas de Error Absoluto}{24}{subsubsection*.35}%
+\contentsline {subsubsection}{Coeficiente de Determinación}{25}{subsubsection*.37}%
+\contentsline {subsubsection}{Métricas de Confiabilidad}{26}{subsubsection*.38}%
+\contentsline {subsubsection}{Métricas de Robustez}{26}{subsubsection*.39}%
+\contentsline {subsubsection}{Selección de Métricas según Aplicación}{26}{subsubsection*.41}%
+\contentsline {section}{\numberline {2.3}Cinemática de Robots Cartesianos}{27}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Sistemas de Transmisión Mecánica}{27}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Control de Motores Paso a Paso}{27}{section.2.5}%
+\contentsline {chapter}{\numberline {3}Desarrollo del Sistema}{28}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Arquitectura General del Sistema}{28}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Modelado y Diseño Mecánico}{28}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Especificaciones de Diseño y Restricciones}{28}{subsection.3.2.1}%
+\contentsline {subsubsection}{Descripción General del Sistema}{28}{subsubsection*.42}%
+\contentsline {subsubsection}{Configuración Estructural}{28}{subsubsection*.43}%
+\contentsline {subsubsection}{Cargas del Sistema}{29}{subsubsection*.44}%
+\contentsline {paragraph}{Cargas del eje horizontal:}{29}{paragraph*.45}%
+\contentsline {paragraph}{Cargas del eje vertical:}{29}{paragraph*.46}%
+\contentsline {subsubsection}{Especificaciones Cinemáticas}{29}{subsubsection*.47}%
+\contentsline {subsection}{\numberline {3.2.2}Análisis Cinemático del Sistema}{30}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Diseño Estructural}{30}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Sistema de Movimiento Horizontal}{30}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Sistema de Movimiento Vertical}{30}{subsection.3.2.5}%
+\contentsline {subsection}{\numberline {3.2.6}Brazo Robótico}{30}{subsection.3.2.6}%
+\contentsline {subsection}{\numberline {3.2.7}Modelado CAD y Fabricación}{30}{subsection.3.2.7}%
+\contentsline {section}{\numberline {3.3}Sistema de Control de Bajo Nivel (Nivel Regulatorio)}{30}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Arquitectura del Nivel Regulatorio}{30}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Hardware de Control - Arduino Mega 2560}{30}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Selección y Dimensionamiento de Actuadores}{30}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Sensores de Seguridad}{30}{subsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.3.5}Control de Movimiento}{30}{subsection.3.3.5}%
+\contentsline {subsection}{\numberline {3.3.6}Protocolo de Comunicación UART}{30}{subsection.3.3.6}%
+\contentsline {section}{\numberline {3.4}Sistema de Supervisión y Alta Gestión (Nivel Supervisor)}{30}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Arquitectura del Nivel Supervisor}{30}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Hardware Supervisor - Raspberry Pi 4}{30}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Máquina de Estados Supervisora}{30}{subsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.4.4}Coordinación con Nivel Regulatorio}{30}{subsection.3.4.4}%
+\contentsline {section}{\numberline {3.5}Inteligencia Artificial y Visión por Computadora}{30}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Arquitectura y Pipeline de Procesamiento}{30}{subsection.3.5.1}%
+\contentsline {subsubsection}{Arquitectura Modular del Sistema}{30}{subsubsection*.49}%
+\contentsline {subsubsection}{Pipeline General de Procesamiento}{32}{subsubsection*.51}%
+\contentsline {subsubsection}{Sistema de Adquisición Visual}{34}{subsubsection*.53}%
+\contentsline {subsubsection}{Preprocesamiento de Imágenes}{34}{subsubsection*.55}%
+\contentsline {subsubsection}{Segmentación por Umbralización}{35}{subsubsection*.56}%
+\contentsline {subsubsection}{Refinamiento Morfológico}{36}{subsubsection*.57}%
+\contentsline {subsubsection}{Detección y Análisis de Contornos}{36}{subsubsection*.58}%
+\contentsline {subsection}{\numberline {3.5.2}Sistema de Posicionamiento Visual}{37}{subsection.3.5.2}%
+\contentsline {subsubsection}{Fundamento del Sistema de Posicionamiento Visual}{37}{subsubsection*.59}%
+\contentsline {subsubsection}{Metodología de Detección}{38}{subsubsection*.61}%
+\contentsline {subsubsection}{Evaluación de Calidad del Contorno}{38}{subsubsection*.62}%
+\contentsline {subsubsection}{Sistema de Scoring Multicriteria}{39}{subsubsection*.63}%
+\contentsline {subsubsection}{Cálculo de Desviación}{39}{subsubsection*.64}%
+\contentsline {subsubsection}{Discriminación de Orientación}{40}{subsubsection*.65}%
+\contentsline {subsubsection}{Desempeño del Algoritmo}{40}{subsubsection*.66}%
+\contentsline {subsubsection}{Fundamentación de la Calibración Espacial}{40}{subsubsection*.67}%
+\contentsline {subsubsection}{Metodología de Calibración}{41}{subsubsection*.68}%
+\contentsline {subsubsection}{Resultados de Calibración}{41}{subsubsection*.69}%
+\contentsline {subsubsection}{Validación Estadística del Sistema}{42}{subsubsection*.70}%
+\contentsline {subsubsection}{Algoritmo de Corrección Iterativa}{42}{subsubsection*.72}%
+\contentsline {subsubsection}{Criterio de Convergencia}{43}{subsubsection*.73}%
+\contentsline {subsubsection}{Análisis de Desempeño}{43}{subsubsection*.74}%
+\contentsline {subsection}{\numberline {3.5.3}Sistema de Clasificación de Cultivos}{44}{subsection.3.5.3}%
+\contentsline {subsubsection}{Objetivo y Enfoque del Sistema de Clasificación}{44}{subsubsection*.76}%
+\contentsline {subsubsection}{Fundamento de la Segmentación Cromática}{44}{subsubsection*.77}%
+\contentsline {subsubsection}{Refinamiento de la Máscara de Segmentación}{45}{subsubsection*.79}%
+\contentsline {subsubsection}{Detección y Filtrado de Contornos}{45}{subsubsection*.80}%
+\contentsline {subsubsection}{Extracción del Descriptor de Área}{46}{subsubsection*.81}%
+\contentsline {subsubsection}{Casos Especiales y Manejo de Ambigüedades}{46}{subsubsection*.82}%
+\contentsline {subsubsection}{Construcción del Dataset de Calibración}{47}{subsubsection*.84}%
+\contentsline {subsubsection}{Análisis Estadístico de Áreas}{47}{subsubsection*.85}%
+\contentsline {subsubsection}{Evaluación de Separabilidad entre Clases}{48}{subsubsection*.87}%
+\contentsline {subsubsection}{Determinación del Umbral Óptimo de Clasificación}{48}{subsubsection*.88}%
+\contentsline {subsubsection}{Zona de Incertidumbre y Confianza de Clasificación}{49}{subsubsection*.89}%
+\contentsline {subsubsection}{Validación Experimental del Clasificador}{49}{subsubsection*.90}%
+\contentsline {subsubsection}{Métricas de Desempeño}{49}{subsubsection*.92}%
+\contentsline {subsubsection}{Análisis de Errores}{50}{subsubsection*.93}%
+\contentsline {subsection}{\numberline {3.5.4}Mapeo y Optimización de Rutas}{50}{subsection.3.5.4}%
+\contentsline {subsubsection}{Estrategia de Exploración Sistemática}{50}{subsubsection*.94}%
+\contentsline {subsubsection}{Sincronización entre Visión y Movimiento}{51}{subsubsection*.96}%
+\contentsline {subsubsection}{Mecanismo de Cooldown Espacial}{51}{subsubsection*.97}%
+\contentsline {subsubsection}{Estructura de Datos del Mapa}{52}{subsubsection*.98}%
+\contentsline {subsubsection}{Actualización Dinámica durante Cosecha}{53}{subsubsection*.99}%
+\contentsline {subsubsection}{Persistencia de Datos}{53}{subsubsection*.100}%
+\contentsline {subsubsection}{Formulación del Problema de Optimización}{53}{subsubsection*.101}%
+\contentsline {subsubsection}{Modelo de Tiempo de Movimiento}{54}{subsubsection*.102}%
+\contentsline {subsubsection}{Algoritmo Heurístico del Vecino Más Cercano}{54}{subsubsection*.103}%
+\contentsline {subsubsection}{Refinamiento mediante Optimización 2-opt}{55}{subsubsection*.104}%
+\contentsline {subsubsection}{Heurística Específica de Agrupamiento por Filas}{55}{subsubsection*.105}%
+\contentsline {subsubsection}{Resultados Comparativos}{56}{subsubsection*.106}%
+\contentsline {subsubsection}{Eficiencia Operativa Global}{56}{subsubsection*.107}%
+\contentsline {section}{\numberline {3.6}Interfaz de Usuario y Supervisión}{56}{section.3.6}%
+\contentsline {section}{\numberline {3.7}Montaje e Integración}{56}{section.3.7}%
+\contentsline {chapter}{\numberline {4}Pruebas y Resultados}{66}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Metodología de Pruebas}{66}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Pruebas del Sistema Mecánico}{66}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Pruebas del Sistema de Control}{66}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Pruebas del Sistema de IA}{66}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Pruebas de Integración}{66}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Análisis de Resultados}{66}{section.4.6}%
+\contentsline {chapter}{\numberline {5}Conclusiones y Trabajo Futuro}{67}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Conclusiones Generales}{67}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Aportes del Proyecto}{67}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Trabajo Futuro}{67}{section.5.3}%
+\contentsline {chapter}{\numberline {A}Diagramas Eléctricos Completos}{68}{appendix.Alph1}%
+\contentsline {chapter}{\numberline {B}Código Fuente Relevante}{69}{appendix.Alph2}%
+\contentsline {chapter}{\numberline {C}Especificaciones Técnicas de Componentes}{70}{appendix.Alph3}%
+\contentsline {chapter}{\numberline {D}Manual de Usuario}{71}{appendix.Alph4}%
+\contentsline {chapter}{\numberline {E}Hojas de Datos}{72}{appendix.Alph5}%
+\contentsline {chapter}{Referencias}{73}{appendix*.108}%
