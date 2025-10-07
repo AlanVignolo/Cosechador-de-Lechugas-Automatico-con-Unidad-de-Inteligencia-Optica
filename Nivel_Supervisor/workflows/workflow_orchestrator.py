@@ -35,11 +35,11 @@ if ANALIZAR_DIR not in sys.path:
     sys.path.append(ANALIZAR_DIR)
 
 try:
-    from escaner_vertical_manual import scan_vertical_manual
-    print("Escáner vertical manual importado")
+    from escaner_vertical import scan_vertical_with_flags
+    print("Escáner vertical con IA importado")
 except Exception as e:
-    scan_vertical_manual = None
-    print(f"Advertencia: No se pudo importar escáner vertical manual: {e}")
+    scan_vertical_with_flags = None
+    print(f"Advertencia: No se pudo importar escáner vertical con IA: {e}")
 
 try:
     from escaner_standalone import scan_horizontal_with_live_camera
@@ -266,7 +266,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
     """
     Inicio completo:
     1) Homing
-    2) Escaneo vertical (manual de flags) sin tocar switch superior
+    2) Escaneo vertical (con IA) sin tocar switch superior
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
        - Evitar tocar switch derecho: no se posiciona en el límite derecho
        - Entre tubos, mover en diagonal (derecha + Y objetivo)
@@ -276,7 +276,7 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
     """
     try:
         errores = []
-        if scan_vertical_manual is None:
+        if scan_vertical_with_flags is None:
             errores.append("Escáner vertical")
         if scan_horizontal_with_live_camera is None:
             errores.append("Escáner horizontal")
@@ -284,8 +284,8 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
         if errores:
             print(f"Error: Módulos no disponibles: {', '.join(errores)}")
             print("Verifica que los archivos existan:")
-            if scan_vertical_manual is None:
-                print(f"  - {ESC_V_DIR}/escaner_vertical_manual.py")
+            if scan_vertical_with_flags is None:
+                print(f"  - {ESC_V_DIR}/escaner_vertical.py")
             if scan_horizontal_with_live_camera is None:
                 print(f"  - {ESC_H_DIR}/escaner_standalone.py")
             return False
@@ -362,8 +362,8 @@ def inicio_completo(robot, return_home: bool = True) -> bool:
             print(f"Error en homing: {res_home.get('message')}")
             return False
 
-        print("[inicio_completo] Paso 2/4: Escaneo vertical (manual)...")
-        v_ok = scan_vertical_manual(robot)
+        print("[inicio_completo] Paso 2/4: Escaneo vertical (con IA)...")
+        v_ok = scan_vertical_with_flags(robot)
         if not v_ok:
             print("Escaneo vertical con errores")
             return False
@@ -1019,13 +1019,13 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
     """
     Inicio completo (LEGACY - calibración del workspace):
     1) Calibración completa del workspace (homing + medida)
-    2) Escaneo vertical (manual de flags)
+    2) Escaneo vertical (con IA)
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
        - Mover en diagonal entre tubos: back-off X desde límite izquierdo + ΔY al siguiente tubo
     4) Volver a (0,0) con un solo movimiento
     """
     try:
-        if scan_vertical_manual is None or scan_horizontal_with_live_camera is None:
+        if scan_vertical_with_flags is None or scan_horizontal_with_live_camera is None:
             print("Error: Escáneres no disponibles (import fallido)")
             return False
 
@@ -1041,8 +1041,8 @@ def inicio_completo_legacy(robot, return_home: bool = True) -> bool:
             print(f"Error en homing: {res_home.get('message')}")
             return False
 
-        print("[inicio_completo] Paso 2/4: Escaneo vertical (manual)...")
-        v_ok = scan_vertical_manual(robot)
+        print("[inicio_completo] Paso 2/4: Escaneo vertical (con IA)...")
+        v_ok = scan_vertical_with_flags(robot)
         if not v_ok:
             print("Escaneo vertical con errores")
             return False
@@ -1148,7 +1148,7 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
     """
     Inicio simple (robot ya referenciado):
     1) Ir a (0,0) sin hacer homing
-    2) Escaneo vertical (manual de flags) sin tocar switch superior
+    2) Escaneo vertical (con IA) sin tocar switch superior
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
        - Evitar tocar switch derecho: no se posiciona en el límite derecho
        - Entre tubos, mover en diagonal (derecha + Y objetivo)
@@ -1157,7 +1157,7 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
     Movimiento: relativo con robot.cmd.move_xy(dx, dy).
     """
     try:
-        if scan_vertical_manual is None or scan_horizontal_with_live_camera is None:
+        if scan_vertical_with_flags is None or scan_horizontal_with_live_camera is None:
             print("Error: Escáneres no disponibles (import fallido)")
             return False
 
@@ -1226,8 +1226,8 @@ def inicio_simple(robot, return_home: bool = True) -> bool:
             time.sleep(0.1)
             _wait_until_position(0.0, 0.0)
 
-        print("[inicio_simple] Paso 2/4: Escaneo vertical (manual)...")
-        v_ok = scan_vertical_manual(robot)
+        print("[inicio_simple] Paso 2/4: Escaneo vertical (con IA)...")
+        v_ok = scan_vertical_with_flags(robot)
         if not v_ok:
             print("Escaneo vertical con errores")
             return False
@@ -1336,13 +1336,13 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
     """
     Inicio completo con homing completo (calibración del workspace):
     1) Calibración completa del workspace (homing + medida)
-    2) Escaneo vertical (manual de flags)
+    2) Escaneo vertical (con IA)
     3) Para cada tubo detectado: mover al Y del tubo y ejecutar escaneo horizontal
        - Mover en diagonal entre tubos: back-off X desde límite izquierdo + ΔY al siguiente tubo
     4) Volver a (0,0) con un solo movimiento
     """
     try:
-        if scan_vertical_manual is None or scan_horizontal_with_live_camera is None:
+        if scan_vertical_with_flags is None or scan_horizontal_with_live_camera is None:
             print("Error: Escáneres no disponibles (import fallido)")
             return False
 
@@ -1418,8 +1418,8 @@ def inicio_completo_hard(robot, return_home: bool = True) -> bool:
             print(f"Error en calibración: {calib.get('message')}")
             return False
 
-        print("[inicio_completo_hard] Paso 2/4: Escaneo vertical (manual)...")
-        v_ok = scan_vertical_manual(robot)
+        print("[inicio_completo_hard] Paso 2/4: Escaneo vertical (con IA)...")
+        v_ok = scan_vertical_with_flags(robot)
         if not v_ok:
             print("Escaneo vertical con errores")
             return False
