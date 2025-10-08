@@ -197,6 +197,23 @@ def clasificar_imagen(imagen_path, stats_json=None, guardar=False, debug=False):
                     break
             cv2.destroyAllWindows()
 
+            # 6. Contorno principal seleccionado (el más grande)
+            if len(contours) > 0:
+                # Encontrar el contorno más grande
+                main_contour = max(contours, key=cv2.contourArea)
+
+                # Dibujar solo el contorno principal
+                img_main_contour = img_recortada.copy()
+                cv2.drawContours(img_main_contour, [main_contour], -1, (0, 255, 0), 2)
+
+                cv2.imshow("DEBUG CLASIFICACION: 6. CONTORNO PRINCIPAL SELECCIONADO", img_main_contour)
+                cv2.resizeWindow("DEBUG CLASIFICACION: 6. CONTORNO PRINCIPAL SELECCIONADO", 800, 600)
+                print(f"6. Contorno principal seleccionado (el más grande) - Presiona 'c' para continuar...")
+                while True:
+                    if cv2.waitKey(1) & 0xFF == ord('c'):
+                        break
+                cv2.destroyAllWindows()
+
     return resultado
 
 
