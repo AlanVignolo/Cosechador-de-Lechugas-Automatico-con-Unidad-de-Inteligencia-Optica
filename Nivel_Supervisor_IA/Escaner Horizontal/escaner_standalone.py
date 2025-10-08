@@ -17,9 +17,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Correccion Posici
 from core.camera_manager import get_camera_manager
 from config.robot_config import RobotConfig
 
-def scan_horizontal_with_live_camera(robot, tubo_id=None):
+def scan_horizontal_with_live_camera(robot, tubo_id=None, debug=False):
     """
     Función principal de escaneo horizontal autónoma con matriz de cintas
+
+    Args:
+        robot: Instancia del RobotController
+        tubo_id: ID del tubo a escanear (None = preguntar al usuario)
+        debug: Si True, muestra visualización en tiempo real (default: False)
     """
     # Importar sistema de matriz y configuración dinámica de tubos
     import sys
@@ -227,17 +232,16 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 detection_state['last_transition_ts'] = now_ts
         
         def video_loop():
-            """Bucle de video sin UI; solo procesa y emite flags"""
+            """Bucle de video; con opción de UI debug"""
             thread_name = threading.current_thread().name
-                
+
             try:
-                # Sin ventanas UI (evita bloqueos en 2ª corrida)
                 frame_count = 0
                 start_ts = time.time()
                 printed_none_once = False
                 detection_count = 0
                 last_status_report = time.time()
-                
+
                 while is_scanning[0]:
                     try:
                         frame = camera_mgr.get_latest_video_frame()
@@ -245,24 +249,35 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                             printed_none_once = True
                             time.sleep(0.05)
                             continue
-                        
+
                         frame_count += 1
                         printed_none_once = False
-                        
+
                         # Procesar frame para detección
                         processed = process_frame_for_detection(frame)
-                        
+
                         # Usar detector sofisticado
                         is_tape_detected = detect_sophisticated_tape(processed)
-                        
+
                         if is_tape_detected:
                             detection_count += 1
-                        
-                        # Reporte de estado cada 5 segundos
-                        
-                        # Procesar cambios de estado y enviar flags (sin posición)
+
+                        # Procesar cambios de estado y enviar flags
                         process_detection_state(is_tape_detected)
-                        # Sin UI / imshow
+
+                        # Visualización modo debug (sin texto, solo línea central limpia)
+                        if debug:
+                            display_frame = processed.copy()
+
+                            # Dibujar línea de referencia central (gris claro, delgada)
+                            img_center_x = display_frame.shape[1] // 2
+                            cv2.line(display_frame, (img_center_x, 0), (img_center_x, display_frame.shape[0]), (180, 180, 180), 2)
+
+                            cv2.imshow("Escaner Horizontal - DEBUG", display_frame)
+                            if cv2.waitKey(1) & 0xFF == ord('q'):
+                                print("Usuario presionó 'q'")
+                                is_scanning[0] = False
+                                break
 
                     except Exception:
                         time.sleep(0.1)
@@ -272,7 +287,8 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                         break
                         
             finally:
-                pass
+                if debug:
+                    cv2.destroyAllWindows()
         
         # Iniciar hilo de video con nombre único
         video_thread_name = f"VideoScanThread_{scan_id}"

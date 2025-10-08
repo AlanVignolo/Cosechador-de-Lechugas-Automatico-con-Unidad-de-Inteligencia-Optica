@@ -1167,46 +1167,27 @@ def detect_tape_position_debug(image, debug=True):
     
     print(f"Región principal: {w}x{h} en ({x}, {y})")
     
-    # Crear imagen con contornos sobre imagen a COLOR
+    # Crear imagen limpia para debug (sin contornos, solo líneas de referencia)
     if len(image.shape) == 3:
         contour_image = image.copy()
     else:
         # Si es escala de grises, convertir a color
         contour_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-    
-    # Dibujar contorno completo (verde)
-    cv2.drawContours(contour_image, [main_contour], -1, (0, 255, 0), 2)
-    
-    # Dibujar SOLO la región de la base real (10% inferior) - RECTÁNGULO AZUL
-    if base_pixels_found:
-        base_rect_x = real_base_x_min
-        base_rect_y = bottom_y_start
-        base_rect_w = real_base_width
-        base_rect_h = bottom_height
-        cv2.rectangle(contour_image, (base_rect_x, base_rect_y), 
-                     (base_rect_x + base_rect_w, base_rect_y + base_rect_h), 
-                     (255, 0, 0), 4)  # AZUL GRUESO = Base real
-        
-        # Marcar línea de la base específicamente (ROJA)
-        cv2.line(contour_image, (real_base_x_min, y + h), (real_base_x_max, y + h), (0, 0, 255), 3)
-    else:
-        # Si falla, usar rectángulo completo (amarillo)
-        cv2.rectangle(contour_image, (x, y), (x + w, y + h), (0, 255, 255), 3)  # Amarillo
-    
-    # Dibujar centro REAL (círculo grande ROJO)
-    cv2.circle(contour_image, (center_x, y + h - bottom_height // 2), 15, (0, 0, 255), -1)
-    
-    # Líneas de referencia MÁS GRUESAS
-    cv2.line(contour_image, (img_center_x, 0), (img_center_x, h_img), (255, 0, 255), 4)  # Magenta = centro imagen
-    cv2.line(contour_image, (center_x, 0), (center_x, h_img), (0, 0, 255), 4)  # Rojo = centro detectado
-    
-    # Agregar texto explicativo ACTUALIZADO
-    cv2.putText(contour_image, f"Centro IMG: {img_center_x}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
-    cv2.putText(contour_image, f"Centro BASE REAL: {center_x}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    cv2.putText(contour_image, f"DIFERENCIA: {center_x - img_center_x}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-    if base_pixels_found:
-        cv2.putText(contour_image, f"Ancho base real: {real_base_width}px", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
-        cv2.putText(contour_image, f"RECTANGULO AZUL = 10% inferior", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+
+    # Dibujar solo líneas de referencia limpias (sin círculos, sin texto, sin contornos)
+    # Calcular posición vertical para las líneas (centradas en la base detectada)
+    line_y_start = max(0, y + h - bottom_height - 80)
+    line_y_end = min(h_img, y + h + 80)
+
+    # Línea vertical del centro de imagen (gris claro, delgada)
+    cv2.line(contour_image, (img_center_x, line_y_start), (img_center_x, line_y_end), (180, 180, 180), 2)
+
+    # Línea vertical del centro detectado (verde brillante, delgada)
+    cv2.line(contour_image, (center_x, line_y_start), (center_x, line_y_end), (0, 255, 0), 2)
+
+    # Línea horizontal conectando ambos centros para mostrar distancia (amarilla, delgada)
+    line_y_pos = y + h - bottom_height // 2
+    cv2.line(contour_image, (img_center_x, line_y_pos), (center_x, line_y_pos), (0, 255, 255), 2)
     
     # Mostrar resultado final
     cv2.imshow("DEBUG HORIZONTAL: 5. DETECCION FINAL", contour_image)

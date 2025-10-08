@@ -102,7 +102,7 @@ class ClasificadorSimple:
 # Singleton global del clasificador
 _clasificador_singleton = None
 
-def clasificar_imagen(imagen_path, stats_json=None, guardar=False):
+def clasificar_imagen(imagen_path, stats_json=None, guardar=False, debug=False):
     """
     Función rápida para clasificar una imagen sin crear objeto
     Aplica recorte automático del 10% en cada lado
@@ -112,6 +112,7 @@ def clasificar_imagen(imagen_path, stats_json=None, guardar=False):
         imagen_path: Ruta a la imagen
         stats_json: Ruta al JSON de estadísticas (None = usa default)
         guardar: Si guardar resultados visuales
+        debug: Si mostrar visualización paso a paso (default: False)
 
     Returns:
         dict con 'clase', 'confianza', 'detalles'
@@ -127,7 +128,30 @@ def clasificar_imagen(imagen_path, stats_json=None, guardar=False):
     if _clasificador_singleton is None:
         _clasificador_singleton = ClasificadorSimple(stats_json)
 
-    return _clasificador_singleton.clasificar(imagen_path, guardar_resultados=guardar)
+    resultado = _clasificador_singleton.clasificar(imagen_path, guardar_resultados=guardar)
+
+    # Modo debug: mostrar imagen procesada
+    if debug and resultado['clase'] is not None:
+        import cv2
+        import os
+
+        # Cargar y mostrar imagen original
+        img = cv2.imread(str(imagen_path))
+        if img is not None:
+            # Aplicar recorte 10%
+            alto, ancho = img.shape[:2]
+            recorte = int(min(alto, ancho) * 0.1)
+            img_recortada = img[recorte:alto-recorte, recorte:ancho-recorte]
+
+            cv2.imshow("DEBUG - Imagen Original", img)
+            cv2.imshow("DEBUG - Imagen Recortada 10%", img_recortada)
+            print("Presiona 'c' para continuar...")
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('c'):
+                    break
+            cv2.destroyAllWindows()
+
+    return resultado
 
 
 # ============================================================================

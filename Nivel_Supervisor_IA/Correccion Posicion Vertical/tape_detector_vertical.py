@@ -912,17 +912,17 @@ def detect_tape_position_vertical_debug(image, debug=True):
     center_x = best_candidate['base_center_x']
     base_y = best_candidate['base_y']
     
-    # Dibujar líneas de referencia
-    cv2.line(detection_image, (0, img_center_y), (w_img, img_center_y), (255, 0, 255), 4)  # Magenta = centro imagen
-    cv2.line(detection_image, (0, base_y), (w_img, base_y), (0, 0, 255), 4)  # Rojo = base detectada
-    
-    # Marcar centro con círculo
-    cv2.circle(detection_image, (center_x, base_y), 15, (0, 0, 255), -1)
-    
-    # Agregar texto explicativo
-    cv2.putText(detection_image, f"Centro IMG: {img_center_y}px", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
-    cv2.putText(detection_image, f"Base DETECTADA: {base_y}px", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-    cv2.putText(detection_image, f"DIFERENCIA: {img_center_y - base_y}px", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    # Dibujar líneas de referencia estéticas (solo en el área relevante, sin círculo ni texto)
+    # Línea horizontal del centro de imagen (delgada, gris claro)
+    line_x_start = max(0, center_x - 100)
+    line_x_end = min(w_img, center_x + 100)
+    cv2.line(detection_image, (line_x_start, img_center_y), (line_x_end, img_center_y), (180, 180, 180), 2)
+
+    # Línea horizontal de la base detectada (delgada, verde brillante)
+    cv2.line(detection_image, (line_x_start, base_y), (line_x_end, base_y), (0, 255, 0), 2)
+
+    # Línea vertical conectando ambos centros para mostrar distancia (delgada, amarilla)
+    cv2.line(detection_image, (center_x, img_center_y), (center_x, base_y), (0, 255, 255), 2)
     
     # Mostrar detección final
     cv2.imshow("DEBUG VERTICAL: 5. DETECCION FINAL", detection_image)

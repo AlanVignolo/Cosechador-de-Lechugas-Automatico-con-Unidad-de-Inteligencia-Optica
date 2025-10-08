@@ -578,39 +578,186 @@ def test_full_position_correction(robot):
     except Exception as e:
         print(f"Error inesperado: {e}")
 
+def test_horizontal_correction_only_debug(robot):
+    """Probar solo corrección horizontal con modo debug visual"""
+    if not AI_MODULES_AVAILABLE:
+        print("Modulos de IA no disponibles")
+        return
+
+    print("\nCORRECCION HORIZONTAL (DEBUG - MODO VISUAL)")
+    print("ASEGURATE de que:")
+    print("- La camara este conectada y funcionando")
+    print("- Hay una cinta horizontal visible")
+    print("- El robot esta en posicion segura")
+    print("- Puedes ver las ventanas de imagen (presiona 'c' para continuar)")
+    print("Iniciando automáticamente...")
+
+    try:
+        # Cargar calibración horizontal
+        import json
+        h_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_lineal.json')
+
+        try:
+            with open(h_calibration_path, 'r') as f:
+                h_calibration = json.load(f)
+            a = h_calibration['coefficients']['a']
+            b = h_calibration['coefficients']['b']
+        except Exception as e:
+            print(f"Error cargando calibración horizontal: {str(e)}")
+            return
+
+        print(f"Calibración horizontal: mm = {a:.5f} * px + {b:.2f}")
+
+        tolerance_mm = AI_TEST_PARAMS['tolerance_mm']
+
+        for iteration in range(AI_TEST_PARAMS['max_iterations']):
+            print(f"\nIteracion horizontal {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
+
+            # Capturar y mostrar con debug
+            image = capture_image_for_correction_debug(AI_TEST_PARAMS['camera_index'])
+            if image is None:
+                print(f"Error en captura")
+                break
+
+            # Detectar con debug visual
+            candidates = detect_tape_position_debug(image)
+            if not candidates:
+                print(f"Error en detección")
+                break
+
+            # Calcular movimiento
+            detected_x = candidates[0]['base_center_x']
+            img_center_x = image.shape[1] // 2
+            distance_pixels = detected_x - img_center_x
+
+            correction_mm = a * distance_pixels + b
+            move_mm = correction_mm + AI_TEST_PARAMS['offset_x_mm']
+
+            print(f"   Corrección detectada: {move_mm:.1f}mm")
+
+            if abs(move_mm) <= tolerance_mm:
+                print(f"Corrección horizontal completada en {iteration + 1} iteraciones")
+                return
+
+            # Ejecutar movimiento
+            move_result = robot.cmd.move_xy(move_mm, 0)
+            if not move_result.get("success"):
+                print(f"Error en movimiento: {move_result}")
+                break
+
+            time.sleep(1.0)
+
+        print(f"No se logro correccion en {AI_TEST_PARAMS['max_iterations']} iteraciones")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+def test_vertical_correction_only_debug(robot):
+    """Probar solo corrección vertical con modo debug visual"""
+    if not AI_MODULES_AVAILABLE:
+        print("Modulos de IA no disponibles")
+        return
+
+    print("\nCORRECCION VERTICAL (DEBUG - MODO VISUAL)")
+    print("ASEGURATE de que:")
+    print("- La camara este conectada y funcionando")
+    print("- Hay una cinta vertical visible")
+    print("- El robot esta en posicion segura")
+    print("- Puedes ver las ventanas de imagen (presiona 'c' para continuar)")
+    print("Iniciando automáticamente...")
+
+    try:
+        # Cargar calibración vertical
+        import json
+        v_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical_lineal.json')
+
+        try:
+            with open(v_calibration_path, 'r') as f:
+                v_calibration = json.load(f)
+            a = v_calibration['coefficients']['a']
+            b = v_calibration['coefficients']['b']
+        except Exception as e:
+            print(f"Error cargando calibración vertical: {str(e)}")
+            return
+
+        print(f"Calibración vertical: mm = {a:.5f} * px + {b:.2f}")
+
+        for iteration in range(AI_TEST_PARAMS['max_iterations']):
+            print(f"\nIteracion vertical {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
+
+            # Capturar y mostrar con debug
+            image_v = capture_image_for_correction_vertical_debug(AI_TEST_PARAMS['camera_index'])
+            if image_v is None:
+                print(f"Error en captura")
+                break
+
+            # Detectar con debug visual
+            candidates_v = detect_tape_position_vertical_debug(image_v)
+            if not candidates_v:
+                print(f"Error en detección")
+                break
+
+            # Calcular movimiento
+            detected_y = candidates_v[0]['base_y']
+            img_center_y = image_v.shape[0] // 2
+            distance_pixels_v = img_center_y - detected_y
+
+            correction_mm_v = a * distance_pixels_v + b
+            move_mm_v = correction_mm_v + AI_TEST_PARAMS['offset_y_mm']
+            move_mm_v = -move_mm_v  # Invertir signo
+
+            print(f"   Corrección detectada: {move_mm_v:.1f}mm")
+
+            if abs(move_mm_v) <= AI_TEST_PARAMS['tolerance_mm']:
+                print(f"Corrección vertical completada en {iteration + 1} iteraciones")
+                return
+
+            # Ejecutar movimiento
+            move_result_v = robot.cmd.move_xy(0, move_mm_v)
+            if not move_result_v.get("success"):
+                print(f"Error en movimiento: {move_result_v}")
+                break
+
+            time.sleep(1.0)
+
+        print(f"No se logro correccion en {AI_TEST_PARAMS['max_iterations']} iteraciones")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
 def test_full_position_correction_debug(robot):
     """Probar corrección completa con modo debug (muestra imágenes paso a paso)"""
     if not AI_MODULES_AVAILABLE:
         print("Modulos de IA no disponibles")
         return
-    
+
     print("\nCORRECCION COMPLETA (DEBUG - MODO VISUAL)")
     print("ASEGURATE de que:")
     print("- La camara este conectada y funcionando")
     print("- Hay una cinta visible (ambos ejes)")
     print("- El robot esta en posicion segura")
     print("- Puedes ver las ventanas de imagen (presiona 'c' para continuar)")
-    
+
     # if input("Continuar? (s/N): ").lower() != 's':
     #     print("Prueba cancelada")
     #     return
     print("Iniciando automáticamente...")
-    
+
     try:
         result = test_position_correction_direct_debug(
-            robot, 
-            AI_TEST_PARAMS['camera_index'], 
-            AI_TEST_PARAMS['max_iterations'], 
+            robot,
+            AI_TEST_PARAMS['camera_index'],
+            AI_TEST_PARAMS['max_iterations'],
             AI_TEST_PARAMS['tolerance_mm']
         )
-        
+
         if result['success']:
             print("\nCORRECCION COMPLETADA EXITOSAMENTE")
             print(f"Resultado: {result['message']}")
         else:
             print("\nERROR EN LA CORRECCION")
             print(f"Error: {result['message']}")
-            
+
     except Exception as e:
         print(f"Error inesperado: {e}")
 
@@ -911,16 +1058,22 @@ def menu_interactivo(uart_manager, robot):
             print("\n" + "="*60)
             print("MENU DE PRUEBAS DE CORRECCION IA")
             print("="*60)
-            print("1. Correccion HORIZONTAL unicamente")
-            print("2. Correccion VERTICAL unicamente")
+            print("Modos normales:")
+            print("1. Correccion HORIZONTAL")
+            print("2. Correccion VERTICAL")
             print("3. Correccion COMPLETA (horizontal + vertical)")
-            print("4. Correccion COMPLETA (DEBUG - muestra imagenes)")
-            print("5. Configurar parametros")
+            print("-"*60)
+            print("Modos DEBUG (con visualizacion paso a paso):")
+            print("4. Correccion HORIZONTAL (DEBUG)")
+            print("5. Correccion VERTICAL (DEBUG)")
+            print("6. Correccion COMPLETA (DEBUG)")
+            print("-"*60)
+            print("7. Configurar parametros")
             print("0. Volver al menu principal")
             print("-"*60)
-            
-            sub_opcion = input("Selecciona tipo de prueba (0-5): ")
-            
+
+            sub_opcion = input("Selecciona tipo de prueba (0-7): ")
+
             if sub_opcion == '1':
                 print("\nINICIANDO CORRECCION HORIZONTAL")
                 test_horizontal_correction_only(robot)
@@ -931,9 +1084,15 @@ def menu_interactivo(uart_manager, robot):
                 print("\nINICIANDO CORRECCION COMPLETA")
                 test_full_position_correction(robot)
             elif sub_opcion == '4':
+                print("\nINICIANDO CORRECCION HORIZONTAL (DEBUG)")
+                test_horizontal_correction_only_debug(robot)
+            elif sub_opcion == '5':
+                print("\nINICIANDO CORRECCION VERTICAL (DEBUG)")
+                test_vertical_correction_only_debug(robot)
+            elif sub_opcion == '6':
                 print("\nINICIANDO CORRECCION COMPLETA (DEBUG)")
                 test_full_position_correction_debug(robot)
-            elif sub_opcion == '5':
+            elif sub_opcion == '7':
                 print("\nCONFIGURACION DE PARAMETROS")
                 configure_ai_test_parameters()
             elif sub_opcion == '0':
@@ -949,22 +1108,38 @@ def menu_interactivo(uart_manager, robot):
             print(f"Las trayectorias mover_lechuga -> recoger_lechuga usarán el comportamiento para {estado.lower()}")
         elif opcion == '12':
             if SCANNER_HORIZONTAL_AVAILABLE:
-                try:
-                    success = scan_horizontal_with_live_camera(robot)
-                    if success:
-                        print("Escaneado horizontal completado exitosamente")
-                    else:
-                        print("El escaneado horizontal se completó con errores")
-                except KeyboardInterrupt:
-                    print("\nEscaneado horizontal interrumpido por el usuario")
-                except Exception as e:
-                    print(f"Error durante el escaneado horizontal: {e}")
-                    import traceback
-                    traceback.print_exc()
-                
-                # Mensaje de seguridad
-                print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
-                print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
+                print("\n" + "="*60)
+                print("ESCÁNER HORIZONTAL")
+                print("="*60)
+                print("1. Modo NORMAL (sin visualización)")
+                print("2. Modo DEBUG (con visualización en tiempo real)")
+                print("0. Volver")
+                print("-"*60)
+
+                sub_opt = input("Selecciona modo (0-2): ")
+
+                if sub_opt == '0':
+                    pass
+                elif sub_opt in ['1', '2']:
+                    debug_mode = (sub_opt == '2')
+                    try:
+                        success = scan_horizontal_with_live_camera(robot, debug=debug_mode)
+                        if success:
+                            print("Escaneado horizontal completado exitosamente")
+                        else:
+                            print("El escaneado horizontal se completó con errores")
+                    except KeyboardInterrupt:
+                        print("\nEscaneado horizontal interrumpido por el usuario")
+                    except Exception as e:
+                        print(f"Error durante el escaneado horizontal: {e}")
+                        import traceback
+                        traceback.print_exc()
+
+                    # Mensaje de seguridad
+                    print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
+                    print("Si el robot quedó en una posición no deseada, usar las opciones de movimiento manual")
+                else:
+                    print("Opción inválida")
             else:
                 print("Escáner horizontal no disponible. Verificar imports.")
         elif opcion == '13':
@@ -992,31 +1167,44 @@ def menu_interactivo(uart_manager, robot):
                 print("\n" + "="*60)
                 print("ESCÁNER VERTICAL AUTOMÁTICO CON IA")
                 print("="*60)
-                print("Este modo detecta automáticamente cuando el tubo está COMPLETO")
-                print("(ambas líneas superior e inferior visibles)")
-                print()
-                print("INICIANDO ESCANEADO...")
+                print("1. Modo NORMAL (sin visualización)")
+                print("2. Modo DEBUG (con visualización en tiempo real)")
+                print("0. Volver")
                 print("-"*60)
 
-                try:
-                    success = scan_vertical_with_flags(robot)
-                    if success:
-                        print("\n" + "="*60)
-                        print("ESCANEADO VERTICAL AUTOMÁTICO COMPLETADO")
-                        print("="*60)
-                    else:
-                        print("\n" + "="*60)
-                        print("EL ESCANEADO SE COMPLETÓ CON ERRORES")
-                        print("="*60)
-                except KeyboardInterrupt:
-                    print("\nEscaneado vertical automático interrumpido por el usuario")
-                except Exception as e:
-                    print(f"Error durante el escaneado vertical automático: {e}")
-                    import traceback
-                    traceback.print_exc()
+                sub_opt = input("Selecciona modo (0-2): ")
 
-                # Mensaje de seguridad
-                print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
+                if sub_opt == '0':
+                    pass
+                elif sub_opt in ['1', '2']:
+                    debug_mode = (sub_opt == '2')
+                    print("\nEste modo detecta automáticamente cuando el tubo está COMPLETO")
+                    print("(ambas líneas superior e inferior visibles)")
+                    print()
+                    print("INICIANDO ESCANEADO...")
+                    print("-"*60)
+
+                    try:
+                        success = scan_vertical_with_flags(robot, debug=debug_mode)
+                        if success:
+                            print("\n" + "="*60)
+                            print("ESCANEADO VERTICAL AUTOMÁTICO COMPLETADO")
+                            print("="*60)
+                        else:
+                            print("\n" + "="*60)
+                            print("EL ESCANEADO SE COMPLETÓ CON ERRORES")
+                            print("="*60)
+                    except KeyboardInterrupt:
+                        print("\nEscaneado vertical automático interrumpido por el usuario")
+                    except Exception as e:
+                        print(f"Error durante el escaneado vertical automático: {e}")
+                        import traceback
+                        traceback.print_exc()
+
+                    # Mensaje de seguridad
+                    print("\nIMPORTANTE: Verificar que el robot esté en posición segura")
+                else:
+                    print("Opción inválida")
             else:
                 print("Escáner vertical automático no disponible. Verificar imports.")
         elif opcion == '15':
@@ -1024,55 +1212,68 @@ def menu_interactivo(uart_manager, robot):
                 print("\n" + "="*60)
                 print("CLASIFICACIÓN DE LECHUGA - IA DETECCIÓN DE PLANTA")
                 print("="*60)
+                print("1. Modo NORMAL (sin visualización)")
+                print("2. Modo DEBUG (muestra imagen original y recortada)")
+                print("0. Volver")
+                print("-"*60)
 
-                try:
-                    # Obtener el gestor de cámara
-                    camera_mgr = get_camera_manager()
+                sub_opt = input("Selecciona modo (0-2): ")
 
-                    # Intentar inicializar la cámara si no está activa
-                    if not camera_mgr.is_camera_active():
-                        print("Inicializando cámara...")
-                        camera_mgr.initialize_camera()
+                if sub_opt == '0':
+                    pass
+                elif sub_opt in ['1', '2']:
+                    debug_mode = (sub_opt == '2')
 
-                    print("📷 Capturando imagen...")
-                    # Capturar imagen
-                    frame = camera_mgr.capture_frame()
+                    try:
+                        # Obtener el gestor de cámara
+                        camera_mgr = get_camera_manager()
 
-                    if frame is None:
-                        print("❌ No se pudo capturar la imagen de la cámara")
-                        continue
+                        # Intentar inicializar la cámara si no está activa
+                        if not camera_mgr.is_camera_active():
+                            print("Inicializando cámara...")
+                            camera_mgr.initialize_camera()
 
-                    # Guardar imagen temporalmente (usar /tmp para evitar problemas con espacios)
-                    import cv2
-                    temp_image_path = '/tmp/temp_clasificacion_claudio.jpg'
-                    success = cv2.imwrite(temp_image_path, frame)
-                    if not success:
-                        print(f"❌ Error guardando imagen en {temp_image_path}")
-                        continue
-                    print(f"✓ Imagen guardada")
+                        print("📷 Capturando imagen...")
+                        # Capturar imagen
+                        frame = camera_mgr.capture_frame()
 
-                    # Clasificar la imagen
-                    print("🔄 Clasificando imagen...")
-                    resultado = clasificar_imagen(temp_image_path)
+                        if frame is None:
+                            print("❌ No se pudo capturar la imagen de la cámara")
+                            continue
 
-                    # Mostrar resultado
-                    print("\n" + "="*60)
-                    print("RESULTADO DE LA CLASIFICACIÓN")
-                    print("="*60)
-                    print(f"Clase predicha: {resultado['clase']}")
-                    print(f"Confianza: {resultado['confianza']:.2%}")
+                        # Guardar imagen temporalmente (usar /tmp para evitar problemas con espacios)
+                        import cv2
+                        temp_image_path = '/tmp/temp_clasificacion_claudio.jpg'
+                        success = cv2.imwrite(temp_image_path, frame)
+                        if not success:
+                            print(f"❌ Error guardando imagen en {temp_image_path}")
+                            continue
+                        print(f"✓ Imagen guardada")
 
-                    if 'probabilidades' in resultado:
-                        print("\nProbabilidades por clase:")
-                        for clase, prob in resultado['probabilidades'].items():
-                            print(f"  - {clase}: {prob:.2%}")
+                        # Clasificar la imagen con modo debug
+                        print("🔄 Clasificando imagen...")
+                        resultado = clasificar_imagen(temp_image_path, debug=debug_mode)
 
-                    print("="*60)
+                        # Mostrar resultado
+                        print("\n" + "="*60)
+                        print("RESULTADO DE LA CLASIFICACIÓN")
+                        print("="*60)
+                        print(f"Clase predicha: {resultado['clase']}")
+                        print(f"Confianza: {resultado['confianza']:.2%}")
 
-                except Exception as e:
-                    print(f"\n❌ Error durante la clasificación: {e}")
-                    import traceback
-                    traceback.print_exc()
+                        if 'probabilidades' in resultado['detalles']:
+                            print("\nProbabilidades por clase:")
+                            for clase, prob in resultado['detalles']['probabilidades'].items():
+                                print(f"  - {clase}: {prob:.2%}")
+
+                        print("="*60)
+
+                    except Exception as e:
+                        print(f"\n❌ Error durante la clasificación: {e}")
+                        import traceback
+                        traceback.print_exc()
+                else:
+                    print("Opción inválida")
             else:
                 print("Módulo de clasificación no disponible. Verificar imports.")
         elif opcion == '0':

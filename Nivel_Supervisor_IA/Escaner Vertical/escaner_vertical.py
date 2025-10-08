@@ -155,7 +155,7 @@ class VerticalScanner:
             print(f"Error en send_flag: {e}")
             return None
 
-    def video_loop(self, robot, detection_state, min_tube_height_px=80):
+    def video_loop(self, robot, detection_state, min_tube_height_px=80, debug=False):
         """Bucle de video para procesamiento continuo"""
         print("Iniciando bucle de video...")
 
@@ -186,46 +186,49 @@ class VerticalScanner:
                 y_sup, y_inf, centro_y, info = detectar_lineas_tubo(frame_procesado, debug=False)
 
                 # Determinar si el tubo está completo
-                tube_complete = self.is_tube_complete(y_sup, y_inf, frame_procesado.shape[0], 
+                tube_complete = self.is_tube_complete(y_sup, y_inf, frame_procesado.shape[0],
                                                       min_height=min_tube_height_px)
 
                 # Procesar estado y generar flags
                 self.process_detection_state(tube_complete, detection_state, robot)
 
-                # Visualización (opcional, comentar para mejor performance)
-                if y_sup is not None and y_inf is not None:
-                    cv2.line(frame_procesado, (0, y_sup), (frame_procesado.shape[1], y_sup), (0, 0, 255), 2)
-                    cv2.line(frame_procesado, (0, y_inf), (frame_procesado.shape[1], y_inf), (0, 255, 0), 2)
+                # Visualización modo debug (sin texto, líneas limpias)
+                if debug:
+                    display_frame = frame_procesado.copy()
 
-                    altura_tubo = y_inf - y_sup
-                    status_color = (0, 255, 0) if tube_complete else (0, 165, 255)
-                    status_text = "COMPLETO" if tube_complete else "CORTADO"
-                    cv2.putText(frame_procesado, f"{status_text} (h={altura_tubo}px)", (10, 30),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
-                else:
-                    cv2.putText(frame_procesado, "NO DETECTADO", (10, 30),
-                               cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                    if y_sup is not None and y_inf is not None:
+                        # Líneas de referencia estéticas (sin texto)
+                        # Línea superior (rojo)
+                        cv2.line(display_frame, (0, y_sup), (display_frame.shape[1], y_sup), (0, 0, 255), 2)
+                        # Línea inferior (verde)
+                        cv2.line(display_frame, (0, y_inf), (display_frame.shape[1], y_inf), (0, 255, 0), 2)
 
-                cv2.imshow("Escaner Vertical", frame_procesado)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    print("Usuario presionó 'q'")
-                    self.is_scanning = False
-                    break
+                        # Línea central de referencia de imagen (gris claro, delgada)
+                        img_center_y = display_frame.shape[0] // 2
+                        cv2.line(display_frame, (0, img_center_y), (display_frame.shape[1], img_center_y), (180, 180, 180), 1)
+
+                    cv2.imshow("Escaner Vertical - DEBUG", display_frame)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        print("Usuario presionó 'q'")
+                        self.is_scanning = False
+                        break
 
             except Exception as e:
                 # No mostrar errores menores
                 pass
 
-        cv2.destroyAllWindows()
+        if debug:
+            cv2.destroyAllWindows()
         print(f"Bucle de video terminado. Frames procesados: {frame_count}")
 
-    def start_scanning_with_movement(self, robot, min_tube_height_px=80):
+    def start_scanning_with_movement(self, robot, min_tube_height_px=80, debug=False):
         """
         Inicia el escaneo vertical con movimiento
-        
+
         Args:
             robot: Instancia del RobotController
             min_tube_height_px: Altura mínima del tubo en píxeles (default: 80px)
+            debug: Si True, muestra visualización en tiempo real (default: False)
         """
         print("\n" + "="*60)
         print("INICIANDO ESCANEO VERTICAL CON SISTEMA DE FLAGS")
@@ -271,7 +274,7 @@ class VerticalScanner:
             self.is_scanning = True
             video_thread = threading.Thread(
                 target=self.video_loop,
-                args=(robot, detection_state, min_tube_height_px),
+                args=(robot, detection_state, min_tube_height_px, debug),
                 daemon=True
             )
             video_thread.start()
@@ -520,10 +523,10 @@ def correlate_flags_with_snapshots_vertical(detection_state):
         print(f"Error en correlación: {e}")
 
 # Función principal
-def scan_vertical_with_flags(robot):
+def scan_vertical_with_flags(robot, debug=False):
     """Función principal para escaneo vertical con flags"""
     scanner = VerticalScanner()
-    return scanner.start_scanning_with_movement(robot)
+    return scanner.start_scanning_with_movement(robot, debug=debug)
 
 if __name__ == "__main__":
     print("Este módulo debe ser importado desde main_robot.py")
