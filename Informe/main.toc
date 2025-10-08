@@ -35,118 +35,112 @@
 \contentsline {subsubsection}{Robustez y Generalización}{19}{subsubsection*.24}%
 \contentsline {subsubsection}{Ventajas y Limitaciones del Enfoque Morfológico}{19}{subsubsection*.25}%
 \contentsline {subsubsection}{Técnicas Adicionales para Robustez}{20}{subsubsection*.26}%
-\contentsline {subsection}{\numberline {2.2.4}Métricas de Evaluación para Sistemas de Clasificación}{21}{subsection.2.2.4}%
-\contentsline {subsubsection}{Matriz de Confusión}{21}{subsubsection*.27}%
-\contentsline {subsubsection}{Exactitud (Accuracy)}{21}{subsubsection*.29}%
-\contentsline {subsubsection}{Precisión (Precision)}{22}{subsubsection*.30}%
-\contentsline {subsubsection}{Exhaustividad (Recall/Sensitivity)}{23}{subsubsection*.31}%
-\contentsline {subsubsection}{F-Score}{23}{subsubsection*.32}%
-\contentsline {subsubsection}{Métricas Agregadas Multiclase}{23}{subsubsection*.34}%
-\contentsline {subsubsection}{Métricas de Error Absoluto}{24}{subsubsection*.35}%
-\contentsline {subsubsection}{Coeficiente de Determinación}{25}{subsubsection*.37}%
-\contentsline {subsubsection}{Métricas de Confiabilidad}{26}{subsubsection*.38}%
-\contentsline {subsubsection}{Métricas de Robustez}{26}{subsubsection*.39}%
-\contentsline {subsubsection}{Selección de Métricas según Aplicación}{26}{subsubsection*.41}%
-\contentsline {section}{\numberline {2.3}Cinemática de Robots Cartesianos}{27}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Sistemas de Transmisión Mecánica}{27}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Control de Motores Paso a Paso}{27}{section.2.5}%
-\contentsline {chapter}{\numberline {3}Desarrollo del Sistema}{28}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Arquitectura General del Sistema}{28}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Modelado y Diseño Mecánico}{28}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Especificaciones de Diseño y Restricciones}{28}{subsection.3.2.1}%
-\contentsline {subsubsection}{Descripción General del Sistema}{28}{subsubsection*.42}%
-\contentsline {subsubsection}{Configuración Estructural}{28}{subsubsection*.43}%
-\contentsline {subsubsection}{Cargas del Sistema}{29}{subsubsection*.44}%
-\contentsline {paragraph}{Cargas del eje horizontal:}{29}{paragraph*.45}%
-\contentsline {paragraph}{Cargas del eje vertical:}{29}{paragraph*.46}%
-\contentsline {subsubsection}{Especificaciones Cinemáticas}{29}{subsubsection*.47}%
-\contentsline {subsection}{\numberline {3.2.2}Análisis Cinemático del Sistema}{30}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Diseño Estructural}{30}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Sistema de Movimiento Horizontal}{30}{subsection.3.2.4}%
-\contentsline {subsection}{\numberline {3.2.5}Sistema de Movimiento Vertical}{30}{subsection.3.2.5}%
-\contentsline {subsection}{\numberline {3.2.6}Brazo Robótico}{30}{subsection.3.2.6}%
-\contentsline {subsection}{\numberline {3.2.7}Modelado CAD y Fabricación}{30}{subsection.3.2.7}%
-\contentsline {section}{\numberline {3.3}Sistema de Control de Bajo Nivel (Nivel Regulatorio)}{30}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Arquitectura del Nivel Regulatorio}{30}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Hardware de Control - Arduino Mega 2560}{30}{subsection.3.3.2}%
-\contentsline {subsection}{\numberline {3.3.3}Selección y Dimensionamiento de Actuadores}{30}{subsection.3.3.3}%
-\contentsline {subsection}{\numberline {3.3.4}Sensores de Seguridad}{30}{subsection.3.3.4}%
-\contentsline {subsection}{\numberline {3.3.5}Control de Movimiento}{30}{subsection.3.3.5}%
-\contentsline {subsection}{\numberline {3.3.6}Protocolo de Comunicación UART}{30}{subsection.3.3.6}%
-\contentsline {section}{\numberline {3.4}Sistema de Supervisión y Alta Gestión (Nivel Supervisor)}{30}{section.3.4}%
-\contentsline {subsection}{\numberline {3.4.1}Arquitectura del Nivel Supervisor}{30}{subsection.3.4.1}%
-\contentsline {subsection}{\numberline {3.4.2}Hardware Supervisor - Raspberry Pi 4}{30}{subsection.3.4.2}%
-\contentsline {subsection}{\numberline {3.4.3}Máquina de Estados Supervisora}{30}{subsection.3.4.3}%
-\contentsline {subsection}{\numberline {3.4.4}Coordinación con Nivel Regulatorio}{30}{subsection.3.4.4}%
-\contentsline {section}{\numberline {3.5}Inteligencia Artificial y Visión por Computadora}{30}{section.3.5}%
-\contentsline {subsection}{\numberline {3.5.1}Arquitectura y Pipeline de Procesamiento}{30}{subsection.3.5.1}%
-\contentsline {subsubsection}{Arquitectura Modular del Sistema}{30}{subsubsection*.49}%
-\contentsline {subsubsection}{Pipeline General de Procesamiento}{32}{subsubsection*.51}%
-\contentsline {subsubsection}{Sistema de Adquisición Visual}{34}{subsubsection*.53}%
-\contentsline {subsubsection}{Preprocesamiento de Imágenes}{34}{subsubsection*.55}%
-\contentsline {subsubsection}{Segmentación por Umbralización}{35}{subsubsection*.56}%
-\contentsline {subsubsection}{Refinamiento Morfológico}{36}{subsubsection*.57}%
-\contentsline {subsubsection}{Detección y Análisis de Contornos}{36}{subsubsection*.58}%
-\contentsline {subsection}{\numberline {3.5.2}Sistema de Posicionamiento Visual}{37}{subsection.3.5.2}%
-\contentsline {subsubsection}{Fundamento del Sistema de Posicionamiento Visual}{37}{subsubsection*.59}%
-\contentsline {subsubsection}{Metodología de Detección}{38}{subsubsection*.61}%
-\contentsline {subsubsection}{Evaluación de Calidad del Contorno}{38}{subsubsection*.62}%
-\contentsline {subsubsection}{Sistema de Scoring Multicriteria}{39}{subsubsection*.63}%
-\contentsline {subsubsection}{Cálculo de Desviación}{39}{subsubsection*.64}%
-\contentsline {subsubsection}{Discriminación de Orientación}{40}{subsubsection*.65}%
-\contentsline {subsubsection}{Desempeño del Algoritmo}{40}{subsubsection*.66}%
-\contentsline {subsubsection}{Fundamentación de la Calibración Espacial}{40}{subsubsection*.67}%
-\contentsline {subsubsection}{Metodología de Calibración}{41}{subsubsection*.68}%
-\contentsline {subsubsection}{Resultados de Calibración}{41}{subsubsection*.69}%
-\contentsline {subsubsection}{Validación Estadística del Sistema}{42}{subsubsection*.70}%
-\contentsline {subsubsection}{Algoritmo de Corrección Iterativa}{42}{subsubsection*.72}%
-\contentsline {subsubsection}{Criterio de Convergencia}{43}{subsubsection*.73}%
-\contentsline {subsubsection}{Análisis de Desempeño}{43}{subsubsection*.74}%
-\contentsline {subsection}{\numberline {3.5.3}Sistema de Clasificación de Cultivos}{44}{subsection.3.5.3}%
-\contentsline {subsubsection}{Objetivo y Enfoque del Sistema de Clasificación}{44}{subsubsection*.76}%
-\contentsline {subsubsection}{Fundamento de la Segmentación Cromática}{44}{subsubsection*.77}%
-\contentsline {subsubsection}{Refinamiento de la Máscara de Segmentación}{45}{subsubsection*.79}%
-\contentsline {subsubsection}{Detección y Filtrado de Contornos}{45}{subsubsection*.80}%
-\contentsline {subsubsection}{Extracción del Descriptor de Área}{46}{subsubsection*.81}%
-\contentsline {subsubsection}{Casos Especiales y Manejo de Ambigüedades}{46}{subsubsection*.82}%
-\contentsline {subsubsection}{Construcción del Dataset de Calibración}{47}{subsubsection*.84}%
-\contentsline {subsubsection}{Análisis Estadístico de Áreas}{47}{subsubsection*.85}%
-\contentsline {subsubsection}{Evaluación de Separabilidad entre Clases}{48}{subsubsection*.87}%
-\contentsline {subsubsection}{Determinación del Umbral Óptimo de Clasificación}{48}{subsubsection*.88}%
-\contentsline {subsubsection}{Zona de Incertidumbre y Confianza de Clasificación}{49}{subsubsection*.89}%
-\contentsline {subsubsection}{Validación Experimental del Clasificador}{49}{subsubsection*.90}%
-\contentsline {subsubsection}{Métricas de Desempeño}{49}{subsubsection*.92}%
-\contentsline {subsubsection}{Análisis de Errores}{50}{subsubsection*.93}%
-\contentsline {subsection}{\numberline {3.5.4}Mapeo y Optimización de Rutas}{50}{subsection.3.5.4}%
-\contentsline {subsubsection}{Estrategia de Exploración Sistemática}{50}{subsubsection*.94}%
-\contentsline {subsubsection}{Sincronización entre Visión y Movimiento}{51}{subsubsection*.96}%
-\contentsline {subsubsection}{Mecanismo de Cooldown Espacial}{51}{subsubsection*.97}%
-\contentsline {subsubsection}{Estructura de Datos del Mapa}{52}{subsubsection*.98}%
-\contentsline {subsubsection}{Actualización Dinámica durante Cosecha}{53}{subsubsection*.99}%
-\contentsline {subsubsection}{Persistencia de Datos}{53}{subsubsection*.100}%
-\contentsline {subsubsection}{Formulación del Problema de Optimización}{53}{subsubsection*.101}%
-\contentsline {subsubsection}{Modelo de Tiempo de Movimiento}{54}{subsubsection*.102}%
-\contentsline {subsubsection}{Algoritmo Heurístico del Vecino Más Cercano}{54}{subsubsection*.103}%
-\contentsline {subsubsection}{Refinamiento mediante Optimización 2-opt}{55}{subsubsection*.104}%
-\contentsline {subsubsection}{Heurística Específica de Agrupamiento por Filas}{55}{subsubsection*.105}%
-\contentsline {subsubsection}{Resultados Comparativos}{56}{subsubsection*.106}%
-\contentsline {subsubsection}{Eficiencia Operativa Global}{56}{subsubsection*.107}%
-\contentsline {section}{\numberline {3.6}Interfaz de Usuario y Supervisión}{56}{section.3.6}%
-\contentsline {section}{\numberline {3.7}Montaje e Integración}{56}{section.3.7}%
-\contentsline {chapter}{\numberline {4}Pruebas y Resultados}{66}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Metodología de Pruebas}{66}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Pruebas del Sistema Mecánico}{66}{section.4.2}%
-\contentsline {section}{\numberline {4.3}Pruebas del Sistema de Control}{66}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Pruebas del Sistema de IA}{66}{section.4.4}%
-\contentsline {section}{\numberline {4.5}Pruebas de Integración}{66}{section.4.5}%
-\contentsline {section}{\numberline {4.6}Análisis de Resultados}{66}{section.4.6}%
-\contentsline {chapter}{\numberline {5}Conclusiones y Trabajo Futuro}{67}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Conclusiones Generales}{67}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Aportes del Proyecto}{67}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Trabajo Futuro}{67}{section.5.3}%
-\contentsline {chapter}{\numberline {A}Diagramas Eléctricos Completos}{68}{appendix.Alph1}%
-\contentsline {chapter}{\numberline {B}Código Fuente Relevante}{69}{appendix.Alph2}%
-\contentsline {chapter}{\numberline {C}Especificaciones Técnicas de Componentes}{70}{appendix.Alph3}%
-\contentsline {chapter}{\numberline {D}Manual de Usuario}{71}{appendix.Alph4}%
-\contentsline {chapter}{\numberline {E}Hojas de Datos}{72}{appendix.Alph5}%
-\contentsline {chapter}{Referencias}{73}{appendix*.108}%
+\contentsline {section}{\numberline {2.3}Cinemática de Robots Cartesianos}{21}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Sistemas de Transmisión Mecánica}{21}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Sistemas de Transmisión}{21}{subsection.2.4.1}%
+\contentsline {subsubsection}{Transmisión por Correa Dentada y Poleas}{21}{subsubsection*.27}%
+\contentsline {paragraph}{Principio de funcionamiento}{21}{paragraph*.28}%
+\contentsline {paragraph}{Ventajas del sistema}{21}{paragraph*.29}%
+\contentsline {paragraph}{Componentes del sistema}{21}{paragraph*.30}%
+\contentsline {paragraph}{Cálculo de la relación de transmisión}{22}{paragraph*.31}%
+\contentsline {paragraph}{Tensado de la correa}{22}{paragraph*.32}%
+\contentsline {paragraph}{Aplicación en el sistema}{22}{paragraph*.33}%
+\contentsline {subsubsection}{Transmisión por Varilla Roscada (Husillo)}{22}{subsubsection*.34}%
+\contentsline {paragraph}{Principio de funcionamiento}{22}{paragraph*.35}%
+\contentsline {paragraph}{Tipos de roscas}{23}{paragraph*.36}%
+\contentsline {paragraph}{Relación de transmisión}{23}{paragraph*.37}%
+\contentsline {paragraph}{Análisis de fuerzas y torque}{23}{paragraph*.38}%
+\contentsline {paragraph}{Eficiencia del sistema}{24}{paragraph*.39}%
+\contentsline {paragraph}{Condición de auto-frenado}{24}{paragraph*.40}%
+\contentsline {paragraph}{Carga crítica y pandeo}{24}{paragraph*.41}%
+\contentsline {paragraph}{Vida útil y desgaste}{24}{paragraph*.42}%
+\contentsline {paragraph}{Aplicación en el sistema}{24}{paragraph*.43}%
+\contentsline {section}{\numberline {2.5}Control de Motores Paso a Paso}{25}{section.2.5}%
+\contentsline {chapter}{\numberline {3}Desarrollo del Sistema}{26}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Arquitectura General del Sistema}{26}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Modelado y Diseño Mecánico}{26}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Especificaciones de Diseño y Restricciones}{26}{subsection.3.2.1}%
+\contentsline {subsubsection}{Descripción General del Sistema}{26}{subsubsection*.44}%
+\contentsline {subsubsection}{Configuración Estructural}{26}{subsubsection*.45}%
+\contentsline {subsubsection}{Cargas del Sistema}{27}{subsubsection*.46}%
+\contentsline {paragraph}{Cargas del eje horizontal:}{27}{paragraph*.47}%
+\contentsline {paragraph}{Cargas del eje vertical:}{27}{paragraph*.48}%
+\contentsline {subsubsection}{Especificaciones Cinemáticas}{27}{subsubsection*.49}%
+\contentsline {subsection}{\numberline {3.2.2}Análisis Cinemático del Sistema}{27}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Sistema de Movimiento Horizontal}{27}{subsection.3.2.3}%
+\contentsline {subsubsection}{Selección del perfil de movimiento horizontal}{27}{subsubsection*.51}%
+\contentsline {paragraph}{Cálculo de deflexión}{28}{paragraph*.52}%
+\contentsline {subsubsection}{Sistema de transmisión por correa}{28}{subsubsection*.53}%
+\contentsline {paragraph}{Distribución de cargas en el sistema}{28}{paragraph*.54}%
+\contentsline {paragraph}{Verificación del porcentaje adoptado}{29}{paragraph*.55}%
+\contentsline {paragraph}{Análisis de fuerzas}{29}{paragraph*.56}%
+\contentsline {paragraph}{Cálculo del torque motor}{29}{paragraph*.57}%
+\contentsline {paragraph}{Selección del motor}{30}{paragraph*.58}%
+\contentsline {subsection}{\numberline {3.2.4}Sistema de Movimiento Vertical}{30}{subsection.3.2.4}%
+\contentsline {subsubsection}{Selección de varilla trapezoidal}{30}{subsubsection*.60}%
+\contentsline {paragraph}{Datos de diseño}{30}{paragraph*.61}%
+\contentsline {paragraph}{Análisis de pandeo por carga crítica de Euler}{30}{paragraph*.62}%
+\contentsline {paragraph}{Selección del diámetro}{31}{paragraph*.63}%
+\contentsline {subsubsection}{Cálculo de torque motor para accionamiento vertical}{31}{subsubsection*.64}%
+\contentsline {paragraph}{Selección del tipo de motor}{31}{paragraph*.65}%
+\contentsline {paragraph}{Parámetros de operación}{31}{paragraph*.66}%
+\contentsline {paragraph}{Análisis de torque en varillas trapezoidales}{32}{paragraph*.67}%
+\contentsline {paragraph}{Aplicación de factores de seguridad}{32}{paragraph*.68}%
+\contentsline {paragraph}{Selección del motor paso a paso}{33}{paragraph*.69}%
+\contentsline {subsection}{\numberline {3.2.5}Brazo Robótico}{33}{subsection.3.2.5}%
+\contentsline {subsubsection}{Descripción del Sistema}{33}{subsubsection*.71}%
+\contentsline {subsubsection}{Parámetros Geométricos}{33}{subsubsection*.72}%
+\contentsline {subsubsection}{Cinemática Directa}{34}{subsubsection*.73}%
+\contentsline {subsubsection}{Cinemática Inversa}{34}{subsubsection*.74}%
+\contentsline {subsubsection}{Espacio de Trabajo}{34}{subsubsection*.75}%
+\contentsline {subsubsection}{Jacobiano}{34}{subsubsection*.76}%
+\contentsline {subsubsection}{Gripper Tipo Pinza}{35}{subsubsection*.77}%
+\contentsline {subsubsection}{Singularidades}{35}{subsubsection*.78}%
+\contentsline {subsection}{\numberline {3.2.6}Modelado CAD y Fabricación}{35}{subsection.3.2.6}%
+\contentsline {subsubsection}{Suporte superior}{35}{subsubsection*.79}%
+\contentsline {subsubsection}{Suporte medio}{37}{subsubsection*.84}%
+\contentsline {subsubsection}{Suporte inferior}{38}{subsubsection*.86}%
+\contentsline {subsubsection}{Brazo robótico}{38}{subsubsection*.88}%
+\contentsline {section}{\numberline {3.3}Sistema de Control de Bajo Nivel (Nivel Regulatorio)}{40}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Arquitectura del Nivel Regulatorio}{40}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Hardware de Control - Arduino Mega 2560}{40}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Selección y Dimensionamiento de Actuadores}{40}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Sensores de Seguridad}{40}{subsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.3.5}Control de Movimiento}{40}{subsection.3.3.5}%
+\contentsline {subsection}{\numberline {3.3.6}Protocolo de Comunicación UART}{40}{subsection.3.3.6}%
+\contentsline {section}{\numberline {3.4}Sistema de Supervisión y Alta Gestión (Nivel Supervisor)}{40}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Arquitectura del Nivel Supervisor}{40}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Hardware Supervisor - Raspberry Pi 4}{40}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Máquina de Estados Supervisora}{40}{subsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.4.4}Coordinación con Nivel Regulatorio}{40}{subsection.3.4.4}%
+\contentsline {section}{\numberline {3.5}Inteligencia Artificial y Visión por Computadora}{40}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Arquitectura y Pipeline de Procesamiento}{40}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Sistema de Posicionamiento Visual}{40}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.3}Sistema de Clasificación de Cultivos}{40}{subsection.3.5.3}%
+\contentsline {subsection}{\numberline {3.5.4}Mapeo y Optimización de Rutas}{40}{subsection.3.5.4}%
+\contentsline {subsubsection}{Formulación del Problema de Optimización}{40}{subsubsection*.91}%
+\contentsline {subsubsection}{Modelo de Tiempo de Movimiento}{41}{subsubsection*.92}%
+\contentsline {subsubsection}{Algoritmo Heurístico del Vecino Más Cercano}{41}{subsubsection*.93}%
+\contentsline {subsubsection}{Refinamiento mediante Optimización 2-opt}{42}{subsubsection*.94}%
+\contentsline {subsubsection}{Heurística Específica de Agrupamiento por Filas}{42}{subsubsection*.95}%
+\contentsline {subsubsection}{Resultados Comparativos}{43}{subsubsection*.96}%
+\contentsline {subsubsection}{Eficiencia Operativa Global}{43}{subsubsection*.97}%
+\contentsline {section}{\numberline {3.6}Interfaz de Usuario y Supervisión}{43}{section.3.6}%
+\contentsline {section}{\numberline {3.7}Montaje e Integración}{43}{section.3.7}%
+\contentsline {chapter}{\numberline {4}Pruebas y Resultados}{44}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Metodología de Pruebas}{44}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Pruebas del Sistema Mecánico}{44}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Pruebas del Sistema de Control}{44}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Pruebas del Sistema de IA}{44}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Pruebas de Integración}{44}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Análisis de Resultados}{44}{section.4.6}%
+\contentsline {chapter}{\numberline {5}Conclusiones y Trabajo Futuro}{45}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Conclusiones Generales}{45}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Aportes del Proyecto}{45}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Trabajo Futuro}{45}{section.5.3}%
+\contentsline {chapter}{\numberline {A}Diagramas Eléctricos Completos}{46}{appendix.Alph1}%
+\contentsline {chapter}{\numberline {B}Código Fuente Relevante}{47}{appendix.Alph2}%
+\contentsline {chapter}{\numberline {C}Especificaciones Técnicas de Componentes}{48}{appendix.Alph3}%
+\contentsline {chapter}{\numberline {D}Manual de Usuario}{49}{appendix.Alph4}%
+\contentsline {chapter}{\numberline {E}Hojas de Datos}{50}{appendix.Alph5}%
+\contentsline {chapter}{Referencias}{51}{appendix*.98}%

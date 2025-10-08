@@ -66,28 +66,16 @@ El sistema debe operar con los siguientes parámetros:
 Sin embargo, considerando microstepping y factores operacionales, la velocidad nominal de trabajo se establece en aproximadamente 563\,rpm.
 
 \paragraph{Análisis de torque en varillas trapezoidales}
-El torque requerido para mover una carga mediante una varilla trapezoidal se compone de dos componentes: el torque necesario para vencer la fricción en la rosca y el torque para vencer la fricción en el collarín del soporte.
-
-El torque para subir una carga se calcula como:
-\begin{equation}
-T_{\text{subida}} = \frac{F \cdot d_m}{2} \cdot k_R + \frac{F \cdot \mu_c \cdot d_c}{2}
-\label{eq:torque_subida}
-\end{equation}
-
-El torque para bajar una carga se calcula como:
-\begin{equation}
-T_{\text{bajada}} = \frac{F \cdot d_m}{2} \cdot k_L + \frac{F \cdot \mu_c \cdot d_c}{2}
-\label{eq:torque_bajada}
-\end{equation}
+El torque requerido para mover una carga mediante una varilla trapezoidal se compone de dos componentes: el torque necesario para vencer la fricción en la rosca y el torque para vencer la fricción en el collarín del soporte. Dicho torque se calcula a partir de la ecuación \ref{eq:torque_total_varilla}
 
 donde:
 \begin{itemize}
-    \item $F = 1.2\,\text{kg} \cdot 9.81\,\text{m/s}^2 = 11.77$\,N (carga a mover)
-    \item $d_m = 14$\,mm (diámetro medio de la varilla TR16$\times$4)
-    \item $d_c \approx 26$\,mm (diámetro medio del collarín/tuerca)
-    \item $\mu_c = 0.2$ (coeficiente de fricción acero-acero para rosca trapezoidal lubricada)
-    \item $k_R = 1.3$ (factor de rosca para subida, incluye efecto de cuña y fricción)
-    \item $k_L = 0.6$ (factor de rosca para bajada)
+    \item $F = 1.2\,\text{kg} \cdot 9.81\,\text{m/s}^2 = 11.77$\,N
+    \item $d_m = 14$\,mm 
+    \item $d_c \approx 26$\,mm
+    \item $\mu_c = 0.2$ 
+    \item $k_R = 1.3$ 
+    \item $k_L = 0.6$ 
 \end{itemize}
 
 Sustituyendo valores en las ecuaciones~(\ref{eq:torque_subida}) y~(\ref{eq:torque_bajada}):
