@@ -197,22 +197,36 @@ def clasificar_imagen(imagen_path, stats_json=None, guardar=False, debug=False):
                     break
             cv2.destroyAllWindows()
 
-            # 6. Contorno principal seleccionado (el más grande)
-            if len(contours) > 0:
-                # Encontrar el contorno más grande
-                main_contour = max(contours, key=cv2.contourArea)
+            # 6. Contorno usado para clasificación (usa el detector real del clasificador)
+            # Necesitamos obtener los contornos procesados por el clasificador
+            # Recrear el proceso del clasificador para obtener el contorno correcto
+            from ContornosBienfiltrados import EdgeDetectorOptimized
+            detector_temp = EdgeDetectorOptimized()
 
-                # Dibujar solo el contorno principal
-                img_main_contour = img_recortada.copy()
-                cv2.drawContours(img_main_contour, [main_contour], -1, (0, 255, 0), 2)
+            try:
+                binary_temp, contours_temp = detector_temp.detect_edges(img_recortada)
 
-                cv2.imshow("DEBUG CLASIFICACION: 6. CONTORNO PRINCIPAL SELECCIONADO", img_main_contour)
-                cv2.resizeWindow("DEBUG CLASIFICACION: 6. CONTORNO PRINCIPAL SELECCIONADO", 800, 600)
-                print(f"6. Contorno principal seleccionado (el más grande) - Presiona 'c' para continuar...")
-                while True:
-                    if cv2.waitKey(1) & 0xFF == ord('c'):
-                        break
-                cv2.destroyAllWindows()
+                if len(contours_temp) > 0:
+                    # El clasificador usa el PRIMER contorno (índice 0) después del filtrado
+                    # Este es el contorno que realmente se usa para la clasificación
+                    main_contour = contours_temp[0]
+
+                    # Dibujar solo el contorno usado para clasificación
+                    img_main_contour = img_recortada.copy()
+                    cv2.drawContours(img_main_contour, [main_contour], -1, (0, 255, 0), 2)
+
+                    # Calcular área para información
+                    area = cv2.contourArea(main_contour)
+
+                    cv2.imshow("DEBUG CLASIFICACION: 6. CONTORNO USADO PARA CLASIFICACION", img_main_contour)
+                    cv2.resizeWindow("DEBUG CLASIFICACION: 6. CONTORNO USADO PARA CLASIFICACION", 800, 600)
+                    print(f"6. Contorno usado para clasificación (área={area:.0f}px²) - Presiona 'c' para continuar...")
+                    while True:
+                        if cv2.waitKey(1) & 0xFF == ord('c'):
+                            break
+                    cv2.destroyAllWindows()
+            except Exception as e:
+                print(f"Error mostrando contorno: {e}")
 
     return resultado
 
