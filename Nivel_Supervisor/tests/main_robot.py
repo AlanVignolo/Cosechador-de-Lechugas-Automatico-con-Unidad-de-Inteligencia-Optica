@@ -579,148 +579,85 @@ def test_full_position_correction(robot):
         print(f"Error inesperado: {e}")
 
 def test_horizontal_correction_only_debug(robot):
-    """Probar solo corrección horizontal con modo debug visual"""
+    """Probar solo corrección horizontal con modo debug visual (SOLO CAPTURA, SIN MOVIMIENTO)"""
     if not AI_MODULES_AVAILABLE:
         print("Modulos de IA no disponibles")
         return
 
-    print("\nCORRECCION HORIZONTAL (DEBUG - MODO VISUAL)")
+    print("\nCORRECCION HORIZONTAL (DEBUG - SOLO CAPTURA DE IMAGENES)")
+    print("MODO: Solo muestra el procesamiento paso a paso, NO mueve el robot")
     print("ASEGURATE de que:")
     print("- La camara este conectada y funcionando")
     print("- Hay una cinta horizontal visible")
-    print("- El robot esta en posicion segura")
     print("- Puedes ver las ventanas de imagen (presiona 'c' para continuar)")
-    print("Iniciando automáticamente...")
+    print("\nIniciando captura...")
 
     try:
-        # Cargar calibración horizontal
-        import json
-        h_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Horizontal', 'calibracion_lineal.json')
-
-        try:
-            with open(h_calibration_path, 'r') as f:
-                h_calibration = json.load(f)
-            a = h_calibration['coefficients']['a']
-            b = h_calibration['coefficients']['b']
-        except Exception as e:
-            print(f"Error cargando calibración horizontal: {str(e)}")
+        # Capturar y mostrar con debug
+        image = capture_image_for_correction_debug(AI_TEST_PARAMS['camera_index'])
+        if image is None:
+            print(f"Error en captura")
             return
 
-        print(f"Calibración horizontal: mm = {a:.5f} * px + {b:.2f}")
+        # Detectar con debug visual (muestra todos los pasos)
+        candidates = detect_tape_position_debug(image)
+        if not candidates:
+            print(f"No se detectó cinta en la imagen")
+            return
 
-        tolerance_mm = AI_TEST_PARAMS['tolerance_mm']
+        # Mostrar resultado final
+        detected_x = candidates[0]['base_center_x']
+        img_center_x = image.shape[1] // 2
+        distance_pixels = detected_x - img_center_x
 
-        for iteration in range(AI_TEST_PARAMS['max_iterations']):
-            print(f"\nIteracion horizontal {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
-
-            # Capturar y mostrar con debug
-            image = capture_image_for_correction_debug(AI_TEST_PARAMS['camera_index'])
-            if image is None:
-                print(f"Error en captura")
-                break
-
-            # Detectar con debug visual
-            candidates = detect_tape_position_debug(image)
-            if not candidates:
-                print(f"Error en detección")
-                break
-
-            # Calcular movimiento
-            detected_x = candidates[0]['base_center_x']
-            img_center_x = image.shape[1] // 2
-            distance_pixels = detected_x - img_center_x
-
-            correction_mm = a * distance_pixels + b
-            move_mm = correction_mm + AI_TEST_PARAMS['offset_x_mm']
-
-            print(f"   Corrección detectada: {move_mm:.1f}mm")
-
-            if abs(move_mm) <= tolerance_mm:
-                print(f"Corrección horizontal completada en {iteration + 1} iteraciones")
-                return
-
-            # Ejecutar movimiento
-            move_result = robot.cmd.move_xy(move_mm, 0)
-            if not move_result.get("success"):
-                print(f"Error en movimiento: {move_result}")
-                break
-
-            time.sleep(1.0)
-
-        print(f"No se logro correccion en {AI_TEST_PARAMS['max_iterations']} iteraciones")
+        print(f"\n{'='*60}")
+        print(f"RESULTADO FINAL (sin movimiento):")
+        print(f"  Centro detectado: {detected_x}px")
+        print(f"  Centro imagen: {img_center_x}px")
+        print(f"  Distancia: {distance_pixels}px ({'derecha' if distance_pixels > 0 else 'izquierda'})")
+        print(f"{'='*60}")
 
     except Exception as e:
         print(f"Error: {e}")
 
 def test_vertical_correction_only_debug(robot):
-    """Probar solo corrección vertical con modo debug visual"""
+    """Probar solo corrección vertical con modo debug visual (SOLO CAPTURA, SIN MOVIMIENTO)"""
     if not AI_MODULES_AVAILABLE:
         print("Modulos de IA no disponibles")
         return
 
-    print("\nCORRECCION VERTICAL (DEBUG - MODO VISUAL)")
+    print("\nCORRECCION VERTICAL (DEBUG - SOLO CAPTURA DE IMAGENES)")
+    print("MODO: Solo muestra el procesamiento paso a paso, NO mueve el robot")
     print("ASEGURATE de que:")
     print("- La camara este conectada y funcionando")
     print("- Hay una cinta vertical visible")
-    print("- El robot esta en posicion segura")
     print("- Puedes ver las ventanas de imagen (presiona 'c' para continuar)")
-    print("Iniciando automáticamente...")
+    print("\nIniciando captura...")
 
     try:
-        # Cargar calibración vertical
-        import json
-        v_calibration_path = os.path.join(os.path.dirname(__file__), '..', 'Nivel_Supervisor_IA', 'Correccion Posicion Vertical', 'calibracion_vertical_lineal.json')
-
-        try:
-            with open(v_calibration_path, 'r') as f:
-                v_calibration = json.load(f)
-            a = v_calibration['coefficients']['a']
-            b = v_calibration['coefficients']['b']
-        except Exception as e:
-            print(f"Error cargando calibración vertical: {str(e)}")
+        # Capturar y mostrar con debug
+        image_v = capture_image_for_correction_vertical_debug(AI_TEST_PARAMS['camera_index'])
+        if image_v is None:
+            print(f"Error en captura")
             return
 
-        print(f"Calibración vertical: mm = {a:.5f} * px + {b:.2f}")
+        # Detectar con debug visual (muestra todos los pasos)
+        candidates_v = detect_tape_position_vertical_debug(image_v)
+        if not candidates_v:
+            print(f"No se detectó cinta en la imagen")
+            return
 
-        for iteration in range(AI_TEST_PARAMS['max_iterations']):
-            print(f"\nIteracion vertical {iteration + 1}/{AI_TEST_PARAMS['max_iterations']}")
+        # Mostrar resultado final
+        detected_y = candidates_v[0]['base_y']
+        img_center_y = image_v.shape[0] // 2
+        distance_pixels_v = img_center_y - detected_y
 
-            # Capturar y mostrar con debug
-            image_v = capture_image_for_correction_vertical_debug(AI_TEST_PARAMS['camera_index'])
-            if image_v is None:
-                print(f"Error en captura")
-                break
-
-            # Detectar con debug visual
-            candidates_v = detect_tape_position_vertical_debug(image_v)
-            if not candidates_v:
-                print(f"Error en detección")
-                break
-
-            # Calcular movimiento
-            detected_y = candidates_v[0]['base_y']
-            img_center_y = image_v.shape[0] // 2
-            distance_pixels_v = img_center_y - detected_y
-
-            correction_mm_v = a * distance_pixels_v + b
-            move_mm_v = correction_mm_v + AI_TEST_PARAMS['offset_y_mm']
-            move_mm_v = -move_mm_v  # Invertir signo
-
-            print(f"   Corrección detectada: {move_mm_v:.1f}mm")
-
-            if abs(move_mm_v) <= AI_TEST_PARAMS['tolerance_mm']:
-                print(f"Corrección vertical completada en {iteration + 1} iteraciones")
-                return
-
-            # Ejecutar movimiento
-            move_result_v = robot.cmd.move_xy(0, move_mm_v)
-            if not move_result_v.get("success"):
-                print(f"Error en movimiento: {move_result_v}")
-                break
-
-            time.sleep(1.0)
-
-        print(f"No se logro correccion en {AI_TEST_PARAMS['max_iterations']} iteraciones")
+        print(f"\n{'='*60}")
+        print(f"RESULTADO FINAL (sin movimiento):")
+        print(f"  Base detectada: {detected_y}px")
+        print(f"  Centro imagen: {img_center_y}px")
+        print(f"  Distancia: {distance_pixels_v}px ({'arriba' if distance_pixels_v > 0 else 'abajo'})")
+        print(f"{'='*60}")
 
     except Exception as e:
         print(f"Error: {e}")

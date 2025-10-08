@@ -130,22 +130,68 @@ def clasificar_imagen(imagen_path, stats_json=None, guardar=False, debug=False):
 
     resultado = _clasificador_singleton.clasificar(imagen_path, guardar_resultados=guardar)
 
-    # Modo debug: mostrar imagen procesada
+    # Modo debug: mostrar pasos del procesamiento
     if debug and resultado['clase'] is not None:
         import cv2
         import os
 
-        # Cargar y mostrar imagen original
+        # Cargar imagen
         img = cv2.imread(str(imagen_path))
         if img is not None:
-            # Aplicar recorte 10%
-            alto, ancho = img.shape[:2]
-            recorte = int(min(alto, ancho) * 0.1)
-            img_recortada = img[recorte:alto-recorte, recorte:ancho-recorte]
+            # 1. Imagen original
+            cv2.imshow("DEBUG CLASIFICACION: 1. IMAGEN ORIGINAL", img)
+            cv2.resizeWindow("DEBUG CLASIFICACION: 1. IMAGEN ORIGINAL", 800, 600)
+            print("1. Imagen original capturada - Presiona 'c' para continuar...")
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('c'):
+                    break
+            cv2.destroyAllWindows()
 
-            cv2.imshow("DEBUG - Imagen Original", img)
-            cv2.imshow("DEBUG - Imagen Recortada 10%", img_recortada)
-            print("Presiona 'c' para continuar...")
+            # 2. Recorte 10%
+            alto, ancho = img.shape[:2]
+            margin_h = int(alto * 0.10)
+            margin_w = int(ancho * 0.10)
+            img_recortada = img[margin_h:alto-margin_h, margin_w:ancho-margin_w]
+
+            cv2.imshow("DEBUG CLASIFICACION: 2. RECORTE 10%", img_recortada)
+            cv2.resizeWindow("DEBUG CLASIFICACION: 2. RECORTE 10%", 800, 600)
+            print("2. Imagen con recorte del 10% aplicado - Presiona 'c' para continuar...")
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('c'):
+                    break
+            cv2.destroyAllWindows()
+
+            # 3. Conversión a HSV y extracción de canal V
+            hsv = cv2.cvtColor(img_recortada, cv2.COLOR_BGR2HSV)
+            v_channel = hsv[:,:,2]
+
+            cv2.imshow("DEBUG CLASIFICACION: 3. CANAL V (BRILLO)", v_channel)
+            cv2.resizeWindow("DEBUG CLASIFICACION: 3. CANAL V (BRILLO)", 800, 600)
+            print("3. Canal V extraído (brillo) - Presiona 'c' para continuar...")
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('c'):
+                    break
+            cv2.destroyAllWindows()
+
+            # 4. Aplicar Canny para detección de bordes
+            edges = cv2.Canny(v_channel, 50, 150)
+
+            cv2.imshow("DEBUG CLASIFICACION: 4. BORDES DETECTADOS (CANNY)", edges)
+            cv2.resizeWindow("DEBUG CLASIFICACION: 4. BORDES DETECTADOS (CANNY)", 800, 600)
+            print("4. Bordes detectados con filtro Canny - Presiona 'c' para continuar...")
+            while True:
+                if cv2.waitKey(1) & 0xFF == ord('c'):
+                    break
+            cv2.destroyAllWindows()
+
+            # 5. Encontrar contornos
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            img_contours = img_recortada.copy()
+            cv2.drawContours(img_contours, contours, -1, (0, 255, 0), 2)
+
+            cv2.imshow("DEBUG CLASIFICACION: 5. CONTORNOS DETECTADOS", img_contours)
+            cv2.resizeWindow("DEBUG CLASIFICACION: 5. CONTORNOS DETECTADOS", 800, 600)
+            print(f"5. Contornos detectados ({len(contours)} contornos) - Presiona 'c' para continuar...")
             while True:
                 if cv2.waitKey(1) & 0xFF == ord('c'):
                     break

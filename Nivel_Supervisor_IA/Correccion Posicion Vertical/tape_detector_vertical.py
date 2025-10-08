@@ -924,10 +924,27 @@ def detect_tape_position_vertical_debug(image, debug=True):
     # Línea vertical conectando ambos centros para mostrar distancia (delgada, amarilla)
     cv2.line(detection_image, (center_x, img_center_y), (center_x, base_y), (0, 255, 255), 2)
     
-    # Mostrar detección final
-    cv2.imshow("DEBUG VERTICAL: 5. DETECCION FINAL", detection_image)
-    cv2.resizeWindow("DEBUG VERTICAL: 5. DETECCION FINAL", 800, 600)
-    print(f"5. Base detectada en Y={base_y}px (centro imagen={img_center_y}px) - Presiona 'c' para continuar...")
+    # Mostrar detección con líneas de referencia
+    cv2.imshow("DEBUG VERTICAL: 5. LINEAS DE REFERENCIA", detection_image)
+    cv2.resizeWindow("DEBUG VERTICAL: 5. LINEAS DE REFERENCIA", 800, 600)
+    print(f"5. Líneas de referencia - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+
+    # NUEVA IMAGEN: Mostrar solo la línea de la base detectada sin líneas de referencia
+    final_image = image.copy()
+
+    # Dibujar solo la línea horizontal de la base detectada
+    line_x_start = max(0, center_x - 100)
+    line_x_end = min(w_img, center_x + 100)
+    cv2.line(final_image, (line_x_start, base_y), (line_x_end, base_y), (0, 255, 0), 2)  # Verde, delgada
+
+    cv2.imshow("DEBUG VERTICAL: 6. LINEA BASE DETECTADA", final_image)
+    cv2.resizeWindow("DEBUG VERTICAL: 6. LINEA BASE DETECTADA", 800, 600)
+    print(f"6. Línea de la base detectada - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):

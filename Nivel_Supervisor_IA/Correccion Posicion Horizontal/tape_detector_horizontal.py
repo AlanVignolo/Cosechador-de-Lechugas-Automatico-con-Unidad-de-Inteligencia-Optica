@@ -1189,10 +1189,35 @@ def detect_tape_position_debug(image, debug=True):
     line_y_pos = y + h - bottom_height // 2
     cv2.line(contour_image, (img_center_x, line_y_pos), (center_x, line_y_pos), (0, 255, 255), 2)
     
-    # Mostrar resultado final
-    cv2.imshow("DEBUG HORIZONTAL: 5. DETECCION FINAL", contour_image)
-    cv2.resizeWindow("DEBUG HORIZONTAL: 5. DETECCION FINAL", 800, 600)
-    print(f"5. Centro detectado en X={center_x}px (centro imagen={img_center_x}px) - Presiona 'c' para continuar...")
+    # Mostrar resultado con líneas de referencia
+    cv2.imshow("DEBUG HORIZONTAL: 5. LINEAS DE REFERENCIA", contour_image)
+    cv2.resizeWindow("DEBUG HORIZONTAL: 5. LINEAS DE REFERENCIA", 800, 600)
+    print(f"5. Líneas de referencia - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
+
+    # NUEVA IMAGEN: Mostrar solo el rectángulo detectado (base real) sin líneas
+    final_image = image.copy()
+    if len(final_image.shape) == 2:
+        final_image = cv2.cvtColor(final_image, cv2.COLOR_GRAY2BGR)
+
+    # Dibujar solo el rectángulo de la base detectada (10% inferior)
+    if base_pixels_found:
+        # Rectángulo de la base real
+        base_rect_x = real_base_x_min
+        base_rect_y = bottom_y_start
+        base_rect_w = real_base_width
+        base_rect_h = bottom_height
+        cv2.rectangle(final_image, (base_rect_x, base_rect_y),
+                     (base_rect_x + base_rect_w, base_rect_y + base_rect_h),
+                     (0, 255, 0), 2)  # Verde, delgado
+
+    cv2.imshow("DEBUG HORIZONTAL: 6. RECTANGULO DETECTADO", final_image)
+    cv2.resizeWindow("DEBUG HORIZONTAL: 6. RECTANGULO DETECTADO", 800, 600)
+    print(f"6. Rectángulo de la base detectada - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
