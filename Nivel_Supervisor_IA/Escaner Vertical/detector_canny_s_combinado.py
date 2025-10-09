@@ -268,10 +268,13 @@ def detectar_lineas_tubo_visual_debug(imagen):
 
     # Mostrar original
     cv2.imshow("DEBUG VERTICAL: 1. Imagen Original", imagen)
-    key = cv2.waitKey(0) & 0xFF
-    if key == ord('q'):
-        cv2.destroyAllWindows()
-        return None, None, None, None
+    cv2.resizeWindow("DEBUG VERTICAL: 1. Imagen Original", 800, 600)
+    print("1. Imagen Original - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
 
     # Conversiones
     gray = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
@@ -280,48 +283,62 @@ def detectar_lineas_tubo_visual_debug(imagen):
 
     # Mostrar canal S
     cv2.imshow("DEBUG VERTICAL: 2. Canal S (Saturacion)", s)
-    print(f"Canal S - Media: {np.mean(s):.1f}, Std: {np.std(s):.1f}")
-    key = cv2.waitKey(0) & 0xFF
-    if key == ord('q'):
-        cv2.destroyAllWindows()
-        return None, None, None, None
+    cv2.resizeWindow("DEBUG VERTICAL: 2. Canal S (Saturacion)", 800, 600)
+    print(f"2. Canal S - Media: {np.mean(s):.1f}, Std: {np.std(s):.1f} - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
 
     # Canny
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edges_canny = cv2.Canny(blurred, 20, 172)
     cv2.imshow("DEBUG VERTICAL: 3. Bordes Canny (20, 172)", edges_canny)
-    key = cv2.waitKey(0) & 0xFF
-    if key == ord('q'):
-        cv2.destroyAllWindows()
-        return None, None, None, None
+    cv2.resizeWindow("DEBUG VERTICAL: 3. Bordes Canny (20, 172)", 800, 600)
+    print("3. Bordes Canny - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
 
     # Máscara S bajo
     s_inv = 255 - s
     _, mask_s_low = cv2.threshold(s_inv, 150, 255, cv2.THRESH_BINARY)
     cv2.imshow("DEBUG VERTICAL: 4. Mascara S Bajo (inv > 150)", mask_s_low)
-    key = cv2.waitKey(0) & 0xFF
-    if key == ord('q'):
-        cv2.destroyAllWindows()
-        return None, None, None, None
+    cv2.resizeWindow("DEBUG VERTICAL: 4. Mascara S Bajo (inv > 150)", 800, 600)
+    print("4. Mascara S Bajo - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
 
     # Combinar Canny + Máscara S
     kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     edges_dilated = cv2.dilate(edges_canny, kernel_dilate, iterations=1)
     edges_filtrados = cv2.bitwise_and(edges_dilated, mask_s_low)
     cv2.imshow("DEBUG VERTICAL: 5. Canny AND Mascara S", edges_filtrados)
-    key = cv2.waitKey(0) & 0xFF
-    if key == ord('q'):
-        cv2.destroyAllWindows()
-        return None, None, None, None
+    cv2.resizeWindow("DEBUG VERTICAL: 5. Canny AND Mascara S", 800, 600)
+    print("5. Canny AND Mascara S - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
 
     # Morfología para cerrar gaps
     kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 9))
     edges_final = cv2.morphologyEx(edges_filtrados, cv2.MORPH_CLOSE, kernel_close)
     cv2.imshow("DEBUG VERTICAL: 6. Cierre Morfologico (3x9)", edges_final)
-    key = cv2.waitKey(0) & 0xFF
-    if key == ord('q'):
-        cv2.destroyAllWindows()
-        return None, None, None, None
+    cv2.resizeWindow("DEBUG VERTICAL: 6. Cierre Morfologico (3x9)", 800, 600)
+    print("6. Cierre Morfologico - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
+    cv2.destroyAllWindows()
 
     # Encontrar contornos y analizar
     contours, _ = cv2.findContours(edges_final, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -411,38 +428,22 @@ def detectar_lineas_tubo_visual_debug(imagen):
         print(f"  Saturacion media: {mejor['mean_s']:.1f}")
         print(f"  Aspect ratio: {mejor['aspect']:.2f}")
 
-        x, y, w, h = mejor['bbox']
         y_sup = mejor['y_superior']
         y_inf = mejor['y_inferior']
-        centro_y = mejor['centro_y']
 
+        # Solo mostrar líneas superior e inferior sin texto
         # Línea superior (ROJA)
-        cv2.line(resultado, (0, y_sup), (imagen.shape[1], y_sup), (0, 0, 255), 3)
-        cv2.putText(resultado, f"Y_SUP = {y_sup}", (10, y_sup - 10),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-
+        cv2.line(resultado, (0, y_sup), (imagen.shape[1], y_sup), (0, 0, 255), 2)
         # Línea inferior (VERDE)
-        cv2.line(resultado, (0, y_inf), (imagen.shape[1], y_inf), (0, 255, 0), 3)
-        cv2.putText(resultado, f"Y_INF = {y_inf}", (10, y_inf + 25),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-        # Línea centro (AZUL)
-        cv2.line(resultado, (0, centro_y), (imagen.shape[1], centro_y), (255, 0, 0), 2)
-        cv2.putText(resultado, f"CENTRO = {centro_y}", (10, centro_y - 10),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
-
-        # Rectángulo del contorno (amarillo)
-        cv2.rectangle(resultado, (x, y), (x+w, y+h), (0, 255, 255), 2)
-
-        # Mostrar otros candidatos en gris
-        for i, cand in enumerate(candidatos[1:3], start=1):
-            x, y, w, h = cand['bbox']
-            color = (100, 100, 100)
-            cv2.rectangle(resultado, (x, y), (x+w, y+h), color, 1)
+        cv2.line(resultado, (0, y_inf), (imagen.shape[1], y_inf), (0, 255, 0), 2)
 
     cv2.imshow("DEBUG VERTICAL: 7. RESULTADO - Lineas Detectadas", resultado)
-    print("\nPresiona cualquier tecla para cerrar...")
-    cv2.waitKey(0)
+    cv2.resizeWindow("DEBUG VERTICAL: 7. RESULTADO - Lineas Detectadas", 800, 600)
+    print("7. Resultado - Lineas Detectadas - Presiona 'c' para continuar...")
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('c'):
+            break
     cv2.destroyAllWindows()
 
     # Retornar mejor candidato si tiene score suficiente
