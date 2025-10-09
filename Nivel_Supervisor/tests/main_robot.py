@@ -95,6 +95,7 @@ scan_vertical_with_flags = None
 try:
     print("Intentando importar escáner vertical automático...")
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
+    from escaner_vertical import scan_vertical_with_flags
     SCANNER_VERTICAL_AUTO_AVAILABLE = True
     print("Escáner vertical automático importado exitosamente")
 except ImportError as e:
