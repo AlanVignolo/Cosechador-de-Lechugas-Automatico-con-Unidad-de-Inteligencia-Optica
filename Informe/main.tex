@@ -7,11 +7,12 @@
 ]{geometry}
 
 % Paquetes
-\usepackage[spanish]{babel}
 \usepackage{amssymb}
 \usepackage{amsfonts}
-\usepackage{amsmath}
 \usepackage{amsmath,eqparbox}
+\usepackage[utf8]{inputenc}   % Entrada: codificación UTF-8 (acentos en el código)
+\usepackage[T1]{fontenc}      % Salida: codificación de fuentes
+\usepackage[spanish]{babel}   % Traducciones y separación silábica
 \usepackage{array}
 \usepackage{bm}
 \usepackage{blindtext}
@@ -120,22 +121,21 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{02_MarcoTeorico/2.2_vision_ia/deteccion_bordes}
 \input{02_MarcoTeorico/2.2_vision_ia/deteccion_contornos}
 \input{02_MarcoTeorico/2.2_vision_ia/analisis_morfologico}
-\input{02_MarcoTeorico/2.2_vision_ia/metricas_evaluacion}
+%\input{02_MarcoTeorico/2.2_vision_ia/metricas_evaluacion}
 
-\section{Cinemática de Robots Cartesianos}
-\input{02_MarcoTeorico/2.3_cinematica/modelado_cinematico}
-\input{02_MarcoTeorico/2.3_cinematica/espacios_trabajo}
-\input{02_MarcoTeorico/2.3_cinematica/analisis_trayectorias}
+\section{Robots Cartesianos y Robots serie}
+%\input{02_MarcoTeorico/2.3_cinematica/modelado_cinematico}
+%\input{02_MarcoTeorico/2.3_cinematica/espacios_trabajo}
+%\input{02_MarcoTeorico/2.3_cinematica/analisis_trayectorias}
+\input{02_MarcoTeorico/2.3_cinematica/robots_Cartesianos_y_serie.tex}
 
 \section{Sistemas de Transmisión Mecánica}
-\input{02_MarcoTeorico/2.4_transmision/correa_poleas}
-\input{02_MarcoTeorico/2.4_transmision/husillo_tuerca}
-\input{02_MarcoTeorico/2.4_transmision/rodamientos_guias}
+\input{02_MarcoTeorico/2.4_transmision/transmision.tex}
 
 \section{Control de Motores Paso a Paso}
 \input{02_MarcoTeorico/2.5_motores/principio_funcionamiento}
-\input{02_MarcoTeorico/2.5_motores/modos_operacion}
-\input{02_MarcoTeorico/2.5_motores/drivers_electronica}
+%\input{02_MarcoTeorico/2.5_motores/modos_operacion}
+%\input{02_MarcoTeorico/2.5_motores/drivers_electronica}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CAPÍTULO 3: DESARROLLO DEL SISTEMA
@@ -153,32 +153,32 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \subsection{Especificaciones de Diseño y Restricciones}
 \input{03_Desarrollo/3.2_modelado_mecanico/especificaciones_diseno}
 
-\subsection{Análisis Cinemático del Sistema}
-\input{03_Desarrollo/3.2_modelado_mecanico/grados_libertad}
-\input{03_Desarrollo/3.2_modelado_mecanico/ecuaciones_movimiento}
-\input{03_Desarrollo/3.2_modelado_mecanico/espacio_trabajo}
+%\subsection{Análisis Cinemático del Sistema}
+%\input{03_Desarrollo/3.2_modelado_mecanico/grados_libertad}
+%\input{03_Desarrollo/3.2_modelado_mecanico/ecuaciones_movimiento}
+%\input{03_Desarrollo/3.2_modelado_mecanico/espacio_trabajo}
 
-\subsection{Diseño Estructural}
-\input{03_Desarrollo/3.2_modelado_mecanico/calculos_resistencia}
+%\subsection{Diseño Estructural}
+%\input{03_Desarrollo/3.2_modelado_mecanico/calculos_resistencia}
 \subsection{Sistema de Movimiento Horizontal}
-\input{03_Desarrollo/3.2_modelado_mecanico/dimensionamiento_correa}
+\input{03_Desarrollo/3.2_modelado_mecanico/Movimiento_Horizontal.tex}
 
-\input{03_Desarrollo/3.2_modelado_mecanico/calculo_cargas_horizontal}
+%\input{03_Desarrollo/3.2_modelado_mecanico/calculo_cargas_horizontal}
 
 \subsection{Sistema de Movimiento Vertical}
-\input{03_Desarrollo/3.2_modelado_mecanico/analisis_husillo}
+\input{03_Desarrollo/3.2_modelado_mecanico/Movimiento_Vertical.tex}
 
-\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_guias}
+%\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_guias}
 
 \subsection{Brazo Robótico}
 \input{03_Desarrollo/3.2_modelado_mecanico/configuracion_brazo}
-\input{03_Desarrollo/3.2_modelado_mecanico/cinematica_brazo}
+%\input{03_Desarrollo/3.2_modelado_mecanico/cinematica_brazo}
 \input{03_Desarrollo/3.2_modelado_mecanico/seleccion_servos}
 
 \subsection{Modelado CAD y Fabricación}
 %\input{03_Desarrollo/3.2_modelado_mecanico/diseno_piezas_3d}
-\input{03_Desarrollo/3.2_modelado_mecanico/tecnologia_impresion}
-\input{03_Desarrollo/3.2_modelado_mecanico/tolerancias_ajustes}
+\input{03_Desarrollo/3.2_modelado_mecanico/Modelado_3d.tex}
+%\input{03_Desarrollo/3.2_modelado_mecanico/tolerancias_ajustes}
 
 \section{Sistema de Control de Bajo Nivel (Nivel Regulatorio)}
 
@@ -229,8 +229,8 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \section{Inteligencia Artificial y Visión por Computadora}
 
 \subsection{Arquitectura y Pipeline de Procesamiento}
-\input{03_Desarrollo/3.5_ia_vision/arquitectura_general}
-\input{03_Desarrollo/3.5_ia_vision/hardware_preprocesamiento}
+%\input{03_Desarrollo/3.5_ia_vision/arquitectura_general}
+%\input{03_Desarrollo/3.5_ia_vision/hardware_preprocesamiento}
 
 \subsection{Detector de Marcadores de Referencia}
 \input{03_Desarrollo/3.5_ia_vision/3.5.3_detector_marcadores/fundamento}

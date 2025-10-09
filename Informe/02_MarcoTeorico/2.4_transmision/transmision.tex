@@ -1,0 +1,195 @@
+% Transmisión
+
+\subsection{Sistemas de Transmisión}
+
+El sistema mecánico del cosechador emplea dos tipos principales de transmisión para convertir el movimiento rotacional de los motores en movimiento lineal y rotacional según los requerimientos de cada eje:
+
+\subsubsection{Transmisión por Correa Dentada y Poleas}
+
+\paragraph{Principio de funcionamiento}
+La transmisión por correa dentada consiste en una correa flexible con dientes en su superficie interna que engranan con poleas dentadas solidarias a los ejes motor y conducido. Este sistema permite transmitir potencia y movimiento entre ejes paralelos con alta eficiencia y sin deslizamiento.
+
+\paragraph{Ventajas del sistema}
+\begin{itemize}
+    \item \textbf{Transmisión sincrónica:} Los dientes de la correa engranan positivamente con las poleas, eliminando el deslizamiento y garantizando una relación de transmisión exacta
+    \item \textbf{Alta eficiencia:} Eficiencia típica del 96-98\%, superior a sistemas de correas trapezoidales
+    \item \textbf{Bajo mantenimiento:} No requiere lubricación y presenta mínimo desgaste en condiciones normales de operación
+    \item \textbf{Operación silenciosa:} El engrane de los dientes minimiza vibraciones y ruido
+    \item \textbf{Flexibilidad de diseño:} Permite implementar diferentes relaciones de transmisión mediante la selección de poleas de distintos diámetros
+    \item \textbf{Bajo momento de inercia:} La correa es liviana, lo que facilita arranques y paradas rápidas
+\end{itemize}
+
+\paragraph{Componentes del sistema}
+\begin{enumerate}
+    \item \textbf{Polea motriz:} Montada en el eje del motor, transmite el movimiento rotacional a la correa. Su diámetro primitivo determina la velocidad de salida junto con el diámetro de la polea conducida.
+
+    \item \textbf{Polea conducida:} Montada en el eje a accionar, recibe el movimiento desde la correa. La relación de diámetros entre ambas poleas define la relación de transmisión:
+    \begin{equation}
+        i = \frac{D_2}{D_1} = \frac{n_1}{n_2} = \frac{z_2}{z_1}
+    \end{equation}
+    donde $D$ son los diámetros primitivos, $n$ las velocidades angulares y $z$ el número de dientes de las poleas motriz (1) y conducida (2).
+
+    \item \textbf{Correa dentada:} Elemento flexible con perfil dentado estandarizado. Los perfiles más comunes son:
+    \begin{itemize}
+        \item GT2 (2\,mm de paso): Utilizado en aplicaciones de precisión como impresoras 3D y CNC
+        \item GT3 (3\,mm de paso): Mayor capacidad de carga que GT2
+        \item HTD (High Torque Drive): Para aplicaciones de alta potencia
+        \item T-series y AT-series: Perfiles trapezoidales para uso general
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Cálculo de la relación de transmisión}
+Para un sistema con polea motriz de $z_1$ dientes y polea conducida de $z_2$ dientes:
+\begin{equation}
+    n_2 = n_1 \cdot \frac{z_1}{z_2}
+\end{equation}
+
+La longitud de correa requerida para una distancia entre centros $C$ se calcula como:
+\begin{equation}
+    L = 2C + \frac{\pi(D_1 + D_2)}{2} + \frac{(D_2 - D_1)^2}{4C}
+\end{equation}
+
+\paragraph{Tensado de la correa}
+El tensado adecuado es crítico para el funcionamiento correcto:
+\begin{itemize}
+    \item \textbf{Tensión insuficiente:} Produce saltos de dientes y pérdida de sincronismo
+    \item \textbf{Tensión excesiva:} Incrementa el desgaste de la correa y aumenta la carga sobre los rodamientos
+\end{itemize}
+
+La tensión estática recomendada se calcula como:
+\begin{equation}
+    T_s = \frac{1.5 \cdot P}{v} + m \cdot v^2
+\end{equation}
+donde $P$ es la potencia transmitida, $v$ la velocidad lineal de la correa y $m$ la masa por unidad de longitud.
+
+\paragraph{Aplicación en el sistema}
+En el movimiento horizontal del cosechador, la transmisión por correa dentada se emplea para:
+\begin{itemize}
+    \item Transferir el movimiento del motor al husillo de movimiento
+    \item Permitir la ubicación del motor en una posición que optimice el balance de masas
+    \item Reducir o amplificar la velocidad según los requerimientos cinemáticos
+    \item Minimizar las vibraciones transmitidas entre motor y carro móvil
+\end{itemize}
+
+\subsubsection{Transmisión por Varilla Roscada (Husillo)}
+
+\paragraph{Principio de funcionamiento}
+La transmisión por varilla roscada, también conocida como sistema tornillo-tuerca, convierte el movimiento rotacional en movimiento lineal mediante el principio de la rosca helicoidal. Cuando la varilla roscada gira, la tuerca acoplada a ella se desplaza linealmente a lo largo del eje de la varilla.
+
+\paragraph{Tipos de roscas}
+\begin{enumerate}
+    \item \textbf{Rosca trapezoidal (ACME o TR):}
+    \begin{itemize}
+        \item Perfil trapezoidal con ángulo de flanco de 30° (ACME) o 15° (TR métrica)
+        \item Alta resistencia al desgaste
+        \item Buena capacidad de carga axial
+        \item Eficiencia típica: 30-50\%
+        \item Auto-frenante en la mayoría de configuraciones (ángulo de hélice bajo)
+        \item Aplicación: Movimiento vertical del sistema
+    \end{itemize}
+
+    \item \textbf{Husillo de bolas:}
+    \begin{itemize}
+        \item Recirculación de bolas entre la rosca y la tuerca
+        \item Mínima fricción (contacto rodante vs. deslizante)
+        \item Eficiencia típica: 90-95\%
+        \item No es auto-frenante
+        \item Mayor precisión y vida útil
+        \item Costo significativamente mayor
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Relación de transmisión}
+El desplazamiento lineal por revolución está determinado por el paso de la rosca:
+\begin{equation}
+    \Delta x = n \cdot p
+\end{equation}
+donde $n$ es el número de revoluciones y $p$ es el paso de la rosca.
+
+Para rosca de múltiples entradas:
+\begin{equation}
+    p_{\text{efectivo}} = N_e \cdot p_{\text{nominal}}
+\end{equation}
+donde $N_e$ es el número de entradas.
+
+\paragraph{Análisis de fuerzas y torque}
+El torque necesario para mover una carga $F$ mediante una varilla roscada incluye dos componentes:
+
+\textbf{1. Torque de subida:}
+\begin{equation}
+T_{\text{subida}} = \frac{F \cdot d_m}{2} \cdot k_R + \frac{F \cdot \mu_c \cdot d_c}{2}
+\label{eq:torque_subida}
+\end{equation}
+
+\textbf{2. Torque de bajada:}
+\begin{equation}
+T_{\text{bajada}} = \frac{F \cdot d_m}{2} \cdot k_L + \frac{F \cdot \mu_c \cdot d_c}{2}
+\label{eq:torque_bajada}
+\end{equation}
+
+El torque total resulta:
+\begin{equation}
+    T_{\text{total}} = T_{\text{subida}} + T_{\text{bajada}} 
+    \label{eq:torque_total_varilla}
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item F: Carga a desplazar.
+    \item $d_m$: diámetro medio de la rosca
+    \item $d_c$: diámetro medio del collarín
+    \item $\mu_c$:coeficiente de fricción del collarín
+    \item $k_R$:  factor de rosca para subida, incluye efecto de cuña y fricción
+    \item $k_L$: factor de rosca para bajada
+\end{itemize}
+
+\paragraph{Eficiencia del sistema}
+La eficiencia de la transmisión se define como:
+\begin{equation}
+    \eta = \frac{\tan(\alpha)}{\tan(\alpha + \phi)}
+\end{equation}
+
+Para roscas trapezoidales típicas con $\mu \approx 0.1-0.2$ (lubricadas), la eficiencia varía entre 30\% y 50\%.
+
+\paragraph{Condición de auto-frenado}
+Un sistema de tornillo-tuerca es auto-frenante (la carga no puede hacer girar la varilla) cuando:
+\begin{equation}
+    \alpha < \phi \quad \Rightarrow \quad \tan(\alpha) < \mu
+\end{equation}
+
+Esto es deseable en aplicaciones verticales donde se requiere mantener la posición sin energía en el motor.
+
+\paragraph{Carga crítica y pandeo}
+Para varillas largas trabajando a compresión, debe verificarse la carga crítica de Euler:
+\begin{equation}
+    P_{\text{cr}} = \frac{\pi^2 \cdot E \cdot I}{(K \cdot L)^2}
+\end{equation}
+
+donde $E$ es el módulo de Young, $I$ el momento de inercia de la sección, $L$ la longitud y $K$ el factor de longitud efectiva según las condiciones de apoyo.
+
+\paragraph{Vida útil y desgaste}
+El desgaste en roscas trapezoidales depende de:
+\begin{itemize}
+    \item Presión de contacto entre rosca y tuerca
+    \item Velocidad de deslizamiento
+    \item Calidad de la lubricación
+    \item Material de la tuerca (bronce, polímeros, acero)
+\end{itemize}
+
+La vida útil se estima mediante:
+\begin{equation}
+    L_{10} = \left(\frac{C_a}{F}\right)^3 \cdot 10^6 \quad \text{[mm de recorrido]}
+\end{equation}
+donde $C_a$ es la capacidad de carga dinámica de la tuerca y $F$ la carga aplicada.
+
+\paragraph{Aplicación en el sistema}
+En el movimiento vertical del cosechador, la transmisión por varilla trapezoidal TR16$\times$4 se emplea debido a:
+\begin{itemize}
+    \item \textbf{Auto-frenado:} Mantiene la posición vertical sin consumo energético continuo
+    \item \textbf{Simplicidad:} No requiere sistemas de bloqueo adicionales
+    \item \textbf{Costo:} Significativamente menor que husillos de bolas
+    \item \textbf{Robustez:} Tolera mejor condiciones adversas (polvo, humedad)
+    \item \textbf{Precisión suficiente:} Con 200 pasos/mm se logra la resolución requerida para el posicionamiento
+\end{itemize}
+
+El sistema trabaja principalmente a tracción (varilla fija superior, carga colgante) lo que minimiza problemas de pandeo, aunque se verifica la estabilidad estructural para garantizar seguridad ante cualquier eventualidad.
