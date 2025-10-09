@@ -14,10 +14,20 @@ Los límites del rango cromático se establecieron empíricamente mediante anál
 
 La fundamentación teórica de esta estrategia se presentó en la Sección 2.2.1 del marco teórico, donde se demostró que el espacio HSV proporciona robustez ante variaciones de iluminación al separar la información cromática de la información de luminosidad. Esta propiedad resulta crítica en el entorno del invernadero, donde la intensidad luminosa varía significativamente durante el día debido a la luz natural complementaria.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{imagenes/segmentacion_cromatica_lechugas.png}
-\caption{Proceso de segmentación cromática: (a) imagen RGB original, (b) conversión a HSV, (c) máscara binaria resultante de la segmentación por rango verde}
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/clasificador_1_original.jpg}
+    \caption{Imagen RGB original}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/clasificador_2_verde.jpg}
+    \caption{Máscara de vegetación verde}
+\end{subfigure}
+\caption{Proceso de segmentación cromática para detección de vegetación en espacio HSV}
 \label{fig:segmentacion_cromatica}
 \end{figure}
 
@@ -71,9 +81,34 @@ Cuando el área del contorno principal se encuentra en una zona de incertidumbre
 
 El tiempo total de procesamiento del pipeline de clasificación, incluyendo captura, conversión HSV, segmentación, morfología, detección de contornos y cálculo de área, es de aproximadamente 143 milisegundos. Esta latencia permite una frecuencia de operación superior a 6 Hz, aunque en la práctica la clasificación se ejecuta únicamente cuando el robot se encuentra estacionado frente a una estación, sin restricciones temporales estrictas.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{imagenes/pipeline_clasificacion_completo.png}
-\caption{Pipeline completo del sistema de clasificación desde captura hasta decisión, mostrando las transformaciones sucesivas de la imagen}
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/clasificador_3_negro.jpg}
+    \caption{Máscara de regiones oscuras}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/clasificador_4_combinado.jpg}
+    \caption{Combinación verde + negro}
+\end{subfigure}
+
+\vspace{0.3cm}
+
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/clasificador_5_binario_final.jpg}
+    \caption{Máscara binaria refinada}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/clasificador_6_contornos.jpg}
+    \caption{Contornos finales detectados}
+\end{subfigure}
+
+\caption{Pipeline completo del sistema de clasificación mostrando las transformaciones sucesivas hasta la extracción de contornos}
 \label{fig:pipeline_clasificacion}
 \end{figure}

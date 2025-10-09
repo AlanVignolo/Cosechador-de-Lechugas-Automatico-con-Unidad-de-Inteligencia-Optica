@@ -24,10 +24,43 @@ Los bordes filtrados presentan típicamente discontinuidades causadas por variac
 
 La orientación vertical del kernel (mayor altura que ancho) favorece la conexión de segmentos de líneas horizontales mientras preserva la separación entre líneas vertical. Esta operación es crítica para que la subsecuente detección de contornos identifique el tubo como una región conexa única en lugar de múltiples fragmentos independientes.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{imagenes/proceso_deteccion_tubos.png}
-\caption{Pipeline de procesamiento del detector de tubos: (a) imagen RGB original, (b) bordes Canny, (c) máscara de baja saturación, (d) bordes filtrados, (e) morfología aplicada, (f) líneas detectadas}
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_tubos_1_original.png}
+    \caption{Imagen RGB original}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_tubos_2_canny.png}
+    \caption{Bordes Canny (T=20-172)}
+\end{subfigure}
+
+\vspace{0.3cm}
+
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_tubos_3_canal_s.png}
+    \caption{Máscara de baja saturación}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_tubos_5_morfologia.png}
+    \caption{Morfología de cierre (kernel 3×9)}
+\end{subfigure}
+
+\vspace{0.3cm}
+
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_tubos_6_lineas.png}
+    \caption{Líneas superior e inferior detectadas}
+\end{subfigure}
+
+\caption{Pipeline de procesamiento del detector de tubos mostrando las transformaciones sucesivas hasta la identificación de bordes del tubo}
 \label{fig:proceso_tubos}
 \end{figure}
 

@@ -23,10 +23,35 @@ El valor de umbral 50 se determinó empíricamente mediante análisis del histog
 
 Sobre la imagen binaria resultante se ejecuta el algoritmo de detección de contornos de Suzuki-Abe, obteniendo las fronteras de todas las regiones oscuras detectadas. Los contornos se filtran aplicando un criterio de área mínima de 500 píxeles, eliminando elementos espurios correspondientes a ruido o pequeñas sombras. Este umbral se estableció considerando que una cinta de 18 milímetros de ancho a 200 milímetros de distancia subtiende aproximadamente 120 píxeles de ancho en la imagen, resultando en áreas típicas superiores a 3000 píxeles para segmentos de cinta de longitud razonable.
 
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{imagenes/proceso_deteccion_marcadores.png}
-\caption{Pipeline de procesamiento del detector de marcadores: (a) imagen RGB original, (b) canal V extraído, (c) umbralización inversa, (d) contornos detectados con scoring}
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_marcadores_1_original.png}
+    \caption{Imagen RGB original capturada}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_marcadores_2_canal_v.png}
+    \caption{Canal V extraído (brillo)}
+\end{subfigure}
+
+\vspace{0.3cm}
+
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_marcadores_3_binario.png}
+    \caption{Umbralización binaria inversa (T=50)}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_marcadores_4_contornos.png}
+    \caption{Contornos detectados con scoring}
+\end{subfigure}
+
+\caption{Pipeline de procesamiento del detector de marcadores mostrando las transformaciones sucesivas de la imagen}
 \label{fig:proceso_marcadores}
 \end{figure}
 
