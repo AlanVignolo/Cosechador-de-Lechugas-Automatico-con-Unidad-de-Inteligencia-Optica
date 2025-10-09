@@ -41,6 +41,58 @@ def capturar_imagen():
     finally:
         camera_mgr.release("detector_tubo_vertical")
 
+def capturar_imagen_debug():
+    """Captura imagen con visualización de área de análisis (modo debug)"""
+    camera_mgr = get_camera_manager()
+    if not camera_mgr.acquire("detector_tubo_vertical_debug"):
+        return None
+    try:
+        frame = camera_mgr.capture_frame(timeout=4.0, max_retries=3)
+        if frame is None:
+            return None
+
+        # Rotar 90°
+        frame_rotado = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
+        # Calcular ROI
+        alto, ancho = frame_rotado.shape[:2]
+        x1 = int(ancho * 0.2)
+        x2 = int(ancho * 0.8)
+        y1 = int(alto * 0.3)
+        y2 = int(alto * 0.7)
+
+        # Mostrar imagen completa con área de análisis marcada
+        frame_con_rectangulo = frame_rotado.copy()
+        cv2.rectangle(frame_con_rectangulo, (x1, y1), (x2, y2), (0, 255, 0), 3)
+        cv2.putText(frame_con_rectangulo, "AREA DE ANALISIS", (x1, y1-10),
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        cv2.imshow("DEBUG VERTICAL: 1. Imagen + Area de Analisis", frame_con_rectangulo)
+        cv2.resizeWindow("DEBUG VERTICAL: 1. Imagen + Area de Analisis", 800, 600)
+        print("1. Imagen con area de analisis marcada - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+
+        # Recortar
+        frame_recortado = frame_rotado[y1:y2, x1:x2]
+
+        # Mostrar imagen recortada
+        cv2.imshow("DEBUG VERTICAL: 2. Imagen Recortada", frame_recortado)
+        cv2.resizeWindow("DEBUG VERTICAL: 2. Imagen Recortada", 800, 600)
+        print("2. Imagen recortada para analisis - Presiona 'c' para continuar...")
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('c'):
+                break
+        cv2.destroyAllWindows()
+
+        return frame_recortado
+    finally:
+        camera_mgr.release("detector_tubo_vertical_debug")
+
 def detectar_lineas_tubo(imagen, debug=False):
     """
     Detecta las líneas superior e inferior de la tapa del tubo
@@ -260,31 +312,15 @@ def detectar_lineas_tubo_visual_debug(imagen):
     Returns:
         tuple: (y_superior, y_inferior, centro_y, info)
     """
-    print("\n" + "="*60)
-    print("DEBUG VISUAL - DETECTOR DE LÍNEAS DEL TUBO")
-    print("="*60)
-    print("Presiona 'c' en cada ventana para continuar...")
-    print("="*60 + "\n")
-
-    # Mostrar original
-    cv2.imshow("DEBUG VERTICAL: 1. Imagen Original", imagen)
-    cv2.resizeWindow("DEBUG VERTICAL: 1. Imagen Original", 800, 600)
-    print("1. Imagen Original - Presiona 'c' para continuar...")
-    while True:
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('c'):
-            break
-    cv2.destroyAllWindows()
-
     # Conversiones
     gray = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
     hsv = cv2.cvtColor(imagen, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv)
 
     # Mostrar canal S
-    cv2.imshow("DEBUG VERTICAL: 2. Canal S (Saturacion)", s)
-    cv2.resizeWindow("DEBUG VERTICAL: 2. Canal S (Saturacion)", 800, 600)
-    print(f"2. Canal S - Media: {np.mean(s):.1f}, Std: {np.std(s):.1f} - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 3. Canal S (Saturacion)", s)
+    cv2.resizeWindow("DEBUG VERTICAL: 3. Canal S (Saturacion)", 800, 600)
+    print(f"3. Canal S - Media: {np.mean(s):.1f}, Std: {np.std(s):.1f} - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -294,9 +330,9 @@ def detectar_lineas_tubo_visual_debug(imagen):
     # Canny
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edges_canny = cv2.Canny(blurred, 20, 172)
-    cv2.imshow("DEBUG VERTICAL: 3. Bordes Canny (20, 172)", edges_canny)
-    cv2.resizeWindow("DEBUG VERTICAL: 3. Bordes Canny (20, 172)", 800, 600)
-    print("3. Bordes Canny - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 4. Bordes Canny (20, 172)", edges_canny)
+    cv2.resizeWindow("DEBUG VERTICAL: 4. Bordes Canny (20, 172)", 800, 600)
+    print("4. Bordes Canny - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -306,9 +342,9 @@ def detectar_lineas_tubo_visual_debug(imagen):
     # Máscara S bajo
     s_inv = 255 - s
     _, mask_s_low = cv2.threshold(s_inv, 150, 255, cv2.THRESH_BINARY)
-    cv2.imshow("DEBUG VERTICAL: 4. Mascara S Bajo (inv > 150)", mask_s_low)
-    cv2.resizeWindow("DEBUG VERTICAL: 4. Mascara S Bajo (inv > 150)", 800, 600)
-    print("4. Mascara S Bajo - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 5. Mascara S Bajo (inv > 150)", mask_s_low)
+    cv2.resizeWindow("DEBUG VERTICAL: 5. Mascara S Bajo (inv > 150)", 800, 600)
+    print("5. Mascara S Bajo - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -319,9 +355,9 @@ def detectar_lineas_tubo_visual_debug(imagen):
     kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     edges_dilated = cv2.dilate(edges_canny, kernel_dilate, iterations=1)
     edges_filtrados = cv2.bitwise_and(edges_dilated, mask_s_low)
-    cv2.imshow("DEBUG VERTICAL: 5. Canny AND Mascara S", edges_filtrados)
-    cv2.resizeWindow("DEBUG VERTICAL: 5. Canny AND Mascara S", 800, 600)
-    print("5. Canny AND Mascara S - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 6. Canny AND Mascara S", edges_filtrados)
+    cv2.resizeWindow("DEBUG VERTICAL: 6. Canny AND Mascara S", 800, 600)
+    print("6. Canny AND Mascara S - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -331,9 +367,9 @@ def detectar_lineas_tubo_visual_debug(imagen):
     # Morfología para cerrar gaps
     kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 9))
     edges_final = cv2.morphologyEx(edges_filtrados, cv2.MORPH_CLOSE, kernel_close)
-    cv2.imshow("DEBUG VERTICAL: 6. Cierre Morfologico (3x9)", edges_final)
-    cv2.resizeWindow("DEBUG VERTICAL: 6. Cierre Morfologico (3x9)", 800, 600)
-    print("6. Cierre Morfologico - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 7. Cierre Morfologico (3x9)", edges_final)
+    cv2.resizeWindow("DEBUG VERTICAL: 7. Cierre Morfologico (3x9)", 800, 600)
+    print("7. Cierre Morfologico - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):
@@ -437,9 +473,9 @@ def detectar_lineas_tubo_visual_debug(imagen):
         # Línea inferior (VERDE)
         cv2.line(resultado, (0, y_inf), (imagen.shape[1], y_inf), (0, 255, 0), 2)
 
-    cv2.imshow("DEBUG VERTICAL: 7. RESULTADO - Lineas Detectadas", resultado)
-    cv2.resizeWindow("DEBUG VERTICAL: 7. RESULTADO - Lineas Detectadas", 800, 600)
-    print("7. Resultado - Lineas Detectadas - Presiona 'c' para continuar...")
+    cv2.imshow("DEBUG VERTICAL: 8. RESULTADO - Lineas Detectadas", resultado)
+    cv2.resizeWindow("DEBUG VERTICAL: 8. RESULTADO - Lineas Detectadas", 800, 600)
+    print("8. Resultado - Lineas Detectadas - Presiona 'c' para continuar...")
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == ord('c'):

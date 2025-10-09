@@ -97,7 +97,7 @@ try:
     print("Intentando importar escáner vertical automático...")
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
     from escaner_vertical import scan_vertical_with_flags
-    from detector_canny_s_combinado import detectar_lineas_tubo_visual_debug, capturar_imagen
+    from detector_canny_s_combinado import detectar_lineas_tubo_visual_debug, capturar_imagen_debug
     SCANNER_VERTICAL_AUTO_AVAILABLE = True
     print("Escáner vertical automático importado exitosamente")
 except ImportError as e:
@@ -1127,15 +1127,20 @@ def menu_interactivo(uart_manager, robot):
                     print("-"*60)
 
                     try:
-                        # Capturar imagen (rotada y recortada)
-                        print("\nCapturando imagen...")
-                        imagen = capturar_imagen()
+                        # Capturar imagen con visualización de área de análisis
+                        print("\n" + "="*60)
+                        print("DEBUG VISUAL - DETECTOR DE LÍNEAS DEL TUBO")
+                        print("="*60)
+                        print("Presiona 'c' en cada ventana para continuar...")
+                        print("="*60 + "\n")
+
+                        print("Capturando imagen...")
+                        imagen = capturar_imagen_debug()
 
                         if imagen is None:
                             print("Error: No se pudo capturar imagen")
                         else:
-                            print("Imagen capturada. Procesando...")
-                            # Mostrar visualización paso a paso
+                            # Mostrar visualización paso a paso (pasos 3-8)
                             y_sup, y_inf, centro_y, info = detectar_lineas_tubo_visual_debug(imagen)
 
                             if y_sup is not None:
