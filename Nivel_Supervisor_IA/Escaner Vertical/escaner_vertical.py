@@ -14,10 +14,11 @@ import numpy as np
 # Importar módulos del sistema
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'config'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'core'))
 
 # Solo importar lo que NO depende de robot_controller
 from detector_canny_s_combinado import detectar_lineas_tubo
-from camera_manager import get_camera_manager
+from core.camera_manager import get_camera_manager
 
 # Lazy imports (se importan cuando se necesitan)
 # RobotConfig se importa en las funciones
