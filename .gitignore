@@ -49,3 +49,32 @@ env/
 # ============================
 .DS_Store
 Thumbs.db
+
+# ============================
+# LaTeX archivos generados
+# ============================
+*.pdf
+*.aux
+*.out
+*.synctex.gz
+*.toc
+*.backup
+*.fdb_latexmk
+*.fls
+*.nav
+*.snm
+*.vrb
+
+# ============================
+# Base de datos
+# ============================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================
+# Atmel Studio adicional
+# ============================
+.vs/
+*.atsuo
+*.componentinfo.xml
