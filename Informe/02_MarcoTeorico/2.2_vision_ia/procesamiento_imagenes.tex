@@ -1,86 +1,24 @@
 \subsection{Procesamiento Digital de Imágenes}
 
-El procesamiento digital de imágenes constituye el fundamento tecnológico de los sistemas de visión artificial aplicados a robótica agrícola. Esta disciplina permite transformar datos visuales crudos capturados por cámaras en información estructurada y procesable por algoritmos de decisión, integrando conceptos de análisis matemático, álgebra lineal y teoría de señales.
-
-\subsubsection{Representación Digital de Imágenes}
-
-Una imagen digital se define matemáticamente como una función bidimensional discreta $f(x,y)$, donde las coordenadas espaciales $(x,y)$ representan posiciones en el plano de la imagen y el valor de la función indica la intensidad luminosa en cada punto. Para imágenes a color en formato RGB, esta representación se extiende a un espacio tridimensional:
+El procesamiento digital de imágenes transforma datos visuales crudos capturados por cámaras en información estructurada procesable por algoritmos de decisión. Una imagen digital se define matemáticamente como una función bidimensional discreta $f(x,y)$ donde las coordenadas espaciales representan posiciones y el valor de la función indica intensidad luminosa. Para imágenes a color en formato RGB:
 
 \begin{equation}
 \mathbf{I}(x,y) = \begin{bmatrix} R(x,y) \\ G(x,y) \\ B(x,y) \end{bmatrix} \in [0, 255]^3
 \end{equation}
 
-donde $R$, $G$ y $B$ representan los canales de color rojo, verde y azul respectivamente. Esta codificación permite representar aproximadamente 16.7 millones de colores distintos ($256^3$), cubriendo ampliamente el espectro visible necesario para aplicaciones de agricultura de precisión.
+donde $R$, $G$ y $B$ representan los canales rojo, verde y azul respectivamente. Esta codificación permite representar aproximadamente 16.7 millones de colores distintos ($256^3$). La resolución espacial de una imagen de dimensiones $M \times N$ píxeles determina la cantidad de información disponible para el análisis, con cada píxel representando el promedio de la radiancia incidente sobre el área del sensor correspondiente.
 
-La resolución espacial de una imagen determina la cantidad de información disponible para el análisis. Una imagen de dimensiones $M \times N$ píxeles contiene $M \cdot N$ elementos de información, cada uno representando el promedio de la radiancia incidente sobre el área del sensor correspondiente a ese píxel.
+\subsubsection{Espacio de Color HSV}
 
-\subsubsection{Espacios de Color y Transformaciones}
+El espacio RGB presenta limitaciones debido a su fuerte correlación entre canales y sensibilidad a variaciones de iluminación. El espacio HSV separa información cromática (matiz H y saturación S) de información de iluminación (valor V), proporcionando robustez frente a cambios de luz. La transformación de RGB a HSV se define como $V = \max(R, G, B)$, $S = (V - \min(R,G,B))/V$ si $V \neq 0$, y $H$ calculado según cuál componente RGB es máxima.
 
-El espacio de color RGB, aunque intuitivo y ampliamente utilizado en sistemas de captura, presenta limitaciones para ciertas tareas de procesamiento debido a su fuerte correlación entre canales y sensibilidad a variaciones de iluminación. Por esta razón, la conversión a espacios de color alternativos resulta fundamental en visión por computadora.
+El canal $V$ (Value) captura la intensidad luminosa independientemente del color, representando el brillo máximo entre los tres canales RGB. Esta propiedad lo convierte en un descriptor ideal para detectar objetos oscuros contra fondos claros o viceversa. Para detección de elementos de contraste oscuro (marcadores negros, cintas de cultivo), el canal $V$ permite segmentación robusta mediante umbralización: $\text{Objeto oscuro} \Leftrightarrow V(x,y) < T_V$ donde $T_V$ es un umbral empírico. En cultivo hidropónico bajo iluminación controlada, valores típicos son $T_V \in [30, 70]$.
 
-\textbf{Espacio HSV (Hue, Saturation, Value)}
-
-El espacio HSV separa la información cromática (matiz y saturación) de la información de iluminación (valor), proporcionando robustez frente a cambios en las condiciones de luz. La transformación de RGB a HSV se define mediante:
-
-\begin{equation}
-V = \max(R, G, B)
-\end{equation}
-
-\begin{equation}
-S = \begin{cases}
-\frac{V - \min(R,G,B)}{V} & \text{si } V \neq 0 \\
-0 & \text{si } V = 0
-\end{cases}
-\end{equation}
-
-\begin{equation}
-H = \begin{cases}
-60^\circ \cdot \frac{G-B}{V - \min(R,G,B)} & \text{si } V = R \\
-60^\circ \cdot \left(2 + \frac{B-R}{V - \min(R,G,B)}\right) & \text{si } V = G \\
-60^\circ \cdot \left(4 + \frac{R-G}{V - \min(R,G,B)}\right) & \text{si } V = B
-\end{cases}
-\end{equation}
-
-Esta descomposición resulta particularmente ventajosa para la detección de elementos basada en contraste y brillo.
-
-\textbf{El Canal V como Descriptor de Intensidad}
-
-El canal $V$ (Value) captura la intensidad luminosa independientemente del color, representando el brillo máximo entre los tres canales RGB. Esta propiedad lo convierte en un descriptor ideal para detectar objetos oscuros contra fondos claros o viceversa.
-
-Para la detección de elementos de contraste oscuro (como marcadores negros o cintas de cultivo), el canal $V$ permite una segmentación robusta mediante umbralización:
-
-\begin{equation}
-\text{Objeto oscuro} \Leftrightarrow V(x,y) < T_V
-\end{equation}
-
-donde $T_V$ es un umbral empírico que depende de las condiciones de iluminación del entorno. En aplicaciones de cultivo hidropónico bajo iluminación controlada, valores típicos son $T_V \in [30, 70]$, permitiendo detectar elementos con baja reflectancia sin ser afectados por variaciones de color.
-
-\textbf{Ventajas del Canal V para Detección}
-
-La separación de la información de brillo en el canal $V$ ofrece ventajas operativas críticas:
-
-\begin{itemize}
-\item \textbf{Invariancia parcial a color}: Elementos oscuros se detectan independientemente de su matiz (negro, azul oscuro, verde oscuro)
-\item \textbf{Umbralización simple}: Un único parámetro $T_V$ define la separación
-\item \textbf{Robustez ante variaciones uniformes}: Cambios globales de iluminación afectan proporcionalmente todos los píxeles
-\item \textbf{Eficiencia computacional}: Operaciones sobre un único canal en lugar de tres
-\end{itemize}
-
-Matemáticamente, el canal $V$ satisface:
-
-\begin{equation}
-V(\alpha \cdot \mathbf{I}_{RGB}) = \alpha \cdot V(\mathbf{I}_{RGB}) \quad \forall \alpha > 0
-\end{equation}
-
-donde $\alpha$ representa un factor de escala de iluminación global. Esta linealidad permite compensar variaciones uniformes de brillo mediante ajustes del umbral.
+Las ventajas incluyen invariancia parcial a color (elementos oscuros se detectan independientemente de matiz), umbralización simple (un único parámetro $T_V$), robustez ante variaciones uniformes de iluminación, y eficiencia computacional al operar sobre un único canal. Matemáticamente, el canal $V$ satisface linealidad: $V(\alpha \cdot \mathbf{I}_{RGB}) = \alpha \cdot V(\mathbf{I}_{RGB})$ para $\alpha > 0$, permitiendo compensar variaciones uniformes de brillo mediante ajustes del umbral.
 
 \subsubsection{Umbralización y Segmentación}
 
-La umbralización constituye una técnica fundamental de segmentación que particiona una imagen en regiones de interés mediante la comparación de intensidades de píxeles contra valores de referencia.
-
-\textbf{Umbralización Binaria Inversa}
-
-En escenarios donde los elementos de interés presentan intensidades menores que el fondo, la umbralización inversa resulta esencial:
+La umbralización particiona una imagen en regiones de interés comparando intensidades de píxeles contra valores de referencia. En escenarios donde elementos de interés presentan intensidades menores que el fondo, la \textbf{umbralización binaria inversa} resulta esencial:
 
 \begin{equation}
 g(x,y) = \begin{cases}
@@ -89,173 +27,38 @@ g(x,y) = \begin{cases}
 \end{cases}
 \end{equation}
 
-Esta operación genera una imagen binaria donde los píxeles blancos (255) corresponden a regiones oscuras de la imagen original. Es la técnica empleada para detectar cintas de cultivo negras, tubos oscuros y marcadores de contraste en agricultura de precisión.
-
-\textbf{Aplicación al Canal V para Detección de Oscuros}
-
-La combinación de conversión HSV y umbralización inversa del canal $V$ proporciona un método robusto para segmentar elementos oscuros:
-
-\begin{equation}
-\text{Máscara}(x,y) = \begin{cases}
-255 & \text{si } V(x,y) < T_V \\
-0 & \text{si } V(x,y) \geq T_V
-\end{cases}
-\end{equation}
-
-Por ejemplo, con $T_V = 50$, se destacan todos los píxeles con valor de brillo inferior a 50, típicamente correspondientes a superficies oscuras como:
-\begin{itemize}
-\item Cintas de identificación negras
-\item Tubos de cultivo sin contenido
-\item Tierra o sustrato oscuro
-\item Sombras pronunciadas
-\end{itemize}
-
-\textbf{Selección Empírica del Umbral}
-
-A diferencia de métodos adaptativos como Otsu, en entornos controlados resulta más efectivo establecer umbrales fijos determinados experimentalmente. El procedimiento consiste en:
-
-\begin{enumerate}
-\item Capturar imágenes representativas del escenario operativo
-\item Analizar histograma del canal $V$ para objetos de interés
-\item Identificar el rango de valores $V$ que caracteriza consistentemente dichos objetos
-\item Establecer $T_V$ en el punto que maximiza separación entre objeto y fondo
-\item Validar con conjunto de prueba diverso
-\end{enumerate}
-
-Este enfoque aprovecha el conocimiento específico del entorno operativo, resultando en umbrales más robustos que métodos automáticos que no consideran la naturaleza del problema.
+Esta operación genera una imagen binaria donde píxeles blancos (255) corresponden a regiones oscuras de la original, empleada para detectar cintas negras, tubos oscuros y marcadores de contraste. A diferencia de métodos adaptativos como Otsu, en entornos controlados resulta más efectivo establecer umbrales fijos determinados experimentalmente mediante análisis de histogramas del canal $V$ sobre imágenes representativas, identificando el rango de valores que caracteriza consistentemente los objetos de interés y estableciendo $T_V$ en el punto que maximiza separación entre objeto y fondo.
 
 \subsubsection{Operaciones Morfológicas}
 
-Las operaciones morfológicas manipulan la forma y estructura de objetos en imágenes binarias mediante la aplicación de elementos estructurantes. Se fundamentan en la teoría de conjuntos y permiten eliminar ruido, rellenar huecos y separar objetos conectados.
+Las operaciones morfológicas manipulan forma y estructura de objetos en imágenes binarias mediante elementos estructurantes, permitiendo eliminar ruido, rellenar huecos y separar objetos conectados. La \textbf{erosión} reduce el tamaño de objetos eliminando píxeles del perímetro: $(A \ominus B)(x,y) = \min_{(s,t) \in B} \{A(x+s, y+t)\}$ donde $A$ es la imagen binaria y $B$ el elemento estructurante. La \textbf{dilatación} expande objetos añadiendo píxeles al perímetro: $(A \oplus B)(x,y) = \max_{(s,t) \in B} \{A(x+s, y+t)\}$.
 
-\textbf{Erosión}
+Estas operaciones se combinan formando \textbf{apertura} $(A \circ B) = (A \ominus B) \oplus B$ que elimina pequeños objetos y protuberancias manteniendo tamaño aproximado de objetos grandes, y \textbf{cierre} $(A \bullet B) = (A \oplus B) \ominus B$ que rellena huecos pequeños y conecta componentes próximos. El cierre resulta esencial para consolidar regiones fragmentadas durante la segmentación.
 
-La erosión reduce el tamaño de los objetos eliminando píxeles del perímetro:
+La forma y tamaño del elemento estructurante $B$ determina el comportamiento: cuadrados $3 \times 3$ para operaciones isotrópicas básicas, cuadrados $5 \times 5$ con mayor alcance para eliminar ruido moderado, y rectangulares verticales $7 \times 3$ para conectividad preferencial vertical. Una secuencia típica de refinamiento morfológico aplica: apertura $(3 \times 3, 2 \text{ iter.})$ para eliminar ruido puntual, cierre $(3 \times 3, 2 \text{ iter.})$ para rellenar huecos pequeños, cierre $(5 \times 5, 2 \text{ iter.})$ para conectar regiones próximas, y cierre vertical $(7 \times 3, 1 \text{ iter.})$ para unificar objetos verticalmente fragmentados.
 
-\begin{equation}
-(A \ominus B)(x,y) = \min_{(s,t) \in B} \{A(x+s, y+t)\}
-\end{equation}
+\subsubsection{Calibración Espacial}
 
-donde $A$ es la imagen binaria y $B$ es el elemento estructurante. Esta operación elimina pequeñas protuberancias y separa objetos débilmente conectados.
-
-\textbf{Dilatación}
-
-La dilatación expande los objetos añadiendo píxeles al perímetro:
-
-\begin{equation}
-(A \oplus B)(x,y) = \max_{(s,t) \in B} \{A(x+s, y+t)\}
-\end{equation}
-
-Esta operación rellena pequeños huecos y conecta regiones próximas.
-
-\textbf{Apertura y Cierre}
-
-Estas operaciones compuestas combinan erosión y dilatación para refinar máscaras:
-
-\begin{equation}
-\text{Apertura: } A \circ B = (A \ominus B) \oplus B
-\end{equation}
-
-\begin{equation}
-\text{Cierre: } A \bullet B = (A \oplus B) \ominus B
-\end{equation}
-
-La apertura elimina pequeños objetos y protuberancias manteniendo el tamaño aproximado de objetos grandes. El cierre rellena huecos pequeños y conecta componentes próximos, resultando esencial para consolidar regiones fragmentadas.
-
-\textbf{Elementos Estructurantes}
-
-La forma y tamaño del elemento estructurante $B$ determina el comportamiento de las operaciones morfológicas:
-
-\begin{itemize}
-\item \textbf{Cuadrado} $3 \times 3$: Operaciones isotrópicas básicas
-\item \textbf{Cuadrado} $5 \times 5$: Mayor alcance, elimina ruido moderado
-\item \textbf{Rectangular vertical} $7 \times 3$: Conectividad preferencial vertical, útil para unir fragmentos de objetos alargados verticalmente
-\end{itemize}
-
-La secuencia típica de refinamiento morfológico en aplicaciones de cultivo es:
-
-\begin{enumerate}
-\item Apertura $(3 \times 3, 2 \text{ iteraciones})$ - elimina ruido puntual
-\item Cierre $(3 \times 3, 2 \text{ iteraciones})$ - rellena huecos pequeños
-\item Cierre $(5 \times 5, 2 \text{ iteraciones})$ - conecta regiones próximas
-\item Cierre vertical $(7 \times 3, 1 \text{ iteración})$ - unifica objetos verticalmente fragmentados
-\end{enumerate}
-
-\subsubsection{Calibración y Transformación de Coordenadas}
-
-La calibración establece la correspondencia entre coordenadas píxel en la imagen y coordenadas físicas en el espacio de trabajo. Esta transformación es fundamental para convertir mediciones visuales en comandos de movimiento precisos.
-
-\textbf{Modelo de Transformación Lineal}
-
-Para configuraciones donde la cámara observa perpendicular al plano de trabajo a distancia constante, la transformación píxel-a-métrica puede aproximarse mediante un modelo lineal afín:
+La calibración establece correspondencia entre coordenadas píxel en imagen y coordenadas físicas en espacio de trabajo, fundamental para convertir mediciones visuales en comandos de movimiento precisos. Para configuraciones donde la cámara observa perpendicular al plano de trabajo a distancia constante, la transformación píxel-a-métrica se aproxima mediante modelo lineal afín:
 
 \begin{equation}
 d_{mm} = a \cdot d_{px} + b
 \end{equation}
 
-donde $d_{px}$ es la distancia medida en píxeles, $d_{mm}$ la distancia física en milímetros, y $a, b$ son parámetros de calibración. El coeficiente $a$ representa la escala (mm/píxel) y $b$ un offset sistemático.
+donde $d_{px}$ es distancia en píxeles, $d_{mm}$ distancia física en milímetros, y $a, b$ parámetros de calibración. El coeficiente $a$ representa la escala (mm/píxel) y $b$ un offset sistemático.
 
-Para sistemas bidimensionales, la transformación se expresa como:
-
-\begin{equation}
-\begin{bmatrix} x_{mm} \\ y_{mm} \end{bmatrix} = \begin{bmatrix} a_x & 0 \\ 0 & a_y \end{bmatrix} \begin{bmatrix} x_{px} \\ y_{px} \end{bmatrix} + \begin{bmatrix} b_x \\ b_y \end{bmatrix}
-\end{equation}
-
-donde $a_x, a_y$ son factores de escala independientes (permitiendo píxeles no cuadrados o perspectiva leve) y $b_x, b_y$ son desplazamientos de origen.
-
-\textbf{Estimación de Parámetros por Mínimos Cuadrados}
-
-Los parámetros de calibración se estiman mediante regresión lineal a partir de pares de puntos de correspondencia conocidos. Dado un conjunto de $N$ mediciones:
-
-\begin{equation}
-\{(d_{px,i}, d_{mm,i})\}_{i=1}^{N}
-\end{equation}
-
-el problema de mínimos cuadrados minimiza el error cuadrático:
+Los parámetros se estiman mediante regresión lineal por mínimos cuadrados a partir de pares de correspondencia conocidos $\{(d_{px,i}, d_{mm,i})\}_{i=1}^{N}$, minimizando el error cuadrático:
 
 \begin{equation}
 \min_{a,b} \sum_{i=1}^{N} (d_{mm,i} - (a \cdot d_{px,i} + b))^2
 \end{equation}
 
-La solución analítica se obtiene mediante las ecuaciones normales:
+La solución analítica mediante ecuaciones normales proporciona:
 
 \begin{equation}
-a = \frac{N\sum d_{px,i}d_{mm,i} - \sum d_{px,i}\sum d_{mm,i}}{N\sum d_{px,i}^2 - (\sum d_{px,i})^2}
+a = \frac{N\sum d_{px,i}d_{mm,i} - \sum d_{px,i}\sum d_{mm,i}}{N\sum d_{px,i}^2 - (\sum d_{px,i})^2}, \quad b = \frac{\sum d_{mm,i} - a\sum d_{px,i}}{N}
 \end{equation}
 
-\begin{equation}
-b = \frac{\sum d_{mm,i} - a\sum d_{px,i}}{N}
-\end{equation}
+El procedimiento de calibración coloca marcadores de referencia en posiciones conocidas, captura imagen detectando posiciones en píxeles, mide físicamente distancias entre marcadores, calcula distancias en píxeles entre los mismos marcadores, aplica regresión lineal para estimar parámetros, y valida con mediciones independientes.
 
-Este método garantiza la solución óptima en el sentido de mínimos cuadrados, minimizando el error cuadrático medio.
-
-\textbf{Procedimiento de Calibración}
-
-El proceso de calibración consiste en:
-
-\begin{enumerate}
-\item Colocar marcadores de referencia en el espacio de trabajo en posiciones conocidas
-\item Capturar imagen y detectar posiciones de marcadores en píxeles
-\item Medir físicamente distancias entre marcadores (con calibre o regla)
-\item Calcular distancias en píxeles entre los mismos marcadores en la imagen
-\item Aplicar regresión lineal para estimar parámetros $a, b$
-\item Validar con mediciones independientes
-\end{enumerate}
-
-\textbf{Validación Estadística}
-
-La precisión de la calibración se cuantifica mediante el error cuadrático medio (RMSE):
-
-\begin{equation}
-\text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(d_{mm,i} - \hat{d}_{mm,i})^2}
-\end{equation}
-
-donde $\hat{d}_{mm,i} = a \cdot d_{px,i} + b$ son las predicciones del modelo. Valores de RMSE inferiores a 1-2mm resultan aceptables para aplicaciones de manipulación agrícola de precisión, considerando las tolerancias biológicas de los cultivos.
-
-El coeficiente de determinación $R^2$ complementa la evaluación:
-
-\begin{equation}
-R^2 = 1 - \frac{\sum (d_{mm,i} - \hat{d}_{mm,i})^2}{\sum (d_{mm,i} - \bar{d}_{mm})^2}
-\end{equation}
-
-donde $\bar{d}_{mm}$ es la media de las distancias reales. Valores $R^2 > 0.99$ indican excelente ajuste lineal, validando la aproximación del modelo.
+La precisión se cuantifica mediante error cuadrático medio: $\text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(d_{mm,i} - \hat{d}_{mm,i})^2}$ donde $\hat{d}_{mm,i} = a \cdot d_{px,i} + b$ son predicciones del modelo. Valores de RMSE inferiores a 1-2mm resultan aceptables para manipulación agrícola de precisión. El coeficiente de determinación $R^2 = 1 - \frac{\sum (d_{mm,i} - \hat{d}_{mm,i})^2}{\sum (d_{mm,i} - \bar{d}_{mm})^2}$ complementa la evaluación; valores $R^2 > 0.99$ indican excelente ajuste lineal, validando la aproximación del modelo.

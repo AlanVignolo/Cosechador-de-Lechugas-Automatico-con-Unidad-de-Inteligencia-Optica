@@ -1,347 +1,49 @@
 \subsection{Detección y Análisis de Contornos}
 
-La detección de contornos constituye una técnica fundamental en visión por computadora para la identificación y caracterización de objetos en imágenes. Los contornos representan las fronteras entre regiones con propiedades visuales distintas, proporcionando información estructural esencial para el reconocimiento y clasificación de elementos.
+La detección de contornos identifica las fronteras entre regiones con propiedades visuales distintas en imágenes binarias, proporcionando información estructural esencial para reconocimiento y clasificación de elementos. Un contorno se define matemáticamente como la secuencia ordenada de píxeles que forman el límite de una región conexa: $C = \{(x_i, y_i)\}_{i=1}^{n}$ donde $(x_i, y_i) \in \partial R$, siendo $\partial R$ la frontera topológica de la región $R$. Formalmente, un punto pertenece a la frontera si es parte de la región pero tiene al menos un vecino que no pertenece a ella. La conectividad del contorno se define por el vecindario considerado: 4-conectividad (vecinos arriba, abajo, izquierda, derecha) o 8-conectividad (incluyendo diagonales, generando contornos más suaves).
 
-\subsubsection{Definición Matemática de Contorno}
+\subsubsection{Algoritmo de Suzuki-Abe}
 
-Un contorno se define como la secuencia ordenada de píxeles que forman el límite de una región conexa en una imagen binaria:
+El algoritmo de Suzuki-Abe, implementado en OpenCV mediante la función \texttt{findContours}, detecta simultáneamente contornos externos e internos organizándolos jerárquicamente. El algoritmo recorre la imagen binaria en orden raster y, al encontrar un píxel de objeto no visitado, inicia el rastreo del contorno siguiendo la frontera. La jerarquía resultante representa relaciones de anidamiento entre contornos mediante estructura de árbol.
 
-\begin{equation}
-C = \{(x_i, y_i)\}_{i=1}^{n} \quad \text{donde } (x_i, y_i) \in \partial R
-\end{equation}
+Los modos de recuperación determinan qué contornos se extraen: \textbf{RETR\_EXTERNAL} extrae solo contornos externos de nivel superior (suficiente para aplicaciones donde interesan objetos individuales), \textbf{RETR\_LIST} extrae todos los contornos sin jerarquía, y \textbf{RETR\_TREE} construye la jerarquía completa de contornos anidados. El parámetro de aproximación controla la representación: \textbf{CHAIN\_APPROX\_NONE} almacena todos los puntos preservando información geométrica completa, mientras que \textbf{CHAIN\_APPROX\_SIMPLE} comprime segmentos colineales reduciendo uso de memoria.
 
-siendo $\partial R$ la frontera topológica de la región $R$. Formalmente, un punto $(x,y)$ pertenece a $\partial R$ si es parte de la región pero tiene al menos un vecino que no pertenece a ella:
+\subsubsection{Descriptores Geométricos}
 
-\begin{equation}
-(x,y) \in R \quad \land \quad \exists (x',y') \in \mathcal{N}(x,y) : (x',y') \notin R
-\end{equation}
-
-donde $\mathcal{N}(x,y)$ representa el vecindario del píxel. La definición de vecindario determina la conectividad del contorno:
-\begin{itemize}
-\item \textbf{4-conectividad}: Vecinos arriba, abajo, izquierda, derecha
-\item \textbf{8-conectividad}: Incluye diagonales, genera contornos más suaves
-\end{itemize}
-
-\subsubsection{Algoritmo de Detección de Contornos de Suzuki-Abe}
-
-El algoritmo de Suzuki-Abe detecta simultáneamente contornos externos e internos (huecos), organizándolos jerárquicamente. Es el método implementado en OpenCV mediante la función \texttt{findContours}.
-
-\textbf{Principio de Funcionamiento}
-
-El algoritmo recorre la imagen binaria en orden raster (izquierda-derecha, arriba-abajo) y, al encontrar un píxel de objeto aún no visitado, inicia el rastreo del contorno. Define dos tipos de bordes:
-
-\begin{itemize}
-\item \textbf{Contorno externo}: Límite exterior de una región de objeto
-\item \textbf{Contorno interno}: Límite de un hueco dentro del objeto
-\end{itemize}
-
-La jerarquía se representa mediante relaciones padre-hijo:
-
-\begin{equation}
-\text{Jerarquía}_i = \{\text{Siguiente}, \text{Previo}, \text{Primer\_Hijo}, \text{Padre}\}
-\end{equation}
-
-donde cada elemento apunta al índice del contorno correspondiente en la lista.
-
-\textbf{Modos de Recuperación}
-
-Los modos de recuperación determinan qué contornos se extraen:
-
-\begin{itemize}
-\item \textbf{RETR\_EXTERNAL}: Solo contornos externos de nivel superior
-\item \textbf{RETR\_LIST}: Todos los contornos sin jerarquía
-\item \textbf{RETR\_TREE}: Jerarquía completa de contornos anidados
-\end{itemize}
-
-Para aplicaciones de cultivo donde interesa detectar objetos individuales sin relaciones jerárquicas complejas, \textbf{RETR\_EXTERNAL} resulta suficiente y eficiente.
-
-\textbf{Métodos de Aproximación}
-
-El parámetro de aproximación controla la representación del contorno:
-
-\begin{itemize}
-\item \textbf{CHAIN\_APPROX\_NONE}: Almacena todos los puntos del contorno
-\item \textbf{CHAIN\_APPROX\_SIMPLE}: Comprime segmentos horizontales/verticales
-\end{itemize}
-
-CHAIN\_APPROX\_NONE preserva toda la información geométrica, necesario para análisis morfológico detallado.
-
-\subsubsection{Descriptores Geométricos de Contornos}
-
-Los descriptores cuantifican propiedades estructurales de los contornos, permitiendo clasificación y reconocimiento de formas.
-
-\textbf{Área}
-
-El área encerrada por un contorno se calcula mediante la fórmula del Shoelace (algoritmo de Gauss):
+Los descriptores cuantifican propiedades estructurales de contornos. El \textbf{área} encerrada se calcula mediante la fórmula del Shoelace:
 
 \begin{equation}
 A = \frac{1}{2}\left|\sum_{i=0}^{n-1}(x_i y_{i+1} - x_{i+1}y_i)\right|
 \end{equation}
 
-donde $(x_n, y_n) = (x_0, y_0)$ para cerrar el contorno. Esta fórmula es eficiente computacionalmente ($\mathcal{O}(n)$) y proporciona el área exacta del polígono.
+donde $(x_n, y_n) = (x_0, y_0)$ cierra el contorno. Este método tiene complejidad $\mathcal{O}(n)$ y proporciona área exacta del polígono. El \textbf{perímetro} se calcula sumando distancias euclidianas entre puntos consecutivos: $P = \sum_{i=0}^{n-1}\sqrt{(x_{i+1}-x_i)^2 + (y_{i+1}-y_i)^2}$.
 
-\textbf{Perímetro}
+El \textbf{rectángulo delimitador} (bounding box) es el rectángulo alineado a ejes que contiene completamente al contorno: $\text{BBox} = (x_{min}, y_{min}, w, h)$ donde $x_{min} = \min_i x_i$, $y_{min} = \min_i y_i$, $w = \max_i x_i - x_{min}$ y $h = \max_i y_i - y_{min}$. Este descriptor permite filtrar contornos por relación de aspecto o dimensiones absolutas.
 
-La longitud del contorno se calcula como:
-
-\begin{equation}
-P = \sum_{i=0}^{n-1}\sqrt{(x_{i+1}-x_i)^2 + (y_{i+1}-y_i)^2}
-\end{equation}
-
-El perímetro es sensible a la resolución de la imagen y al ruido del contorno.
-
-\textbf{Rectángulo Delimitador (Bounding Box)}
-
-El bounding box es el rectángulo alineado a ejes que contiene completamente al contorno:
+El \textbf{centroide} representa el centro de masa geométrico del contorno:
 
 \begin{equation}
-\text{BBox} = (x_{min}, y_{min}, w, h)
+\bar{x} = \frac{1}{6A}\sum_{i=0}^{n-1}(x_i + x_{i+1})(x_i y_{i+1} - x_{i+1}y_i), \quad \bar{y} = \frac{1}{6A}\sum_{i=0}^{n-1}(y_i + y_{i+1})(x_i y_{i+1} - x_{i+1}y_i)
 \end{equation}
 
-donde:
-\begin{equation}
-x_{min} = \min_{i} x_i, \quad y_{min} = \min_{i} y_i
-\end{equation}
-\begin{equation}
-w = \max_{i} x_i - x_{min}, \quad h = \max_{i} y_i - y_{min}
-\end{equation}
+Este punto resulta fundamental para cálculos de desviación espacial en sistemas de corrección de posicionamiento visual.
 
-\textbf{Centroide}
+\subsubsection{Filtrado y Selección de Contornos}
 
-El centro de masa del contorno se calcula como:
+Las imágenes binarias reales contienen múltiples contornos, muchos correspondientes a ruido o elementos irrelevantes. El filtrado elimina contornos no deseados según criterios del problema. El \textbf{filtrado por área} establece límites: $A_{min} \leq A_{contorno} \leq A_{max}$. Los umbrales se definen según el tamaño esperado de objetos; por ejemplo, $A_{min} = 0.01 \cdot A_{imagen}$ filtra ruido puntual mientras que $A_{max} = 0.6 \cdot A_{imagen}$ elimina regiones que abarcan casi toda la imagen.
+
+El \textbf{filtrado por posición} descarta contornos que tocan bordes de la imagen (generalmente incompletos) o que no contienen el punto central (bajo asunción de objeto centrado en campo de visión). El \textbf{filtrado por forma} emplea relación de aspecto $AR = w/h$ del bounding box para discriminar orientaciones: valores $AR > 2$ indican objetos horizontales, $AR < 0.5$ objetos verticales, y valores intermedios formas aproximadamente cuadradas.
+
+Cuando múltiples contornos cumplen filtros básicos, se implementa un \textbf{sistema de scoring} que pondera múltiples criterios para seleccionar el mejor candidato. Un score típico combina área normalizada, distancia del centroide al centro de imagen, y métricas de calidad de forma:
 
 \begin{equation}
-\bar{x} = \frac{1}{6A}\sum_{i=0}^{n-1}(x_i + x_{i+1})(x_i y_{i+1} - x_{i+1}y_i)
+S_{total} = w_1 \cdot S_{área} + w_2 \cdot S_{posición} + w_3 \cdot S_{forma}
 \end{equation}
 
-\begin{equation}
-\bar{y} = \frac{1}{6A}\sum_{i=0}^{n-1}(y_i + y_{i+1})(x_i y_{i+1} - x_{i+1}y_i)
-\end{equation}
+donde los pesos $w_i$ reflejan importancia relativa de cada aspecto según el problema. Para detección de cintas de referencia, la posición central recibe mayor peso ($w_2 = 0.4$) dado que las desviaciones esperadas son pequeñas. Para clasificación de cultivos, el área domina ($w_1 = 0.5$) siendo el descriptor más discriminativo.
 
-donde $A$ es el área calculada previamente.
+\subsubsection{Análisis de Regiones Parciales}
 
-\subsubsection{Filtrado de Contornos}
+En aplicaciones donde la geometría varía entre zonas del objeto, analizar regiones específicas del contorno proporciona descriptores más robustos que el contorno completo. Por ejemplo, para detectar cintas de referencia con bases rectangulares pero formas irregulares superiores, se analiza únicamente el 10\% inferior del contorno: $R_{base} = \{(x,y) \in C : y \geq y_{max} - 0.1h\}$ donde $h$ es la altura del bounding box. Sobre esta región se calcula el ancho efectivo $w_{base} = \max_{(x,y) \in R_{base}} x - \min_{(x,y) \in R_{base}} x + 1$ y la ocupación (fracción de píxeles presentes respecto al rectángulo delimitador de la base). Bases sólidas rectangulares presentan ocupación superior a 0.8, mientras que formas irregulares tienen menor ocupación, permitiendo discriminación efectiva.
 
-En aplicaciones reales, las imágenes binarias contienen múltiples contornos, muchos correspondientes a ruido o elementos irrelevantes. El filtrado elimina contornos no deseados según criterios específicos del problema.
-
-\textbf{Filtrado por Área}
-
-Eliminar contornos cuya área esté fuera de un rango esperado:
-
-\begin{equation}
-\text{Contorno válido} \Leftrightarrow A_{min} \leq A_{contorno} \leq A_{max}
-\end{equation}
-
-Los umbrales se establecen según el tamaño esperado de objetos de interés. Por ejemplo, para detectar plantas en tubos de cultivo de área conocida, se pueden establecer límites adaptativos:
-
-\begin{equation}
-A_{min} = 0.01 \cdot A_{imagen}, \quad A_{max} = 0.6 \cdot A_{imagen}
-\end{equation}
-
-filtrando tanto ruido puntual como regiones que abarcan casi toda la imagen.
-
-\textbf{Filtrado por Posición}
-
-Descartar contornos que tocan los bordes de la imagen, ya que generalmente están incompletos:
-
-\begin{equation}
-\text{Toca borde} \Leftrightarrow \exists (x_i, y_i) \in C : x_i < \delta \lor x_i > W-\delta \lor y_i < \delta \lor y_i > H-\delta
-\end{equation}
-
-donde $W, H$ son dimensiones de la imagen y $\delta$ es un margen de tolerancia (típicamente 5 píxeles).
-
-Adicionalmente, se puede verificar proximidad a un margen interno:
-
-\begin{equation}
-\text{Cerca de borde} \Leftrightarrow x_{min} < m_W \lor x_{max} > W - m_W \lor y_{min} < m_H \lor y_{max} > H - m_H
-\end{equation}
-
-donde $m_W = 0.12W$ y $m_H = 0.12H$ definen un margen del 12\% desde cada borde.
-
-\textbf{Filtrado por Inclusión del Centro}
-
-Priorizar contornos que encierran el punto central de la imagen, asumiendo que el objeto de interés está centrado:
-
-\begin{equation}
-\text{Encierra centro} \Leftrightarrow (W/2, H/2) \in \text{Interior}(C)
-\end{equation}
-
-Esto se verifica mediante el algoritmo de ray casting o la función \texttt{pointPolygonTest} de OpenCV.
-
-\subsubsection{Análisis de Regiones Parciales del Contorno}
-
-En muchas aplicaciones, el análisis de regiones específicas del contorno proporciona información más robusta que el contorno completo. Esto es particularmente útil cuando los objetos tienen geometría variable en diferentes zonas.
-
-\textbf{Extracción del Segmento Inferior}
-
-Para objetos verticales donde la base tiene geometría más consistente (como cintas de cultivo en tubos), analizar solo el 10\% inferior mejora la robustez:
-
-\begin{equation}
-\text{Región base} = \{(x,y) \in C : y \geq y_{max} - 0.1 \cdot h\}
-\end{equation}
-
-donde $h = y_{max} - y_{min}$ es la altura del bounding box.
-
-\textbf{Ancho Efectivo de la Base}
-
-El ancho de la base se calcula como el rango horizontal de píxeles en la región inferior:
-
-\begin{equation}
-w_{base} = \max_{(x,y) \in \text{base}} x - \min_{(x,y) \in \text{base}} x + 1
-\end{equation}
-
-Este descriptor es más estable que el ancho del bounding box completo, especialmente cuando la parte superior del objeto es irregular.
-
-\textbf{Consistencia de Ancho}
-
-La varianza del ancho a lo largo de la región base cuantifica la regularidad geométrica:
-
-\begin{equation}
-\text{Consistencia} = 1 - \frac{\sigma_{w}}{\bar{w}}
-\end{equation}
-
-donde $\sigma_w$ es la desviación estándar de anchos por fila y $\bar{w}$ el ancho promedio. Valores cercanos a 1 indican bases rectangulares consistentes.
-
-\textbf{Ocupación de la Base}
-
-La proporción del rectángulo base ocupada por píxeles del contorno:
-
-\begin{equation}
-\text{Ocupación} = \frac{N_{píxeles\_base}}{w_{base} \times h_{base}}
-\end{equation}
-
-Bases sólidas tienen ocupación > 0.8, mientras formas irregulares tienen menor ocupación.
-
-\subsubsection{Métricas de Forma para Clasificación}
-
-\textbf{Rectangularidad de la Base}
-
-Mide qué tan rectangular es la región inferior del contorno:
-
-\begin{equation}
-\text{Rectangularidad} = \frac{A_{contorno\_base}}{A_{bbox\_base}}
-\end{equation}
-
-donde $A_{contorno\_base}$ es el área del contorno en la región base y $A_{bbox\_base}$ el área del rectángulo delimitador de esa región. Valores > 0.9 indican bases casi rectangulares, típicas de cintas o marcadores fabricados.
-
-\textbf{Rectitud de la Base}
-
-Evalúa qué tan horizontal es el borde inferior:
-
-\begin{equation}
-\text{Rectitud} = 1 - \frac{\sigma_y}{h_{tolerancia}}
-\end{equation}
-
-donde $\sigma_y$ es la desviación estándar de las coordenadas $y$ de los píxeles de la base, y $h_{tolerancia}$ es un valor de referencia (ej. 5 píxeles). Bases perfectamente horizontales tienen $\sigma_y \approx 0$.
-
-\subsubsection{Análisis Estadístico de Píxeles Internos}
-
-Además de la geometría del contorno, el contenido interno proporciona información cromática para clasificación.
-
-\textbf{Creación de Máscara de Región}
-
-Dada una imagen multicanal $\mathbf{I}$ y un contorno $C$, se crea una máscara binaria:
-
-\begin{equation}
-M(x,y) = \begin{cases}
-255 & \text{si } (x,y) \in \text{Interior}(C) \\
-0 & \text{en caso contrario}
-\end{cases}
-\end{equation}
-
-\textbf{Ratios de Color}
-
-Para clasificar entre objetos con diferente composición cromática (ej. lechugas verdes vs. tubos negros), se calculan proporciones de píxeles de cada clase dentro del contorno.
-
-Dadas máscaras de color verde $M_G$ y negro $M_B$:
-
-\begin{equation}
-\text{Ratio verde} = \frac{\sum_{(x,y)} M(x,y) \land M_G(x,y)}{\sum_{(x,y)} M(x,y)}
-\end{equation}
-
-\begin{equation}
-\text{Ratio negro} = \frac{\sum_{(x,y)} M(x,y) \land M_B(x,y)}{\sum_{(x,y)} M(x,y)}
-\end{equation}
-
-donde $\land$ denota operación AND bit a bit.
-
-\textbf{Intensidad Promedio}
-
-El brillo medio de píxeles internos:
-
-\begin{equation}
-\bar{I} = \frac{\sum_{(x,y):M(x,y)>0} I_{gray}(x,y)}{\sum_{(x,y)} M(x,y)}
-\end{equation}
-
-Esta métrica complementa los ratios de color para mejorar la discriminación.
-
-\subsubsection{Score Combinado para Selección}
-
-Cuando múltiples contornos cumplen filtros básicos, se requiere un criterio cuantitativo para seleccionar el más relevante. Un score combinado pondera múltiples descriptores:
-
-\begin{equation}
-S_{total} = w_1 S_{ancho} + w_2 S_{consistencia} + w_3 S_{ocupación} + w_4 S_{rectitud} + S_{bonus}
-\end{equation}
-
-donde cada $S_i \in [0,1]$ es un score normalizado y $w_i$ son pesos que reflejan importancia relativa.
-
-\textbf{Normalización de Scores}
-
-Los descriptores se normalizan a [0,1]:
-
-\begin{equation}
-S_{ancho} = \min\left(\frac{w_{base}}{w_{ref}}, 1\right)
-\end{equation}
-
-\begin{equation}
-S_{consistencia} = \max\left(0, 1 - \frac{\sigma_w}{100}\right)
-\end{equation}
-
-\begin{equation}
-S_{ocupación} = \min\left(\frac{N_{píxeles}}{w_{base} \cdot h_{base}}, 1\right)
-\end{equation}
-
-\textbf{Ejemplo de Ponderación}
-
-Para detección de cintas de cultivo:
-\begin{equation}
-S_{total} = 0.40 \cdot S_{ancho} + 0.30 \cdot S_{consistencia} + 0.20 \cdot S_{ocupación} + 0.10 \cdot S_{rectitud} + S_{bonus}
-\end{equation}
-
-El ancho base tiene mayor peso (40\%) por ser el descriptor más discriminativo. El bonus adicional puede otorgarse por criterios secundarios (ej. estar centrado en la imagen).
-
-\subsubsection{Componentes Conectados}
-
-Antes de la detección de contornos, identificar componentes conectados permite filtrar regiones por propiedades antes de extraer contornos detallados.
-
-\textbf{Algoritmo de Etiquetado}
-
-El algoritmo de componentes conectados asigna una etiqueta única a cada región conexa:
-
-\begin{equation}
-L: \mathbb{Z}^2 \to \mathbb{N}
-\end{equation}
-
-donde $L(x,y)$ es la etiqueta del píxel en $(x,y)$.
-
-\textbf{Estadísticas de Componentes}
-
-Para cada componente $i$, se extraen:
-\begin{itemize}
-\item Área: $A_i = \sum_{(x,y)} \mathbb{1}[L(x,y) = i]$
-\item Bounding box: $(x_i, y_i, w_i, h_i)$
-\item Centroide: $(\bar{x}_i, \bar{y}_i)$
-\end{itemize}
-
-\textbf{Filtrado Pre-Contorno}
-
-Eliminar componentes por área antes de extraer contornos reduce carga computacional:
-
-\begin{equation}
-\text{Imagen filtrada}(x,y) = \begin{cases}
-255 & \text{si } L(x,y) = i \land A_{min} \leq A_i \leq A_{max} \\
-0 & \text{en caso contrario}
-\end{cases}
-\end{equation}
-
-Este pre-filtrado es especialmente útil cuando hay cientos de componentes pequeños de ruido.
+Este enfoque de análisis por regiones resulta particularmente valioso cuando las condiciones de captura introducen variabilidad en ciertas zonas del objeto (como hojas de lechuga que se extienden irregularmente) pero otras zonas mantienen geometría consistente (como bases de recipientes).
