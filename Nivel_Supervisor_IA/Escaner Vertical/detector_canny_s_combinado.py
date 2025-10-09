@@ -14,7 +14,8 @@ import sys
 import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor'))
-from camera_manager import get_camera_manager
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor', 'core'))
+from core.camera_manager import get_camera_manager
 
 def capturar_imagen():
     """Captura imagen de la cámara"""
@@ -246,6 +247,213 @@ def detectar_posicion_tubo(imagen=None, debug=False):
 
     y_sup, y_inf, centro_y, info = detectar_lineas_tubo(imagen, debug=debug)
     return centro_y
+
+def detectar_lineas_tubo_visual_debug(imagen):
+    """
+    Visualización paso a paso del detector de líneas usando cv2.imshow
+    Similar a detect_tape_position_debug del detector horizontal
+    NO mueve el robot, solo muestra el procesamiento de una imagen estática
+
+    Args:
+        imagen: Imagen ya capturada y procesada (rotada y recortada)
+
+    Returns:
+        tuple: (y_superior, y_inferior, centro_y, info)
+    """
+    print("\n" + "="*60)
+    print("DEBUG VISUAL - DETECTOR DE LÍNEAS DEL TUBO")
+    print("="*60)
+    print("Presiona 'c' en cada ventana para continuar...")
+    print("="*60 + "\n")
+
+    # Mostrar original
+    cv2.imshow("DEBUG VERTICAL: 1. Imagen Original", imagen)
+    key = cv2.waitKey(0) & 0xFF
+    if key == ord('q'):
+        cv2.destroyAllWindows()
+        return None, None, None, None
+
+    # Conversiones
+    gray = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
+    hsv = cv2.cvtColor(imagen, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(hsv)
+
+    # Mostrar canal S
+    cv2.imshow("DEBUG VERTICAL: 2. Canal S (Saturacion)", s)
+    print(f"Canal S - Media: {np.mean(s):.1f}, Std: {np.std(s):.1f}")
+    key = cv2.waitKey(0) & 0xFF
+    if key == ord('q'):
+        cv2.destroyAllWindows()
+        return None, None, None, None
+
+    # Canny
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    edges_canny = cv2.Canny(blurred, 20, 172)
+    cv2.imshow("DEBUG VERTICAL: 3. Bordes Canny (20, 172)", edges_canny)
+    key = cv2.waitKey(0) & 0xFF
+    if key == ord('q'):
+        cv2.destroyAllWindows()
+        return None, None, None, None
+
+    # Máscara S bajo
+    s_inv = 255 - s
+    _, mask_s_low = cv2.threshold(s_inv, 150, 255, cv2.THRESH_BINARY)
+    cv2.imshow("DEBUG VERTICAL: 4. Mascara S Bajo (inv > 150)", mask_s_low)
+    key = cv2.waitKey(0) & 0xFF
+    if key == ord('q'):
+        cv2.destroyAllWindows()
+        return None, None, None, None
+
+    # Combinar Canny + Máscara S
+    kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    edges_dilated = cv2.dilate(edges_canny, kernel_dilate, iterations=1)
+    edges_filtrados = cv2.bitwise_and(edges_dilated, mask_s_low)
+    cv2.imshow("DEBUG VERTICAL: 5. Canny AND Mascara S", edges_filtrados)
+    key = cv2.waitKey(0) & 0xFF
+    if key == ord('q'):
+        cv2.destroyAllWindows()
+        return None, None, None, None
+
+    # Morfología para cerrar gaps
+    kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 9))
+    edges_final = cv2.morphologyEx(edges_filtrados, cv2.MORPH_CLOSE, kernel_close)
+    cv2.imshow("DEBUG VERTICAL: 6. Cierre Morfologico (3x9)", edges_final)
+    key = cv2.waitKey(0) & 0xFF
+    if key == ord('q'):
+        cv2.destroyAllWindows()
+        return None, None, None, None
+
+    # Encontrar contornos y analizar
+    contours, _ = cv2.findContours(edges_final, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    candidatos = []
+
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area < 250:
+            continue
+
+        x, y, w, h = cv2.boundingRect(cnt)
+        aspect_ratio = w / h if h > 0 else 0
+
+        # Buscar rectángulos VERTICALES (tapa)
+        if aspect_ratio < 0.9:
+            # Analizar saturación en ROI
+            roi_s = s[y:y+h, x:x+w]
+            mean_s = np.mean(roi_s)
+            std_s = np.std(roi_s)
+
+            score = 0
+
+            # Scoring por forma vertical
+            if aspect_ratio < 0.5:
+                score += 35
+            elif aspect_ratio < 0.7:
+                score += 25
+            else:
+                score += 15
+
+            # Scoring por tamaño
+            if 15 < w < 80 and 30 < h < 150:
+                score += 25
+
+            # Scoring por saturación baja y uniforme
+            if mean_s < 35:
+                score += 30
+                if std_s < 15:
+                    score += 20
+
+            # Scoring por estar centrado horizontalmente
+            centro_x = x + w // 2
+            img_center_x = imagen.shape[1] // 2
+            dist_x = abs(centro_x - img_center_x)
+            if dist_x < imagen.shape[1] * 0.25:
+                score += 20
+
+            # Scoring por área
+            if 600 < area < 6000:
+                score += 15
+
+            # Extraer líneas superior e inferior
+            y_superior = y
+            y_inferior = y + h
+            centro_y = y + h // 2
+
+            candidatos.append({
+                'bbox': (x, y, w, h),
+                'y_superior': y_superior,
+                'y_inferior': y_inferior,
+                'centro_y': centro_y,
+                'centro_x': centro_x,
+                'area': area,
+                'aspect': aspect_ratio,
+                'score': score,
+                'mean_s': mean_s,
+                'std_s': std_s
+            })
+
+    # Ordenar por score
+    candidatos = sorted(candidatos, key=lambda c: c['score'], reverse=True)
+
+    print(f"\nCandidatos encontrados: {len(candidatos)}")
+
+    # Mostrar resultado final
+    resultado = imagen.copy()
+
+    if candidatos:
+        mejor = candidatos[0]
+        print(f"\nMejor candidato:")
+        print(f"  Score: {mejor['score']}")
+        print(f"  Linea Superior (Y): {mejor['y_superior']}")
+        print(f"  Linea Inferior (Y): {mejor['y_inferior']}")
+        print(f"  Centro (Y): {mejor['centro_y']}")
+        print(f"  Altura: {mejor['y_inferior'] - mejor['y_superior']} px")
+        print(f"  Saturacion media: {mejor['mean_s']:.1f}")
+        print(f"  Aspect ratio: {mejor['aspect']:.2f}")
+
+        x, y, w, h = mejor['bbox']
+        y_sup = mejor['y_superior']
+        y_inf = mejor['y_inferior']
+        centro_y = mejor['centro_y']
+
+        # Línea superior (ROJA)
+        cv2.line(resultado, (0, y_sup), (imagen.shape[1], y_sup), (0, 0, 255), 3)
+        cv2.putText(resultado, f"Y_SUP = {y_sup}", (10, y_sup - 10),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+        # Línea inferior (VERDE)
+        cv2.line(resultado, (0, y_inf), (imagen.shape[1], y_inf), (0, 255, 0), 3)
+        cv2.putText(resultado, f"Y_INF = {y_inf}", (10, y_inf + 25),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+        # Línea centro (AZUL)
+        cv2.line(resultado, (0, centro_y), (imagen.shape[1], centro_y), (255, 0, 0), 2)
+        cv2.putText(resultado, f"CENTRO = {centro_y}", (10, centro_y - 10),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+
+        # Rectángulo del contorno (amarillo)
+        cv2.rectangle(resultado, (x, y), (x+w, y+h), (0, 255, 255), 2)
+
+        # Mostrar otros candidatos en gris
+        for i, cand in enumerate(candidatos[1:3], start=1):
+            x, y, w, h = cand['bbox']
+            color = (100, 100, 100)
+            cv2.rectangle(resultado, (x, y), (x+w, y+h), color, 1)
+
+    cv2.imshow("DEBUG VERTICAL: 7. RESULTADO - Lineas Detectadas", resultado)
+    print("\nPresiona cualquier tecla para cerrar...")
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    # Retornar mejor candidato si tiene score suficiente
+    if candidatos and candidatos[0]['score'] > 50:
+        mejor = candidatos[0]
+        return (mejor['y_superior'],
+                mejor['y_inferior'],
+                mejor['centro_y'],
+                mejor)
+    else:
+        return None, None, None, None
 
 if __name__ == "__main__":
     print("="*70)

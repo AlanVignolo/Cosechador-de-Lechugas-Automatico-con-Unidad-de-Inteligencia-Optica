@@ -91,11 +91,13 @@ except Exception as e:
 # Importar escáner vertical automático con IA
 SCANNER_VERTICAL_AUTO_AVAILABLE = False
 scan_vertical_with_flags = None
+detectar_lineas_tubo_visual_debug = None
 
 try:
     print("Intentando importar escáner vertical automático...")
     sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Nivel_Supervisor_IA', 'Escaner Vertical'))
     from escaner_vertical import scan_vertical_with_flags
+    from detector_canny_s_combinado import detectar_lineas_tubo_visual_debug, capturar_imagen
     SCANNER_VERTICAL_AUTO_AVAILABLE = True
     print("Escáner vertical automático importado exitosamente")
 except ImportError as e:
@@ -1107,13 +1109,47 @@ def menu_interactivo(uart_manager, robot):
                 print("="*60)
                 print("1. Modo NORMAL (sin visualización)")
                 print("2. Modo DEBUG (con visualización en tiempo real)")
+                print("3. Modo DEBUG ESTÁTICO (captura única, SIN MOVIMIENTO)")
                 print("0. Volver")
                 print("-"*60)
 
-                sub_opt = input("Selecciona modo (0-2): ")
+                sub_opt = input("Selecciona modo (0-3): ")
 
                 if sub_opt == '0':
                     pass
+                elif sub_opt == '3':
+                    # Modo DEBUG ESTÁTICO - Sin movimiento del robot
+                    print("\n" + "="*60)
+                    print("MODO DEBUG ESTÁTICO - DETECTOR DE LÍNEAS DEL TUBO")
+                    print("="*60)
+                    print("Este modo captura UNA imagen y muestra paso a paso")
+                    print("el procesamiento del detector (SIN mover el robot)")
+                    print("-"*60)
+
+                    try:
+                        # Capturar imagen (rotada y recortada)
+                        print("\nCapturando imagen...")
+                        imagen = capturar_imagen()
+
+                        if imagen is None:
+                            print("Error: No se pudo capturar imagen")
+                        else:
+                            print("Imagen capturada. Procesando...")
+                            # Mostrar visualización paso a paso
+                            y_sup, y_inf, centro_y, info = detectar_lineas_tubo_visual_debug(imagen)
+
+                            if y_sup is not None:
+                                print("\n✓ Detección exitosa")
+                                print(f"  Y Superior: {y_sup} px")
+                                print(f"  Y Inferior: {y_inf} px")
+                                print(f"  Centro: {centro_y} px")
+                                print(f"  Altura: {y_inf - y_sup} px")
+                            else:
+                                print("\n✗ No se detectó el tubo en la imagen")
+                    except Exception as e:
+                        print(f"Error en modo debug estático: {e}")
+                        import traceback
+                        traceback.print_exc()
                 elif sub_opt in ['1', '2']:
                     debug_mode = (sub_opt == '2')
                     print("\nEste modo detecta automáticamente cuando el tubo está COMPLETO")
