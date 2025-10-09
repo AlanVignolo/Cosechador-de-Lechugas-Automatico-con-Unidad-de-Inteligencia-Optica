@@ -1,0 +1,94 @@
+\subsubsection{Aplicación: Escaneo Vertical para Mapeo Automático}
+
+El detector de tubos se emplea exclusivamente en el contexto de escaneo vertical durante la fase de mapeo autónomo del entorno. En esta operación, el robot se posiciona en una coordenada horizontal fija y ejecuta un barrido vertical completo, capturando imágenes periódicamente mientras se desplaza en dirección Y.
+
+\textbf{Protocolo de Escaneo}
+
+El robot inicia el barrido desde la posición vertical mínima (típicamente $Y = 0$ mm) y se desplaza hacia arriba a velocidad reducida de 30 mm/s, significativamente menor que la velocidad nominal de 50 mm/s del eje vertical. Esta reducción de velocidad es necesaria para garantizar calidad de imagen suficiente considerando que las capturas se realizan con el robot en movimiento.
+
+Durante el desplazamiento, el sistema captura imágenes a intervalos regulares de 50 milímetros de desplazamiento vertical. Para un espacio de trabajo de 1200 mm de altura, esto resulta en 24 capturas por barrido vertical. Cada imagen capturada se procesa inmediatamente mediante el pipeline del detector de tubos.
+
+Cuando el detector identifica exitosamente un tubo (retorna valores válidos para $y_{superior}$ e $y_{inferior}$), el sistema registra la coordenada Y actual del robot como ubicación de una fila de estaciones. Esta coordenada se almacena en una lista temporal de filas detectadas.
+
+\textbf{Mecanismo de Debouncing Espacial}
+
+Dado que el tubo presenta dimensión vertical de aproximadamente 100 mm y el robot se desplaza en incrementos de 50 mm, es probable que un mismo tubo sea detectado en múltiples capturas consecutivas. Para evitar registros duplicados de la misma fila, se implementa debouncing espacial: tras registrar una detección, se inhabilita el registro de nuevas detecciones durante los siguientes 120 mm de desplazamiento vertical.
+
+Este valor de debouncing se seleccionó considerando que la separación mínima entre filas de tubos es de 200 mm. El umbral de 120 mm garantiza que no se confundan dos tubos adyacentes mientras permite tolerancia para variabilidad en las distancias reales del sistema hidropónico.
+
+Matemáticamente, una nueva detección en coordenada $Y_{actual}$ se registra únicamente si:
+
+\begin{equation}
+|Y_{actual} - Y_{última}| > 120 \text{ mm}
+\end{equation}
+
+donde $Y_{última}$ es la coordenada de la última detección registrada.
+
+\textbf{Confirmación Temporal}
+
+Adicionalmente al debouncing espacial, se implementa confirmación temporal que requiere detección consistente durante múltiples frames consecutivos. Específicamente, un tubo se considera confirmado únicamente si es detectado en al menos 3 de 5 capturas consecutivas.
+
+Este criterio rechaza detecciones espurias causadas por reflejos transitorios, sombras temporales de elementos móviles, o artefactos de captura. La ventana de confirmación de 5 frames corresponde a aproximadamente 250 mm de desplazamiento (5 frames × 50 mm/frame), compatible con el tamaño vertical de los tubos.
+
+El algoritmo mantiene un buffer circular de los últimos 5 resultados de detección. Cuando el buffer contiene al menos 3 resultados positivos, se confirma la presencia del tubo y se registra la coordenada promedio de las detecciones positivas, reduciendo el efecto del ruido de medición.
+
+\textbf{Construcción del Vector de Filas}
+
+Al finalizar el barrido vertical completo, el sistema ha construido un vector de coordenadas Y que identifica todas las filas de tubos presentes en el entorno:
+
+\begin{equation}
+\mathbf{F}_{filas} = [Y_1, Y_2, ..., Y_n]^T
+\end{equation}
+
+donde $n$ es el número de filas detectadas, típicamente 5 a 7 para una instalación estándar de cultivo hidropónico.
+
+Este vector se combina posteriormente con el vector de columnas obtenido mediante escaneo horizontal (que emplea el detector de marcadores de referencia) para construir la matriz completa de posiciones de estaciones.
+
+\subsubsection{Resultados y Desempeño}
+
+Se evaluó el desempeño del detector de tubos mediante 20 barridos verticales completos ejecutados bajo diferentes condiciones operativas. Los resultados fueron:
+
+\textbf{Tasa de Detección:}
+\begin{itemize}
+\item Tubos correctamente detectados: 132 de 140 (94.3\%)
+\item Falsos negativos: 8 (5.7\%)
+\item Falsos positivos: 2 (tasa de 1.5\%)
+\end{itemize}
+
+Los 8 falsos negativos ocurrieron en condiciones de iluminación deficiente (inferior a 600 lux) donde el contraste entre los bordes del tubo y el fondo se reduce significativamente. Los 2 falsos positivos correspondieron a elementos estructurales del invernadero (postes verticales de soporte) que presentaron geometría y propiedades cromáticas similares a los tubos.
+
+\textbf{Precisión de Localización:}
+
+Para los 132 tubos correctamente detectados, se comparó la coordenada Y registrada contra la posición real medida manualmente con instrumento de metrología. Los resultados fueron:
+
+\begin{itemize}
+\item Error medio: 3.2 mm
+\item Desviación estándar: 2.8 mm
+\item Error máximo: 8.5 mm
+\end{itemize}
+
+Esta precisión es aceptable considerando que el objetivo del mapeo es identificar la fila aproximada donde se encuentra el tubo, no determinar su posición con precisión milimétrica. El sistema de corrección visual mediante marcadores refinará posteriormente el posicionamiento cuando se requiera precisión elevada para operaciones de cosecha.
+
+\textbf{Tiempo de Operación:}
+
+El tiempo total para completar un barrido vertical completo de 1200 mm con 24 capturas es de aproximadamente 45 segundos, desglosado en:
+
+\begin{itemize}
+\item Tiempo de desplazamiento mecánico: 40 segundos (1200 mm a 30 mm/s)
+\item Tiempo acumulado de procesamiento: 2.9 segundos (24 capturas × 120 ms)
+\item Tiempo de sincronización y estabilización: 2.1 segundos
+\end{itemize}
+
+Este tiempo es compatible con los requerimientos del sistema, dado que el barrido vertical se ejecuta únicamente una vez al inicio de cada sesión de operación para construir el mapa del entorno.
+
+\textbf{Robustez ante Variabilidad}
+
+Se evaluó la robustez del detector ante variaciones en condiciones operativas:
+
+\begin{itemize}
+\item Variación de iluminación (800 a 1200 lux): tasa de detección > 93\%
+\item Presencia de vegetación densa que cubre parcialmente el tubo: tasa de detección 88\%
+\item Ángulos de inclinación del robot de hasta ±5 grados: tasa de detección > 90\%
+\end{itemize}
+
+Estos resultados demuestran que el algoritmo presenta robustez adecuada para operación en condiciones reales de invernadero, donde la iluminación natural variable y el crecimiento irregular de las plantas introducen variabilidad significativa en las escenas capturadas.

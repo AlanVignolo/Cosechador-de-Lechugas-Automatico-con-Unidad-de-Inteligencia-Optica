@@ -1,381 +1,65 @@
 \subsection{Clasificación Basada en Análisis Morfológico}
 
-La clasificación morfológica de objetos utiliza características geométricas y estadísticas extraídas de contornos e imágenes para asignar categorías a elementos detectados. A diferencia de métodos de aprendizaje profundo, este enfoque se fundamenta en reglas explícitas derivadas del conocimiento del dominio y análisis estadístico de datos representativos.
+La clasificación morfológica de objetos utiliza características geométricas y estadísticas extraídas de contornos e imágenes para asignar categorías a elementos detectados. A diferencia de métodos de aprendizaje profundo que requieren extensos conjuntos de entrenamiento y elevada capacidad computacional, este enfoque se fundamenta en reglas explícitas derivadas del conocimiento del dominio y análisis estadístico de muestras representativas. El método resulta particularmente efectivo cuando las clases presentan diferenciación clara en características medibles como tamaño, forma o color, y cuando se dispone de entornos controlados donde las condiciones de captura son predecibles.
 
-\subsubsection{Fundamentos de Clasificación por Umbrales}
+\subsubsection{Clasificación por Umbrales sobre Descriptores}
 
-El método más directo de clasificación morfológica establece límites de decisión basados en valores de descriptores geométricos. Para un descriptor $d$ y un conjunto de clases $\mathcal{C} = \{c_1, c_2, ..., c_n\}$, la regla de clasificación se define como:
+El método más directo establece límites de decisión basados en valores de descriptores geométricos. Para un descriptor $d$ y un conjunto de clases $\mathcal{C} = \{c_1, c_2, ..., c_n\}$, la regla de clasificación se define mediante umbrales $t_0, t_1, ..., t_n$ que particionan el espacio de características:
 
 \begin{equation}
 \text{Clase}(x) = c_i \quad \text{si} \quad t_{i-1} < d(x) \leq t_i
 \end{equation}
 
-donde $t_0, t_1, ..., t_n$ son umbrales que particionan el espacio de características.
+Para objetos que se diferencian principalmente por tamaño, el área en píxeles constituye un descriptor efectivo. Por ejemplo, en clasificación de tubos de cultivo donde vasos vacíos presentan poca vegetación visible, plantines muestran área verde intermedia, y lechugas desarrolladas ocupan áreas grandes, se establecen umbrales que separan estas categorías. La robustez del método depende de la separabilidad entre clases: la distancia entre centroides de clases adyacentes debe ser significativa respecto a la dispersión intra-clase para minimizar errores de clasificación.
 
-\textbf{Clasificación por Área}
-
-Para objetos que se diferencian principalmente por tamaño, el área en píxeles constituye un descriptor efectivo:
+La selección óptima de umbrales requiere análisis estadístico de una base de datos representativa. Para cada clase $c_i$, se calculan la media $\mu_i$ y desviación estándar $\sigma_i$ del descriptor mediante:
 
 \begin{equation}
-\text{Clase}(C) = \begin{cases}
-\text{Pequeño} & \text{si } A < t_1 \\
-\text{Mediano} & \text{si } t_1 \leq A < t_2 \\
-\text{Grande} & \text{si } A \geq t_2
-\end{cases}
+\mu_i = \frac{1}{N_i}\sum_{j=1}^{N_i} d_j, \quad \sigma_i = \sqrt{\frac{1}{N_i-1}\sum_{j=1}^{N_i}(d_j - \mu_i)^2}
 \end{equation}
 
-La robustez del método depende de la separabilidad entre clases. La distancia entre centroides de clases adyacentes debe ser significativa respecto a la dispersión intra-clase.
-
-\subsubsection{Análisis Estadístico para Determinación de Umbrales}
-
-La selección óptima de umbrales requiere análisis estadístico de una base de datos representativa de cada clase.
-
-\textbf{Parámetros Estadísticos por Clase}
-
-Para cada clase $c_i$, se calculan la media y desviación estándar del descriptor de interés:
-
-\begin{equation}
-\mu_i = \frac{1}{N_i}\sum_{j=1}^{N_i} d_j
-\end{equation}
-
-\begin{equation}
-\sigma_i = \sqrt{\frac{1}{N_i-1}\sum_{j=1}^{N_i}(d_j - \mu_i)^2}
-\end{equation}
-
-donde $N_i$ es el número de muestras de la clase $i$, $\mu_i$ es la media y $\sigma_i$ la desviación estándar del descriptor $d$.
-
-\textbf{Determinación de Umbrales mediante Análisis de Distribuciones}
-
-Asumiendo distribuciones normales para cada clase:
-
-\begin{equation}
-P(d|c_i) = \frac{1}{\sigma_i\sqrt{2\pi}} \exp\left(-\frac{(d-\mu_i)^2}{2\sigma_i^2}\right)
-\end{equation}
-
-Para distribuciones con igual varianza ($\sigma_i = \sigma_{i+1} = \sigma$), el umbral óptimo entre clases consecutivas es:
+donde $N_i$ es el número de muestras de la clase $i$ y $d_j$ los valores del descriptor observados. Asumiendo distribuciones normales con varianzas similares, el umbral óptimo entre clases consecutivas que minimiza la probabilidad de error es el punto medio entre sus medias:
 
 \begin{equation}
 t_i^* = \frac{\mu_i + \mu_{i+1}}{2}
 \end{equation}
 
-Este umbral minimiza la probabilidad de error cuando las clases tienen igual probabilidad a priori y varianzas similares.
+Este criterio resulta de igualar las densidades de probabilidad gaussianas de ambas clases y resolver para el punto de intersección.
 
-\subsubsection{Clasificación Multi-Criterio con Ratios de Color}
+\subsubsection{Clasificación Multi-Criterio con Distancia Normalizada}
 
-Cuando un único descriptor geométrico no proporciona separabilidad suficiente, se emplean múltiples características simultáneamente. En el contexto de agricultura de precisión, los ratios de color resultan particularmente efectivos.
-
-\textbf{Espacio de Características de Color}
-
-Dado un contorno, se calculan ratios que cuantifican la proporción de diferentes componentes cromáticos:
+Cuando un único descriptor no proporciona separabilidad suficiente, se emplean múltiples características simultáneamente. En agricultura de precisión, los ratios de color resultan particularmente efectivos. Dado un contorno detectado, se calculan proporciones de píxeles de diferentes tonalidades dentro de su región:
 
 \begin{equation}
-r_{verde} = \frac{N_{píxeles\_verdes}}{N_{píxeles\_totales}}
+r_{verde} = \frac{N_{píxeles\_verdes}}{N_{píxeles\_totales}}, \quad r_{negro} = \frac{N_{píxeles\_negros}}{N_{píxeles\_totales}}
 \end{equation}
 
-\begin{equation}
-r_{negro} = \frac{N_{píxeles\_negros}}{N_{píxeles\_totales}}
-\end{equation}
+Cada objeto se representa como un vector en el espacio de características $\mathbf{x} = [r_{verde}, r_{negro}, I_{media}]^T$, donde $I_{media}$ es la intensidad promedio de píxeles internos. Para cada clase $c_i$, se define un prototipo mediante las medias de los descriptores $\boldsymbol{\mu}_i = [\mu_{verde,i}, \mu_{negro,i}, \mu_{intensidad,i}]^T$ y desviaciones estándar $\boldsymbol{\sigma}_i = [\sigma_{verde,i}, \sigma_{negro,i}, \sigma_{intensidad,i}]^T$ calculadas sobre el conjunto de entrenamiento.
 
-donde $N_{píxeles\_totales} = N_{píxeles\_verdes} + N_{píxeles\_negros} + N_{píxeles\_otros}$.
-
-Cada objeto se representa como un vector en el espacio de características:
-
-\begin{equation}
-\mathbf{x} = [r_{verde}, r_{negro}, I_{media}]^T
-\end{equation}
-
-donde $I_{media}$ es la intensidad promedio de píxeles internos.
-
-\textbf{Prototipos de Clase}
-
-Para cada clase $c_i$, se define un prototipo mediante las medias de los descriptores:
-
-\begin{equation}
-\boldsymbol{\mu}_i = [\mu_{verde,i}, \mu_{negro,i}, \mu_{intensidad,i}]^T
-\end{equation}
-
-\textbf{Desviaciones Estándar por Clase}
-
-Las variaciones dentro de cada clase se cuantifican mediante:
-
-\begin{equation}
-\boldsymbol{\sigma}_i = [\sigma_{verde,i}, \sigma_{negro,i}, \sigma_{intensidad,i}]^T
-\end{equation}
-
-\subsubsection{Distancia Euclidiana Normalizada}
-
-Para clasificar un objeto nuevo, se calcula su distancia a cada prototipo de clase. La normalización por desviación estándar garantiza que descriptores con diferentes rangos contribuyan equitativamente.
-
-\textbf{Distancia Normalizada}
-
-La distancia de un objeto $\mathbf{x}$ al prototipo de la clase $c_i$ se define como:
+La clasificación de un objeto nuevo se realiza calculando su distancia normalizada a cada prototipo de clase. La normalización por desviación estándar garantiza que descriptores con diferentes rangos contribuyan equitativamente:
 
 \begin{equation}
 D_i(\mathbf{x}) = \sqrt{\sum_{k=1}^{m} \left(\frac{x_k - \mu_{k,i}}{\sigma_{k,i} + \epsilon}\right)^2}
 \end{equation}
 
-donde:
-\begin{itemize}
-\item $m$ es el número de descriptores (ej. 3 para verde, negro, intensidad)
-\item $x_k$ es el valor del descriptor $k$ para el objeto
-\item $\mu_{k,i}$ es la media del descriptor $k$ para la clase $i$
-\item $\sigma_{k,i}$ es la desviación estándar del descriptor $k$ para la clase $i$
-\item $\epsilon$ es un término pequeño (ej. $10^{-6}$) para evitar división por cero
-\end{itemize}
-
-\textbf{Regla de Clasificación por Mínima Distancia}
-
-El objeto se asigna a la clase con menor distancia normalizada:
+donde $m$ es el número de descriptores, $x_k$ el valor del descriptor $k$ para el objeto, $\mu_{k,i}$ y $\sigma_{k,i}$ los parámetros de la clase $i$, y $\epsilon$ un término pequeño ($10^{-6}$) que evita división por cero. Esta métrica implementa la distancia de Mahalanobis simplificada bajo la asunción de independencia entre descriptores. El objeto se asigna a la clase con menor distancia:
 
 \begin{equation}
 \text{Clase}(\mathbf{x}) = \arg\min_{i} D_i(\mathbf{x})
 \end{equation}
 
-Este criterio implementa un clasificador de vecino más cercano en el espacio normalizado.
-
-\textbf{Cálculo de Confianza}
-
-La confianza de la clasificación se deriva de las distancias relativas:
+La confianza de la clasificación se estima mediante la relación entre distancias:
 
 \begin{equation}
 \text{Confianza} = 1 - \frac{D_{min}}{D_{max} + D_{min}}
 \end{equation}
 
-donde $D_{min}$ es la distancia a la clase predicha y $D_{max}$ la distancia a la clase más lejana. Valores cercanos a 1 indican alta confianza; valores cercanos a 0.5 sugieren ambigüedad.
+donde $D_{min}$ es la distancia a la clase predicha y $D_{max}$ la distancia a la clase más lejana. Valores cercanos a 1 indican alta confianza (objeto claramente perteneciente a una clase); valores cercanos a 0.5 sugieren ambigüedad (objeto equidistante entre clases). Esta información de confianza puede emplearse en el nivel supervisor para implementar estrategias de verificación adicional cuando la clasificación es incierta.
 
-Para mejorar robustez, la confianza se limita:
+\subsubsection{Ventajas y Limitaciones del Enfoque}
 
-\begin{equation}
-\text{Confianza}_{final} = \max(0.3, \min(1.0, \text{Confianza}))
-\end{equation}
+El enfoque morfológico presenta ventajas significativas para aplicaciones de agricultura de precisión. La interpretabilidad de las reglas de decisión facilita la validación agronómica y la depuración de fallos mediante inspección directa de valores de descriptores. La eficiencia computacional permite ejecución en tiempo real sobre hardware embebido sin requerir GPUs o aceleradores especializados. El método requiere únicamente decenas a cientos de muestras por clase para establecer parámetros estadísticos, en contraste con los miles de imágenes necesarios para entrenar redes neuronales profundas. El control explícito sobre umbrales y pesos permite ajuste directo según requerimientos operativos, sin necesidad de reentrenamiento completo del modelo.
 
-garantizando un rango $[0.3, 1.0]$.
+Las limitaciones incluyen la necesidad de diseño manual de características, requiriendo conocimiento experto del dominio para identificar descriptores relevantes. El método se limita a características directamente medibles, sin capacidad de capturar patrones visuales complejos o texturas sutiles que podrían ser aprendidas automáticamente por métodos de aprendizaje profundo. Variaciones significativas de iluminación o perspectiva pueden afectar los descriptores cromáticos, aunque este efecto se mitiga en entornos controlados como invernaderos con iluminación artificial. La separabilidad lineal de clases en el espacio de características limita la aplicabilidad: el método funciona efectivamente con 2-5 categorías bien diferenciadas, pero puede degradar con mayor número de clases o cuando las clases no son linealmente separables.
 
-\subsubsection{Ejemplo: Clasificación de Cultivos}
-
-Para un sistema de clasificación de tubos de cultivo con tres clases:
-
-\begin{itemize}
-\item \textbf{LECHUGAS}: Alto ratio verde ($r_{verde} > 0.40$)
-\item \textbf{PLANTINES}: Ratio verde moderado, alto ratio negro
-\item \textbf{VASOS} (vacíos): Muy bajo ratio verde, alto ratio negro
-\end{itemize}
-
-\textbf{Prototipos Estimados}
-
-A partir de un dataset de entrenamiento:
-
-\begin{equation}
-\boldsymbol{\mu}_{LECHUGAS} = [0.65, 0.35, 120]^T, \quad \boldsymbol{\sigma}_{LECHUGAS} = [0.15, 0.15, 30]^T
-\end{equation}
-
-\begin{equation}
-\boldsymbol{\mu}_{PLANTINES} = [0.45, 0.55, 90]^T, \quad \boldsymbol{\sigma}_{PLANTINES} = [0.15, 0.15, 25]^T
-\end{equation}
-
-\begin{equation}
-\boldsymbol{\mu}_{VASOS} = [0.05, 0.95, 50]^T, \quad \boldsymbol{\sigma}_{VASOS} = [0.10, 0.10, 20]^T
-\end{equation}
-
-\textbf{Clasificación de Muestra}
-
-Dado un objeto con descriptores $\mathbf{x} = [0.60, 0.40, 115]^T$:
-
-\begin{equation}
-D_{LECHUGAS} = \sqrt{\left(\frac{0.60-0.65}{0.15}\right)^2 + \left(\frac{0.40-0.35}{0.15}\right)^2 + \left(\frac{115-120}{30}\right)^2} = 0.47
-\end{equation}
-
-\begin{equation}
-D_{PLANTINES} = \sqrt{\left(\frac{0.60-0.45}{0.15}\right)^2 + \left(\frac{0.40-0.55}{0.15}\right)^2 + \left(\frac{115-90}{25}\right)^2} = 1.52
-\end{equation}
-
-\begin{equation}
-D_{VASOS} = \sqrt{\left(\frac{0.60-0.05}{0.10}\right)^2 + \left(\frac{0.40-0.95}{0.10}\right)^2 + \left(\frac{115-50}{20}\right)^2} = 8.56
-\end{equation}
-
-La clase predicha es LECHUGAS ($D_{min} = 0.47$) con confianza:
-
-\begin{equation}
-\text{Confianza} = 1 - \frac{0.47}{8.56 + 0.47} = 0.95
-\end{equation}
-
-\subsubsection{Análisis de Separabilidad de Clases}
-
-La efectividad de un conjunto de descriptores para clasificación se cuantifica mediante métricas de separabilidad.
-
-\textbf{Criterio de Fisher}
-
-Mide la razón entre varianza inter-clase e intra-clase para un descriptor $d$:
-
-\begin{equation}
-J_F = \frac{(\mu_1 - \mu_2)^2}{\sigma_1^2 + \sigma_2^2}
-\end{equation}
-
-Valores altos de $J_F$ indican buena separabilidad. Para múltiples clases:
-
-\begin{equation}
-J_F = \frac{\sum_{i=1}^{C} N_i(\mu_i - \mu_{global})^2}{\sum_{i=1}^{C} N_i \sigma_i^2}
-\end{equation}
-
-donde $\mu_{global}$ es la media global ponderada.
-
-\textbf{Índice de Solapamiento}
-
-Para distribuciones gaussianas, el solapamiento entre clases $i$ y $j$ se aproxima:
-
-\begin{equation}
-\text{Overlap}_{i,j} \approx 2\Phi\left(-\frac{|\mu_i - \mu_j|}{2\sqrt{\sigma_i^2 + \sigma_j^2}}\right)
-\end{equation}
-
-donde $\Phi$ es la función de distribución acumulada normal estándar. Valores cercanos a 0 indican separación perfecta; valores cercanos a 1 indican fuerte solapamiento.
-
-\subsubsection{Validación Estadística del Clasificador}
-
-\textbf{Exactitud Estimada}
-
-La exactitud de un clasificador se define como:
-
-\begin{equation}
-\text{Exactitud} = \frac{N_{correctas}}{N_{total}}
-\end{equation}
-
-donde $N_{correctas}$ es el número de clasificaciones correctas y $N_{total}$ el tamaño del conjunto de prueba.
-
-\textbf{Intervalo de Confianza}
-
-El intervalo de confianza al 95\% para la exactitud es:
-
-\begin{equation}
-\text{IC}_{95\%} = \hat{p} \pm 1.96\sqrt{\frac{\hat{p}(1-\hat{p})}{n}}
-\end{equation}
-
-donde $\hat{p}$ es la exactitud observada y $n$ el tamaño de la muestra de prueba.
-
-\textbf{Tamaño de Muestra Requerido}
-
-Para estimar la exactitud con error máximo $E$ y nivel de confianza del 95\%:
-
-\begin{equation}
-n_{min} = \left(\frac{1.96 \cdot \sqrt{\hat{p}(1-\hat{p})}}{E}\right)^2
-\end{equation}
-
-Por ejemplo, para $E = 0.05$ (error de 5\%) y $\hat{p} = 0.9$:
-
-\begin{equation}
-n_{min} = \left(\frac{1.96 \cdot \sqrt{0.9 \cdot 0.1}}{0.05}\right)^2 \approx 139
-\end{equation}
-
-Se requieren al menos 139 muestras de prueba.
-
-\subsubsection{Robustez y Generalización}
-
-\textbf{Validación Cruzada k-fold}
-
-Para evaluar la generalización del clasificador, se emplea validación cruzada:
-
-\begin{enumerate}
-\item Dividir dataset en $k$ particiones de igual tamaño (típicamente $k=5$ o $k=10$)
-\item Para $i = 1$ a $k$:
-   \begin{itemize}
-   \item Usar partición $i$ como conjunto de prueba
-   \item Usar restantes $k-1$ particiones para calcular prototipos ($\boldsymbol{\mu}_i$, $\boldsymbol{\sigma}_i$)
-   \item Evaluar exactitud en partición $i$
-   \end{itemize}
-\item Calcular exactitud promedio
-\end{enumerate}
-
-La exactitud estimada por validación cruzada es:
-
-\begin{equation}
-\text{Exactitud}_{CV} = \frac{1}{k}\sum_{i=1}^{k} \text{Exactitud}_i
-\end{equation}
-
-Esta métrica proporciona una estimación más realista del desempeño en datos nuevos que la evaluación en un único conjunto de prueba.
-
-\textbf{Sensibilidad a Variaciones}
-
-La robustez ante ruido se evalúa añadiendo perturbaciones controladas a los descriptores:
-
-\begin{equation}
-d_{ruidoso} = d_{verdadero} + \mathcal{N}(0, \sigma_{ruido}^2)
-\end{equation}
-
-donde $\mathcal{N}(0, \sigma_{ruido}^2)$ es ruido gaussiano con desviación estándar $\sigma_{ruido}$.
-
-Un clasificador robusto mantiene exactitud alta incluso con $\sigma_{ruido}$ moderado. La degradación de desempeño se cuantifica como:
-
-\begin{equation}
-\Delta\text{Exactitud} = \text{Exactitud}_{limpio} - \text{Exactitud}_{ruidoso}
-\end{equation}
-
-Degradaciones $\Delta\text{Exactitud} < 0.1$ (10\%) indican robustez aceptable.
-
-\subsubsection{Ventajas y Limitaciones del Enfoque Morfológico}
-
-\textbf{Ventajas:}
-\begin{itemize}
-\item \textbf{Interpretabilidad}: Reglas de decisión explícitas y comprensibles basadas en características físicas medibles
-\item \textbf{Eficiencia computacional}: Cálculos geométricos y estadísticos simples, ejecución en tiempo real en hardware embebido
-\item \textbf{Pocos datos requeridos}: Decenas a cientos de muestras por clase, vs. miles requeridos por aprendizaje profundo
-\item \textbf{Control explícito}: Ajuste directo de umbrales y pesos según requerimientos operativos
-\item \textbf{Depuración sencilla}: Fallas identificables mediante inspección de valores de descriptores
-\item \textbf{Sin dependencias externas}: No requiere frameworks de deep learning ni GPUs
-\end{itemize}
-
-\textbf{Limitaciones:}
-\begin{itemize}
-\item \textbf{Diseño manual de características}: Requiere conocimiento experto del dominio para identificar descriptores relevantes
-\item \textbf{Limitada a características medibles}: No captura patrones visuales complejos o texturas sutiles
-\item \textbf{Sensibilidad a condiciones}: Variaciones significativas de iluminación o perspectiva pueden afectar descriptores
-\item \textbf{Separabilidad lineal}: Dificultad con clases no linealmente separables en el espacio de características
-\item \textbf{Escalabilidad a muchas clases}: Desempeño puede degradar con >10 clases
-\end{itemize}
-
-\textbf{Aplicabilidad en Agricultura de Precisión}
-
-El enfoque morfológico resulta particularmente adecuado para clasificación de cultivos cuando:
-\begin{enumerate}
-\item Existe diferenciación clara por tamaño, forma o color (plantines vs. plantas maduras vs. tubos vacíos)
-\item El entorno es controlado (cultivo hidropónico con iluminación artificial)
-\item Se requiere operación en hardware con recursos limitados (Raspberry Pi, microcontroladores)
-\item La interpretabilidad del sistema es crítica para validación agronómica
-\item El número de clases es limitado (2-5 categorías)
-\item Se dispone de conocimiento experto para diseñar descriptores relevantes
-\end{enumerate}
-
-La combinación con análisis estadístico robusto permite alcanzar exactitudes >90\% en escenarios donde las características geométricas y cromáticas son discriminativas, sin la complejidad y requisitos computacionales de métodos de aprendizaje profundo.
-
-\subsubsection{Técnicas Adicionales para Robustez}
-
-\textbf{Normalización de Descriptores}
-
-Antes de calcular distancias, normalizar descriptores al rango $[0,1]$ evita que características con rangos grandes dominen:
-
-\begin{equation}
-d_{norm} = \frac{d - d_{min}}{d_{max} - d_{min}}
-\end{equation}
-
-donde $d_{min}$ y $d_{max}$ son los valores mínimo y máximo observados en el dataset de entrenamiento.
-
-\textbf{Umbral de Rechazo}
-
-Para evitar clasificaciones erróneas en objetos anómalos, se establece un umbral máximo de distancia:
-
-\begin{equation}
-\text{Clase}(\mathbf{x}) = \begin{cases}
-\arg\min_{i} D_i(\mathbf{x}) & \text{si } D_{min} < T_{rechazo} \\
-\text{DESCONOCIDO} & \text{si } D_{min} \geq T_{rechazo}
-\end{cases}
-\end{equation}
-
-Objetos con $D_{min} \geq T_{rechazo}$ son rechazados como no pertenecientes a ninguna clase conocida.
-
-\textbf{Actualización de Prototipos}
-
-En aplicaciones donde las características de las clases evolucionan (ej. crecimiento de plantas), los prototipos pueden actualizarse incrementalmente:
-
-\begin{equation}
-\boldsymbol{\mu}_i^{nuevo} = \alpha \cdot \boldsymbol{\mu}_i^{viejo} + (1-\alpha) \cdot \mathbf{x}_{nuevo}
-\end{equation}
-
-donde $\alpha \in [0.9, 0.99]$ controla la tasa de adaptación.
+El enfoque resulta particularmente adecuado para clasificación de cultivos hidropónicos cuando existe diferenciación clara por tamaño, forma o color (como plantines vs. plantas maduras vs. tubos vacíos), el entorno es controlado, se requiere operación en hardware con recursos limitados, la interpretabilidad es crítica para validación, y se dispone de conocimiento experto para diseñar descriptores relevantes. Bajo estas condiciones, la combinación con análisis estadístico robusto permite alcanzar exactitudes superiores a 90\% sin la complejidad y requisitos computacionales de métodos de aprendizaje profundo.
