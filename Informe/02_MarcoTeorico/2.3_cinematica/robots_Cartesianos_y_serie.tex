@@ -1,0 +1,288 @@
+\subsection{Robots Cartesianos}
+Los robots cartesianos, también conocidos como robots pórtico o robots de coordenadas rectangulares, son sistemas robóticos cuya estructura mecánica está compuesta por tres juntas prismáticas ortogonales entre sí. Estos robots realizan movimientos lineales en las tres direcciones del espacio cartesiano (X, Y, Z), lo que los hace especialmente adecuados para aplicaciones que requieren movimientos precisos y repetibles en trayectorias rectilineas.
+
+\subsubsection{Configuración y Estructura}
+
+La configuración típica de un robot cartesiano consiste en tres actuadores lineales dispuestos perpendicularmente, formando un sistema de coordenadas cartesianas tridimensional. La notación cinemática común para este tipo de robots es PPP (Prismático-Prismático-Prismático), indicando que las tres juntas son de tipo prismático. Esta disposición permite que el efector final se mueva de manera independiente en cada uno de los tres ejes principales.
+
+\subsubsection{Grados de Libertad}
+
+Un robot cartesiano básico posee tres grados de libertad (GDL), correspondientes a los movimientos de traslación en los ejes X, Y y Z. Cada grado de libertad está asociado a una junta prismática que proporciona movimiento lineal:
+
+\begin{itemize}
+    \item \textbf{Primer GDL}: Traslación en el eje X
+    \item \textbf{Segundo GDL}: Traslación en el eje Y
+    \item \textbf{Tercer GDL}: Traslación en el eje Z
+\end{itemize}
+
+En aplicaciones que requieren orientación del efector final, se pueden añadir juntas rotacionales adicionales (típicamente en la muñeca), incrementando los grados de libertad total del sistema hasta 6 GDL, permitiendo así posicionamiento y orientación completos en el espacio tridimensional.
+
+\subsubsection{Espacio de Trabajo}
+
+El espacio de trabajo de un robot cartesiano es un paralelepípedo rectangular cuyas dimensiones están determinadas por los límites de desplazamiento de cada junta prismática. Si denotamos los rangos de movimiento como $[x_{\min}, x_{\max}]$, $[y_{\min}, y_{\max}]$ y $[z_{\min}, z_{\max}]$, el espacio de trabajo $\mathcal{W}$ puede expresarse como:
+
+\begin{equation}
+\mathcal{W} = \{(x, y, z) \in \mathbb{R}^3 \mid x_{\min} \leq x \leq x_{\max}, \, y_{\min} \leq y \leq y_{\max}, \, z_{\min} \leq z \leq z_{\max}\}
+\end{equation}
+
+Una característica fundamental de los robots cartesianos es que su espacio de trabajo es regular y completamente accesible, sin singularidades cinemáticas en su interior. El volumen del espacio de trabajo se calcula simplemente como:
+
+\begin{equation}
+V_{\mathcal{W}} = (x_{\max} - x_{\min}) \times (y_{\max} - y_{\min}) \times (z_{\max} - z_{\min})
+\end{equation}
+
+\subsubsection{Cinemática}
+
+La cinemática de los robots cartesianos es excepcionalmente simple debido a la correspondencia directa entre las coordenadas de las juntas y las coordenadas cartesianas del efector final.
+
+\paragraph{Cinemática Directa:} La posición del efector final en el espacio cartesiano se obtiene directamente de las variables de junta:
+
+\begin{equation}
+\begin{bmatrix}
+x \\
+y \\
+z
+\end{bmatrix}
+=
+\begin{bmatrix}
+q_1 \\
+q_2 \\
+q_3
+\end{bmatrix}
+\end{equation}
+
+donde $q_1$, $q_2$ y $q_3$ son los desplazamientos de las juntas prismáticas en los ejes X, Y y Z respectivamente.
+
+\paragraph{Cinemática Inversa:} La solución del problema de cinemática inversa es trivial y única:
+
+\begin{equation}
+\begin{bmatrix}
+q_1 \\
+q_2 \\
+q_3
+\end{bmatrix}
+=
+\begin{bmatrix}
+x \\
+y \\
+z
+\end{bmatrix}
+\end{equation}
+
+Esta simplicidad cinemática es una ventaja significativa en aplicaciones que requieren control preciso y cálculos en tiempo real.
+
+\subsubsection{Planificación de Trayectorias}
+
+Debido a la naturaleza cartesiana del espacio de trabajo, la planificación de trayectorias en estos robots es intuitiva y directa. Las trayectorias más comunes incluyen:
+
+\begin{itemize}
+    \item \textbf{Trayectorias punto a punto}: Movimiento desde una posición inicial hasta una posición final, generalmente siguiendo perfiles de velocidad trapezoidales o de aceleración limitada para cada eje.
+    
+    \item \textbf{Trayectorias lineales}: Interpolación lineal entre dos puntos en el espacio cartesiano, donde la posición en función del tiempo se expresa como:
+    \begin{equation}
+    \mathbf{p}(t) = \mathbf{p}_0 + \frac{t}{T}(\mathbf{p}_f - \mathbf{p}_0), \quad t \in [0, T]
+    \end{equation}
+    donde $\mathbf{p}_0$ es la posición inicial, $\mathbf{p}_f$ es la posición final, y $T$ es el tiempo total de trayectoria.
+    
+    \item \textbf{Trayectorias rectangulares}: Secuencias de movimientos lineales paralelos a los ejes principales, particularmente útiles en aplicaciones de pick-and-place y ensamblaje.
+\end{itemize}
+
+\subsubsection{Ventajas y Aplicaciones}
+
+Las principales ventajas de los robots cartesianos incluyen:
+
+\begin{itemize}
+    \item Alta precisión y repetibilidad posicional
+    \item Cinemática simple sin singularidades
+    \item Alta rigidez estructural y capacidad de carga
+    \item Facilidad de programación y control
+    \item Escalabilidad en dimensiones del espacio de trabajo
+\end{itemize}
+
+Estos robots encuentran aplicación en manufactura automatizada, impresión 3D, máquinas CNC, manipulación de materiales, ensamblaje electrónico y sistemas de almacenamiento automatizado.
+
+\subsection{Robots Serie}
+
+Los robots serie, también denominados robots en cadena cinemática abierta, son aquellos en los que los eslabones están conectados secuencialmente mediante juntas, formando una cadena cinemática desde la base hasta el efector final. Cada eslabón está conectado al anterior mediante una única junta, que puede ser rotacional (R) o prismática (P).
+
+\subsubsection{Configuración y Estructura}
+
+En un robot serie, la configuración puede describirse mediante una secuencia de juntas. Las configuraciones más comunes en aplicaciones industriales incluyen:
+
+\begin{itemize}
+    \item \textbf{Configuración antropomórfica (RRR)}: Tres juntas rotacionales que emulan el hombro, codo y muñeca humanos
+    \item \textbf{Configuración cilíndrica (RPP)}: Una junta rotacional seguida de dos prismáticas
+    \item \textbf{Configuración esférica (RRP)}: Dos juntas rotacionales y una prismática
+    \item \textbf{Configuración SCARA (RRP horizontal)}: Especializada para movimientos en planos horizontales
+    \item \textbf{Configuración 6-DOF (RRRRRR)}: Seis juntas rotacionales para manipulación completa
+\end{itemize}
+
+\subsubsection{Grados de Libertad}
+
+El número de grados de libertad de un robot serie corresponde al número de juntas activas en la cadena cinemática. Para manipulación completa en el espacio tridimensional (posición y orientación arbitrarias), se requieren 6 GDL. Un robot con $n$ juntas tiene $n$ grados de libertad:
+
+\begin{itemize}
+    \item Si $n < 6$: El robot tiene movilidad limitada y no puede alcanzar poses arbitrarias
+    \item Si $n = 6$: El robot puede alcanzar cualquier posición y orientación dentro de su espacio de trabajo
+    \item Si $n > 6$: El robot es redundante, ofreciendo múltiples configuraciones para una misma pose del efector final
+\end{itemize}
+
+\subsubsection{Espacio de Trabajo}
+
+El espacio de trabajo de un robot serie es generalmente más complejo que el de un robot cartesiano y depende fuertemente de la configuración específica de juntas. Típicamente, el espacio de trabajo tiene forma de cáscara esférica, toroidal, o cilíndrica, con regiones inaccesibles y posibles singularidades.
+
+Para un robot con $n$ juntas, donde cada junta $i$ tiene límites $q_i \in [q_{i,\min}, q_{i,\max}]$, el espacio de trabajo alcanzable se define como:
+
+\begin{equation}
+\mathcal{W} = \{\mathbf{p} \in \mathbb{R}^3 \mid \mathbf{p} = f(\mathbf{q}), \, \mathbf{q} \in \mathcal{Q}\}
+\end{equation}
+
+donde $f(\mathbf{q})$ es la función de cinemática directa y $\mathcal{Q}$ es el espacio de configuraciones:
+
+\begin{equation}
+\mathcal{Q} = \{\mathbf{q} \in \mathbb{R}^n \mid q_{i,\min} \leq q_i \leq q_{i,\max}, \, i = 1, \ldots, n\}
+\end{equation}
+
+El espacio de trabajo se subdivide en:
+
+\begin{itemize}
+    \item \textbf{Espacio alcanzable}: Conjunto de puntos que el efector final puede alcanzar desde al menos una orientación
+    \item \textbf{Espacio diestro}: Conjunto de puntos alcanzables desde múltiples orientaciones
+    \item \textbf{Singularidades}: Configuraciones donde se pierde un grado de libertad instantáneo
+\end{itemize}
+
+\subsubsection{Cinemática}
+
+\paragraph{Cinemática Directa:} 
+
+La cinemática directa de robots serie se resuelve mediante la convención de Denavit-Hartenberg (DH), que establece un sistema de coordenadas en cada junta y describe la transformación entre eslabones consecutivos mediante cuatro parámetros: $a_i$ (longitud del eslabón), $\alpha_i$ (ángulo de torsión), $d_i$ (offset), y $\theta_i$ (ángulo de junta).
+
+La matriz de transformación homogénea entre los eslabones $i-1$ e $i$ se expresa como:
+
+\begin{equation}
+{}^{i-1}T_i = 
+\begin{bmatrix}
+\cos\theta_i & -\sin\theta_i\cos\alpha_i & \sin\theta_i\sin\alpha_i & a_i\cos\theta_i \\
+\sin\theta_i & \cos\theta_i\cos\alpha_i & -\cos\theta_i\sin\alpha_i & a_i\sin\theta_i \\
+0 & \sin\alpha_i & \cos\alpha_i & d_i \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\end{equation}
+
+La pose del efector final respecto a la base se obtiene mediante la composición de transformaciones:
+
+\begin{equation}
+{}^0T_n = {}^0T_1 \cdot {}^1T_2 \cdot \ldots \cdot {}^{n-1}T_n
+\end{equation}
+
+\paragraph{Cinemática Inversa:}
+
+El problema de cinemática inversa consiste en determinar las variables de junta $\mathbf{q}$ que posicionan el efector final en una pose deseada. A diferencia de los robots cartesianos, este problema puede tener:
+
+\begin{itemize}
+    \item Múltiples soluciones (hasta 16 para robots de 6 GDL)
+    \item Una única solución
+    \item Ninguna solución (pose fuera del espacio de trabajo)
+\end{itemize}
+
+Los métodos de solución incluyen técnicas geométricas, algebraicas, y numéricas como el método de Newton-Raphson o el Jacobiano inverso.
+
+\subsubsection{Jacobiano y Singularidades}
+
+El Jacobiano del robot relaciona las velocidades de las juntas con las velocidades del efector final:
+
+\begin{equation}
+\dot{\mathbf{x}} = J(\mathbf{q}) \dot{\mathbf{q}}
+\end{equation}
+
+donde $\dot{\mathbf{x}} \in \mathbb{R}^6$ representa las velocidades lineales y angulares del efector final, y $\dot{\mathbf{q}} \in \mathbb{R}^n$ son las velocidades de las juntas.
+
+Las singularidades ocurren cuando $\det(J(\mathbf{q})) = 0$, resultando en pérdida de movilidad o control. Se clasifican en:
+
+\begin{itemize}
+    \item \textbf{Singularidades de frontera}: En los límites del espacio de trabajo
+    \item \textbf{Singularidades internas}: Dentro del espacio de trabajo, donde dos o más ejes se alinean
+\end{itemize}
+
+\subsubsection{Planificación de Trayectorias}
+
+La planificación de trayectorias en robots serie es más compleja debido a la naturaleza no lineal de su cinemática. Las estrategias comunes incluyen:
+
+\paragraph{Trayectorias en el espacio de juntas:}
+
+Interpolación directa entre configuraciones de junta inicial $\mathbf{q}_0$ y final $\mathbf{q}_f$:
+
+\begin{equation}
+\mathbf{q}(t) = \mathbf{q}_0 + s(t)(\mathbf{q}_f - \mathbf{q}_0)
+\end{equation}
+
+donde $s(t)$ es una función de sincronización temporal, típicamente polinomial de grado 3 o 5 para garantizar continuidad en velocidad y aceleración.
+
+\paragraph{Trayectorias en el espacio cartesiano:}
+
+Requieren cinemática inversa en cada punto de la trayectoria. Para una trayectoria lineal en el espacio cartesiano:
+
+\begin{equation}
+\mathbf{x}(t) = \mathbf{x}_0 + s(t)(\mathbf{x}_f - \mathbf{x}_0)
+\end{equation}
+
+seguida de la resolución del problema inverso: $\mathbf{q}(t) = f^{-1}(\mathbf{x}(t))$.
+
+\paragraph{Evitación de singularidades:}
+
+La planificación debe considerar las singularidades del robot, modificando trayectorias o añadiendo restricciones para evitar configuraciones problemáticas donde el control se vuelve inestable.
+
+\subsubsection{Dinámica}
+
+La dinámica de robots serie se describe mediante las ecuaciones de Euler-Lagrange, resultando en el modelo dinámico:
+
+\begin{equation}
+M(\mathbf{q})\ddot{\mathbf{q}} + C(\mathbf{q}, \dot{\mathbf{q}})\dot{\mathbf{q}} + G(\mathbf{q}) = \boldsymbol{\tau}
+\end{equation}
+
+donde $M(\mathbf{q})$ es la matriz de inercia, $C(\mathbf{q}, \dot{\mathbf{q}})$ representa las fuerzas de Coriolis y centrífugas, $G(\mathbf{q})$ es el vector de torques gravitacionales, y $\boldsymbol{\tau}$ son los torques aplicados en las juntas.
+
+\subsubsection{Ventajas y Aplicaciones}
+
+Las ventajas de los robots serie incluyen:
+
+\begin{itemize}
+    \item Gran versatilidad y flexibilidad de movimiento
+    \item Espacio de trabajo amplio relativo a su tamaño
+    \item Capacidad de alcanzar posiciones en espacios confinados
+    \item Variedad de configuraciones para diferentes aplicaciones
+\end{itemize}
+
+Se utilizan extensivamente en soldadura robotizada, pintura, ensamblaje automotriz, cirugía asistida, manipulación de piezas, paletizado, y aplicaciones colaborativas con humanos.
+
+\subsection{Comparación entre Robots Cartesianos y Serie}
+
+\begin{table}[h]
+\centering
+\caption{Comparación de características principales}
+\begin{tabular}{|l|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{Aspecto} & \textbf{Robot Cartesiano} & \textbf{Robot Serie} \\
+\hline
+Cinemática directa & Trivial, relación 1:1 & Compleja, no lineal \\
+\hline
+Cinemática inversa & Trivial, única solución & Compleja, múltiples soluciones \\
+\hline
+Espacio de trabajo & Rectangular, regular & Esférico/toroidal, irregular \\
+\hline
+Precisión & Muy alta, uniforme & Variable, depende de configuración \\
+\hline
+Singularidades & Ninguna & Presentes, requieren planificación \\
+\hline
+Versatilidad & Limitada a movimientos rectilíneos & Alta, movimientos complejos \\
+\hline
+Rigidez & Muy alta & Menor, depende de configuración \\
+\hline
+Escalabilidad & Excelente en dimensiones & Limitada por longitud de eslabones \\
+\hline
+Aplicaciones típicas & CNC, impresión 3D, pick-and-place & Soldadura, ensamblaje, pintura \\
+\hline
+\end{tabular}
+\end{table}
+
+La selección entre un robot cartesiano y uno serie depende fundamentalmente de los requisitos de la aplicación específica, considerando factores como el espacio disponible, precisión requerida, complejidad de trayectorias, y restricciones de carga.
