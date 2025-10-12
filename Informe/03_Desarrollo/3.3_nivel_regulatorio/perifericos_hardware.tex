@@ -1,0 +1,34 @@
+El Arduino Mega 2560 gestiona múltiples periféricos simultáneamente para el control del robot CLAUDIO. La Tabla \ref{tab:perifericos_regulatorio} detalla los recursos de hardware utilizados.
+
+\begin{table}[H]
+\centering
+\caption{Periféricos del Arduino Mega 2560 utilizados en el Nivel Regulatorio}
+\label{tab:perifericos_regulatorio}
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Periférico} & \textbf{Recurso} & \textbf{Función} \\
+\hline
+Timer1 & 16 bits & Generación de pulsos para steppers X e Y (modo CTC con TOP variable) \\
+\hline
+Timer4 & 16 bits & PWM hardware para Servo 1 (brazo) en pin 6 \\
+\hline
+Timer5 & 16 bits & PWM hardware para Servo 2 (brazo) en pin 44 \\
+\hline
+USART0 & Serial & Comunicación con Raspberry Pi (115200 baud, 8N1) \\
+\hline
+GPIO Digital & Pines 22-53 & Control de steppers (DIR, STEP, ENABLE) y finales de carrera \\
+\hline
+Interrupciones & INT0-INT7 & Disponibles para encoders (no utilizadas actualmente) \\
+\hline
+ADC & 10 bits & 16 canales analógicos reservados para expansión futura \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Justificación de Recursos}
+
+\textbf{Timer1 en modo CTC}: Se utiliza modo Clear Timer on Compare Match con registro OCR1A variable para generar frecuencias de pulso ajustables dinámicamente (100 Hz - 20 kHz). Esto permite implementar perfiles de velocidad sin cambiar el prescaler, manteniendo precisión temporal.
+
+\textbf{Timers 4 y 5 para PWM}: Los servomotores requieren señales PWM de 50 Hz con ancho de pulso variable (1000-2000 µs). Los timers de 16 bits permiten generar estas señales por hardware sin intervención del CPU, liberando ciclos para otras tareas.
+
+\textbf{USART0 con buffer circular}: La comunicación bidireccional con el supervisor maneja comandos de hasta 128 caracteres. El buffer circular de 256 bytes (potencia de 2 para optimización) permite recepción asíncrona sin pérdida de datos incluso durante ejecución de movimientos.

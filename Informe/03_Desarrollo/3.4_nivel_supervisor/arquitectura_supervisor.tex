@@ -1,2 +1,72 @@
-% Arquitectura Supervisor
+El Nivel Supervisor constituye la capa de gestión y coordinación de alto nivel del sistema CLAUDIO, implementado sobre una Raspberry Pi 5. Su función principal es orquestar flujos de trabajo complejos que integran movimientos coordinados, procesamiento de visión artificial mediante redes neuronales y toma de decisiones autónomas basada en máquinas de estados finitos.
 
+\subsubsection{Máquina de Estados del Sistema}
+
+El supervisor opera mediante una máquina de estados finitos (FSM) que gobierna el comportamiento del robot durante operaciones de cosecha (Figura \ref{fig:maquina_estados_supervisor}). Esta arquitectura event-driven permite:
+
+\begin{itemize}
+    \item Transiciones deterministas entre estados operacionales
+    \item Sincronización de subsistemas (movimiento XY, brazo, visión, gripper)
+    \item Manejo robusto de excepciones con recuperación automática
+    \item Trazabilidad completa de flujos de ejecución
+\end{itemize}
+
+Los estados principales del sistema son:
+
+\begin{enumerate}
+    \item \textbf{Inicialización}: Homing de ejes, calibración de cámara, carga de modelos de IA
+    \item \textbf{Exploración}: Escaneo del workspace detectando posiciones de plantas
+    \item \textbf{Navegación}: Movimiento del sistema XY hacia objetivo identificado
+    \item \textbf{Manipulación}: Control del brazo para recolección o depósito
+    \item \textbf{Clasificación}: Procesamiento de imagen con red neuronal para decisión
+    \item \textbf{Espera}: Estado idle aguardando comandos del usuario
+    \item \textbf{Emergencia}: Parada segura ante fallas detectadas
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    % TODO: Insertar diagrama de máquina de estados del supervisor
+    % Mostrar: Estados principales, transiciones, eventos trigger, condiciones de guarda
+    \includegraphics[width=0.9\textwidth]{imagenes/maquina_estados_supervisor.png}
+    \caption{Máquina de estados finitos del Nivel Supervisor}
+    \label{fig:maquina_estados_supervisor}
+\end{figure}
+
+\subsubsection{Gestión de Estado Global}
+
+El controlador principal mantiene el estado global del sistema mediante tres mecanismos:
+
+\textbf{Seguimiento de posición:} Sistema de callbacks asíncronos que acumula los deltas de movimiento reportados por el firmware. Este enfoque event-driven elimina polling constante y reduce latencia a <30ms.
+
+\textbf{Persistencia de configuración:} Almacena información crítica en archivos locales (posición de origen post-homing, dimensiones calibradas del workspace, última posición conocida pre-apagado). Esta persistencia permite recuperación automática tras reinicios del sistema.
+
+\textbf{Sincronización con firmware:} Coordina tracking interno con posición real mediante consultas periódicas. Desviaciones >0.5mm activan resincronización automática garantizando consistencia.
+
+Esta gestión centralizada permite que la máquina de estados, los módulos de IA y el control de brazo accedan a información consistente sobre el estado actual del robot.
+
+\subsubsection{Interfaz con Subsistemas}
+
+El supervisor integra tres subsistemas heterogéneos mediante interfaces bien definidas (Figura \ref{fig:interfaz_subsistemas}):
+
+\textbf{Comunicación con Nivel Regulatorio}: Interfaz bidireccional UART a 115200 baudios con protocolo ASCII delimitado. El supervisor envía comandos de movimiento, configuración de velocidades y consultas de estado, recibiendo respuestas síncronas y eventos asíncronos (finalización de movimientos, activación de límites). La latencia típica de comando-respuesta es <20ms.
+
+\textbf{Módulos de Visión por Computadora}: Los detectores de cintas de referencia, tubos de cultivo y clasificador de plantas se ejecutan on-demand con acceso exclusivo a la cámara mediante patrón acquire/release. Esto previene conflictos entre módulos concurrentes y garantiza captura de imágenes sin interferencias. Las inferencias de redes neuronales toman 80-150ms por frame en la Raspberry Pi 5.
+
+\textbf{Control de Alto Nivel del Brazo}: Abstracción mediante 4 posiciones discretas que encapsulan configuraciones cinemáticas complejas:
+\begin{enumerate}
+    \item \textbf{Retraído}: Brazo plegado verticalmente, permite desplazamientos XY seguros
+    \item \textbf{Extendido horizontal}: Brazo a 90° con gripper abierto, para aproximación a planta
+    \item \textbf{Elevado}: Brazo vertical superior con gripper cerrado, transporte de planta cosechada
+    \item \textbf{Extendido descendente}: Brazo inclinado hacia abajo con gripper abierto, para depósito en contenedor
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    % TODO: Insertar diagrama de interfaz con subsistemas
+    % Mostrar: Supervisor en centro conectado con Regulatorio (UART), Visión IA (cámara), y Brazo (estados)
+    \includegraphics[width=0.85\textwidth]{imagenes/interfaz_subsistemas.png}
+    \caption{Interfaz del supervisor con los subsistemas de bajo nivel}
+    \label{fig:interfaz_subsistemas}
+\end{figure}
+
+Esta arquitectura desacoplada permite modificar la implementación de cada subsistema sin afectar a los demás, facilitando mantenimiento incremental y evolución del sistema.

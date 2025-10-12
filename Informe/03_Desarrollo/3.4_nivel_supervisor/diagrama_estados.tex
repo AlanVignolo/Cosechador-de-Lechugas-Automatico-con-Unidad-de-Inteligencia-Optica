@@ -1,2 +1,68 @@
-% Diagrama Estados
+El control del brazo robótico se implementa mediante una máquina de estados finitos (FSM) que encapsula la complejidad de las secuencias de movimiento en estados discretos de alto nivel. Esta abstracción permite que los workflows invoquen funcionalidades complejas mediante transiciones simples entre estados.
 
+\subsubsection{Estados Definidos}
+
+El sistema define cuatro estados principales para el brazo, cada uno con configuraciones específicas de servomotores y gripper:
+
+\begin{table}[H]
+\centering
+\caption{Estados del brazo robótico y sus configuraciones}
+\label{tab:estados_brazo}
+\begin{tabular}{|l|c|c|c|p{5cm}|}
+\hline
+\textbf{Estado} & \textbf{Servo 1} & \textbf{Servo 2} & \textbf{Gripper} & \textbf{Propósito} \\
+\hline
+\texttt{movimiento} & 10° & 10° & Cualquiera & Brazo plegado para desplazamientos XY sin colisiones \\
+\hline
+\texttt{recoger\_lechuga} & 100° & 80° & Abierto & Posición de aproximación para recolección \\
+\hline
+\texttt{mover\_lechuga} & 50° & 160° & Cerrado & Transporte con lechuga asegurada \\
+\hline
+\texttt{depositar\_lechuga} & 90° & 20° & Abierto & Posición de liberación sobre zona de depósito \\
+\hline
+\end{tabular}
+\end{table}
+
+Cada estado representa una configuración completa del sistema brazo-gripper optimizada para una tarea específica dentro del workflow de cosecha.
+
+\begin{figure}[H]
+    \centering
+    % TODO: Insertar diagrama de estados del brazo con transiciones
+    % Mostrar: 4 estados, flechas de transición, condiciones de guarda
+    \includegraphics[width=0.9\textwidth]{imagenes/diagrama_estados_brazo.png}
+    \caption{Máquina de estados del brazo robótico y transiciones permitidas}
+    \label{fig:estados_brazo}
+\end{figure}
+
+\subsubsection{Trayectorias Interpoladas}
+
+Las transiciones entre estados no son instantáneas sino que se implementan mediante trayectorias interpoladas linealmente. Para una transición desde un estado A $(s1_A, s2_A, g_A)$ hacia un estado B $(s1_B, s2_B, g_B)$, el sistema genera una secuencia de $N$ puntos intermedios:
+
+\begin{equation}
+\theta_i(t) = \theta_i^A + \frac{t}{T} \cdot (\theta_i^B - \theta_i^A), \quad t \in [0, T], \quad i \in \{1, 2\}
+\end{equation}
+
+donde $T$ es la duración total del movimiento (típicamente 3-5 segundos) y los puntos se muestrean a 50ms de intervalo. Esta interpolación garantiza movimientos suaves que minimizan vibraciones y cargas mecánicas sobre los servos.
+
+\subsubsection{Gestión del Gripper}
+
+El gripper opera con dos comandos discretos (\texttt{GRIPPER\_OPEN}, \texttt{GRIPPER\_CLOSE}) y timing predefinido:
+
+\begin{itemize}
+    \item \textbf{Apertura}: 2.0 segundos de actuación seguidos de delay de seguridad de 0.3s
+    \item \textbf{Cierre}: 2.0 segundos de actuación, verificación de flag de lechuga presente
+\end{itemize}
+
+El controlador mantiene un flag interno (\texttt{lettuce\_present}) que indica si el gripper contiene una lechuga, permitiendo validaciones de consistencia en el workflow (ej: no permitir depositar si el flag es \texttt{False}).
+
+\subsubsection{Sincronización con Movimientos XY}
+
+La FSM del brazo está diseñada para coordinarse con el sistema de movimiento XY del nivel regulatorio:
+
+\textbf{Restricción de movimiento seguro:} Los comandos de movimiento XY solo se permiten cuando el brazo está en estado \texttt{movimiento} o \texttt{mover\_lechuga}. Intentar movimientos en otros estados genera una advertencia y una transición automática al estado seguro.
+
+\textbf{Bloqueo durante transiciones:} Mientras el brazo está ejecutando una trayectoria (flag \texttt{is\_executing\_trajectory} = \texttt{True}), se bloquean tanto comandos de movimiento XY como nuevas transiciones de brazo, previniendo condiciones de carrera.
+
+\textbf{Timeouts de seguridad:} Cada transición tiene un timeout máximo (20 segundos). Si la trayectoria no completa en ese tiempo, se genera una excepción y el sistema intenta retornar al estado \texttt{movimiento}.
+
+Este diseño de FSM simplifica dramáticamente la lógica de los workflows de alto nivel, que pueden invocar cambios de estado sin preocuparse por los detalles de timing, interpolación o sincronización con otros subsistemas.

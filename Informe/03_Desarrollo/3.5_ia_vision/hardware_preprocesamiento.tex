@@ -10,12 +10,6 @@ La cámara incorpora sistema de enfoque automático que ajusta la posición de l
 
 El montaje de la cámara se realizó mediante un soporte diseñado específicamente e impreso en material PLA mediante manufactura aditiva. El soporte se fija al extremo del brazo robótico y permite ajuste angular de ±15 grados en los ejes de cabeceo y guiñada. Esta capacidad de ajuste es necesaria para compensar tolerancias de ensamblaje y optimizar la orientación del campo de visión respecto al plano de cultivo.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.65\textwidth]{imagenes/montaje_camara_brazo.png}
-\caption{Configuración de montaje de la cámara en el extremo del brazo robótico con soporte ajustable}
-\label{fig:montaje_camara}
-\end{figure}
 
 La interfaz entre la cámara y la Raspberry Pi se establece mediante conexión USB 2.0, que proporciona ancho de banda suficiente para la transferencia de imágenes sin compresión a la tasa de captura requerida. El controlador Video4Linux2, incluido nativamente en el sistema operativo, gestiona la comunicación con el dispositivo y expone las funciones de captura mediante una interfaz de programación estándar.
 

@@ -1,2 +1,76 @@
-% Conversion Pasos Mm
+La conversión entre pasos de motor y desplazamiento lineal depende de las características mecánicas de cada eje.
 
+\subsubsection{Configuración de Drivers de Motor}
+
+La Tabla \ref{tab:config_drivers} muestra la configuración de los drivers TB6600 para los motores paso a paso.
+
+\begin{table}[H]
+\centering
+\caption{Configuración de drivers TB6600 y motores NEMA 17}
+\label{tab:config_drivers}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Parámetro} & \textbf{Valor} & \textbf{Observación} \\
+\hline
+Modelo motor & NEMA 17 & 17HS4401 (1.7A nominal) \\
+\hline
+Pasos/revolución & 200 & 1.8° por paso \\
+\hline
+Microstepping & 8x & Configurado vía DIP switches del TB6600 \\
+\hline
+Pasos totales/rev & 1600 & $200 \times 8 = 1600$ \\
+\hline
+Corriente configurada & 1.5A & 88\% de corriente nominal \\
+\hline
+Tensión alimentación & 24V DC & Fuente switching regulada \\
+\hline
+Modo decay & Fast decay & Para mejor respuesta dinámica \\
+\hline
+\end{tabular}
+\end{table}
+
+El microstepping de 8x ofrece balance óptimo entre resolución (mejora 8x vs modo full-step), suavidad de movimiento y velocidad máxima. Configuraciones mayores (16x, 32x) reducirían el torque disponible sin beneficio práctico dada la resolución mecánica limitada por backlash.
+
+\subsubsection{Eje Horizontal (Correa Dentada)}
+
+El eje horizontal utiliza transmisión por correa GT2 con polea de 20 dientes:
+
+\begin{itemize}
+    \item Paso de correa GT2: 2mm/diente
+    \item Dientes en polea: 20
+    \item Avance lineal/revolución: $20 \times 2 = 40$ mm
+\end{itemize}
+
+Conversión:
+\begin{equation}
+\text{pasos/mm}_H = \frac{1600 \text{ pasos}}{40 \text{ mm}} = 40 \text{ pasos/mm}
+\end{equation}
+
+\subsubsection{Eje Vertical (Varilla Roscada)}
+
+El eje vertical utiliza varilla roscada TR8x8 (paso 8mm):
+
+\begin{itemize}
+    \item Paso de rosca: 8mm/revolución
+    \item Avance lineal/revolución: 8mm
+\end{itemize}
+
+Conversión:
+\begin{equation}
+\text{pasos/mm}_V = \frac{1600 \text{ pasos}}{8 \text{ mm}} = 200 \text{ pasos/mm}
+\end{equation}
+
+\subsubsection{Resolución del Sistema}
+
+La resolución teórica de posicionamiento es:
+
+\begin{itemize}
+    \item Horizontal: $\frac{1}{40} = 0.025$ mm/paso
+    \item Vertical: $\frac{1}{200} = 0.005$ mm/paso
+\end{itemize}
+
+En la práctica, factores como backlash de la correa (~0.1mm) y flexión mecánica limitan la resolución efectiva a ~0.1mm en ambos ejes.
+
+\subsubsection{Implementación en Firmware}
+
+El firmware define constantes de conversión (40 pasos/mm para eje horizontal, 200 pasos/mm para eje vertical) y funciones que realizan la conversión bidireccional entre unidades. El protocolo de comunicación con el supervisor utiliza milímetros como unidad estándar, simplificando la interfaz y abstracciendo los detalles mecánicos. El firmware traduce automáticamente todas las distancias recibidas a pasos internamente antes de generar las trayectorias.

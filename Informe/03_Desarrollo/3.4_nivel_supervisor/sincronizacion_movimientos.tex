@@ -1,2 +1,73 @@
-% Sincronizacion Movimientos
+La coordinación de movimientos entre el sistema XY del nivel regulatorio y el brazo robótico del supervisor requiere mecanismos sofisticados de sincronización para garantizar operación segura y eficiente.
 
+\subsubsection{Modelo de Coordinación}
+
+El sistema implementa un modelo de coordinación jerárquico:
+
+\textbf{Nivel 1 - Exclusión mutua física:} El brazo solo puede moverse cuando está en configuración segura (\texttt{movimiento} o \texttt{mover\_lechuga}), donde su extensión no interfiere con el workspace XY. Intentar movimiento XY con brazo extendido genera bloqueo preventivo.
+
+\textbf{Nivel 2 - Sincronización de comandos:} Cada subsistema (XY, brazo) ejecuta un solo comando a la vez. Un comando nuevo se encola hasta que el anterior complete, implementando serialización automática.
+
+\textbf{Nivel 3 - Orquestación de workflows:} Los workflows de alto nivel coordinan secuencias complejas mediante wait points explícitos, garantizando completado de acciones previas antes de iniciar las siguientes.
+
+\subsubsection{Mecanismo de Wait Points}
+
+Los workflows utilizan el método \texttt{wait\_for\_action\_completion} para sincronizar operaciones. Este método bloquea la ejecución hasta recibir la notificación correspondiente del firmware o hasta que se cumpla el timeout especificado. Por ejemplo, tras enviar un comando de movimiento XY, el sistema espera la confirmación de completado con un timeout de 180 segundos antes de continuar con la siguiente acción. Internamente:
+
+\begin{enumerate}
+    \item Registra el tipo de acción esperada en queue de espera
+    \item Thread de lectura UART monitorea mensajes entrantes
+    \item Al detectar mensaje de completado, desbloquea el wait point
+    \item Retorna True si completó, genera excepción si timeout
+\end{enumerate}
+
+\subsubsection{Coordinación Brazo-XY en Workflows}
+
+El workflow de cosecha implementa una secuencia de coordinación en cuatro etapas: primero mueve el sistema XY a la posición de la lechuga detectada y espera confirmación con timeout de 180 segundos; segundo, cambia el brazo a posición de recolección extendida y espera su confirmación con timeout de 20 segundos; tercero, activa el gripper y retrae el brazo a posición de transporte seguro verificando el cambio de estado; finalmente, mueve el sistema XY a la posición de depósito (ahora seguro porque el brazo está retraído) y espera la confirmación del movimiento. Cada transición garantiza que el estado anterior está consolidado antes de proceder.
+
+\subsubsection{Gestión de Timeouts Adaptativos}
+
+Los timeouts se calculan dinámicamente basados en la operación:
+
+\textbf{Movimientos XY:} Timeout = $\frac{d_{euclidiana}}{v_{min}} \times 1.5 + 10s$, donde $d_{euclidiana}$ es la distancia a recorrer y $v_{min}$ la velocidad mínima configurada. El factor 1.5 provee margen para aceleraciones/deceleraciones.
+
+\textbf{Transiciones de brazo:} Timeout fijo de 20s (trayectoria más larga: \texttt{movimiento} $\rightarrow$ \texttt{recoger\_lechuga}: 3-5s nominales).
+
+\textbf{Operaciones de IA:} Timeout variable según módulo:
+\begin{itemize}
+    \item Detección ArUco: 5s (procesamiento simple)
+    \item Clasificación de planta: 15s (inferencia de red neuronal)
+    \item Escaneo completo de tubo: 60s (múltiples capturas + procesamiento)
+\end{itemize}
+
+\subsubsection{Sincronización con Módulos de IA}
+
+Los módulos de visión requieren coordinación especial:
+
+\textbf{Adquisición de cámara:} Implementa patrón acquire/release con lock mediante el gestor de cámara. El sistema bloquea el acceso hasta que la cámara esté disponible, captura el frame requerido dentro de un bloque protegido, y siempre libera el recurso al finalizar (incluso si hay excepciones), garantizando que otros módulos puedan acceder posteriormente.
+
+\textbf{Estabilización post-movimiento:} Tras un movimiento XY, se espera 500ms adicionales antes de capturar imagen para permitir que vibraciones mecánicas se disipen y la imagen sea nítida.
+
+\textbf{Sincronización de iluminación:} Si hay control de iluminación externa (futuro), se sincronizan ciclos de captura con encendido/apagado de LEDs para consistencia.
+
+\subsubsection{Detección y Resolución de Deadlocks}
+
+El sistema implementa detección proactiva de deadlocks potenciales:
+
+\textbf{Timeout watchdog:} Thread independiente monitorea duración de operaciones críticas. Si una operación excede 3x su timeout nominal, se asume deadlock y se fuerza liberación de recursos.
+
+\textbf{Liveness probes:} El supervisor envía heartbeat (\texttt{HB:1}) cada 30s al regulatorio. Si no recibe ACK en 90s (3 intentos), asume desconexión y ejecuta reset de comunicación.
+
+\textbf{Detección de starvation:} Si un módulo espera acceso a cámara por más de 60s, se registra advertencia y se fuerza liberación del lock actual para prevenir bloqueo permanente.
+
+\subsubsection{Optimización de Latencia Total}
+
+Para minimizar tiempo total de workflows:
+
+\textbf{Pipelining cuando es seguro:} En secuencias donde el siguiente comando es predecible y seguro, se puede iniciar sin esperar completado del anterior. Ejemplo: Configurar velocidad + iniciar movimiento se puede pipeline (la configuración es instantánea).
+
+\textbf{Movimientos simultáneos:} El firmware permite movimiento simultáneo de ejes X e Y (comando \texttt{M:x,y} es atómico). El supervisor aprovecha esto para movimientos diagonales en un solo comando vs dos secuenciales.
+
+\textbf{Transiciones de brazo paralelas a procesamiento IA:} Mientras el brazo ejecuta una trayectoria (3-5s), el supervisor puede iniciar procesamiento de imagen capturada previamente, solapando operaciones para mejor throughput.
+
+Estas optimizaciones reducen el tiempo de cosecha de una planta de ~30s (secuencial puro) a ~15-20s (con solapamiento inteligente), mejorando significativamente la productividad del sistema.
