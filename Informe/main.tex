@@ -121,12 +121,9 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{02_MarcoTeorico/2.2_vision_ia/deteccion_bordes}
 \input{02_MarcoTeorico/2.2_vision_ia/deteccion_contornos}
 \input{02_MarcoTeorico/2.2_vision_ia/analisis_morfologico}
-%\input{02_MarcoTeorico/2.2_vision_ia/metricas_evaluacion}
+\input{02_MarcoTeorico/2.2_vision_ia/metricas_evaluacion}
 
-\section{Robots Cartesianos y Robots serie}
-%\input{02_MarcoTeorico/2.3_cinematica/modelado_cinematico}
-%\input{02_MarcoTeorico/2.3_cinematica/espacios_trabajo}
-%\input{02_MarcoTeorico/2.3_cinematica/analisis_trayectorias}
+\section{Estructuras Cartesianas y Robots serie}
 \input{02_MarcoTeorico/2.3_cinematica/robots_Cartesianos_y_serie.tex}
 
 \section{Sistemas de Transmisión Mecánica}
@@ -175,9 +172,9 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 %\input{03_Desarrollo/3.2_modelado_mecanico/cinematica_brazo}
 \input{03_Desarrollo/3.2_modelado_mecanico/seleccion_servos}
 
-\subsection{Modelado CAD y Fabricación}
+\subsection{Modelado CAD}
 %\input{03_Desarrollo/3.2_modelado_mecanico/diseno_piezas_3d}
-\input{03_Desarrollo/3.2_modelado_mecanico/Modelado_3d.tex}
+\input{03_Desarrollo/3.2_modelado_mecanico/Modelado3D_real.tex}
 %\input{03_Desarrollo/3.2_modelado_mecanico/tolerancias_ajustes}
 
 \section{Sistema de Control de Bajo Nivel (Nivel Regulatorio)}
@@ -229,8 +226,8 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \section{Inteligencia Artificial y Visión por Computadora}
 
 \subsection{Arquitectura y Pipeline de Procesamiento}
-%\input{03_Desarrollo/3.5_ia_vision/arquitectura_general}
-%\input{03_Desarrollo/3.5_ia_vision/hardware_preprocesamiento}
+\input{03_Desarrollo/3.5_ia_vision/arquitectura_general}
+\input{03_Desarrollo/3.5_ia_vision/hardware_preprocesamiento}
 
 \subsection{Detector de Marcadores de Referencia}
 \input{03_Desarrollo/3.5_ia_vision/3.5.3_detector_marcadores/fundamento}
@@ -257,20 +254,27 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{03_Desarrollo/3.6_interfaz/visualizacion_datos}
 \input{03_Desarrollo/3.6_interfaz/control_remoto}
 
-\section{Montaje e Integración}
-\input{03_Desarrollo/3.7_montaje/ensamblaje_mecanico}
-\input{03_Desarrollo/3.7_montaje/integracion_electronica}
-\input{03_Desarrollo/3.7_montaje/calibracion_puesta_marcha}
-\input{03_Desarrollo/3.7_montaje/problemas_soluciones}
+
+%\input{03_Desarrollo/3.7_montaje/ensamblaje_mecanico}
+%\input{03_Desarrollo/3.7_montaje/integracion_electronica}
+%\input{03_Desarrollo/3.7_montaje/calibracion_puesta_marcha}
+%\input{03_Desarrollo/3.7_montaje/problemas_soluciones}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CAPÍTULO 4: PRUEBAS Y RESULTADOS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Pruebas y Resultados}
+\chapter{Prototipo, pruebas y resultados}
+\section{Diseño estructural y mecánico}
+\input{04_Pruebas/4.1_estructura_y_mec/estr_y_mec.tex}
+\input{04_Pruebas/4.1_estructura_y_mec/Sistema_mov_horizontal.tex}
+\input{04_Pruebas/4.1_estructura_y_mec/Sistema_mov_vertical.tex}
+\input{04_Pruebas/4.1_estructura_y_mec/Modelado_3d.tex}
+%\input{04_Pruebas/Sistema_movi_vertical}
+%\input{03_Desarrollo/3.2_modelado_mecanico/Modelado_3d.tex}
 
-\section{Metodología de Pruebas}
-\input{04_Pruebas/4.1_metodologia/diseno_experimental}
-\input{04_Pruebas/4.1_metodologia/metricas_evaluacion}
+%\section{Metodología de Pruebas} %%Ver que secciones le pondriamos
+%\input{04_Pruebas/4.1_metodologia/diseno_experimental}
+%\input{04_Pruebas/4.1_metodologia/metricas_evaluacion}
 
 \section{Pruebas del Sistema Mecánico}
 \input{04_Pruebas/4.2_mecanico/precision_posicionamiento}
@@ -300,6 +304,8 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{04_Pruebas/4.6_analisis/limitaciones}
 \input{04_Pruebas/4.6_analisis/mejoras_potenciales}
 
+\chapter{Análisis de costos}
+\input{06_Costos/Analisis_economico.tex}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CAPÍTULO 5: CONCLUSIONES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
