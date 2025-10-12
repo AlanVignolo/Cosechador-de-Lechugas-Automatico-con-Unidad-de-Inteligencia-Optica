@@ -1,2 +1,43 @@
-% Justificacion Raspberry
+La elección de la Raspberry Pi 5 como plataforma para el Nivel Supervisor se fundamenta en requerimientos críticos de procesamiento de visión artificial, gestión concurrente de estados y capacidad de ejecución de redes neuronales en tiempo real.
 
+\subsubsection{Requerimientos del Sistema Supervisor}
+
+El nivel supervisor debe ejecutar simultáneamente múltiples tareas computacionalmente intensivas:
+
+\begin{itemize}
+    \item \textbf{Inferencia de redes neuronales}: Ejecución de modelos de clasificación de plantas sobre imágenes de 1920x1080 píxeles con latencia <200ms por frame. Requiere capacidad de cómputo de punto flotante y memoria suficiente para cargar pesos del modelo (~50-100MB).
+
+    \item \textbf{Gestión de máquina de estados compleja}: Orquestación de FSM con 7 estados principales, validación de transiciones, sincronización de subsistemas heterogéneos (movimiento, visión, manipulador) con latencias <50ms para garantizar respuesta en tiempo real.
+
+    \item \textbf{Procesamiento multi-hilo}: Gestión concurrente de comunicación UART (thread dedicado para RX), captura de frames de cámara (thread de adquisición), procesamiento de IA (thread de inferencia) y ejecución de workflows sin bloqueos mutuos.
+
+    \item \textbf{Visión por computadora}: Algoritmos de detección de marcadores ArUco, segmentación por color, detección de contornos y análisis morfológico ejecutándose en pipeline sobre imágenes RGB de alta resolución.
+\end{itemize}
+
+\subsubsection{Especificaciones de la Raspberry Pi 5}
+
+La Raspberry Pi 5 (configuración de 8GB RAM) provee las capacidades necesarias:
+
+\textbf{Procesador}: CPU ARM Cortex-A76 quad-core a 2.4GHz (60\% más rápido que RPi 4), con set de instrucciones ARMv8.2-A que incluye extensiones SIMD para aceleración de operaciones vectoriales. Suficiente para ejecutar inferencias de redes neuronales compactas (MobileNet, EfficientNet-Lite) a 5-8 fps.
+
+\textbf{Memoria}: 8GB LPDDR4X-4267 permite cargar simultáneamente modelos de IA, buffers de imágenes y estructuras de datos del sistema sin swapping. El sistema operativo y aplicaciones utilizan ~2GB, dejando 6GB disponibles para procesamiento.
+
+\textbf{GPU}: VideoCore VII con arquitectura mejorada provee aceleración para decodificación de video H.264/H.265 y operaciones OpenGL ES 3.1, útil para pre-procesamiento de imágenes.
+
+\textbf{Conectividad}: USB 3.0 para cámara de alta velocidad (hasta 200 MB/s), UART hardware para comunicación con nivel regulatorio, GPIO para expansiones. Dual-band WiFi 802.11ac y Gigabit Ethernet (no utilizados actualmente pero disponibles para supervisión remota futura).
+
+\textbf{Consumo}: 8-10W típico bajo carga, alimentación via USB-C 5V/3A. Permite operación continua sin refrigeración activa con disipador pasivo.
+
+\subsubsection{Justificación de Selección}
+
+La Raspberry Pi 5 es la plataforma mínima viable que cumple todos los requerimientos:
+
+\begin{itemize}
+    \item Capacidad de ejecutar inferencias de redes neuronales en tiempo real (<200ms/frame)
+    \item Suficiente potencia para gestionar FSM compleja con múltiples threads concurrentes
+    \item Soporte nativo de Python 3.x con bibliotecas optimizadas (OpenCV-ARM, TensorFlow Lite, NumPy)
+    \item Sistema operativo Linux completo que facilita desarrollo, testing y debugging
+    \item Costo accesible (\$80 USD) con prestaciones adecuadas para la aplicación
+\end{itemize}
+
+Alternativas como microcontroladores (Arduino, STM32) carecen de capacidad de procesamiento de IA. Plataformas más potentes (Jetson Nano, Intel NUC) resultan sobredimensionadas y costosas para los requerimientos del proyecto. La RPi 5 representa el balance óptimo entre capacidad computacional, flexibilidad de desarrollo y costo.

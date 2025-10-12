@@ -4,9 +4,29 @@ La detección de contornos identifica las fronteras entre regiones con propiedad
 
 \subsubsection{Algoritmo de Suzuki-Abe}
 
-El algoritmo de Suzuki-Abe, implementado en OpenCV mediante la función \texttt{findContours}, detecta simultáneamente contornos externos e internos organizándolos jerárquicamente. El algoritmo recorre la imagen binaria en orden raster y, al encontrar un píxel de objeto no visitado, inicia el rastreo del contorno siguiendo la frontera. La jerarquía resultante representa relaciones de anidamiento entre contornos mediante estructura de árbol.
+El algoritmo de Suzuki-Abe, implementado en OpenCV mediante la función \texttt{findContours}, detecta simultáneamente contornos externos e internos organizándolos jerárquicamente. El algoritmo recorre la imagen binaria en orden raster (de izquierda a derecha, de arriba hacia abajo) y, al encontrar un píxel de objeto no visitado, inicia el rastreo del contorno siguiendo la frontera. La jerarquía resultante representa relaciones de anidamiento entre contornos mediante estructura de árbol.
 
-Los modos de recuperación determinan qué contornos se extraen: \textbf{RETR\_EXTERNAL} extrae solo contornos externos de nivel superior (suficiente para aplicaciones donde interesan objetos individuales), \textbf{RETR\_LIST} extrae todos los contornos sin jerarquía, y \textbf{RETR\_TREE} construye la jerarquía completa de contornos anidados. El parámetro de aproximación controla la representación: \textbf{CHAIN\_APPROX\_NONE} almacena todos los puntos preservando información geométrica completa, mientras que \textbf{CHAIN\_APPROX\_SIMPLE} comprime segmentos colineales reduciendo uso de memoria.
+\textbf{Modos de recuperación de contornos:}
+
+Los modos de recuperación determinan qué contornos se extraen de la imagen:
+
+\begin{itemize}
+\item \textbf{RETR\_EXTERNAL}: Extrae solo contornos externos de nivel superior, ignorando contornos internos (huecos dentro de objetos). Este modo es suficiente para aplicaciones donde interesan objetos individuales sin necesidad de analizar su estructura interna.
+
+\item \textbf{RETR\_LIST}: Extrae todos los contornos detectados (externos e internos) sin establecer relaciones jerárquicas entre ellos. Los contornos se almacenan en una lista plana.
+
+\item \textbf{RETR\_TREE}: Construye la jerarquía completa de contornos anidados, estableciendo relaciones padre-hijo entre contornos externos y sus contornos internos. Útil cuando se necesita analizar la estructura topológica completa.
+\end{itemize}
+
+\textbf{Métodos de aproximación de contornos:}
+
+El parámetro de aproximación controla cómo se representan los puntos del contorno:
+
+\begin{itemize}
+\item \textbf{CHAIN\_APPROX\_NONE}: Almacena todos los puntos del contorno sin compresión, preservando información geométrica completa. Por ejemplo, un segmento horizontal de 100 píxeles se representa con 100 puntos.
+
+\item \textbf{CHAIN\_APPROX\_SIMPLE}: Comprime segmentos horizontales, verticales y diagonales almacenando solo los puntos extremos, reduciendo significativamente el uso de memoria. El mismo segmento horizontal de 100 píxeles se representa con solo 2 puntos (inicio y fin).
+\end{itemize}
 
 \subsubsection{Descriptores Geométricos}
 
@@ -40,10 +60,29 @@ Cuando múltiples contornos cumplen filtros básicos, se implementa un \textbf{s
 S_{total} = w_1 \cdot S_{área} + w_2 \cdot S_{posición} + w_3 \cdot S_{forma}
 \end{equation}
 
-donde los pesos $w_i$ reflejan importancia relativa de cada aspecto según el problema. Para detección de cintas de referencia, la posición central recibe mayor peso ($w_2 = 0.4$) dado que las desviaciones esperadas son pequeñas. Para clasificación de cultivos, el área domina ($w_1 = 0.5$) siendo el descriptor más discriminativo.
+donde los pesos $w_i$ (con $\sum w_i = 1$) reflejan importancia relativa de cada aspecto según el problema. Cada componente $S_i$ se normaliza típicamente al rango $[0,1]$ para que contribuyan de manera equilibrada al score total. El contorno con mayor score es seleccionado como el objeto de interés.
 
 \subsubsection{Análisis de Regiones Parciales}
 
-En aplicaciones donde la geometría varía entre zonas del objeto, analizar regiones específicas del contorno proporciona descriptores más robustos que el contorno completo. Por ejemplo, para detectar cintas de referencia con bases rectangulares pero formas irregulares superiores, se analiza únicamente el 10\% inferior del contorno: $R_{base} = \{(x,y) \in C : y \geq y_{max} - 0.1h\}$ donde $h$ es la altura del bounding box. Sobre esta región se calcula el ancho efectivo $w_{base} = \max_{(x,y) \in R_{base}} x - \min_{(x,y) \in R_{base}} x + 1$ y la ocupación (fracción de píxeles presentes respecto al rectángulo delimitador de la base). Bases sólidas rectangulares presentan ocupación superior a 0.8, mientras que formas irregulares tienen menor ocupación, permitiendo discriminación efectiva.
+En aplicaciones donde la geometría varía entre zonas del objeto, analizar regiones específicas del contorno proporciona descriptores más robustos que el contorno completo. Este enfoque particiona el contorno en segmentos y analiza cada uno por separado.
 
-Este enfoque de análisis por regiones resulta particularmente valioso cuando las condiciones de captura introducen variabilidad en ciertas zonas del objeto (como hojas de lechuga que se extienden irregularmente) pero otras zonas mantienen geometría consistente (como bases de recipientes).
+\textbf{Ejemplo de partición por altura:} Para objetos con base regular pero parte superior irregular, se puede analizar únicamente una región inferior del contorno:
+
+\begin{equation}
+R_{base} = \{(x,y) \in C : y \geq y_{max} - \alpha h\}
+\end{equation}
+
+donde $C$ es el contorno completo, $h$ es la altura del bounding box, y $\alpha \in (0,1)$ define la fracción de altura a analizar (típicamente $\alpha = 0.1$ para el 10\% inferior). Sobre esta región se pueden calcular descriptores específicos como:
+
+\begin{itemize}
+\item \textbf{Ancho efectivo de la base}: $w_{base} = \max_{(x,y) \in R_{base}} x - \min_{(x,y) \in R_{base}} x + 1$
+
+\item \textbf{Ocupación de la base}: Fracción de píxeles presentes respecto al rectángulo delimitador de la región, calculada como:
+\begin{equation}
+\text{Ocupación} = \frac{|R_{base}|}{w_{base} \cdot (\alpha h)}
+\end{equation}
+\end{itemize}
+
+Bases sólidas rectangulares presentan ocupación superior a 0.8, mientras que formas irregulares o fragmentadas tienen menor ocupación, permitiendo discriminación efectiva entre diferentes tipos de objetos.
+
+Este enfoque de análisis por regiones resulta particularmente valioso cuando las condiciones de captura introducen variabilidad en ciertas zonas del objeto pero otras zonas mantienen geometría consistente y predecible.

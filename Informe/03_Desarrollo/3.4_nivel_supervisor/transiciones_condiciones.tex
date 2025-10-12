@@ -1,2 +1,66 @@
-% Transiciones Condiciones
+Las transiciones entre estados del brazo robótico están gobernadas por condiciones de guarda que garantizan la seguridad y consistencia del sistema.
 
+\subsubsection{Matriz de Transiciones Permitidas}
+
+No todas las transiciones entre estados son válidas. La Tabla \ref{tab:transiciones_brazo} muestra las transiciones permitidas entre las 4 posiciones del brazo:
+
+\begin{table}[H]
+\centering
+\caption{Transiciones permitidas entre estados del brazo robótico}
+\label{tab:transiciones_brazo}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Desde \textbackslash{} Hacia} & \textbf{Retraído} & \textbf{Ext. Horiz.} & \textbf{Elevado} & \textbf{Ext. Desc.} \\
+\hline
+Retraído & - & ✓ & ✗ & ✗ \\
+\hline
+Extendido Horizontal & ✓ & - & ✓ & ✗ \\
+\hline
+Elevado & ✓ & ✗ & - & ✓ \\
+\hline
+Extendido Descendente & ✓ & ✗ & ✓ & - \\
+\hline
+\end{tabular}
+\end{table}
+
+Esta restricción previene transiciones peligrosas. Por ejemplo, no se permite pasar directamente de "Retraído" a "Extendido Descendente" sin pasar por estados intermedios que garanticen que hay un objeto en el gripper.
+
+\subsubsection{Condiciones de Guarda}
+
+Además de las restricciones topológicas, cada transición evalúa condiciones específicas (Tabla \ref{tab:condiciones_guarda}).
+
+\begin{table}[H]
+\centering
+\caption{Condiciones de guarda y acciones por transición}
+\label{tab:condiciones_guarda}
+\small
+\begin{tabular}{|l|p{4cm}|p{6cm}|}
+\hline
+\textbf{Transición Hacia} & \textbf{Precondiciones} & \textbf{Acciones Ejecutadas} \\
+\hline
+Retraído & Siempre permitida (estado seguro) & Mover servos a ángulos de reposo. Gripper mantiene estado actual. \\
+\hline
+Ext. Horizontal & Brazo en Retraído. Flag de objeto = False & Abrir gripper, luego extender brazo horizontalmente. \\
+\hline
+Elevado & Brazo en Ext. Horizontal o Ext. Descendente & Si viene de Horizontal: cerrar gripper, elevar, setear flag = True. Si viene de Descendente: solo elevar. \\
+\hline
+Ext. Descendente & Brazo en Elevado. Flag de objeto = True & Extender hacia abajo, abrir gripper, setear flag = False. \\
+\hline
+\end{tabular}
+\end{table}
+
+El flag de objeto (booleano interno) rastrea si el gripper contiene una planta. Este mecanismo previene intentar depositar cuando el gripper está vacío, o recoger cuando ya contiene un objeto.
+
+\subsubsection{Validación y Bloqueos}
+
+El controlador del brazo implementa tres niveles de validación:
+
+\textbf{Validación preventiva}: Antes de iniciar una transición, se verifica que sea topológicamente válida, que no haya otra trayectoria en ejecución, y que el sistema XY esté detenido. Si alguna condición falla, la transición se rechaza inmediatamente con mensaje de error específico.
+
+\textbf{Bloqueo durante ejecución}: Una vez iniciada la trayectoria, se activa un flag de ejecución que bloquea nuevos comandos de cambio de estado y movimientos XY (excepto para estados seguros como Retraído).
+
+\textbf{Verificación post-transición}: Al completar el movimiento, se consultan las posiciones reales de los servos al firmware y se verifica que estén dentro de ±5° de los valores objetivo. Desviaciones mayores registran advertencia y reintentan automáticamente.
+
+\subsubsection{Gestión de Timeouts}
+
+Cada transición tiene un timeout máximo de 20 segundos. Un thread auxiliar monitorea el flag de ejecución cada 100ms. Si transcurre el timeout sin completar, fuerza la finalización del flag, genera excepción de timeout e intenta transición de emergencia al estado Retraído. Este mecanismo garantiza que el sistema nunca queda bloqueado indefinidamente esperando una transición incompleta.

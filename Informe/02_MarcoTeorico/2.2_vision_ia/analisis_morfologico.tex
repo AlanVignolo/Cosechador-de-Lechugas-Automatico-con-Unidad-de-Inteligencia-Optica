@@ -4,13 +4,21 @@ La clasificación morfológica de objetos utiliza características geométricas 
 
 \subsubsection{Clasificación por Umbrales sobre Descriptores}
 
-El método más directo establece límites de decisión basados en valores de descriptores geométricos. Para un descriptor $d$ y un conjunto de clases $\mathcal{C} = \{c_1, c_2, ..., c_n\}$, la regla de clasificación se define mediante umbrales $t_0, t_1, ..., t_n$ que particionan el espacio de características:
+El método más directo establece límites de decisión basados en valores de descriptores geométricos. Para un descriptor $d$ (como área, perímetro, o relación de aspecto) y un conjunto de clases $\mathcal{C} = \{c_1, c_2, ..., c_n\}$, la regla de clasificación se define mediante umbrales $t_0, t_1, ..., t_n$ que particionan el espacio de características:
 
 \begin{equation}
 \text{Clase}(x) = c_i \quad \text{si} \quad t_{i-1} < d(x) \leq t_i
 \end{equation}
 
-Para objetos que se diferencian principalmente por tamaño, el área en píxeles constituye un descriptor efectivo. Por ejemplo, en clasificación de tubos de cultivo donde vasos vacíos presentan poca vegetación visible, plantines muestran área verde intermedia, y lechugas desarrolladas ocupan áreas grandes, se establecen umbrales que separan estas categorías. La robustez del método depende de la separabilidad entre clases: la distancia entre centroides de clases adyacentes debe ser significativa respecto a la dispersión intra-clase para minimizar errores de clasificación.
+donde $x$ es el objeto a clasificar y $d(x)$ su valor de descriptor.
+
+Para objetos que se diferencian principalmente por tamaño, el área en píxeles constituye un descriptor efectivo. La robustez del método depende de la \textbf{separabilidad entre clases}: la distancia entre centroides de clases adyacentes debe ser significativa respecto a la dispersión intra-clase para minimizar errores de clasificación. Matemáticamente, se busca que:
+
+\begin{equation}
+|\mu_i - \mu_{i+1}| \gg \sigma_i + \sigma_{i+1}
+\end{equation}
+
+donde $\mu_i$ y $\sigma_i$ son la media y desviación estándar del descriptor para la clase $i$.
 
 La selección óptima de umbrales requiere análisis estadístico de una base de datos representativa. Para cada clase $c_i$, se calculan la media $\mu_i$ y desviación estándar $\sigma_i$ del descriptor mediante:
 
@@ -28,13 +36,15 @@ Este criterio resulta de igualar las densidades de probabilidad gaussianas de am
 
 \subsubsection{Clasificación Multi-Criterio con Distancia Normalizada}
 
-Cuando un único descriptor no proporciona separabilidad suficiente, se emplean múltiples características simultáneamente. En agricultura de precisión, los ratios de color resultan particularmente efectivos. Dado un contorno detectado, se calculan proporciones de píxeles de diferentes tonalidades dentro de su región:
+Cuando un único descriptor no proporciona separabilidad suficiente, se emplean múltiples características simultáneamente. Un enfoque común combina descriptores geométricos con información de color o textura. Dado un contorno detectado, se pueden calcular múltiples características como:
 
 \begin{equation}
-r_{verde} = \frac{N_{píxeles\_verdes}}{N_{píxeles\_totales}}, \quad r_{negro} = \frac{N_{píxeles\_negros}}{N_{píxeles\_totales}}
+r_{color} = \frac{N_{píxeles\_color\_objetivo}}{N_{píxeles\_totales}}, \quad I_{media} = \frac{1}{N}\sum_{(x,y) \in R} I(x,y)
 \end{equation}
 
-Cada objeto se representa como un vector en el espacio de características $\mathbf{x} = [r_{verde}, r_{negro}, I_{media}]^T$, donde $I_{media}$ es la intensidad promedio de píxeles internos. Para cada clase $c_i$, se define un prototipo mediante las medias de los descriptores $\boldsymbol{\mu}_i = [\mu_{verde,i}, \mu_{negro,i}, \mu_{intensidad,i}]^T$ y desviaciones estándar $\boldsymbol{\sigma}_i = [\sigma_{verde,i}, \sigma_{negro,i}, \sigma_{intensidad,i}]^T$ calculadas sobre el conjunto de entrenamiento.
+donde $N$ es el número total de píxeles en la región $R$ delimitada por el contorno, $N_{píxeles\_color\_objetivo}$ es el número de píxeles que satisfacen un criterio de color específico, e $I(x,y)$ es la intensidad del píxel.
+
+Cada objeto se representa como un vector en el espacio de características $\mathbf{x} = [d_1, d_2, ..., d_m]^T$ donde cada $d_j$ es un descriptor (área, relación de aspecto, ratio de color, intensidad media, etc.). Para cada clase $c_i$, se define un \textbf{prototipo} mediante las medias $\boldsymbol{\mu}_i = [\mu_{1,i}, \mu_{2,i}, ..., \mu_{m,i}]^T$ y desviaciones estándar $\boldsymbol{\sigma}_i = [\sigma_{1,i}, \sigma_{2,i}, ..., \sigma_{m,i}]^T$ calculadas sobre un conjunto de muestras representativas (conjunto de entrenamiento).
 
 La clasificación de un objeto nuevo se realiza calculando su distancia normalizada a cada prototipo de clase. La normalización por desviación estándar garantiza que descriptores con diferentes rangos contribuyan equitativamente:
 
@@ -58,8 +68,42 @@ donde $D_{min}$ es la distancia a la clase predicha y $D_{max}$ la distancia a l
 
 \subsubsection{Ventajas y Limitaciones del Enfoque}
 
-El enfoque morfológico presenta ventajas significativas para aplicaciones de agricultura de precisión. La interpretabilidad de las reglas de decisión facilita la validación agronómica y la depuración de fallos mediante inspección directa de valores de descriptores. La eficiencia computacional permite ejecución en tiempo real sobre hardware embebido sin requerir GPUs o aceleradores especializados. El método requiere únicamente decenas a cientos de muestras por clase para establecer parámetros estadísticos, en contraste con los miles de imágenes necesarios para entrenar redes neuronales profundas. El control explícito sobre umbrales y pesos permite ajuste directo según requerimientos operativos, sin necesidad de reentrenamiento completo del modelo.
+\textbf{Ventajas del enfoque morfológico:}
 
-Las limitaciones incluyen la necesidad de diseño manual de características, requiriendo conocimiento experto del dominio para identificar descriptores relevantes. El método se limita a características directamente medibles, sin capacidad de capturar patrones visuales complejos o texturas sutiles que podrían ser aprendidas automáticamente por métodos de aprendizaje profundo. Variaciones significativas de iluminación o perspectiva pueden afectar los descriptores cromáticos, aunque este efecto se mitiga en entornos controlados como invernaderos con iluminación artificial. La separabilidad lineal de clases en el espacio de características limita la aplicabilidad: el método funciona efectivamente con 2-5 categorías bien diferenciadas, pero puede degradar con mayor número de clases o cuando las clases no son linealmente separables.
+\begin{itemize}
+\item \textbf{Interpretabilidad}: Las reglas de decisión son explícitas y comprensibles, facilitando la validación y depuración mediante inspección directa de valores de descriptores.
 
-El enfoque resulta particularmente adecuado para clasificación de cultivos hidropónicos cuando existe diferenciación clara por tamaño, forma o color (como plantines vs. plantas maduras vs. tubos vacíos), el entorno es controlado, se requiere operación en hardware con recursos limitados, la interpretabilidad es crítica para validación, y se dispone de conocimiento experto para diseñar descriptores relevantes. Bajo estas condiciones, la combinación con análisis estadístico robusto permite alcanzar exactitudes superiores a 90\% sin la complejidad y requisitos computacionales de métodos de aprendizaje profundo.
+\item \textbf{Eficiencia computacional}: Permite ejecución en tiempo real sobre hardware embebido sin requerir GPUs o aceleradores especializados.
+
+\item \textbf{Requisitos de datos reducidos}: Requiere únicamente decenas a cientos de muestras por clase para establecer parámetros estadísticos, en contraste con los miles o millones de imágenes necesarios para entrenar redes neuronales profundas.
+
+\item \textbf{Control explícito}: Los umbrales y pesos pueden ajustarse directamente según requerimientos operativos, sin necesidad de reentrenamiento completo del modelo.
+
+\item \textbf{Bajo costo de implementación}: No requiere infraestructura computacional especializada ni períodos largos de entrenamiento.
+\end{itemize}
+
+\textbf{Limitaciones del enfoque:}
+
+\begin{itemize}
+\item \textbf{Diseño manual de características}: Requiere conocimiento experto del dominio para identificar descriptores relevantes y discriminativos.
+
+\item \textbf{Capacidad expresiva limitada}: Se limita a características directamente medibles, sin capacidad de capturar patrones visuales complejos o texturas sutiles que podrían ser aprendidas automáticamente por métodos de aprendizaje profundo.
+
+\item \textbf{Sensibilidad a condiciones de captura}: Variaciones significativas de iluminación o perspectiva pueden afectar los descriptores cromáticos y geométricos, aunque este efecto se mitiga en entornos controlados.
+
+\item \textbf{Separabilidad lineal}: El método funciona efectivamente con 2-5 categorías bien diferenciadas, pero puede degradar con mayor número de clases o cuando las clases presentan solapamiento significativo en el espacio de características.
+\end{itemize}
+
+\textbf{Aplicabilidad del método:}
+
+El enfoque resulta particularmente adecuado cuando se cumplen las siguientes condiciones:
+\begin{itemize}
+\item Existe diferenciación clara entre clases por tamaño, forma o color
+\item El entorno de operación es controlado o predecible
+\item Se requiere operación en hardware con recursos computacionales limitados
+\item La interpretabilidad es crítica para validación o certificación
+\item Se dispone de conocimiento experto para diseñar descriptores relevantes
+\item El número de clases es reducido (2-5 categorías)
+\end{itemize}
+
+Bajo estas condiciones, la combinación de análisis morfológico con métodos estadísticos robustos permite alcanzar exactitudes superiores a 90\% sin la complejidad y requisitos computacionales de métodos de aprendizaje profundo.

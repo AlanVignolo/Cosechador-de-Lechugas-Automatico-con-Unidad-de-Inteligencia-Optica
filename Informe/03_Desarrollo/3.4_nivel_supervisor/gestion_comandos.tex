@@ -1,2 +1,82 @@
-% Gestion Comandos
+La coordinación entre el Nivel Supervisor y el Nivel Regulatorio se realiza mediante un protocolo de comandos estructurados transmitidos por UART. El módulo \texttt{CommandManager} encapsula la lógica de formateado, envío y validación de respuestas.
 
+\subsubsection{Protocolo de Comandos}
+
+Los comandos siguen un formato consistente basado en caracteres ASCII delimitados. Los delimitadores enmarcan cada comando, el separador de dos puntos divide el identificador de los parámetros, y los parámetros múltiples se separan con comas. Este formato mantiene compatibilidad directa con el protocolo implementado en el nivel regulatorio.
+
+\textbf{Comandos de movimiento:}
+\begin{itemize}
+    \item \texttt{M:x,y} - Movimiento relativo en mm (ej: \texttt{M:50.5,-20.3})
+    \item \texttt{V:h\_speed,v\_speed} - Configuración de velocidades en pasos/s
+    \item \texttt{XY?} - Consulta de posición actual en mm
+    \item \texttt{RP} - Solicitud de progreso de movimiento actual
+\end{itemize}
+
+\textbf{Comandos de brazo y gripper:}
+\begin{itemize}
+    \item \texttt{A:s1,s2,t} - Movimiento de ambos servos a ángulos (s1, s2) en tiempo t (ms)
+    \item \texttt{P:num,angle} - Movimiento de servo individual (num=1 o 2)
+    \item \texttt{G:O} / \texttt{G:C} - Apertura/cierre de gripper con confirmación
+    \item \texttt{GT} - Toggle de gripper (cambio de estado)
+    \item \texttt{Q} - Consulta de posiciones actuales de servos
+\end{itemize}
+
+\textbf{Comandos de sistema:}
+\begin{itemize}
+    \item \texttt{S?} - Consulta de estado completo del sistema
+    \item \texttt{L?} - Consulta de estado de finales de carrera
+    \item \texttt{S} - Emergency stop (detención inmediata de todos los motores)
+    \item \texttt{HB:1} - Heartbeat (keep-alive) del supervisor
+\end{itemize}
+
+\subsubsection{Gestión de Respuestas}
+
+El \texttt{UARTManager} implementa un sistema de colas para separar respuestas síncronas de notificaciones asíncronas:
+
+\textbf{Respuestas síncronas:} Cada comando enviado espera una respuesta del firmware con prefijo \texttt{RESPONSE} seguido de los datos solicitados, utilizando el mismo formato delimitado. El timeout por defecto es 5 segundos. Si no hay respuesta, se genera \texttt{UARTTimeoutException} y se reintentan hasta 3 veces con backoff exponencial (1s, 2s, 4s).
+
+\textbf{Eventos asíncronos:} El firmware puede enviar notificaciones no solicitadas en cualquier momento:
+\begin{itemize}
+    \item \texttt{STEPPER\_MOVE\_COMPLETED:...} - Movimiento XY completado con datos de posición
+    \item \texttt{LIMIT\_TRIGGERED:tipo} - Final de carrera activado
+    \item \texttt{STEPPER\_EMERGENCY\_STOP:...} - Parada de emergencia ejecutada
+    \item \texttt{GRIPPER\_OPENED/CLOSED} - Confirmación de acción de gripper
+\end{itemize}
+
+Estos mensajes se encolan en \texttt{message\_queue} y son procesados por callbacks registrados.
+
+\subsubsection{Sistema de Callbacks}
+
+El supervisor registra funciones callback para eventos específicos mediante métodos del gestor UART. Se pueden configurar callbacks para progreso de movimiento, finalización de movimiento y activación de límites. Los callbacks se ejecutan en thread separado del lector UART, permitiendo procesamiento no bloqueante. El \texttt{RobotController} utiliza esta funcionalidad para actualizar la posición global automáticamente al completar cada movimiento, manteniendo sincronizado el estado interno sin polling activo.
+
+\subsubsection{Validación de Comandos}
+
+Antes de enviar un comando al firmware, el \texttt{CommandManager} realiza validaciones:
+
+\textbf{Rangos de parámetros:}
+\begin{itemize}
+    \item Ángulos de servo: 10° - 160° (clampeo automático)
+    \item Velocidades: 100 - 8000 pasos/s
+    \item Tiempos de trayectoria: 0 - 10000 ms
+\end{itemize}
+
+\textbf{Precondiciones de estado:}
+\begin{itemize}
+    \item Movimientos XY requieren sistema homed (excepto homing mismo)
+    \item Comandos de brazo requieren conexión UART activa
+    \item Emergency stop siempre permitido (máxima prioridad)
+\end{itemize}
+
+Si una validación falla, el comando se rechaza inmediatamente sin enviar al firmware, retornando un diccionario con estado de falla y descripción del error específico.
+
+\subsubsection{Gestión de Concurrencia}
+
+Aunque Python tiene GIL (Global Interpreter Lock), el sistema maneja múltiples threads: el principal ejecuta workflows y lógica de negocio, uno dedicado lee continuamente del puerto serial parseando mensajes y disparando callbacks, y un watchdog monitorea timeouts y liveness del sistema.
+
+Para prevenir race conditions, el acceso a la cola de mensajes está protegido con lock implícito, las escrituras al puerto serial se serializan mediante lock explícito, y la actualización de posición global es atómica (asignación de diccionarios es atómica en CPython).
+
+\subsubsection{Optimización de Latencia}
+
+El sistema minimiza latencia end-to-end mediante buffering asíncrono (buffer de 4096 bytes, suficiente para ~50 mensajes evitando pérdidas durante ráfagas), comandos no bloqueantes (retornan inmediatamente tras validar que el firmware inició la acción, con notificación de completado vía callback asíncrono), y pipelining selectivo (para secuencias predecibles como configurar velocidad + iniciar movimiento, se envían comandos en rápida sucesión sin esperar respuesta individual, reduciendo latencia total de 100ms a ~20ms).
+
+Mediciones muestran latencia típica de 15-30ms desde envío de comando hasta recepción de respuesta, dominada por tiempo de transmisión serial a 115200 baudios más procesamiento en Arduino (<1ms).

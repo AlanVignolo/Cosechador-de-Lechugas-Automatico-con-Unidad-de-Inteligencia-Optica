@@ -34,7 +34,7 @@ La tercera etapa adelgaza los bordes candidatos preservando únicamente píxeles
 
 La cuarta etapa aplica dos umbrales para clasificar píxeles en tres categorías: bordes fuertes (magnitud > umbral alto), bordes débiles (magnitud entre umbral bajo y alto), y no bordes (magnitud < umbral bajo). Los bordes fuertes se aceptan inmediatamente. Los bordes débiles se aceptan únicamente si están conectados directa o indirectamente a un borde fuerte, mediante un algoritmo de seguimiento de contornos. Esta estrategia de histéresis reduce falsos positivos permitiendo que bordes genuinos con secciones débiles sean preservados, mientras que bordes débiles aislados (probablemente ruido) son rechazados.
 
-La relación típica entre umbrales es $T_{alto} = 2 \cdot T_{bajo}$ o $3 \cdot T_{bajo}$, estableciéndose los valores absolutos experimentalmente según las características de la imagen. Para imágenes de cultivos hidropónicos con buena iluminación, valores como $T_{bajo} = 50$ y $T_{alto} = 150$ (en escala 0-255) resultan efectivos.
+La relación típica entre umbrales es $T_{alto} = 2 \cdot T_{bajo}$ o $3 \cdot T_{bajo}$, estableciéndose los valores absolutos experimentalmente según las características de la imagen. Para imágenes con buena iluminación, valores típicos como $T_{bajo} = 50$ y $T_{alto} = 150$ (en escala 0-255) suelen resultar efectivos.
 
 \subsubsection{Transformada de Hough para Detección de Líneas}
 
@@ -48,8 +48,13 @@ Cada píxel de borde $(x_i, y_i)$ genera una curva sinusoidal en el espacio $(\t
 
 La transformada de Hough probabilística optimiza este proceso muestreando aleatoriamente puntos de borde en lugar de procesarlos todos, reduciendo significativamente el costo computacional manteniendo precisión adecuada. El algoritmo retorna los puntos extremos de los segmentos de línea detectados, permitiendo filtrar líneas por longitud mínima y separación máxima entre segmentos.
 
-\subsubsection{Aplicación a Detección de Estructuras de Cultivo}
+\textbf{Parámetros de configuración:} Los parámetros clave de la transformada de Hough incluyen:
+\begin{itemize}
+\item \textbf{Resolución angular} ($\Delta\theta$): precisión en la discretización del ángulo
+\item \textbf{Resolución de distancia} ($\Delta\rho$): precisión en la discretización de la distancia
+\item \textbf{Umbral de votos}: número mínimo de puntos de borde que deben alinearse para considerar una línea válida
+\item \textbf{Longitud mínima}: filtro para descartar segmentos de línea muy cortos
+\item \textbf{Gap máximo}: distancia máxima permitida entre segmentos para considerarlos parte de la misma línea
+\end{itemize}
 
-En el contexto de robótica agrícola para cultivos hidropónicos, la combinación de Canny y Hough permite detectar líneas horizontales correspondientes a bordes superior e inferior de tubos de cultivo. El sistema captura una imagen del tubo, aplica Canny para extraer bordes, y ejecuta Hough configurado para detectar líneas con orientación horizontal (ángulos cercanos a 0° o 180°). Los parámetros clave incluyen la longitud mínima de línea (para filtrar segmentos cortos irrelevantes) y el gap máximo permitido entre segmentos (para unificar líneas fragmentadas por oclusiones parciales).
-
-La detección robusta de ambas líneas (superior e inferior) indica que el tubo está completamente visible en el campo de visión de la cámara, información empleada por el sistema de mapeo autónomo para registrar la posición de estaciones de cultivo. Un sistema de confirmación temporal que requiere detección consistente durante múltiples frames consecutivos (típicamente 5 frames) implementa un debouncing que rechaza detecciones espurias causadas por reflejos o sombras temporales, garantizando robustez en el mapeo del entorno.
+La combinación de Canny y Hough constituye una herramienta fundamental para detectar estructuras rectilíneas en imágenes, aplicable a múltiples dominios como detección de carriles en vehículos autónomos, inspección de piezas manufacturadas, y localización de estructuras geométricas regulares.

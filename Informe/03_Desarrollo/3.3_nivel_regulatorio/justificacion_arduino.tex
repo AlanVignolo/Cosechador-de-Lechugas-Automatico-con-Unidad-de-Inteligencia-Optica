@@ -1,2 +1,78 @@
-% Justificacion Arduino
+La selección del Arduino Mega 2560 como plataforma para el Nivel Regulatorio se basa en requerimientos específicos de E/S, capacidad de procesamiento en tiempo real y ecosistema de desarrollo.
 
+\subsubsection{Requerimientos del Sistema de Control}
+
+El nivel regulatorio debe cumplir con:
+
+\begin{itemize}
+    \item \textbf{Generación de pulsos de alta frecuencia}: Steppers operan hasta 10,000 pasos/s requiriendo pulsos con jitter <5µs
+    \item \textbf{Múltiples timers hardware}: 2 ejes de steppers + 2 servos + comunicación UART simultáneos
+    \item \textbf{Señales PWM de 5V}: Los drivers de stepper A4988 y servomotores requieren lógica de 5V. Microcontroladores de 3.3V (STM32, ESP32) requerirían level shifters adicionales
+    \item \textbf{Pines GPIO suficientes}: 8 pines para steppers (STEP/DIR/ENABLE x2 ejes) + 2 servos + 4 finales de carrera + gripper (4 pines) + reserva = mínimo 20 pines digitales
+    \item \textbf{UART hardware}: Comunicación serial a 115200 baudios sin bloquear loop principal
+    \item \textbf{Memoria}: Firmware actual usa ~15KB de flash y ~1.2KB de RAM
+\end{itemize}
+
+\subsubsection{Especificaciones del Arduino Mega 2560}
+
+El Arduino Mega 2560 provee:
+
+\textbf{Microcontrolador}: ATmega2560 de 8 bits a 16MHz con arquitectura AVR RISC, suficiente para ejecutar loops de control a >10kHz con latencias predecibles.
+
+\textbf{Memoria}:
+\begin{itemize}
+    \item 256KB Flash (firmware actual: 15KB, 6\% de uso)
+    \item 8KB SRAM (uso actual: 1.2KB, 15\%)
+    \item 4KB EEPROM para persistencia de configuración
+\end{itemize}
+
+\textbf{Recursos de hardware}:
+\begin{itemize}
+    \item 6 Timers (16-bit: Timer1, Timer3, Timer4, Timer5; 8-bit: Timer0, Timer2)
+    \item 54 pines digitales I/O
+    \item 16 entradas analógicas ADC de 10 bits
+    \item 4 UARTs hardware independientes
+    \item 15 canales PWM hardware
+\end{itemize}
+
+\textbf{Ecosistema}: Toolchain GCC-AVR maduro, librerías optimizadas, debugger fácil vía UART, amplia documentación.
+
+\subsubsection{Comparativa con Alternativas}
+
+La Tabla \ref{tab:comparativa_microcontroladores} presenta la evaluación de alternativas consideradas.
+
+\begin{table}[H]
+\centering
+\caption{Comparativa de microcontroladores para el Nivel Regulatorio}
+\label{tab:comparativa_microcontroladores}
+\small
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Característica} & \textbf{Arduino Mega} & \textbf{Arduino Uno} & \textbf{STM32F103} & \textbf{ESP32} \\
+\hline
+Frecuencia CPU & 16 MHz & 16 MHz & 72 MHz & 240 MHz \\
+\hline
+Timers 16-bit & 4 & 1 & 4 & 4 \\
+\hline
+Pines GPIO & 54 & 20 & 37 & 34 \\
+\hline
+Nivel lógico & \textbf{5V} & \textbf{5V} & 3.3V & 3.3V \\
+\hline
+Flash / RAM & 256KB / 8KB & 32KB / 2KB & 64KB / 20KB & 4MB / 520KB \\
+\hline
+Timers PWM & 15 & 6 & 12 & 16 \\
+\hline
+UART hardware & 4 & 1 & 3 & 3 \\
+\hline
+Ecosistema & Excelente & Excelente & Bueno & Bueno \\
+\hline
+Jitter ISR típico & <2 µs & <2 µs & <1 µs & 5-20 µs \\
+\hline
+Costo aprox. (USD) & 10 & 5 & 15 & 8 \\
+\hline
+\textbf{Veredicto} & \textbf{Seleccionado} & Insuf. I/O & Req. shifters & Jitter alto \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Razón principal de selección}: El Arduino Mega es la única opción que combina salidas de **5V nativas** (compatibles directamente con drivers A4988 y servos), suficientes timers hardware, abundantes pines GPIO y determinismo temporal (<2 µs de jitter en interrupciones). Las alternativas basadas en ARM de 3.3V requerirían circuitería adicional de level shifting, incrementando complejidad y costo sin beneficio funcional para esta aplicación de control a baja frecuencia (16 MHz es suficiente para loops a 10 kHz).

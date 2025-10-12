@@ -1,2 +1,93 @@
-% Estructura Comandos
+El protocolo de comunicación UART entre el nivel regulatorio y el supervisor utiliza mensajes ASCII delimitados con formato estructurado.
 
+\subsubsection{Formato de Comandos}
+
+Cada comando sigue una estructura delimitada por los caracteres \texttt{<} y \texttt{>}, con formato: \texttt{<COMANDO:param1,param2>\textbackslash n}. Los elementos son delimitadores de inicio/fin, identificador de comando (1-3 caracteres ASCII), separador de dos puntos (opcional), parámetros separados por comas, y terminador de línea.
+
+\subsubsection{Comandos Implementados}
+
+La Tabla \ref{tab:comandos_uart} presenta el conjunto completo de comandos del protocolo UART.
+
+\begin{table}[H]
+\centering
+\caption{Comandos UART del Nivel Regulatorio}
+\label{tab:comandos_uart}
+\small
+\begin{tabular}{|l|l|p{5cm}|l|}
+\hline
+\textbf{Comando} & \textbf{Parámetros} & \textbf{Descripción} & \textbf{Ejemplo} \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Control de Movimiento}} \\
+\hline
+M & x, y (mm) & Movimiento relativo en plano XY & \texttt{<M:50.5,-20>} \\
+\hline
+V & h, v (pasos/s) & Configurar velocidades máximas & \texttt{<V:8000,10000>} \\
+\hline
+H & - & Ejecutar secuencia de homing & \texttt{<H>} \\
+\hline
+XY? & - & Consultar posición actual & \texttt{<XY?>} \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Control de Brazo y Gripper}} \\
+\hline
+A & s1, s2, t (°, °, ms) & Mover ambos servos con tiempo & \texttt{<A:90,45,2000>} \\
+\hline
+P & num, angle (-, °) & Mover servo individual (1 o 2) & \texttt{<P:1,120>} \\
+\hline
+G & O/C & Abrir (O) o Cerrar (C) gripper & \texttt{<G:O>} \\
+\hline
+Q & - & Consultar ángulos de servos & \texttt{<Q>} \\
+\hline
+\multicolumn{4}{|c|}{\textbf{Sistema y Monitoreo}} \\
+\hline
+S? & - & Estado completo del sistema & \texttt{<S?>} \\
+\hline
+L? & - & Estado de finales de carrera & \texttt{<L?>} \\
+\hline
+S & - & Emergency stop (inmediato) & \texttt{<S>} \\
+\hline
+HB & 1 & Heartbeat (keep-alive) & \texttt{<HB:1>} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Formato de Respuestas}
+
+El firmware genera dos tipos de respuestas: para comandos exitosos envía un mensaje con el prefijo \texttt{RESPONSE} seguido de los datos solicitados, mientras que para comandos fallidos envía un mensaje con el prefijo \texttt{ERROR} seguido del código de error correspondiente. Ambos tipos mantienen el formato delimitado estándar del protocolo.
+
+\subsubsection{Eventos Asíncronos}
+
+Además de responder a comandos, el firmware envía notificaciones automáticas cuando ocurren eventos importantes (Tabla \ref{tab:eventos_asincronos}).
+
+\begin{table}[H]
+\centering
+\caption{Eventos asíncronos del firmware}
+\label{tab:eventos_asincronos}
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Evento} & \textbf{Descripción} \\
+\hline
+\texttt{<STEPPER\_MOVE\_COMPLETED:x,y>} & Movimiento completado exitosamente. Retorna posición final en mm. \\
+\hline
+\texttt{<LIMIT\_TRIGGERED:tipo>} & Final de carrera activado (H\_MIN, H\_MAX, V\_MIN, V\_MAX). \\
+\hline
+\texttt{<GRIPPER\_OPENED>} & Gripper completó apertura. \\
+\hline
+\texttt{<GRIPPER\_CLOSED>} & Gripper completó cierre. \\
+\hline
+\texttt{<STEPPER\_EMERGENCY\_STOP>} & Parada de emergencia ejecutada (por límite o comando). \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Procesamiento de Comandos}
+
+El firmware utiliza un parser basado en máquina de estados:
+
+\begin{enumerate}
+    \item Bytes recibidos se almacenan en buffer circular (256 bytes)
+    \item Cuando se detecta \texttt{<}, comienza captura de comando
+    \item Cuando se detecta \texttt{>}, se parsea y ejecuta el comando
+    \item Respuesta se envía inmediatamente tras ejecución
+\end{enumerate}
+
+El procesamiento completo toma <1ms para comandos simples, garantizando latencia total (transmisión + procesamiento + respuesta) <20ms a 115200 baudios.

@@ -1,2 +1,89 @@
-% Recuperacion Fallas
+El sistema supervisor implementa estrategias multinivel de recuperación ante fallas, permitiendo operación continua en presencia de errores transitorios y degradación controlada ante fallos persistentes.
 
+\subsubsection{Clasificación de Fallas}
+
+Las fallas se clasifican según severidad y recuperabilidad (Tabla \ref{tab:clasificacion_fallas}).
+
+\begin{table}[H]
+\centering
+\caption{Clasificación de fallas del sistema supervisor}
+\label{tab:clasificacion_fallas}
+\small
+\begin{tabular}{|l|p{6cm}|p{5cm}|}
+\hline
+\textbf{Tipo} & \textbf{Ejemplos} & \textbf{Causa Típica} \\
+\hline
+\multicolumn{3}{|c|}{\textbf{Tipo 1 - Fallas Transitorias Recuperables}} \\
+\hline
+Timeout UART & Comando sin respuesta en <5s & Interferencia electromagnética, latencia momentánea \\
+\hline
+Frame corrupto & Imagen con errores de lectura & Error USB, desincronización buffer \\
+\hline
+Detección fallida & Algoritmo no encuentra features & Oclusión temporal, iluminación variable \\
+\hline
+Desviación menor & Error de posición <5mm & Acumulación de redondeo \\
+\hline
+\multicolumn{3}{|c|}{\textbf{Tipo 2 - Fallas Persistentes Degradables}} \\
+\hline
+IA fallando & Inferencias erróneas consistentes & Modelo corrupto, incompatibilidad de versión \\
+\hline
+Cámara no disponible & No se puede abrir dispositivo & Desconexión física, fallo driver \\
+\hline
+Desviación mayor & Error de posición >10mm & Pérdida de pasos, colisión no detectada \\
+\hline
+Límite siempre activo & Switch siempre reporta activado & Switch pegado, cable cortocircuitado \\
+\hline
+\multicolumn{3}{|c|}{\textbf{Tipo 3 - Fallas Críticas Irrecuperables}} \\
+\hline
+Pérdida comunicación & Arduino no responde a comandos & Cable desconectado, firmware colgado \\
+\hline
+Colisión mecánica & Obstrucción física detectada & Objeto en workspace, fallo mecánico \\
+\hline
+Error firmware & Arduino en estado inconsistente & Bug firmware, corrupción de memoria \\
+\hline
+Calibración corrupta & Datos de homing inválidos & Archivo dañado, valores fuera de rango \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Estrategias de Recuperación por Tipo}
+
+La Tabla \ref{tab:estrategias_recuperacion} resume las estrategias de recuperación implementadas para cada tipo de falla.
+
+\begin{table}[H]
+\centering
+\caption{Estrategias de recuperación según tipo de falla}
+\label{tab:estrategias_recuperacion}
+\small
+\begin{tabular}{|l|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{Tipo} & \textbf{Estrategia} & \textbf{Resultado Esperado} \\
+\hline
+Tipo 1 & Retry con backoff exponencial: 3 intentos con delays 1s, 2s, 4s. Si falla todo, escalar a Tipo 2. & Recuperación automática en 5-10s. Si falla, degradación. \\
+\hline
+Tipo 2 & Modo degradado: IA manual, posiciones predefinidas, re-homing parcial, desactivar sensor dañado. Notificar operador. & Sistema continúa operando con funcionalidad reducida. \\
+\hline
+Tipo 3 & Parada segura: EMERGENCY\_STOP, brazo a posición segura, guardar estado (posición, workflow, calibración), liberar recursos, notificar operador. & Sistema detenido esperando intervención manual. \\
+\hline
+\end{tabular}
+\end{table}
+
+Fallas Tipo 1 se resuelven automáticamente en 5-10 segundos mediante reintentos. Fallas Tipo 2 activan modo degradado permitiendo operación continua con funcionalidad reducida. Fallas Tipo 3 ejecutan parada segura preservando el estado del sistema para diagnóstico post-mortem.
+
+\subsubsection{Persistencia y Recuperación de Estado}
+
+Ante reinicio del supervisor (crash, actualización, apagado), el sistema intenta cargar archivos de estado persistentes: referencia de homing, dimensiones del workspace, última posición conocida y estado de workflows interrumpidos. Tras cargar, consulta la posición real al firmware y compara con la almacenada. Si la desviación es <1mm acepta la posición almacenada; si es >1mm descarta y requiere re-homing completo.
+
+Para workflows interrumpidos: los idempotentes (como escaneo) se reinician desde cero, los con estado (como cosecha) continúan desde el último punto de control completado, y las operaciones atómicas (como recolección individual) se consideran fallidas y se descartan.
+
+\subsubsection{Autodiagnóstico y Health Checks}
+
+El supervisor ejecuta health checks cada 60 segundos verificando: comunicación UART (envío de comando de estado con respuesta esperada), acceso a cámara (captura de frame de prueba), memoria disponible (>500MB libres) y temperatura de CPU (<75°C). El regulatorio se verifica vía heartbeat: respuesta en <100ms, estados de límites consistentes con posición, y servos respondiendo a queries.
+
+Si un health check falla 3 veces consecutivas, se genera alerta y se ejecuta recuperación apropiada según tipo de falla detectada.
+
+\subsubsection{Logging de Fallas}
+
+Cada falla se registra en formato estructurado con: timestamp preciso, tipo y severidad, contexto completo (comando, posición, workflow activo), acción de recuperación tomada, resultado, y tiempo total de recuperación. Esta información persistente permite identificar patrones recurrentes, optimizar parámetros de retry/timeouts, detectar degradación de componentes antes de fallo total, y mejorar la robustez en futuras versiones.
+
+La combinación de estas estrategias permite al sistema operar robustamente en entornos reales, manteniendo alta disponibilidad (>95\% uptime) incluso ante fallas intermitentes de componentes.

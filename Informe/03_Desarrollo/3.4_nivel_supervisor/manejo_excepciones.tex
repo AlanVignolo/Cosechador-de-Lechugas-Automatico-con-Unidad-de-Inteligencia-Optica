@@ -1,2 +1,103 @@
-% Manejo Excepciones
+El sistema supervisor implementa mecanismos robustos de manejo de excepciones para garantizar operación continua ante condiciones inesperadas, minimizando interrupciones del servicio.
 
+\subsubsection{Jerarquía de Excepciones}
+
+El sistema define excepciones específicas por tipo de error:
+
+\textbf{Excepciones de comunicación:}
+\begin{itemize}
+    \item \texttt{UARTTimeoutException}: Comando enviado sin respuesta en tiempo esperado (>5s)
+    \item \texttt{InvalidResponseException}: Respuesta malformada o inconsistente del firmware
+    \item \texttt{SerialConnectionLost}: Pérdida de conexión física con Arduino
+\end{itemize}
+
+\textbf{Excepciones de movimiento:}
+\begin{itemize}
+    \item \texttt{LimitSwitchTriggered}: Activación inesperada de final de carrera durante movimiento
+    \item \texttt{PositionDeviationError}: Desviación superior a 5mm entre posición esperada y real
+    \item \texttt{HomingFailedException}: Fallo en secuencia de homing (no alcanza límites)
+\end{itemize}
+
+\textbf{Excepciones de brazo:}
+\begin{itemize}
+    \item \texttt{ArmTransitionTimeout}: Transición de estado no completa en timeout (>20s)
+    \item \texttt{InvalidStateTransition}: Intento de transición no permitida por matriz
+    \item \texttt{ServoPositionError}: Servo no alcanza posición objetivo (desviación >5°)
+\end{itemize}
+
+\textbf{Excepciones de IA:}
+\begin{itemize}
+    \item \texttt{CameraAcquisitionFailed}: No se puede adquirir acceso exclusivo a cámara
+    \item \texttt{FrameCaptureTimeout}: Captura de imagen excede timeout (>2s)
+    \item \texttt{DetectionFailure}: Algoritmo de detección no encuentra features esperados
+\end{itemize}
+
+\subsubsection{Estrategias de Recuperación}
+
+Cada tipo de excepción tiene una estrategia de recuperación específica:
+
+\textbf{Recuperación automática (nivel 1):} Para errores transitorios, el sistema intenta recuperación sin intervención:
+
+\begin{enumerate}
+    \item \textbf{Timeout UART}: Reenvío del comando hasta 3 veces con backoff exponencial (1s, 2s, 4s)
+    \item \textbf{Frame capture timeout}: Reinicio del stream de cámara y reintento de captura
+    \item \textbf{Servo position error}: Reenvío de comando de posición con tiempo extendido
+\end{enumerate}
+
+\textbf{Recuperación con degradación (nivel 2):} Cuando la recuperación automática falla, el sistema intenta operación degradada:
+
+\begin{enumerate}
+    \item \textbf{Detection failure}: Si detector de cintas falla, usa posiciones hardcoded de configuración previa
+    \item \textbf{Position deviation}: Ejecuta resincronización forzada desde firmware
+    \item \textbf{Arm transition timeout}: Cancela transición, retorna a estado \texttt{movimiento}
+\end{enumerate}
+
+\textbf{Parada segura (nivel 3):} Para errores críticos irrecuperables:
+
+\begin{enumerate}
+    \item Detiene todos los movimientos en curso (\texttt{EMERGENCY\_STOP})
+    \item Intenta mover brazo a posición segura (\texttt{movimiento})
+    \item Libera recursos (cámara, conexión serial)
+    \item Registra estado completo del sistema en log
+    \item Notifica al usuario y espera intervención manual
+\end{enumerate}
+
+\subsubsection{Logging Estructurado}
+
+Todas las excepciones se registran con estructura consistente que incluye timestamp preciso, nivel de severidad, módulo origen, tipo de excepción, mensaje descriptivo, contexto completo del sistema (estado actual, comando en curso, variables relevantes), stack trace completo para debugging, y acción de recuperación ejecutada.
+
+Los niveles de logging son:
+\begin{itemize}
+    \item \texttt{WARNING}: Excepciones recuperadas automáticamente
+    \item \texttt{ERROR}: Excepciones que requieren degradación o reintentos
+    \item \texttt{CRITICAL}: Excepciones que causan parada del workflow
+\end{itemize}
+
+\subsubsection{Mecanismo de Watchdog}
+
+El sistema implementa un watchdog de alto nivel que monitorea:
+
+\textbf{Liveness del supervisor:} Thread secundario verifica cada 5 segundos que el proceso principal responde a pings internos. Si no hay respuesta en 15s, registra estado y reinicia el supervisor.
+
+\textbf{Detección de deadlocks:} Monitorea tiempo de ejecución de operaciones críticas:
+\begin{itemize}
+    \item Movimiento XY: timeout 180s (basado en velocidad y distancia máxima)
+    \item Captura + procesamiento IA: timeout 30s
+    \item Transición de brazo: timeout 20s
+\end{itemize}
+
+Si una operación excede su timeout, el watchdog genera una excepción forzada y libera locks.
+
+\textbf{Heartbeat con nivel regulatorio:} Envío periódico de comando \texttt{HB:1} (heartbeat) cada 30s. Si el regulatorio no responde a 3 heartbeats consecutivos, se asume pérdida de comunicación y se ejecuta parada segura.
+
+\subsubsection{Estrategia de Fail-Safe}
+
+En caso de fallo catastrófico del supervisor (crash de Python, kernel panic, pérdida de alimentación), el nivel regulatorio implementa protección independiente:
+
+\begin{itemize}
+    \item Timeout de heartbeat: Si no recibe \texttt{HB:1} en 90s, ejecuta EMERGENCY\_STOP
+    \item Finales de carrera: Siempre activos por hardware, independientes del supervisor
+    \item Watchdog de firmware: Reinicio del Arduino si loop principal se bloquea >8s
+\end{itemize}
+
+Esta arquitectura de capas redundantes garantiza que el sistema físico nunca queda en estado peligroso, incluso ante fallos múltiples del software de supervisión.

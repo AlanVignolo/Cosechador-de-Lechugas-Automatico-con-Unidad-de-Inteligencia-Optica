@@ -8,13 +8,65 @@ El procesamiento digital de imágenes transforma datos visuales crudos capturado
 
 donde $R$, $G$ y $B$ representan los canales rojo, verde y azul respectivamente. Esta codificación permite representar aproximadamente 16.7 millones de colores distintos ($256^3$). La resolución espacial de una imagen de dimensiones $M \times N$ píxeles determina la cantidad de información disponible para el análisis, con cada píxel representando el promedio de la radiancia incidente sobre el área del sensor correspondiente.
 
+\subsubsection{Operaciones de Convolución y Kernels}
+
+Muchas operaciones de procesamiento de imágenes se basan en la \textbf{convolución}, una operación matemática fundamental que aplica un \textbf{kernel} (también llamado \textit{filtro} o \textit{máscara}) sobre cada píxel de la imagen. Un kernel es una pequeña matriz (típicamente $3 \times 3$, $5 \times 5$ o $7 \times 7$) que define cómo se combinan los valores de los píxeles vecinos para producir un nuevo valor.
+
+La operación de convolución se define matemáticamente como:
+
+\begin{equation}
+(I \ast K)(x,y) = \sum_{i=-a}^{a} \sum_{j=-b}^{b} I(x+i, y+j) \cdot K(i,j)
+\end{equation}
+
+donde $I$ es la imagen de entrada, $K$ es el kernel de tamaño $(2a+1) \times (2b+1)$, y el resultado $(I \ast K)(x,y)$ representa el valor procesado del píxel en la posición $(x,y)$. En términos simples, para cada píxel se calcula una suma ponderada de los valores de sus píxeles vecinos, donde los pesos están dados por el kernel.
+
+\textbf{Ejemplo de aplicación:} Un kernel gaussiano se utiliza para suavizar imágenes (reducir ruido), mientras que los kernels de Sobel detectan bordes al resaltar cambios bruscos de intensidad. Los kernels morfológicos (elementos estructurantes) operan sobre imágenes binarias para modificar formas geométricas.
+
+\textbf{Elemento estructurante:} En operaciones morfológicas sobre imágenes binarias, el kernel se denomina \textit{elemento estructurante} y define la forma y tamaño del vecindario considerado. Por ejemplo:
+\begin{itemize}
+\item Cuadrado $3 \times 3$: afecta los 8 vecinos inmediatos del píxel central
+\item Cuadrado $5 \times 5$: afecta un vecindario más amplio (24 píxeles alrededor)
+\item Rectangular $7 \times 3$: preferencia direccional (mayor alcance vertical que horizontal)
+\end{itemize}
+
+El tamaño y forma del elemento estructurante determinan el alcance y dirección de las operaciones morfológicas aplicadas.
+
 \subsubsection{Espacio de Color HSV}
 
-El espacio RGB presenta limitaciones debido a su fuerte correlación entre canales y sensibilidad a variaciones de iluminación. El espacio HSV separa información cromática (matiz H y saturación S) de información de iluminación (valor V), proporcionando robustez frente a cambios de luz. La transformación de RGB a HSV se define como $V = \max(R, G, B)$, $S = (V - \min(R,G,B))/V$ si $V \neq 0$, y $H$ calculado según cuál componente RGB es máxima.
+El espacio RGB presenta limitaciones debido a su fuerte correlación entre canales y sensibilidad a variaciones de iluminación. El espacio HSV separa información cromática (matiz H y saturación S) de información de iluminación (valor V), proporcionando robustez frente a cambios de luz. La transformación de RGB a HSV se define mediante las siguientes ecuaciones:
 
-El canal $V$ (Value) captura la intensidad luminosa independientemente del color, representando el brillo máximo entre los tres canales RGB. Esta propiedad lo convierte en un descriptor ideal para detectar objetos oscuros contra fondos claros o viceversa. Para detección de elementos de contraste oscuro (marcadores negros, cintas de cultivo), el canal $V$ permite segmentación robusta mediante umbralización: $\text{Objeto oscuro} \Leftrightarrow V(x,y) < T_V$ donde $T_V$ es un umbral empírico. En cultivo hidropónico bajo iluminación controlada, valores típicos son $T_V \in [30, 70]$.
+\begin{align}
+V &= \max(R, G, B) \\
+S &= \begin{cases}
+\frac{V - \min(R,G,B)}{V} & \text{si } V \neq 0 \\
+0 & \text{si } V = 0
+\end{cases} \\
+H &= \text{calculado según el canal RGB máximo}
+\end{align}
 
-Las ventajas incluyen invariancia parcial a color (elementos oscuros se detectan independientemente de matiz), umbralización simple (un único parámetro $T_V$), robustez ante variaciones uniformes de iluminación, y eficiencia computacional al operar sobre un único canal. Matemáticamente, el canal $V$ satisface linealidad: $V(\alpha \cdot \mathbf{I}_{RGB}) = \alpha \cdot V(\mathbf{I}_{RGB})$ para $\alpha > 0$, permitiendo compensar variaciones uniformes de brillo mediante ajustes del umbral.
+donde $V$ representa el valor (brillo), $S$ la saturación (pureza del color), y $H$ el matiz (tono del color).
+
+\textbf{Canal V (Value):} El canal $V$ captura la intensidad luminosa independientemente del color, representando el brillo máximo entre los tres canales RGB. Esta propiedad lo convierte en un descriptor ideal para detectar objetos oscuros contra fondos claros o viceversa. Para detección de elementos de contraste oscuro, el canal $V$ permite segmentación robusta mediante umbralización:
+
+\begin{equation}
+\text{Objeto oscuro} \Leftrightarrow V(x,y) < T_V
+\end{equation}
+
+donde $T_V$ es un umbral empírico. Valores típicos bajo iluminación controlada son:
+
+\begin{equation}
+T_V \in [30, 70]
+\end{equation}
+
+Las ventajas incluyen invariancia parcial a color (elementos oscuros se detectan independientemente de matiz), umbralización simple (un único parámetro $T_V$), robustez ante variaciones uniformes de iluminación, y eficiencia computacional al operar sobre un único canal.
+
+\textbf{Propiedad de linealidad:} Matemáticamente, el canal $V$ satisface una propiedad de linealidad respecto al escalamiento uniforme de intensidad. Si escalamos una imagen RGB por un factor constante $\alpha > 0$ (por ejemplo, aumentando el brillo), el canal $V$ resultante también se escala por ese mismo factor:
+
+\begin{equation}
+V(\alpha \cdot \mathbf{I}_{RGB}) = \alpha \cdot V(\mathbf{I}_{RGB}) \quad \text{para } \alpha > 0
+\end{equation}
+
+donde $\mathbf{I}_{RGB}$ representa la imagen en el espacio RGB y $\alpha$ es un factor de escalamiento de intensidad. Esta propiedad permite compensar variaciones uniformes de brillo mediante ajustes proporcionales del umbral $T_V$.
 
 \subsubsection{Umbralización y Segmentación}
 
@@ -27,15 +79,58 @@ g(x,y) = \begin{cases}
 \end{cases}
 \end{equation}
 
-Esta operación genera una imagen binaria donde píxeles blancos (255) corresponden a regiones oscuras de la original, empleada para detectar cintas negras, tubos oscuros y marcadores de contraste. A diferencia de métodos adaptativos como Otsu, en entornos controlados resulta más efectivo establecer umbrales fijos determinados experimentalmente mediante análisis de histogramas del canal $V$ sobre imágenes representativas, identificando el rango de valores que caracteriza consistentemente los objetos de interés y estableciendo $T_V$ en el punto que maximiza separación entre objeto y fondo.
+donde $f(x,y)$ es la intensidad del píxel en la imagen original, $T$ es el umbral de decisión, y $g(x,y)$ es la imagen binaria resultante. Esta operación genera una imagen binaria donde píxeles blancos (255) corresponden a regiones oscuras de la original, permitiendo aislar objetos oscuros sobre fondos claros.
+
+A diferencia de métodos adaptativos como Otsu (que calcula automáticamente el umbral óptimo minimizando la varianza intra-clase), en entornos controlados resulta más efectivo establecer umbrales fijos determinados experimentalmente mediante análisis de histogramas del canal $V$ sobre imágenes representativas, identificando el rango de valores que caracteriza consistentemente los objetos de interés y estableciendo $T$ en el punto que maximiza separación entre objeto y fondo.
 
 \subsubsection{Operaciones Morfológicas}
 
-Las operaciones morfológicas manipulan forma y estructura de objetos en imágenes binarias mediante elementos estructurantes, permitiendo eliminar ruido, rellenar huecos y separar objetos conectados. La \textbf{erosión} reduce el tamaño de objetos eliminando píxeles del perímetro: $(A \ominus B)(x,y) = \min_{(s,t) \in B} \{A(x+s, y+t)\}$ donde $A$ es la imagen binaria y $B$ el elemento estructurante. La \textbf{dilatación} expande objetos añadiendo píxeles al perímetro: $(A \oplus B)(x,y) = \max_{(s,t) \in B} \{A(x+s, y+t)\}$.
+Las operaciones morfológicas manipulan forma y estructura de objetos en imágenes binarias mediante elementos estructurantes, permitiendo eliminar ruido, rellenar huecos y separar objetos conectados.
 
-Estas operaciones se combinan formando \textbf{apertura} $(A \circ B) = (A \ominus B) \oplus B$ que elimina pequeños objetos y protuberancias manteniendo tamaño aproximado de objetos grandes, y \textbf{cierre} $(A \bullet B) = (A \oplus B) \ominus B$ que rellena huecos pequeños y conecta componentes próximos. El cierre resulta esencial para consolidar regiones fragmentadas durante la segmentación.
+\textbf{Operaciones básicas:}
 
-La forma y tamaño del elemento estructurante $B$ determina el comportamiento: cuadrados $3 \times 3$ para operaciones isotrópicas básicas, cuadrados $5 \times 5$ con mayor alcance para eliminar ruido moderado, y rectangulares verticales $7 \times 3$ para conectividad preferencial vertical. Una secuencia típica de refinamiento morfológico aplica: apertura $(3 \times 3, 2 \text{ iter.})$ para eliminar ruido puntual, cierre $(3 \times 3, 2 \text{ iter.})$ para rellenar huecos pequeños, cierre $(5 \times 5, 2 \text{ iter.})$ para conectar regiones próximas, y cierre vertical $(7 \times 3, 1 \text{ iter.})$ para unificar objetos verticalmente fragmentados.
+\begin{itemize}
+\item \textbf{Erosión} (símbolo $\ominus$): Reduce el tamaño de objetos eliminando píxeles del perímetro:
+\begin{equation}
+(A \ominus B)(x,y) = \min_{(s,t) \in B} \{A(x+s, y+t)\}
+\end{equation}
+donde $A$ es la imagen binaria y $B$ el elemento estructurante.
+
+\item \textbf{Dilatación} (símbolo $\oplus$): Expande objetos añadiendo píxeles al perímetro:
+\begin{equation}
+(A \oplus B)(x,y) = \max_{(s,t) \in B} \{A(x+s, y+t)\}
+\end{equation}
+\end{itemize}
+
+\textbf{Operaciones compuestas:}
+
+Estas operaciones básicas se combinan para formar operaciones más complejas:
+
+\begin{itemize}
+\item \textbf{Apertura} (símbolo $\circ$): Aplica erosión seguida de dilatación:
+\begin{equation}
+(A \circ B) = (A \ominus B) \oplus B
+\end{equation}
+Elimina pequeños objetos y protuberancias manteniendo el tamaño aproximado de objetos grandes.
+
+\item \textbf{Cierre} (símbolo $\bullet$): Aplica dilatación seguida de erosión:
+\begin{equation}
+(A \bullet B) = (A \oplus B) \ominus B
+\end{equation}
+Rellena huecos pequeños y conecta componentes próximos. El cierre resulta esencial para consolidar regiones fragmentadas durante la segmentación.
+\end{itemize}
+
+\textbf{Configuración de operaciones:}
+
+La forma y tamaño del elemento estructurante $B$ determina el comportamiento: cuadrados $3 \times 3$ para operaciones isotrópicas básicas, cuadrados $5 \times 5$ con mayor alcance para eliminar ruido moderado, y rectangulares verticales $7 \times 3$ para conectividad preferencial vertical.
+
+Una secuencia típica de refinamiento morfológico aplica múltiples operaciones iteradas. El término \textbf{iteraciones} (abreviado como \textit{iter.}) indica cuántas veces consecutivas se repite la operación:
+\begin{itemize}
+\item Apertura $(3 \times 3, 2 \text{ iter.})$: eliminar ruido puntual aplicando apertura 2 veces
+\item Cierre $(3 \times 3, 2 \text{ iter.})$: rellenar huecos pequeños aplicando cierre 2 veces
+\item Cierre $(5 \times 5, 2 \text{ iter.})$: conectar regiones próximas con elemento mayor
+\item Cierre vertical $(7 \times 3, 1 \text{ iter.})$: unificar objetos verticalmente fragmentados
+\end{itemize}
 
 \subsubsection{Calibración Espacial}
 
