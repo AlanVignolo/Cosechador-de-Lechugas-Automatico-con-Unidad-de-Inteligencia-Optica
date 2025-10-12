@@ -32,16 +32,16 @@ El servomotor del codo es responsable del movimiento de la carga ubicada en el e
 
 \subsubsection{Torque Estático (Gravitacional)}
 
-En la posición horizontal, el torque necesario para sostener la carga es:
+En la posición horizontal, el torque necesario para sostener la carga ubicada en el extremo del eslabón es:
 
 \begin{equation}
-\tau_{est,codo} = m_{carga} \cdot g \cdot \frac{L_2}{2}
+\tau_{est,codo} = m_{carga} \cdot g \cdot L_2
 \end{equation}
 
-donde se considera el centro de masa de la carga en el punto medio del eslabón. Sustituyendo valores:
+Sustituyendo valores:
 
 \begin{equation}
-\tau_{est,codo} = 0.4 \, \text{kg} \cdot 9.81 \, \text{m/s}^2 \cdot 0.0625 \, \text{m} = 0.245 \, \text{N} \cdot \text{m}
+\tau_{est,codo} = 0.4 \, \text{kg} \cdot 9.81 \, \text{m/s}^2 \cdot 0.125 \, \text{m} = 0.49 \, \text{N} \cdot \text{m}
 \end{equation}
 
 \subsubsection{Momento de Inercia}
@@ -73,7 +73,7 @@ donde $\omega_{max} = 45° \cdot \frac{\pi}{180°} = 0.785 \, \text{rad/s}$.
 El torque dinámico requerido se obtiene mediante:
 
 \begin{equation}
-\tau_{din,codo} = I_{codo} \cdot \alpha = 6.25 \times 10^{-3} \cdot 1.57 = 9.8 \times 10^{-3} \, \text{N} \cdot \text{m}
+\tau_{din,codo} = I_{codo} \cdot \alpha = 6.25 \times 10^{-3} \cdot 1.57 = 9.81 \times 10^{-3} \, \text{N} \cdot \text{m}
 \end{equation}
 
 \subsubsection{Torque Total}
@@ -81,13 +81,13 @@ El torque dinámico requerido se obtiene mediante:
 El torque total necesario suma los componentes estático y dinámico:
 
 \begin{equation}
-\tau_{codo,total} = \tau_{est,codo} + \tau_{din,codo} = 0.245 + 0.0098 = 0.255 \, \text{N} \cdot \text{m}
+\tau_{codo,total} = \tau_{est,codo} + \tau_{din,codo} = 0.49 + 0.00981 = 0.50 \, \text{N} \cdot \text{m}
 \end{equation}
 
 Aplicando un factor de seguridad de 1.5 para considerar fricciones, pérdidas y variaciones en la carga:
 
 \begin{equation}
-\tau_{codo} = 1.5 \cdot \tau_{codo,total} = 0.38 \, \text{N} \cdot \text{m} \approx 39 \, \text{kg} \cdot \text{cm}
+\tau_{codo} = 1.5 \cdot \tau_{codo,total} = 0.75 \, \text{N} \cdot \text{m} \approx 76 \, \text{kg} \cdot \text{cm}
 \end{equation}
 
 \subsubsection{Dimensionamiento del Motor del Hombro}
@@ -171,7 +171,7 @@ La Tabla \ref{tab:resultados_torque} resume los torques mínimos requeridos para
 \textbf{Articulación} & \textbf{Torque Estático} & \textbf{Torque Total} & \textbf{Con Seguridad} \\
  & \textbf{(kg·cm)} & \textbf{(kg·cm)} & \textbf{(kg·cm)} \\
 \hline
-Codo & 25 & 26 & 39 \\
+Codo & 50 & 51 & 76 \\
 Hombro & 138 & 144 & 216 \\
 \hline
 \end{tabular}
@@ -179,11 +179,11 @@ Hombro & 138 & 144 & 216 \\
 
 En base a estos requerimientos, se proponen las siguientes opciones de servomotores:
 
-\textbf{Motor del Codo (39 kg·cm):}
+\textbf{Motor del Codo (76 kg·cm):}
 \begin{itemize}
-    \item Dynamixel MX-28: 24 kg·cm @ 12V (requiere reducción 2:1)
-    \item Dynamixel MX-64: 60 kg·cm @ 12V (opción recomendada)
-    \item Servo industrial con reductor: torque nominal > 40 kg·cm
+    \item Dynamixel MX-64: 60 kg·cm @ 12V (requiere reducción 1.3:1 o torque adicional)
+    \item Dynamixel MX-106: 84 kg·cm @ 12V (opción recomendada, margen de seguridad)
+    \item Servo industrial con reductor: torque nominal > 80 kg·cm
 \end{itemize}
 
 \textbf{Motor del Hombro (216 kg·cm):}
