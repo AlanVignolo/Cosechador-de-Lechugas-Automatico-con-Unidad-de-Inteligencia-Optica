@@ -184,23 +184,6 @@ Para motores bipolares (4 cables). Requiere puentes H para invertir la polaridad
     \item \textbf{Bipolar con control de corriente}: Regulación precisa mediante sensado de corriente
 \end{itemize}
 
-\subsubsection{Control de Corriente por Chopping}
-
-El método de chopping mantiene la corriente en las bobinas mediante modulación PWM, comparando la corriente medida con una referencia:
-
-\begin{equation}
-D = \frac{t_{on}}{T_{PWM}} = \frac{R \cdot I_{ref} + L \frac{di}{dt}}{V_{supply}}
-\end{equation}
-
-donde $D$ es el ciclo de trabajo, $R$ y $L$ son la resistencia e inductancia de la bobina, $I_{ref}$ es la corriente de referencia, y $V_{supply}$ es el voltaje de alimentación.
-
-Modos de chopping:
-\begin{itemize}
-    \item \textbf{Fast decay}: Ambos transistores del puente H se apagan, corriente decae rápidamente
-    \item \textbf{Slow decay}: Un transistor permanece encendido, decaimiento lento
-    \item \textbf{Mixed decay}: Combinación de ambos para optimizar desempeño
-\end{itemize}
-
 \subsubsection{Interfaces de Control}
 
 \paragraph{Step/Direction:}
@@ -264,19 +247,6 @@ Para movimientos cortos donde no se alcanza $\omega_{max}$, la velocidad pico es
 \omega_{peak} = \sqrt{\alpha \cdot \theta_{total}}
 \end{equation}
 
-\subsubsection{Perfil S-Curve}
-
-Para reducir vibraciones y mejorar la suavidad, se utilizan perfiles con aceleración variable (jerk limitado). El perfil S-curve tiene siete fases: incremento de aceleración, aceleración constante, decremento de aceleración, velocidad constante, y las fases simétricas de deceleración.
-
-El jerk máximo $j_{max}$ determina la suavidad:
-\begin{equation}
-\alpha(t) = \begin{cases}
-j_{max} \cdot t & 0 \leq t < t_1 \\
-\alpha_{max} & t_1 \leq t < t_2 \\
-\alpha_{max} - j_{max}(t - t_2) & t_2 \leq t < t_3
-\end{cases}
-\end{equation}
-
 \subsection{Análisis de Fallos Comunes}
 \begin{itemize}
 
@@ -301,11 +271,5 @@ Típicamente, $\Delta T_{rated} = 80^\circ$C sobre ambiente.
 
 \paragraph{Soluciones:}Reducir corriente en configuración del driver (sacrificando torque), implementar reducción de corriente en reposo, mejorar ventilación o añadir disipadores, reducir ciclo de trabajo, seleccionar motor de mayor frame size con mejor capacidad térmica.
 \end{itemize}
-\subsection{Aplicaciones Típicas}
-\begin{itemize}
-    \item Impresoras 3D y Máquinas CNC
-    \item Telescopios y Sistemas de Seguimiento
-    \item Automatización Industrial y Pick-and-Place
-    \item Sistemas Médicos y de Laboratorio
-\end{itemize}
+
 %Los motores paso a paso continúan siendo una solución óptima para aplicaciones que requieren posicionamiento preciso, control digital directo, y operación confiable sin sistemas de retroalimentación complejos. La selección adecuada mediante un proceso sistemático, combinada con configuración apropiada del driver y técnicas de control avanzadas, garantiza un desempeño óptimo y vida útil prolongada del sistema.

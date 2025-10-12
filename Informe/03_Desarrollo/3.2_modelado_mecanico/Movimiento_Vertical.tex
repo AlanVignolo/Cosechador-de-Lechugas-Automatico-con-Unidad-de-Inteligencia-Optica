@@ -1,9 +1,7 @@
 \subsubsection{Selección de varilla trapezoidal} 
 \label{sec:mov_vertical}
-\paragraph{Datos de diseño}
 El sistema de elevación vertical debe soportar una carga total de 1.2\,kg (lechuga y accesorios) a lo largo de una varilla de 2\,m de longitud. La varilla está fijada por su extremo superior y la carga se desplaza a lo largo de ella mediante una tuerca, trabajando por lo tanto a tracción. Se adopta un factor de seguridad de 4 para contemplar cargas dinámicas, desalineaciones y degradación del sistema con el uso.
 
-\paragraph{Análisis de pandeo por carga crítica de Euler}
 Aunque la varilla trabaja principalmente a tracción, es necesario verificar la estabilidad estructural frente a posibles cargas de compresión durante maniobras o situaciones no previstas. Considerando que la varilla tiene ambos extremos empotrados, la carga crítica de Euler se calcula como:
 
 \begin{equation}
@@ -64,7 +62,6 @@ Se verifica que la varilla seleccionada cumple ampliamente con los requerimiento
 
 \subsubsection{Cálculo de torque motor para accionamiento vertical}
 
-\paragraph{Selección del tipo de motor}
 Se selecciona un motor paso a paso (PaP) debido a:
 \begin{itemize}
     \item Alta precisión de posicionamiento sin necesidad de encoder
@@ -73,7 +70,6 @@ Se selecciona un motor paso a paso (PaP) debido a:
     \item Compatibilidad con la resolución requerida de 200 pasos/mm
 \end{itemize}
 
-\paragraph{Parámetros de operación}
 El sistema debe operar con los siguientes parámetros:
 \begin{itemize}
     \item Velocidad lineal máxima: 75\,mm/s
@@ -84,7 +80,6 @@ El sistema debe operar con los siguientes parámetros:
 
 Sin embargo, considerando microstepping y factores operacionales, la velocidad nominal de trabajo se establece en aproximadamente 563\,rpm.
 
-\paragraph{Análisis de torque en varillas trapezoidales}
 El torque requerido para mover una carga mediante una varilla trapezoidal se compone de dos componentes: el torque necesario para vencer la fricción en la rosca y el torque para vencer la fricción en el collarín del soporte. Dicho torque se calcula a partir de la ecuación \ref{eq:torque_total_varilla}
 
 donde:
