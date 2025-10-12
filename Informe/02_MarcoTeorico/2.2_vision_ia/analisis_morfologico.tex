@@ -68,42 +68,12 @@ donde $D_{min}$ es la distancia a la clase predicha y $D_{max}$ la distancia a l
 
 \subsubsection{Ventajas y Limitaciones del Enfoque}
 
-\textbf{Ventajas del enfoque morfológico:}
+\textbf{Resumen:}
 
-\begin{itemize}
-\item \textbf{Interpretabilidad}: Las reglas de decisión son explícitas y comprensibles, facilitando la validación y depuración mediante inspección directa de valores de descriptores.
+El enfoque morfológico para clasificación presenta \textbf{ventajas significativas} como su interpretabilidad (reglas explícitas), eficiencia computacional (funciona en tiempo real sin GPUs), requisitos mínimos de datos (decenas vs miles de imágenes), control directo de parámetros y bajo costo de implementación.
 
-\item \textbf{Eficiencia computacional}: Permite ejecución en tiempo real sobre hardware embebido sin requerir GPUs o aceleradores especializados.
+Sin embargo, tiene \textbf{limitaciones importantes}: requiere diseño manual de características con conocimiento experto, tiene capacidad expresiva limitada para patrones complejos, es sensible a variaciones de iluminación y perspectiva, y funciona mejor solo con 2-5 categorías bien diferenciadas, degradándose con más clases o cuando hay solapamiento entre ellas.
 
-\item \textbf{Requisitos de datos reducidos}: Requiere únicamente decenas a cientos de muestras por clase para establecer parámetros estadísticos, en contraste con los miles o millones de imágenes necesarios para entrenar redes neuronales profundas.
-
-\item \textbf{Control explícito}: Los umbrales y pesos pueden ajustarse directamente según requerimientos operativos, sin necesidad de reentrenamiento completo del modelo.
-
-\item \textbf{Bajo costo de implementación}: No requiere infraestructura computacional especializada ni períodos largos de entrenamiento.
-\end{itemize}
-
-\textbf{Limitaciones del enfoque:}
-
-\begin{itemize}
-\item \textbf{Diseño manual de características}: Requiere conocimiento experto del dominio para identificar descriptores relevantes y discriminativos.
-
-\item \textbf{Capacidad expresiva limitada}: Se limita a características directamente medibles, sin capacidad de capturar patrones visuales complejos o texturas sutiles que podrían ser aprendidas automáticamente por métodos de aprendizaje profundo.
-
-\item \textbf{Sensibilidad a condiciones de captura}: Variaciones significativas de iluminación o perspectiva pueden afectar los descriptores cromáticos y geométricos, aunque este efecto se mitiga en entornos controlados.
-
-\item \textbf{Separabilidad lineal}: El método funciona efectivamente con 2-5 categorías bien diferenciadas, pero puede degradar con mayor número de clases o cuando las clases presentan solapamiento significativo en el espacio de características.
-\end{itemize}
-
-\textbf{Aplicabilidad del método:}
-
-El enfoque resulta particularmente adecuado cuando se cumplen las siguientes condiciones:
-\begin{itemize}
-\item Existe diferenciación clara entre clases por tamaño, forma o color
-\item El entorno de operación es controlado o predecible
-\item Se requiere operación en hardware con recursos computacionales limitados
-\item La interpretabilidad es crítica para validación o certificación
-\item Se dispone de conocimiento experto para diseñar descriptores relevantes
-\item El número de clases es reducido (2-5 categorías)
-\end{itemize}
+En esencia: es un método eficiente, interpretable y económico para problemas de clasificación simples en entornos controlados, pero carece de la flexibilidad y capacidad de generalización del aprendizaje profundo.
 
 Bajo estas condiciones, la combinación de análisis morfológico con métodos estadísticos robustos permite alcanzar exactitudes superiores a 90\% sin la complejidad y requisitos computacionales de métodos de aprendizaje profundo.
