@@ -2,11 +2,10 @@
 
 \subsection{Sistemas de Transmisión}
 
-El sistema mecánico del cosechador emplea dos tipos principales de transmisión para convertir el movimiento rotacional de los motores en movimiento lineal y rotacional según los requerimientos de cada eje:
+Se cuenta con diversos sistemas de transmisión, en este proyecto se emplea dos tipos principales de transmisión para convertir el movimiento rotacional de los motores en movimiento lineal y rotacional según los requerimientos de cada eje:
 
 \subsubsection{Transmisión por Correa Dentada y Poleas}
 
-\paragraph{Principio de funcionamiento}
 La transmisión por correa dentada consiste en una correa flexible con dientes en su superficie interna que engranan con poleas dentadas solidarias a los ejes motor y conducido. Este sistema permite transmitir potencia y movimiento entre ejes paralelos con alta eficiencia y sin deslizamiento.
 
 \paragraph{Ventajas del sistema}
@@ -62,18 +61,8 @@ La tensión estática recomendada se calcula como:
 \end{equation}
 donde $P$ es la potencia transmitida, $v$ la velocidad lineal de la correa y $m$ la masa por unidad de longitud.
 
-\paragraph{Aplicación en el sistema}
-En el movimiento horizontal del cosechador, la transmisión por correa dentada se emplea para:
-\begin{itemize}
-    \item Transferir el movimiento del motor al husillo de movimiento
-    \item Permitir la ubicación del motor en una posición que optimice el balance de masas
-    \item Reducir o amplificar la velocidad según los requerimientos cinemáticos
-    \item Minimizar las vibraciones transmitidas entre motor y carro móvil
-\end{itemize}
-
 \subsubsection{Transmisión por Varilla Roscada (Husillo)}
 
-\paragraph{Principio de funcionamiento}
 La transmisión por varilla roscada, también conocida como sistema tornillo-tuerca, convierte el movimiento rotacional en movimiento lineal mediante el principio de la rosca helicoidal. Cuando la varilla roscada gira, la tuerca acoplada a ella se desplaza linealmente a lo largo del eje de la varilla.
 
 \paragraph{Tipos de roscas}
@@ -112,7 +101,6 @@ Para rosca de múltiples entradas:
 \end{equation}
 donde $N_e$ es el número de entradas.
 
-\paragraph{Análisis de fuerzas y torque}
 El torque necesario para mover una carga $F$ mediante una varilla roscada incluye dos componentes:
 
 \textbf{1. Torque de subida:}
@@ -143,7 +131,6 @@ donde:
     \item $k_L$: factor de rosca para bajada
 \end{itemize}
 
-\paragraph{Eficiencia del sistema}
 La eficiencia de la transmisión se define como:
 \begin{equation}
     \eta = \frac{\tan(\alpha)}{\tan(\alpha + \phi)}
@@ -174,22 +161,6 @@ El desgaste en roscas trapezoidales depende de:
     \item Velocidad de deslizamiento
     \item Calidad de la lubricación
     \item Material de la tuerca (bronce, polímeros, acero)
-\end{itemize}
-
-La vida útil se estima mediante:
-\begin{equation}
-    L_{10} = \left(\frac{C_a}{F}\right)^3 \cdot 10^6 \quad \text{[mm de recorrido]}
-\end{equation}
-donde $C_a$ es la capacidad de carga dinámica de la tuerca y $F$ la carga aplicada.
-
-\paragraph{Aplicación en el sistema}
-En el movimiento vertical del cosechador, la transmisión por varilla trapezoidal TR16$\times$4 se emplea debido a:
-\begin{itemize}
-    \item \textbf{Auto-frenado:} Mantiene la posición vertical sin consumo energético continuo
-    \item \textbf{Simplicidad:} No requiere sistemas de bloqueo adicionales
-    \item \textbf{Costo:} Significativamente menor que husillos de bolas
-    \item \textbf{Robustez:} Tolera mejor condiciones adversas (polvo, humedad)
-    \item \textbf{Precisión suficiente:} Con 200 pasos/mm se logra la resolución requerida para el posicionamiento
 \end{itemize}
 
 El sistema trabaja principalmente a tracción (varilla fija superior, carga colgante) lo que minimiza problemas de pandeo, aunque se verifica la estabilidad estructural para garantizar seguridad ante cualquier eventualidad.
