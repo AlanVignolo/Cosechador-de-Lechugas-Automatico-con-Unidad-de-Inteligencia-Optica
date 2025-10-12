@@ -1,8 +1,8 @@
-\section{Dimensionamiento de Servomotores}
+\subsection{Dimensionamiento de Servomotores}
 
 El brazo robótico diseñado para la cosecha de lechugas cuenta con dos grados de libertad, equivalentes a una articulación de hombro y una de codo. El sistema debe ser capaz de extenderse horizontalmente para alcanzar y tomar la carga (lechuga), para luego contraerse y transportarla de manera eficiente.
 
-\subsection{Parámetros del Sistema}
+\subsubsection{Parámetros del Sistema}
 
 Los parámetros físicos y operacionales del brazo robótico se detallan en la Tabla \ref{tab:parametros_brazo}.
 
@@ -26,7 +26,7 @@ Tiempo de aceleración ($t_{ac}$) & 0.5 & s \\
 
 El movimiento del brazo involucra tanto desplazamiento horizontal como elevación vertical, partiendo desde una posición horizontal hasta una posición elevada para transportar la carga. Por lo tanto, el análisis debe considerar tanto el torque dinámico necesario para acelerar las masas como el torque estático requerido para sostener el brazo contra la gravedad.
 
-\subsection{Dimensionamiento del Motor del Codo}
+\subsubsection{Dimensionamiento del Motor del Codo}
 
 El servomotor del codo es responsable del movimiento de la carga ubicada en el extremo del segundo eslabón y debe soportarla contra la gravedad.
 
@@ -90,7 +90,7 @@ Aplicando un factor de seguridad de 1.5 para considerar fricciones, pérdidas y 
 \tau_{codo} = 1.5 \cdot \tau_{codo,total} = 0.38 \, \text{N} \cdot \text{m} \approx 39 \, \text{kg} \cdot \text{cm}
 \end{equation}
 
-\subsection{Dimensionamiento del Motor del Hombro}
+\subsubsection{Dimensionamiento del Motor del Hombro}
 
 El servomotor del hombro debe proporcionar el torque necesario para mover el brazo completo, soportar su peso y el de la carga contra la gravedad, especialmente en la posición horizontal.
 
@@ -195,16 +195,6 @@ En base a estos requerimientos, se proponen las siguientes opciones de servomoto
 
 Dada la magnitud del torque requerido, especialmente en el hombro, se recomienda implementar un sistema de reducción mecánica mediante poleas dentadas o reductores planetarios, lo que permitirá utilizar motores más económicos y con mejor respuesta dinámica.
 
-\subsection{Consideraciones Adicionales}
 
-El análisis presentado considera el peor caso operacional, con el brazo en posición horizontal donde el torque gravitacional es máximo. Durante la operación:
 
-\begin{itemize}
-    \item \textbf{Posición inicial (horizontal):} Requiere el máximo torque para sostener y mover la carga.
-    \item \textbf{Posición elevada:} Al contraer el brazo verticalmente, el momento gravitacional disminuye significativamente, ya que el brazo de palanca se reduce al elevarse.
-    \item \textbf{Estrategia de movimiento:} Se recomienda una trayectoria que minimice el tiempo en posición horizontal, elevando el brazo lo más rápido posible después de tomar la carga.
-\end{itemize}
 
-El componente de torque estático representa aproximadamente el 96\% del torque total en el hombro y el 94\% en el codo, lo que indica que el sistema está dominado por cargas gravitacionales más que por requisitos dinámicos. Esto sugiere que velocidades de movimiento moderadas son apropiadas para esta aplicación.
-
-Se recomienda el uso de servomotores con retroalimentación de posición y corriente para implementar control de torque, permitiendo detectar colisiones durante el agarre y optimizar el consumo energético ajustando el torque según la posición del brazo.

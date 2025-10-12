@@ -2,53 +2,53 @@ Se cuenta con un brazo de dos grados de libertad controlables para el posicionam
 
 \subsubsection{Descripción del Sistema}
 
-El brazo robótico consiste en una configuración planar de dos eslabones articulados mediante juntas rotacionales, con un efector final tipo gripper de pinza. Este sistema posee dos grados de libertad en el plano, definidos por los ángulos de rotación $\theta_1$ y $\theta_2$ de cada articulación.
+El brazo robótico consiste en una configuración de dos eslabones articulados mediante juntas rotacionales, con un efector final tipo pinza. Este sistema posee dos grados de libertad, definidos por los ángulos de rotación $\theta_1$ y $\theta_2$ de cada articulación.
 
 \subsubsection{Parámetros Geométricos}
 
 \begin{itemize}
-    \item $L_1$: Longitud del primer eslabón (eslabón proximal)
-    \item $L_2$: Longitud del segundo eslabón (eslabón distal)
+    \item $L_1$: Longitud del primer eslabón
+    \item $L_2$: Longitud del segundo eslabón
     \item $\theta_1$: Ángulo de la primera articulación (base)
     \item $\theta_2$: Ángulo de la segunda articulación (codo)
 \end{itemize}
 
-\subsubsection{Cinemática Directa}
+%\subsubsection{Cinemática Directa}
 
-La cinemática directa establece la relación entre las coordenadas articulares $(\theta_1, \theta_2)$ y la posición del efector final $(x, y)$ en el plano.
+%La cinemática directa establece la relación entre las coordenadas articulares $(\theta_1, \theta_2)$ y la posición del efector final $(x, y)$ en el plano.
 
-La posición del efector final se calcula mediante:
+%La posición del efector final se calcula mediante:
 
-\begin{align}
-    x &= L_1 \cdot \cos(\theta_1) + L_2 \cdot \cos(\theta_1 + \theta_2) \\
-    y &= L_1 \cdot \sin(\theta_1) + L_2 \cdot \sin(\theta_1 + \theta_2)
-\end{align}
+%\begin{align}
+%    x &= L_1 \cdot \cos(\theta_1) + L_2 \cdot \cos(\theta_1 + \theta_2) \\
+%    y &= L_1 \cdot \sin(\theta_1) + L_2 \cdot \sin(\theta_1 + \theta_2)
+%\end{align}
 
-La orientación del efector final está dada por:
+%La orientación del efector final está dada por:
 
-\begin{equation}
-    \phi = \theta_1 + \theta_2
-\end{equation}
+%\begin{equation}
+%    \phi = \theta_1 + \theta_2
+%\end{equation}
 
-\subsubsection{Cinemática Inversa}
+%\subsubsection{Cinemática Inversa}
 
-La cinemática inversa determina los ángulos articulares necesarios para alcanzar una posición deseada $(x_d, y_d)$. Este problema presenta dos soluciones posibles (configuración de codo arriba y codo abajo).
+%La cinemática inversa determina los ángulos articulares necesarios para alcanzar una posición deseada $(x_d, y_d)$. Este problema presenta dos soluciones posibles (configuración de codo arriba y codo abajo).
 
-Primero se calcula el ángulo $\theta_2$:
+%Primero se calcula el ángulo $\theta_2$:
 
-\begin{equation}
-    \cos(\theta_2) = \frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}
-\end{equation}
+%\begin{equation}
+%    \cos(\theta_2) = \frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}
+%\end{equation}
 
-\begin{equation}
-    \theta_2 = \pm \arccos\left(\frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}\right)
-\end{equation}
+%\begin{equation}
+%    \theta_2 = \pm \arccos\left(\frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}\right)
+%\end{equation}
 
-Luego se determina $\theta_1$:
+%Luego se determina $\theta_1$:
 
-\begin{equation}
-    \theta_1 = \arctan2(y_d, x_d) - \arctan2(L_2 \cdot \sin(\theta_2), L_1 + L_2 \cdot \cos(\theta_2))
-\end{equation}
+%\begin{equation}
+%    \theta_1 = \arctan2(y_d, x_d) - \arctan2(L_2 \cdot \sin(\theta_2), L_1 + L_2 \cdot \cos(\theta_2))
+%\end{equation}
 
 \subsubsection{Espacio de Trabajo}
 
@@ -59,34 +59,34 @@ El espacio de trabajo accesible para el efector final es un anillo circular con:
     \item Radio mínimo: $R_{min} = |L_1 - L_2|$ (brazo completamente plegado)
 \end{itemize}
 
-\subsubsection{Jacobiano}
+%\subsubsection{Jacobiano}
 
-El Jacobiano relaciona las velocidades articulares con las velocidades del efector final:
+%El Jacobiano relaciona las velocidades articulares con las velocidades del efector final:
 
-\begin{equation}
-    \begin{bmatrix}
-        \dot{x} \\
-        \dot{y}
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-        J_{11} & J_{12} \\
-        J_{21} & J_{22}
-    \end{bmatrix}
-    \begin{bmatrix}
-        \dot{\theta}_1 \\
-        \dot{\theta}_2
-    \end{bmatrix}
-\end{equation}
+%\begin{equation}
+%    \begin{bmatrix}
+%        \dot{x} \\
+%        \dot{y}
+%    \end{bmatrix}
+%    =
+%    \begin{bmatrix}
+%        J_{11} & J_{12} \\
+ %       J_{21} & J_{22}
+  %  \end{bmatrix}
+   % \begin{bmatrix}
+    %    \dot{\theta}_1 \\
+     %   \dot{\theta}_2
+    %\end{bmatrix}
+%\end{equation}
 
-Donde:
+%Donde:
 
-\begin{align}
-    J_{11} &= -L_1 \cdot \sin(\theta_1) - L_2 \cdot \sin(\theta_1 + \theta_2) \\
-    J_{12} &= -L_2 \cdot \sin(\theta_1 + \theta_2) \\
-    J_{21} &= L_1 \cdot \cos(\theta_1) + L_2 \cdot \cos(\theta_1 + \theta_2) \\
-    J_{22} &= L_2 \cdot \cos(\theta_1 + \theta_2)
-\end{align}
+%\begin{align}
+ %   J_{11} &= -L_1 \cdot \sin(\theta_1) - L_2 \cdot \sin(\theta_1 + \theta_2) \\
+  %  J_{12} &= -L_2 \cdot \sin(\theta_1 + \theta_2) \\
+   % J_{21} &= L_1 \cdot \cos(\theta_1) + L_2 \cdot \cos(\theta_1 + \theta_2) \\
+    %J_{22} &= L_2 \cdot \cos(\theta_1 + \theta_2)
+%\end{align}
 
 \subsubsection{Gripper Tipo Pinza}
 

@@ -1,0 +1,248 @@
+% Metricas Evaluacion
+
+\label{sec:mov_vertical_prototipo}
+
+El sistema de movimiento vertical se basa en un mecanismo de varilla roscada trapezoidal acoplada a un motor paso a paso. A continuación se detallan las especificaciones de diseño:
+
+\subsection{Parámetros Geométricos}
+\begin{itemize}
+    \item Diámetro de varilla roscada: $d = 8$ mm
+    \item Paso de rosca: $p = 4$ mm
+    \item Longitud total de las varillas: $L = 1000$ mm
+    \item Tipo de rosca: Trapezoidal
+\end{itemize}
+
+\subsection{Carga del Sistema}
+\begin{itemize}
+    \item Masa de la carga útil (lechuga): $m_c = 0.6$ kg
+    \item Masa estimada del soporte móvil: $m_s = 0.8$ kg
+    \item Masa estimada del brazo robótico: $m_b = 0.5$ kg
+    \item Masa total a trasladar: $m_{total} = m_c + m_s + m_b = 1.9$ kg
+\end{itemize}
+
+\subsection{Requisitos de Velocidad}
+\begin{itemize}
+    \item Velocidad lineal deseada: $v = 50$ mm/s
+    \item Aceleración máxima: $a = 100$ mm/s$^2$
+\end{itemize}
+
+\section{Cálculo de Fuerzas}
+
+\subsection{Fuerza Gravitacional}
+La fuerza gravitacional que debe vencer el motor es:
+\begin{equation}
+F_g = m_{total} \cdot g
+\end{equation}
+
+donde $g = 9.81$ m/s$^2$ es la aceleración de la gravedad.
+
+\begin{equation}
+F_g = 1.9 \text{ kg} \times 9.81 \text{ m/s}^2 = 18.64 \text{ N}
+\end{equation}
+
+\subsection{Fuerza de Inercia}
+Durante la fase de aceleración, se requiere una fuerza adicional:
+\begin{equation}
+F_a = m_{total} \cdot a = 1.9 \text{ kg} \times 0.1 \text{ m/s}^2 = 0.19 \text{ N}
+\end{equation}
+
+\subsection{Fuerza de Fricción}
+La fricción en el sistema husillo-tuerca se estima mediante el coeficiente de fricción. Para una varilla trapezoidal con lubricación adecuada:
+
+\begin{equation}
+\mu = 0.15
+\end{equation}
+
+La fuerza de fricción se calcula como:
+\begin{equation}
+F_f = \mu \cdot F_g = 0.15 \times 18.64 \text{ N} = 2.80 \text{ N}
+\end{equation}
+
+\subsection{Fuerza Total Requerida}
+La fuerza total que debe ejercer el sistema es:
+\begin{equation}
+F_{total} = F_g + F_a + F_f = 18.64 + 0.19 + 2.80 = 21.63 \text{ N}
+\end{equation}
+
+\section{Cálculo del Torque Necesario}
+
+\subsection{Torque para Levantar la Carga}
+El torque necesario en el husillo se calcula mediante la relación:
+
+\begin{equation}
+T = \frac{F_{total} \cdot p}{2\pi \cdot \eta}
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item $p = 4$ mm es el paso de rosca
+    \item $\eta$ es la eficiencia del sistema husillo-tuerca
+\end{itemize}
+
+Para un husillo trapezoidal con rodamientos en los extremos y guías lineales:
+\begin{equation}
+\eta = 0.35
+\end{equation}
+
+Sustituyendo valores:
+\begin{equation}
+T = \frac{21.63 \text{ N} \times 0.004 \text{ m}}{2\pi \times 0.35} = \frac{0.0865}{2.199} = 0.0393 \text{ N·m}
+\end{equation}
+
+\begin{equation}
+T = 39.3 \text{ mN·m} = 3.93 \text{ N·cm}
+\end{equation}
+
+\subsection{Torque Dinámico}
+Durante la aceleración, se debe considerar el momento de inercia de la varilla roscada. Para una varilla cilíndrica:
+
+\begin{equation}
+I_{varilla} = \frac{1}{2} m_{varilla} r^2 = \frac{1}{2} \times 0.25 \text{ kg} \times (0.004 \text{ m})^2 = 2 \times 10^{-6} \text{ kg·m}^2
+\end{equation}
+
+La aceleración angular necesaria:
+\begin{equation}
+\omega = \frac{v}{p/(2\pi)} = \frac{0.05 \text{ m/s}}{0.004/(2\pi)} = 78.54 \text{ rad/s}
+\end{equation}
+
+\begin{equation}
+\alpha = \frac{\omega}{t_{acel}} = \frac{78.54}{0.5} = 157.08 \text{ rad/s}^2
+\end{equation}
+
+El torque dinámico adicional:
+\begin{equation}
+T_{din} = I_{varilla} \cdot \alpha = 2 \times 10^{-6} \times 157.08 = 3.14 \times 10^{-4} \text{ N·m}
+\end{equation}
+
+\subsection{Torque Total Requerido}
+\begin{equation}
+T_{requerido} = T + T_{din} = 0.0393 + 0.000314 = 0.0396 \text{ N·m} \approx 40 \text{ mN·m}
+\end{equation}
+
+Con un factor de seguridad de 2.0:
+\begin{equation}
+T_{motor} = 2.0 \times 0.0396 = 0.0792 \text{ N·m} = 79.2 \text{ mN·m}
+\end{equation}
+
+\begin{equation}
+\boxed{T_{motor} = 79.2 \text{ mN·m} = 7.92 \text{ N·cm} = 0.81 \text{ kg·cm}}
+\end{equation}
+
+\section{Selección del Motor}
+
+\subsection{Velocidad Angular Requerida}
+Para alcanzar la velocidad lineal de 50 mm/s:
+
+\begin{equation}
+n = \frac{v \times 60}{p} = \frac{50 \text{ mm/s} \times 60}{4 \text{ mm}} = 750 \text{ RPM}
+\end{equation}
+
+\subsection{Pasos por Segundo}
+Para un motor NEMA 23 con 200 pasos/revolución y configuración de 8 micropasos (TB6600):
+
+\begin{equation}
+\text{Pasos totales/rev} = 200 \times 8 = 1600 \text{ pasos/rev}
+\end{equation}
+
+\begin{equation}
+\text{Frecuencia de pasos} = 750 \text{ RPM} \times \frac{1600}{60} = 20000 \text{ pasos/s}
+\end{equation}
+
+\subsection{Motor Seleccionado: NEMA 23}
+Especificaciones típicas del motor NEMA 23 (23HS8430):
+\begin{itemize}
+    \item Torque de retención: $T_h = 1.26$ N·m = $126$ mN·m
+    \item Corriente nominal: $3.0$ A
+    \item Resistencia: $1.2$ $\Omega$/fase
+    \item Inductancia: $3.6$ mH/fase
+    \item Peso: $0.9$ kg
+\end{itemize}
+
+\section{Verificación de Capacidad}
+
+\subsection{Margen de Torque}
+El margen de torque disponible es:
+\begin{equation}
+\text{Margen} = \frac{T_h}{T_{motor}} = \frac{126}{79.2} = 1.59
+\end{equation}
+
+Esto proporciona un margen de seguridad adicional de 59\% sobre el factor de seguridad ya aplicado.
+
+\subsection{Verificación de Velocidad}
+A 750 RPM, el motor NEMA 23 mantiene aproximadamente el 70\% de su torque máximo (curva típica torque-velocidad). Por lo tanto:
+
+\begin{equation}
+T_{disponible} = 0.7 \times 126 = 88.2 \text{ mN·m}
+\end{equation}
+
+\begin{equation}
+T_{disponible} > T_{motor} \quad (88.2 > 79.2) \quad \checkmark
+\end{equation}
+
+\section{Justificación del Diámetro de Varilla}
+
+\subsection{Análisis de Pandeo}
+Para una varilla con longitud de 1000 mm sometida a carga axial, se debe verificar que no sufra pandeo. La carga crítica de Euler es:
+
+\begin{equation}
+P_{cr} = \frac{\pi^2 E I}{(K L)^2}
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item $E = 200$ GPa (módulo de elasticidad del acero)
+    \item $I = \frac{\pi d^4}{64} = \frac{\pi (0.008)^4}{64} = 2.01 \times 10^{-10}$ m$^4$
+    \item $K = 1$ (factor de longitud efectiva, ambos extremos con rodamientos)
+    \item $L = 1.0$ m
+\end{itemize}
+
+\begin{equation}
+P_{cr} = \frac{\pi^2 \times 200 \times 10^9 \times 2.01 \times 10^{-10}}{(1.0)^2} = 397 \text{ N}
+\end{equation}
+
+El factor de seguridad contra pandeo:
+\begin{equation}
+FS_{pandeo} = \frac{P_{cr}}{F_{total}} = \frac{397}{21.63} = 18.36
+\end{equation}
+
+\subsection{Análisis de Tensión}
+La tensión axial en la varilla:
+\begin{equation}
+\sigma = \frac{F_{total}}{A} = \frac{21.63}{\pi (0.004)^2} = \frac{21.63}{5.03 \times 10^{-5}} = 430 \text{ kPa}
+\end{equation}
+
+Para acero con límite elástico típico de $\sigma_y = 250$ MPa:
+\begin{equation}
+FS_{tensión} = \frac{\sigma_y}{\sigma} = \frac{250 \times 10^3}{0.43} = 581
+\end{equation}
+
+\subsection{Rigidez del Sistema}
+La deflexión máxima bajo carga:
+\begin{equation}
+\delta = \frac{F_{total} L}{A E} = \frac{21.63 \times 1.0}{5.03 \times 10^{-5} \times 200 \times 10^9} = 2.15 \times 10^{-6} \text{ m} = 0.002 \text{ mm}
+\end{equation}
+
+Esta deflexión es despreciable (< 0.01\% de la longitud total).
+
+\subsection{Velocidad Crítica de Rotación}
+Para evitar resonancia, se verifica la velocidad crítica:
+\begin{equation}
+n_{cr} = \frac{30}{\pi L^2} \sqrt{\frac{E I}{\rho A}} \approx 3600 \text{ RPM}
+\end{equation}
+
+La velocidad de operación (750 RPM) está muy por debajo de la velocidad crítica, garantizando operación estable.
+
+\section{Conclusiones}
+
+\begin{itemize}
+    \item El motor NEMA 23 con torque de 1.26 N·m es adecuado para el sistema, proporcionando un margen de seguridad de 59\%.
+    \item La varilla roscada de 8 mm de diámetro con paso de 4 mm está correctamente dimensionada:
+    \begin{itemize}
+        \item Factor de seguridad contra pandeo: 18.36
+        \item Factor de seguridad contra tensión: 581
+        \item Deflexión bajo carga: < 0.003 mm (despreciable)
+        \item Velocidad de operación muy inferior a la velocidad crítica
+    \end{itemize}
+    \item El sistema puede operar a 750 RPM (50 mm/s de velocidad lineal) con 20000 pasos/segundo en configuración de 8 micropasos.
+    \item El driver TB6600 configurado a 24V proporciona la corriente y voltaje necesarios para mantener el torque requerido a la velocidad de operación.
+\end{itemize}
