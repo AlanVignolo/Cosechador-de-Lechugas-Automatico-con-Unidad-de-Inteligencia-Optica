@@ -1,6 +1,6 @@
 El control de velocidad se implementa mediante Timer1 del ATmega2560 configurado en modo CTC (Clear Timer on Compare Match) con frecuencia variable.
 
-\subsubsection{Generación de Pulsos STEP}
+\subsubsection{Generación de Pulsos y conversión de velocidad a OCR1A}
 
 El Timer1 genera interrupciones a frecuencia configurable que alternan el estado del pin STEP entre alto y bajo, creando los pulsos necesarios para el driver TB6600. Cada transición alto-bajo constituye un paso del motor. El sistema cuenta los pasos ejecutados y controla la frecuencia de interrupción mediante el registro de comparación OCR1A del timer:
 
@@ -9,8 +9,6 @@ f_{step} = \frac{f_{CPU}}{2 \cdot prescaler \cdot (OCR1A + 1)}
 \end{equation}
 
 donde $f_{CPU} = 16$ MHz, prescaler = 8, y OCR1A se calcula dinámicamente.
-
-\subsubsection{Conversión Velocidad a OCR1A}
 
 Para una velocidad deseada $v$ en pasos/s, el valor de OCR1A es:
 
@@ -21,16 +19,3 @@ OCR1A = \frac{f_{CPU}}{2 \cdot prescaler \cdot v} - 1 = \frac{16000000}{2 \cdot 
 Ejemplo: Para $v = 5000$ pasos/s, $OCR1A = 199$. Para $v = 10000$ pasos/s, $OCR1A = 99$.
 
 El firmware precalcula y limita OCR1A para evitar overflow y garantizar estabilidad.
-
-\subsubsection{Rango de Velocidades}
-
-El sistema soporta velocidades en el rango:
-
-\begin{itemize}
-    \item \textbf{Mínima}: 500 pasos/s (OCR1A = 1999) - inicio/fin de movimientos
-    \item \textbf{Crucero típica}: 5000-8000 pasos/s - movimientos normales
-    \item \textbf{Máxima}: 10,000 pasos/s (OCR1A = 99) - movimientos rápidos en rectas largas
-\end{itemize}
-
-Velocidades superiores a 10,000 pasos/s causan jitter excesivo (>10µs) y riesgo de pérdida de pasos en los motores NEMA 17 utilizados.
-

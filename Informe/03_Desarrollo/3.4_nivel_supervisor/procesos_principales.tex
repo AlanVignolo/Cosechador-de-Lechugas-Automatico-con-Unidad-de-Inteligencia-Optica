@@ -1,0 +1,73 @@
+\subsubsection{Procesos Principales del Sistema}
+
+El sistema implementa dos workflows de alto nivel que orquestan la operación del robot: detección y mapeo del workspace, y cosecha automatizada. Ambos workflows integran movimientos XY, control del brazo, visión artificial, y manejo de excepciones.
+
+\textbf{Proceso 1: Detección y Mapeo del Workspace}
+
+Este proceso ejecuta un escaneo sistemático para identificar y registrar las posiciones de todos los tubos de cultivo y plantas presentes.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|p{11cm}|}
+\hline
+\textbf{Fase} & \textbf{Descripción} \\
+\hline
+Inicialización & Verifica posición segura del brazo. Ejecuta homing de ejes XY estableciendo origen en esquina superior derecha del workspace. Separa ligeramente de límites (backoff 5-10mm). \\
+\hline
+Escaneo vertical & Movimiento descendente con velocidad 0.30 m/s capturando frames continuamente. Detector de ArUco identifica tubos y registra posiciones Y. Genera archivo de configuración de tubos. \\
+\hline
+Escaneo horizontal & Para cada tubo detectado: posiciona sistema en altura del tubo, ejecuta barrido horizontal (0.375 m/s) con detector de cintas. Registra posiciones X de plantas en matriz de cintas. \\
+\hline
+Retorno & Resincroniza posición consultando firmware. Ejecuta movimiento diagonal directo a origen (0,0). Resetea tracking global. \\
+\hline
+\end{tabular}
+\caption{Fases del proceso de detección y mapeo}
+\label{tab:proceso_deteccion}
+\end{table}
+
+El proceso genera dos salidas persistentes: archivo de configuración de tubos con posiciones Y, y matriz de cintas con posiciones X de cada planta. Tiempo típico: 120-180 segundos dependiendo del tamaño del workspace.
+
+\textbf{Proceso 2: Cosecha Automatizada}
+
+Este proceso ejecuta la recolección sistemática de plantas maduras utilizando los mapas generados previamente.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|p{5.5cm}|p{5cm}|}
+\hline
+\textbf{Etapa} & \textbf{Condiciones de inicio} & \textbf{Acciones principales} \\
+\hline
+Inicialización & Mapas de detección disponibles. Sistema referenciado. & Verifica estado del brazo. Calcula posiciones operacionales (borde seguro, depósito). Inicializa flags internos. \\
+\hline
+Navegación a planta & Lista de cintas disponible. Brazo en posición segura. & Calcula deltas hacia posición objetivo. Ejecuta movimiento XY. Verifica llegada con tolerancia <5mm. \\
+\hline
+Clasificación & Posicionado sobre cinta. Cámara disponible. & Captura imagen. Ejecuta inferencia con red neuronal. Interpreta clase y confianza. \\
+\hline
+Recolección & Clasificación = LECHUGA (confianza >0.85). Gripper vacío. & Corrección fina de posición con visión. Transición brazo a posición recoger. Cierre de gripper. Elevación a posición transporte. \\
+\hline
+Deposición & Lechuga en gripper. Posicionado en zona depósito. & Transición brazo a posición depositar. Apertura de gripper. Retorno a posición transporte. Reset de flags. \\
+\hline
+Finalización & Todas las cintas procesadas. & Movimiento a borde seguro. Transición brazo a posición movimiento. Retorno a origen. Registro de estadísticas. \\
+\hline
+\end{tabular}
+\caption{Etapas del proceso de cosecha automatizada}
+\label{tab:proceso_cosecha}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{imagenes/workflow_deteccion.png}
+    \caption{Diagrama del proceso de detección y mapeo}
+    \label{fig:workflow_deteccion}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{imagenes/workflow_cosecha.png}
+    \caption{Diagrama del proceso de cosecha automatizada}
+    \label{fig:workflow_cosecha}
+\end{figure}
+
+Tiempo típico del proceso de cosecha: 15-20 segundos por planta (incluyendo navegación, clasificación, corrección de posición, recolección y depósito). Un workspace completo de 20-30 plantas se procesa en aproximadamente 8-12 minutos de operación continua.

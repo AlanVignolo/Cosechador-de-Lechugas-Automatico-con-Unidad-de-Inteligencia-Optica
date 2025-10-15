@@ -1,0 +1,11 @@
+\subsubsection{Seguimiento de Posición Global}
+
+El sistema supervisor mantiene un seguimiento continuo de la posición del robot mediante movimientos relativos y confirmaciones del nivel regulatorio.
+
+\textbf{Esquema de movimientos relativos.} El supervisor envía comandos especificando desplazamientos incrementales respecto a la posición actual. Al completar cada movimiento, el nivel regulatorio notifica el desplazamiento real ejecutado, que puede diferir del solicitado si se activa un límite físico durante la trayectoria. Un proceso de monitoreo continuo detecta estas confirmaciones y actualiza la posición global mediante suma acumulativa de los desplazamientos reportados.
+
+Durante el proceso de homing, los eventos de activación de finales de carrera se utilizan para establecer el origen del sistema de coordenadas. En operación normal, si un límite se activa inesperadamente, el firmware detiene el movimiento y notifica tanto el desplazamiento parcial ejecutado como la activación del límite correspondiente.
+
+\textbf{Resincronización periódica.} Para prevenir acumulación de errores, el sistema ejecuta resincronización antes de operaciones críticas. El supervisor consulta la posición absoluta del firmware y la compara con su seguimiento acumulado: desviaciones menores a 0.5mm se consideran normales, desviaciones entre 0.5-5mm actualizan el seguimiento del supervisor, y desviaciones mayores a 5mm generan una excepción que puede requerir un nuevo proceso de homing.
+
+Este esquema logra precisión típica menor a 2mm de error acumulado tras 100 movimientos consecutivos, suficiente para las operaciones de cosecha que requieren tolerancia menor a 5mm.

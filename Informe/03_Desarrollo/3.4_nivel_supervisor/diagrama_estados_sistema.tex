@@ -1,0 +1,30 @@
+\subsubsection{Máquina de Estados General del Sistema}
+
+El supervisor opera mediante una máquina de estados finitos que gobierna el comportamiento del robot durante todas las operaciones. Esta arquitectura permite transiciones deterministas entre estados, sincronización de subsistemas, y manejo robusto de excepciones con recuperación automática.
+
+El sistema define siete estados operacionales principales (Figura \ref{fig:maquina_estados_supervisor}):
+
+\begin{itemize}
+    \item \textbf{Inicialización}: Arranque del sistema. Ejecuta homing de ejes XY, calibra dimensiones del workspace, inicializa cámara y modelos de inteligencia artificial, y verifica comunicación con nivel regulatorio.
+
+    \item \textbf{Exploración}: Escaneo sistemático del workspace mediante barrido vertical (detección de tubos con marcadores ArUco) y horizontal (detección de cintas con posiciones de plantas). Genera mapas persistentes y retorna a origen.
+
+    \item \textbf{Navegación}: Movimiento del sistema XY hacia objetivo identificado. Calcula trayectoria, envía comandos al nivel regulatorio, y verifica llegada a destino con tolerancia menor a 5mm.
+
+    \item \textbf{Clasificación}: Análisis de planta con visión artificial. Captura imagen, ejecuta inferencia con red neuronal, e interpreta resultado según umbrales de confianza configurados.
+
+    \item \textbf{Manipulación}: Control del brazo robótico para recolección o depósito. Incluye corrección fina de posición, transiciones de brazo con trayectorias interpoladas, y control del gripper.
+
+    \item \textbf{Espera}: Estado inactivo aguardando comandos. Monitorea conexión con nivel regulatorio mediante heartbeat periódico y procesa comandos recibidos por interfaz.
+
+    \item \textbf{Emergencia}: Parada segura ante fallas detectadas. Detiene movimientos inmediatamente, intenta llevar brazo a posición segura, y preserva estado del sistema para diagnóstico.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{imagenes/maquina_estados_supervisor.png}
+    \caption{Máquina de estados del nivel supervisor}
+    \label{fig:maquina_estados_supervisor}
+\end{figure}
+
+Las transiciones entre estados están reguladas por condiciones que garantizan seguridad y consistencia operacional. Por ejemplo, no se permite cambiar directamente de Espera a Manipulación sin pasar por Navegación, ya que el brazo requiere estar posicionado sobre el objetivo. Las condiciones típicas incluyen verificación de sistema referenciado antes de movimientos, validación de posición dentro del workspace, disponibilidad de cámara, y compatibilidad de estado del brazo.

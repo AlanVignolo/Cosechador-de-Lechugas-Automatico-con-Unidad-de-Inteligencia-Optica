@@ -1,28 +1,15 @@
+\subsubsection{Manejo de Errores y Protecciones}
+
 El firmware implementa mecanismos robustos de detección y manejo de errores para garantizar operación segura del sistema mecánico.
 
-\subsubsection{Detección de Límites Físicos}
-
-Los finales de carrera se monitorean continuamente mediante lectura de pines digitales en el loop principal. El sistema detecta la activación de cualquier límite (nivel lógico bajo) y ejecuta inmediatamente la secuencia de detención de emergencia, enviando simultáneamente una notificación al supervisor indicando cuál límite se activó.
-
-La activación de cualquier límite durante movimiento causa:
-\begin{enumerate}
-    \item Detención inmediata de todos los motores
-    \item Deshabilitación de drivers (pin ENABLE = HIGH)
-    \item Envío de evento asíncrono al supervisor
-    \item Bloqueo de nuevos comandos de movimiento hasta reset manual
-\end{enumerate}
-
-\subsubsection{Validación de Comandos}
-
-Antes de ejecutar cualquier comando, el parser valida sintaxis y rangos según la Tabla \ref{tab:validacion_comandos}.
+Antes de ejecutar cualquier comando, el parser valida sintaxis y rangos. Comandos inválidos retornan código de error inmediatamente sin ejecutar acción, previniendo movimientos peligrosos (Tabla \ref{tab:validacion_comandos}).
 
 \begin{table}[H]
 \centering
-\caption{Validaciones de comandos y rangos permitidos}
-\label{tab:validacion_comandos}
+\small
 \begin{tabular}{|l|l|l|}
 \hline
-\textbf{Parámetro} & \textbf{Rango Válido} & \textbf{Error si Invalido} \\
+\textbf{Parámetro} & \textbf{Rango Válido} & \textbf{Error} \\
 \hline
 Delimitadores & \texttt{<} y \texttt{>} presentes & INVALID\_CMD \\
 \hline
@@ -34,44 +21,36 @@ Velocidad V & 500 - 12,000 pasos/s & INVALID\_PARAM \\
 \hline
 Tiempo trayectoria & 0 - 10,000 ms & INVALID\_PARAM \\
 \hline
-Número de parámetros & Según comando & INVALID\_CMD \\
-\hline
 \end{tabular}
+\caption{Validaciones de comandos y rangos permitidos}
+\label{tab:validacion_comandos}
 \end{table}
 
-Comandos inválidos retornan código de error inmediatamente sin ejecutar acción, previniendo movimientos peligrosos.
+El firmware implementa watchdog de comunicación: si no recibe heartbeat (\texttt{HB:1}) del supervisor en 90 segundos consecutivos, asume pérdida de comunicación y ejecuta detención de emergencia automática, deshabilitando todos los motores y entrando en modo seguro hasta recibir comando de reset.
 
-\subsubsection{Timeout de Comunicación}
-
-El firmware implementa watchdog de comunicación: si no recibe heartbeat (\texttt{HB:1}) del supervisor en 90 segundos consecutivos, asume pérdida de comunicación y ejecuta EMERGENCY\_STOP automático, deshabilitando todos los motores y entrando en modo seguro hasta recibir comando de reset. Este mecanismo previene movimientos incontrolados si el supervisor falla.
-
-\subsubsection{Protección de Buffer y Códigos de Error}
-
-El buffer UART circular (256 bytes) implementa protección contra overflow verificando espacio disponible antes de cada escritura. Si el buffer está lleno, el byte se descarta y se envía \texttt{<ERROR:BUFFER\_OVERFLOW>}, reiniciando el parser.
-
-La Tabla \ref{tab:codigos_error} lista los códigos de error definidos para diagnóstico sistemático.
+El buffer UART circular (256 bytes) implementa protección contra overflow verificando espacio disponible antes de cada escritura. Si el buffer está lleno, el byte se descarta y se envía error de overflow. La Tabla \ref{tab:codigos_error} lista los códigos de error definidos.
 
 \begin{table}[H]
 \centering
-\caption{Códigos de error del firmware}
-\label{tab:codigos_error}
 \begin{tabular}{|l|p{9cm}|}
 \hline
 \textbf{Código} & \textbf{Descripción y Causa} \\
 \hline
 INVALID\_CMD & Comando no reconocido o sintaxis incorrecta. \\
 \hline
-INVALID\_PARAM & Parámetros fuera de rango válido (velocidad, ángulo, tiempo). \\
+INVALID\_PARAM & Parámetros fuera de rango válido. \\
 \hline
 LIMIT\_HIT & Movimiento bloqueado por activación de final de carrera. \\
 \hline
-BUFFER\_OVERFLOW & Buffer UART saturado. Supervisor enviando datos muy rápido. \\
+BUFFER\_OVERFLOW & Buffer UART saturado. \\
 \hline
 TIMEOUT & Operación excedió timeout configurado. \\
 \hline
-SYSTEM\_ERROR & Error interno del firmware (fallo inesperado). \\
+SYSTEM\_ERROR & Error interno del firmware. \\
 \hline
 \end{tabular}
+\caption{Códigos de error del firmware}
+\label{tab:codigos_error}
 \end{table}
 
-Estos códigos permiten al supervisor diagnosticar fallas específicas y aplicar estrategias de recuperación apropiadas (reintentos, degradación, o parada segura).
+Los finales de carrera se monitorean continuamente en el loop principal (frecuencia >10kHz). El sistema detecta la activación de cualquier límite (nivel lógico bajo con debounce de 6 lecturas consecutivas) y ejecuta inmediatamente la detención de emergencia: deshabilita los drivers (ENABLE = HIGH), detiene la generación de pulsos, envía notificación asíncrona al supervisor indicando el límite activado, y bloquea nuevos comandos de movimiento hasta reset manual. El tiempo de respuesta típico es inferior a 200µs desde la activación física del sensor, suficiente para protección mecánica del sistema considerando las velocidades máximas de operación (0.375 m/s).
