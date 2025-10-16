@@ -1,5 +1,3 @@
-\subsubsection{Fundamento y Motivación}
-
 El sistema de mapeo autónomo requiere identificar la presencia de tubos de cultivo en dirección vertical para registrar la ubicación de estaciones. A diferencia del detector de marcadores que explota contraste cromático mediante umbralización simple, la detección de tubos presenta mayor complejidad debido a que los tubos de PVC blanco se confunden visualmente con el fondo claro del entorno.
 
 La estrategia implementada combina detección de bordes mediante el algoritmo de Canny con la transformada de Hough para identificación de líneas. Esta aproximación se fundamenta en que, aunque el tubo no presente contraste cromático significativo, sus bordes superior e inferior generan gradientes de intensidad detectables cuando la iluminación crea sombras sutiles en las transiciones geométricas.
