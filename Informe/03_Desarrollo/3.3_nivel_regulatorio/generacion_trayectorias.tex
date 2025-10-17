@@ -1,84 +1,70 @@
-El sistema implementa perfiles de velocidad trapezoidales para garantizar movimientos suaves, minimizando vibraciones mecánicas y errores de posicionamiento por pérdida de pasos.
+El sistema implementa perfiles de velocidad trapezoidales con aceleraciones fijas, garantizando comportamiento predecible independientemente de la distancia del movimiento. Las distancias de aceleración y desaceleración permanecen constantes, variando únicamente la longitud de la zona de crucero.
 
-\subsubsection{Perfil Trapezoidal de Velocidad}
+Para movimientos largos (superiores a 25mm), el perfil se compone de las fases mostradas en la Tabla \ref{tab:perfil_trapezoidal}. Esta estrategia asegura que las aceleraciones sean idénticas para todos los movimientos, proporcionando comportamiento mecánico consistente. Por ejemplo, un movimiento de 25mm tiene 12.5mm de aceleración/desaceleración y 12.5mm de crucero, mientras que un movimiento de 250mm mantiene los mismos 12.5mm de aceleración/desaceleración pero dispone de 237.5mm de crucero.
 
-El perfil trapezoidal divide cada movimiento en 5 zonas con transiciones graduales (Figura \ref{fig:perfil_trapezoidal}):
-
-\begin{enumerate}
-    \item \textbf{Aceleración suave} (15\% del recorrido): Rampa lineal desde velocidad inicial (500 pasos/s) hasta velocidad baja (2000 pasos/s)
-    \item \textbf{Aceleración fuerte} (10\% del recorrido): Rampa lineal desde velocidad baja hasta velocidad crucero (hasta 15,000 pasos/s para eje horizontal, 12,000 pasos/s para eje vertical)
-    \item \textbf{Crucero} (50\% del recorrido): Velocidad constante máxima, minimizando vibraciones
-    \item \textbf{Desaceleración fuerte} (10\% del recorrido): Rampa lineal desde velocidad crucero hasta velocidad baja
-    \item \textbf{Desaceleración suave} (15\% del recorrido): Rampa lineal desde velocidad baja hasta velocidad final (500 pasos/s)
-\end{enumerate}
-
-Esta distribución asimétrica (15-10-50-10-15) permite dedicar la mayor parte del movimiento a velocidad constante, maximizando throughput mientras se mantienen transiciones suaves que previenen pérdida de pasos. Para movimientos cortos (<500 pasos), los porcentajes se ajustan dinámicamente para evitar sobrepasamiento, priorizando aceleración/desaceleración sobre crucero.
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Fase} & \textbf{Distancia} & \textbf{$v_i$} & \textbf{$v_f$} & \textbf{Aceleración} \\
+\hline
+1. Arranque & Instant. & 0 & 0.05 & - \\
+\hline
+2. Acel. suave & 5 mm & 0.05 & 0.10 & 0.05 m/s² \\
+\hline
+3. Acel. fuerte & 7.5 mm & 0.10 & 0.375 (H) / 0.30 (V) & 0.37 / 0.27 m/s² \\
+\hline
+4. Crucero & Variable & 0.375 / 0.30 & 0.375 / 0.30 & 0 \\
+\hline
+5. Decel. fuerte & 7.5 mm & 0.375 / 0.30 & 0.10 & -0.37 / -0.27 m/s² \\
+\hline
+6. Decel. suave & 5 mm & 0.10 & 0.05 & -0.05 m/s² \\
+\hline
+7. Detención & Instant. & 0.05 & 0 & - \\
+\hline
+\end{tabular}
+\caption{Fases del perfil trapezoidal de velocidad con aceleraciones fijas. Velocidades en m/s, H: horizontal, V: vertical}
+\label{tab:perfil_trapezoidal}
+\end{table}
 
 \begin{figure}[H]
     \centering
-    % TODO: Insertar gráfico de perfil trapezoidal de velocidad vs tiempo
-    % Mostrar: 5 zonas, velocidades de transición, tiempos relativos
-    \includegraphics[width=0.8\textwidth]{imagenes/perfil_trapezoidal_velocidad.png}
-    \caption{Perfil trapezoidal de velocidad con 5 zonas de transición}
+    % TODO: Insertar gráfico comparativo mostrando mismo perfil de aceleración para diferentes distancias
+    % Mostrar: dos movimientos (25mm vs 250mm) con mismas rampas de accel/decel pero diferente zona crucero
+    \includegraphics[width=0.7\textwidth]{imagenes/perfil_trapezoidal_velocidad.png}
+    \caption{Perfil trapezoidal con aceleraciones fijas. Las zonas de aceleración y desaceleración mantienen longitud constante (12.5mm cada una), mientras que la zona de crucero se ajusta según la distancia total}
     \label{fig:perfil_trapezoidal}
 \end{figure}
 
-\subsubsection{Cálculo Dinámico de Velocidad}
+Cuando la distancia total es menor que 25mm, el perfil se convierte en triangular. El sistema mantiene las mismas aceleraciones de la Tabla \ref{tab:perfil_trapezoidal}, pero calcula el punto medio del movimiento donde debe iniciar la desaceleración para alcanzar exactamente la posición final. En este caso, la velocidad máxima alcanzada es menor que la velocidad de crucero nominal, ya que el motor comienza a frenar antes de alcanzarla. 
 
-La velocidad en cada paso se calcula mediante interpolación lineal dentro de cada zona:
+Para movimientos muy cortos (menos de 3 mm), el sistema reduce la velocidad máxima permitida a 0.10 m/s para mantener precisión en el posicionamiento final, típico en operaciones de ajuste fino.
+
+\begin{figure}[H]
+    \centering
+    % TODO: Insertar gráfico comparativo: perfil trapezoidal vs triangular
+    % Mostrar: movimiento largo con zona crucero vs movimiento corto sin zona crucero (triangular)
+    \includegraphics[width=0.7\textwidth]{imagenes/perfil_trapezoidal_triangular.png}
+    \caption{Comparación entre perfil trapezoidal (movimientos largos) y triangular (movimientos cortos). Ambos utilizan las mismas aceleraciones, pero el perfil triangular invierte la aceleración en el punto medio}
+    \label{fig:perfil_comparacion}
+\end{figure}
+
+La velocidad instantánea en cada paso se calcula mediante interpolación lineal dentro de cada zona. El firmware ejecuta este cálculo continuamente, actualizando el registro OCR1A del Timer1 que controla la frecuencia de generación de pulsos STEP. La conversión entre velocidad deseada $v$ (en pasos/s) y el valor del registro es:
 
 \begin{equation}
-v(n) = v_{inicio} + \frac{(v_{fin} - v_{inicio}) \cdot (n - n_{inicio})}{n_{fin} - n_{inicio}}
+OCR1A = \frac{f_{CPU}}{2 \cdot prescaler \cdot v} - 1 = \frac{1,000,000}{v} - 1
 \end{equation}
 
-donde $n$ es el paso actual, $n_{inicio}$ y $n_{fin}$ delimitan la zona, y $v_{inicio}$, $v_{fin}$ son las velocidades en los extremos de la zona.
+donde $f_{CPU} = 16$ MHz y prescaler = 8. El sistema soporta velocidades entre 500 pasos/s (inicio/fin de movimientos) y 15,000 pasos/s (crucero máximo). Velocidades superiores causan jitter excesivo y riesgo de pérdida de pasos.
 
-Este cálculo se ejecuta en cada paso dentro del loop principal (~10kHz), actualizando el registro OCR1A del Timer1 que controla la frecuencia de interrupción y, por ende, la frecuencia de pulsos STEP.
-
-\subsubsection{Adaptación para Movimientos Cortos}
-
-Movimientos muy cortos (<100 pasos, ~2.5mm) requieren tratamiento especial:
-
-\begin{itemize}
-    \item Velocidad crucero limitada a 2000 pasos/s (vs 10,000 pasos/s nominal)
-    \item Zonas de aceleración/desaceleración reducidas a 25\% cada una
-    \item Zona de crucero mínima (50\% restante)
-\end{itemize}
-
-Esta adaptación previene oscilaciones y garantiza precisión de posicionamiento incluso en movimientos de un solo paso.
-
-\subsubsection{Sincronización Multi-Eje}
-
-Para movimientos diagonales (ambos ejes simultáneos), el firmware implementa sincronización temporal para garantizar trayectorias rectilíneas (Figura \ref{fig:sincronizacion_multieje}).
-
-\textbf{Algoritmo de sincronización}:
-
-\begin{enumerate}
-    \item Se calculan las distancias absolutas para cada eje: $d_H = |x_{target} - x_{actual}|$ y $d_V = |y_{target} - y_{actual}|$
-    \item Se determina el eje dominante (mayor distancia a recorrer)
-    \item El eje dominante utiliza su velocidad crucero nominal ($v_{cruise,H} = 15000$ pasos/s o $v_{cruise,V} = 12000$ pasos/s)
-    \item El eje subordinado escala su velocidad proporcionalmente:
-    \begin{equation}
-    v_{sub} = v_{dom} \times \frac{d_{sub}}{d_{dom}}
-    \end{equation}
-    \item Se verifica que $v_{sub} \geq 500$ pasos/s (velocidad mínima). Si es menor, se recalcula invirtiendo roles.
-    \item Ambos perfiles trapezoidales se inician simultáneamente con sus velocidades ajustadas
-\end{enumerate}
-
-\textbf{Resultado}: Ambos ejes completan su movimiento en el mismo tiempo total $T_{total}$, generando una trayectoria rectilínea en el plano XY. El error de linealidad es <1mm en trayectorias de 500mm.
+Para movimientos diagonales que involucran ambos ejes simultáneamente, el firmware sincroniza los perfiles mediante escalamiento proporcional de velocidades. El eje con mayor distancia a recorrer (eje dominante) utiliza su velocidad de crucero nominal, mientras que el eje subordinado escala su velocidad proporcionalmente: $v_{sub} = v_{dom} \times (d_{sub}/d_{dom})$. Este escalamiento se aplica a todas las fases del perfil, garantizando que ambos ejes completen el movimiento casi al mismo tiempo y generando trayectorias rectilíneas en el plano XY (Figura \ref{fig:sincronizacion_multieje}).
 
 \begin{figure}[H]
     \centering
     % TODO: Insertar diagrama de sincronización multi-eje
-    % Mostrar: dos ejes con diferentes distancias, perfiles de velocidad escalados, trayectoria resultante
-    \includegraphics[width=0.9\textwidth]{imagenes/sincronizacion_multieje.png}
-    \caption{Sincronización de perfiles de velocidad para movimientos diagonales}
+    % Mostrar: dos ejes con diferentes distancias, perfiles escalados, trayectoria rectilínea resultante
+    \includegraphics[width=0.7\textwidth]{imagenes/sincronizacion_multieje.png}
+    \caption{Sincronización de perfiles de velocidad para movimientos diagonales mediante escalamiento proporcional}
     \label{fig:sincronizacion_multieje}
 \end{figure}
-
-\textbf{Ejemplo numérico}: Para un movimiento de $d_H = 4000$ pasos (100mm) y $d_V = 2000$ pasos (10mm):
-\begin{itemize}
-    \item Eje horizontal (dominante): $v_{cruise,H} = 15000$ pasos/s
-    \item Eje vertical (subordinado): $v_{cruise,V} = 15000 \times \frac{2000}{4000} = 7500$ pasos/s
-    \item Tiempo total sincronizado: $T \approx 0.35$ s (considerando aceleraciones)
-\end{itemize}

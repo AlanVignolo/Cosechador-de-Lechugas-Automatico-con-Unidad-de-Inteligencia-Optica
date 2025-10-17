@@ -1,19 +1,11 @@
-El protocolo de comunicación UART entre el nivel regulatorio y el supervisor utiliza mensajes ASCII delimitados con formato estructurado.
+El protocolo de comunicación entre el nivel regulatorio y el supervisor utiliza mensajes ASCII delimitados con formato estructurado. Cada comando sigue la estructura \texttt{<COMANDO:param1,param2>\textbackslash n}, donde los elementos son delimitadores \texttt{<} y \texttt{>}, identificador de comando (1-3 caracteres ASCII), separador de dos puntos (opcional), parámetros separados por comas, y terminador de línea.
 
-\subsubsection{Formato de Comandos}
-
-Cada comando sigue una estructura delimitada por los caracteres \texttt{<} y \texttt{>}, con formato: \texttt{<COMANDO:param1,param2>\textbackslash n}. Los elementos son delimitadores de inicio/fin, identificador de comando (1-3 caracteres ASCII), separador de dos puntos (opcional), parámetros separados por comas, y terminador de línea.
-
-\subsubsection{Comandos Implementados}
-
-La Tabla \ref{tab:comandos_uart} presenta el conjunto completo de comandos del protocolo UART.
+La Tabla \ref{tab:comandos_uart} presenta el conjunto completo de comandos implementados.
 
 \begin{table}[H]
 \centering
-\caption{Comandos UART del Nivel Regulatorio}
-\label{tab:comandos_uart}
 \small
-\begin{tabular}{|l|l|p{5cm}|l|}
+\begin{tabular}{|l|l|p{4.5cm}|l|}
 \hline
 \textbf{Comando} & \textbf{Parámetros} & \textbf{Descripción} & \textbf{Ejemplo} \\
 \hline
@@ -45,49 +37,34 @@ L? & - & Estado de finales de carrera & \texttt{<L?>} \\
 \hline
 S & - & Emergency stop (inmediato) & \texttt{<S>} \\
 \hline
-HB & 1 & Heartbeat (keep-alive) & \texttt{<HB:1>} \\
+HB & 1 & Señal de sincronización periódica & \texttt{<HB:1>} \\
 \hline
 \end{tabular}
+\caption{Comandos UART del Nivel Regulatorio}
+\label{tab:comandos_uart}
 \end{table}
 
-\subsubsection{Formato de Respuestas}
-
-El firmware genera dos tipos de respuestas: para comandos exitosos envía un mensaje con el prefijo \texttt{RESPONSE} seguido de los datos solicitados, mientras que para comandos fallidos envía un mensaje con el prefijo \texttt{ERROR} seguido del código de error correspondiente. Ambos tipos mantienen el formato delimitado estándar del protocolo.
-
-\subsubsection{Eventos Asíncronos}
-
-Además de responder a comandos, el firmware envía notificaciones automáticas cuando ocurren eventos importantes (Tabla \ref{tab:eventos_asincronos}).
+El firmware genera dos tipos de respuestas: comandos exitosos retornan mensajes con prefijo \texttt{RESPONSE} seguido de los datos solicitados, mientras que comandos fallidos retornan mensajes con prefijo \texttt{ERROR} seguido del código de error. Además, el firmware envía notificaciones automáticas cuando ocurren eventos importantes (Tabla \ref{tab:eventos_asincronos}), como finalización de movimientos, activación de límites, o cambios de estado del gripper.
 
 \begin{table}[H]
 \centering
-\caption{Eventos asíncronos del firmware}
-\label{tab:eventos_asincronos}
 \begin{tabular}{|l|p{8cm}|}
 \hline
 \textbf{Evento} & \textbf{Descripción} \\
 \hline
-\texttt{<STEPPER\_MOVE\_COMPLETED:x,y>} & Movimiento completado exitosamente. Retorna posición final en mm. \\
+\texttt{<STEPPER\_MOVE\_COMPLETED:x,y>} & Movimiento completado. Posición final en mm. \\
 \hline
-\texttt{<LIMIT\_TRIGGERED:tipo>} & Final de carrera activado (H\_MIN, H\_MAX, V\_MIN, V\_MAX). \\
+\texttt{<LIMIT\_TRIGGERED:tipo>} & Final de carrera activado por interrupción. \\
 \hline
 \texttt{<GRIPPER\_OPENED>} & Gripper completó apertura. \\
 \hline
 \texttt{<GRIPPER\_CLOSED>} & Gripper completó cierre. \\
 \hline
-\texttt{<STEPPER\_EMERGENCY\_STOP>} & Parada de emergencia ejecutada (por límite o comando). \\
+\texttt{<STEPPER\_EMERGENCY\_STOP>} & Parada de emergencia ejecutada. \\
 \hline
 \end{tabular}
+\caption{Eventos asíncronos del firmware}
+\label{tab:eventos_asincronos}
 \end{table}
 
-\subsubsection{Procesamiento de Comandos}
-
-El firmware utiliza un parser basado en máquina de estados:
-
-\begin{enumerate}
-    \item Bytes recibidos se almacenan en buffer circular (256 bytes)
-    \item Cuando se detecta \texttt{<}, comienza captura de comando
-    \item Cuando se detecta \texttt{>}, se parsea y ejecuta el comando
-    \item Respuesta se envía inmediatamente tras ejecución
-\end{enumerate}
-
-El procesamiento completo toma <1ms para comandos simples, garantizando latencia total (transmisión + procesamiento + respuesta) <20ms a 115200 baudios.
+El firmware utiliza un analizador sintáctico basado en máquina de estados que almacena bytes en buffer circular de 256 bytes. Cuando detecta los delimitadores, analiza y ejecuta el comando, enviando la respuesta inmediatamente.

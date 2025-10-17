@@ -1,0 +1,37 @@
+\subsubsection{Manejo de Errores y Recuperación}
+
+El sistema implementa mecanismos de detección y recuperación de fallas para garantizar operación continua ante condiciones inesperadas. Las fallas se clasifican según severidad y se aplican estrategias de recuperación específicas.
+
+\textbf{Clasificación de fallas.} El sistema define tres categorías según recuperabilidad:
+
+\begin{itemize}
+    \item \textbf{Tipo 1 (Transitorias)}: Excesos de tiempo límite de comunicación, fotogramas corruptos, detección fallida ocasional, desviaciones de posición menores a 5mm. Causadas típicamente por interferencia electromagnética o errores de redondeo.
+
+    \item \textbf{Tipo 2 (Persistentes)}: Fallos consistentes de algoritmos de visión, cámara no disponible, desviaciones mayores a 10mm, finales de carrera siempre activos. Causadas por desconexión física o pérdida de pasos.
+
+    \item \textbf{Tipo 3 (Críticas)}: Pérdida de comunicación con nivel regulatorio, colisión mecánica, errores de firmware. Causadas por cables desconectados u obstrucciones físicas.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|p{5.5cm}|p{5.5cm}|}
+\hline
+\textbf{Tipo} & \textbf{Estrategia de recuperación} & \textbf{Resultado esperado} \\
+\hline
+Tipo 1 & Reintentos con backoff exponencial: 3 intentos con delays de 1s, 2s, 4s. Si falla, escalar a Tipo 2. & Recuperación automática en 5-10s. \\
+\hline
+Tipo 2 & Modo degradado: uso de posiciones predefinidas, re-homing parcial, desactivación de sensor dañado. Notificación a operador. & Sistema continúa con funcionalidad reducida. \\
+\hline
+Tipo 3 & Parada segura: detención inmediata de movimientos, brazo a posición segura, preservación de estado del sistema. & Sistema detenido esperando intervención manual. \\
+\hline
+\end{tabular}
+\caption{Estrategias de recuperación según tipo de falla}
+\label{tab:estrategias_recuperacion}
+\end{table}
+
+\textbf{Monitoreo de comunicación.} El supervisor envía señales de sincronización periódicas (\texttt{HB:1}) al nivel regulatorio cada 30 segundos. El firmware implementa protección independiente: si transcurre un período prolongado sin recibir señal, ejecuta detención de emergencia automática. Este mecanismo unidireccional protege contra fallos del supervisor sin requerir confirmación bidireccional.
+
+\textbf{Detección de bloqueos.} El sistema monitorea tiempos de ejecución de operaciones mediante límites configurados. Si una operación excede su tiempo límite (movimientos, capturas de imagen, transiciones de brazo), se registra el evento y se aborta la operación, evitando bloqueos indefinidos del sistema.
+
+\textbf{Persistencia de estado.} Ante reinicio del supervisor, el sistema intenta cargar estado persistente que incluye referencia de homing, dimensiones del workspace, y última posición conocida. Tras cargar, consulta la posición real al firmware y compara con la almacenada: si la desviación es menor a 1mm acepta la posición y reanuda operación; si es mayor a 1mm descarta los datos y requiere re-homing completo antes de permitir movimientos.

@@ -195,7 +195,7 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \subsection{Arquitectura del nivel regulatorio}
 \input{03_Desarrollo/3.3_nivel_regulatorio/arquitectura_regulatorio}
 
-\subsection{Hardware de Control - Arduino Mega 2560}
+\subsection{Hardware de Control}
 \input{03_Desarrollo/3.3_nivel_regulatorio/justificacion_arduino}
 \input{03_Desarrollo/3.3_nivel_regulatorio/perifericos_hardware}
 \input{03_Desarrollo/3.3_nivel_regulatorio/distribucion_pines}
@@ -218,23 +218,25 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{03_Desarrollo/3.3_nivel_regulatorio/estructura_comandos}
 \input{03_Desarrollo/3.3_nivel_regulatorio/manejo_errores}
 
-\section{Sistema de supervisión y alta gestión (nivel supervisor)}
+\section{Nivel Supervisor}
 
-\subsection{Arquitectura del nivel supervisor}
-\input{03_Desarrollo/3.4_nivel_supervisor/arquitectura_supervisor}
-
-\subsection{Hardware supervisor - Raspberry Pi 5}
+\subsection{Hardware Supervisor}
 \input{03_Desarrollo/3.4_nivel_supervisor/justificacion_raspberry}
 
-\subsection{Máquina de estados supervisora}
-\input{03_Desarrollo/3.4_nivel_supervisor/diagrama_estados}
-\input{03_Desarrollo/3.4_nivel_supervisor/transiciones_condiciones}
-\input{03_Desarrollo/3.4_nivel_supervisor/manejo_excepciones}
+\subsection{Arquitectura del Software}
+\input{03_Desarrollo/3.4_nivel_supervisor/arquitectura_supervisor}
 
-\subsection{Coordinación con nivel regulatorio}
-\input{03_Desarrollo/3.4_nivel_supervisor/gestion_comandos}
-\input{03_Desarrollo/3.4_nivel_supervisor/sincronizacion_movimientos}
-\input{03_Desarrollo/3.4_nivel_supervisor/recuperacion_fallas}
+\subsection{Funcionalidad y Procesos}
+\input{03_Desarrollo/3.4_nivel_supervisor/funcionalidad_procesos}
+
+\subsection{Seguimiento de Posición Global}
+\input{03_Desarrollo/3.4_nivel_supervisor/seguimiento_posicion}
+
+\subsection{Control del Brazo Robótico}
+\input{03_Desarrollo/3.4_nivel_supervisor/control_brazos}
+
+\subsection{Manejo de Errores y Recuperación}
+\input{03_Desarrollo/3.4_nivel_supervisor/manejo_errores}
 
 \section{Inteligencia artificial y visión por computadora}
 

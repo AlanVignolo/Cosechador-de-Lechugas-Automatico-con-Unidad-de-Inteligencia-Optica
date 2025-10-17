@@ -1,0 +1,22 @@
+Los procesos implementados en el nivel supervisor coordinan múltiples operaciones siguiendo secuencias predefinidas. Cada proceso se construye mediante composición de operaciones básicas: movimientos XY, transiciones de brazo, captura de imágenes, y ejecución de algoritmos de visión.
+
+El sistema define cuatro procesos principales implementados en workflow\_orchestrator:
+
+\begin{itemize}
+    \item \textbf{Homing Simple}: Secuencia de referenciado del sistema. Verifica que el brazo esté en posición de movimiento, configura velocidades reducidas, mueve el eje horizontal hasta el límite derecho, retrocede un offset, mueve el eje vertical hasta el límite superior, baja un offset, establece el origen (0,0), y restaura velocidades normales. Guarda la referencia en homing\_reference.json.
+
+    \item \textbf{Calibración del Workspace}: Medición de las dimensiones útiles del espacio de trabajo. Ejecuta homing inicial, se mueve hacia el límite izquierdo registrando la distancia horizontal mediante mensaje de emergencia, se mueve hacia el límite inferior registrando la distancia vertical, calcula las dimensiones restando márgenes de seguridad, y ejecuta homing final. Guarda las dimensiones en workspace\_dimensions.json.
+
+    \item \textbf{Mapeo del Entorno}: Escaneo sistemático para detectar posiciones de tubos y plantas. Realiza escaneo vertical descendente con detector de tubos registrando coordenadas Y en configuracion\_tubos.json. Para cada tubo detectado, ejecuta escaneo horizontal con detector de cintas registrando coordenadas X en matriz\_cintas.json. Retorna a origen tras completar.
+
+    \item \textbf{Cosecha Interactiva}: Proceso completo de recolección. Para cada posición en matriz\_cintas: navega a la posición, captura imagen y ejecuta clasificador morfológico, si detecta lechuga madura ejecuta corrección de posición con detectores de cintas, transfiere el brazo a posición de recoger, cierra el gripper, eleva a posición de transporte, navega a zona de depósito, transfiere a posición depositar, abre el gripper, y retorna a posición de transporte.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{imagenes/workflow_procesos_supervisor.png}
+    \caption{Diagrama de flujo de los procesos principales del nivel supervisor}
+    \label{fig:workflow_procesos_supervisor}
+\end{figure}
+
+Las secuencias verifican condiciones de seguridad antes de ejecutar acciones críticas: sistema referenciado antes de movimientos, posición del brazo compatible con desplazamientos XY, disponibilidad de cámara para captura, y límites del workspace respetados. Los errores durante ejecución (límite activado inesperadamente, pérdida de comunicación, fallo de captura) detienen el proceso y preservan el estado para diagnóstico.

@@ -4,40 +4,40 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Configuraci髇 de velocidades (en pasos/segundo)
-#define SPEED_START      2000    // Velocidad inicial/final (m醩 r醦ido)
-#define SPEED_LOW        4000    // Velocidad baja (transici髇)
+// Configuraci贸n de velocidades (en pasos/segundo)
+#define SPEED_START      2000    // Velocidad inicial/final
+#define SPEED_LOW        4000    // Velocidad baja (transici贸n)
 #define SPEED_CRUISE_H   15000   // Velocidad crucero horizontal
 #define SPEED_CRUISE_V   12000   // Velocidad crucero vertical
 
-// Segmentos del perfil (en porcentaje del total)
-#define ACCEL_SOFT_PERCENT    15  // Primeros 15% aceleraci髇 suave
-#define ACCEL_HARD_PERCENT    10  // Siguientes 10% aceleraci髇 fuerte
-#define DECEL_HARD_PERCENT    10  // 10% desaceleraci髇 fuerte
-#define DECEL_SOFT_PERCENT    15  // 趌timos 15% desaceleraci髇 suave
-// El resto (50%) es velocidad crucero
+// Distancias fijas de aceleraci贸n/desaceleraci贸n (en pasos)
+// Esto garantiza aceleraciones constantes independientemente de la distancia total
+#define ACCEL_SOFT_STEPS     200   // Pasos para aceleraci贸n suave (START -> LOW)
+#define ACCEL_HARD_STEPS     300   // Pasos para aceleraci贸n fuerte (LOW -> CRUISE)
+#define DECEL_HARD_STEPS     300   // Pasos para desaceleraci贸n fuerte (CRUISE -> LOW)
+#define DECEL_SOFT_STEPS     200   // Pasos para desaceleraci贸n suave (LOW -> START)
 
-// Intervalos de actualizaci髇 (en pasos)
-#define SPEED_UPDATE_INTERVAL  10  // Actualizar cada 10 pasos
+// Total de pasos m铆nimos para perfil trapezoidal completo
+#define MIN_STEPS_FOR_TRAPEZOID  (ACCEL_SOFT_STEPS + ACCEL_HARD_STEPS + DECEL_HARD_STEPS + DECEL_SOFT_STEPS)
 
 typedef struct {
-	// Configuraci髇 del movimiento
+	// Configuraci贸n del movimiento
 	int32_t total_steps;
 	int32_t steps_done;
 	uint16_t cruise_speed;
-	
+
 	// Umbrales precalculados
-	int32_t accel_soft_end;    // Fin de aceleraci髇 suave
-	int32_t accel_hard_end;    // Fin de aceleraci髇 fuerte
-	int32_t decel_hard_start;  // Inicio de desaceleraci髇 fuerte
-	int32_t decel_soft_start;  // Inicio de desaceleraci髇 suave
-	
+	int32_t accel_soft_end;    // Fin de aceleraci贸n suave
+	int32_t accel_hard_end;    // Fin de aceleraci贸n fuerte
+	int32_t decel_hard_start;  // Inicio de desaceleraci贸n fuerte
+	int32_t decel_soft_start;  // Inicio de desaceleraci贸n suave
+
 	// Estado actual
 	uint16_t current_speed;
 	bool active;
 } simple_profile_t;
 
-// Funciones p鷅licas
+// Funciones p煤blicas
 void simple_profile_init(simple_profile_t* profile);
 void simple_profile_calculate(simple_profile_t* profile, int32_t steps, uint16_t cruise_speed);
 uint16_t simple_profile_get_speed(simple_profile_t* profile);

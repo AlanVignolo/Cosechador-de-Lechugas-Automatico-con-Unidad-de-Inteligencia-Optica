@@ -1,0 +1,8 @@
+\subsubsection{Seguimiento de Posición Global}
+
+El sistema supervisor mantiene un seguimiento continuo de la posición del robot mediante movimientos relativos y confirmaciones del nivel regulatorio.
+
+El supervisor envía comandos especificando desplazamientos incrementales respecto a la posición actual. Al completar cada movimiento, el nivel regulatorio notifica el desplazamiento real ejecutado, que puede diferir del solicitado si se activa un límite físico durante la trayectoria. Un proceso de monitoreo continuo detecta estas confirmaciones y actualiza la posición global mediante suma acumulativa de los desplazamientos reportados.
+
+Durante el proceso de homing, los eventos de activación de finales de carrera se utilizan para establecer el origen del sistema de coordenadas. En operación normal, si un límite se activa inesperadamente, el firmware detiene el movimiento y notifica tanto el desplazamiento parcial ejecutado como la activación del límite correspondiente.
+El supervisor ajusta la posición global en consecuencia, asegurando que la representación interna del estado del robot refleje con precisión su ubicación física. Este enfoque permite una gestión robusta de la posición, incluso en presencia de errores o interrupciones inesperadas durante el movimiento.

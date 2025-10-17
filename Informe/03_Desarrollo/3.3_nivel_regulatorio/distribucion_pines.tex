@@ -1,59 +1,11 @@
-La distribución de pines del Arduino Mega 2560 se diseñó para optimizar el ruteo de señales, minimizar interferencias y facilitar el mantenimiento (Tabla \ref{tab:distribucion_pines}).
+\subsubsection{Distribución de Pines del Arduino Mega 2560}
 
-\begin{table}[H]
-\centering
-\caption{Distribución de pines del Arduino Mega 2560}
-\label{tab:distribucion_pines}
-\begin{tabular}{|l|l|p{6cm}|}
-\hline
-\textbf{Pin} & \textbf{Función} & \textbf{Descripción} \\
-\hline
-\multicolumn{3}{|c|}{\textbf{Eje Horizontal (X)}} \\
-\hline
-22 & STEP\_H & Pulsos de paso para motor horizontal \\
-23 & DIR\_H & Dirección de giro motor horizontal \\
-24 & ENABLE\_H & Habilitación driver TB6600 horizontal \\
-\hline
-\multicolumn{3}{|c|}{\textbf{Eje Vertical (Y)}} \\
-\hline
-25 & STEP\_V & Pulsos de paso para motor vertical \\
-26 & DIR\_V & Dirección de giro motor vertical \\
-27 & ENABLE\_V & Habilitación driver TB6600 vertical \\
-\hline
-\multicolumn{3}{|c|}{\textbf{Servomotores del Brazo}} \\
-\hline
-11 (PWM) & SERVO1 & Control PWM servo 1 (hombro) - Timer1 \\
-12 (PWM) & SERVO2 & Control PWM servo 2 (codo) - Timer1 \\
-\hline
-\multicolumn{3}{|c|}{\textbf{Gripper (Motor 28BYJ-48)}} \\
-\hline
-30 & GRIPPER\_IN1 & Fase 1 del motor paso a paso \\
-31 & GRIPPER\_IN2 & Fase 2 del motor paso a paso \\
-32 & GRIPPER\_IN3 & Fase 3 del motor paso a paso \\
-33 & GRIPPER\_IN4 & Fase 4 del motor paso a paso \\
-\hline
-\multicolumn{3}{|c|}{\textbf{Finales de Carrera}} \\
-\hline
-40 & LIMIT\_H\_MIN & Final de carrera horizontal mínimo (inicio) \\
-41 & LIMIT\_H\_MAX & Final de carrera horizontal máximo (fin) \\
-42 & LIMIT\_V\_MIN & Final de carrera vertical mínimo (abajo) \\
-43 & LIMIT\_V\_MAX & Final de carrera vertical máximo (arriba) \\
-\hline
-\multicolumn{3}{|c|}{\textbf{Comunicación}} \\
-\hline
-0 (RX0) & UART\_RX & Recepción serial desde Raspberry Pi \\
-1 (TX0) & UART\_TX & Transmisión serial hacia Raspberry Pi \\
-\hline
-\end{tabular}
-\end{table}
+La asignación de pines del microcontrolador se diseñó como se presenta en la Figura \ref{fig:pinout_arduino_mega}, que muestra la disposición física de conexiones en la placa.
 
-\textbf{Criterios de asignación}:
-
-\begin{itemize}
-    \item \textbf{Pines PWM para servos}: Se utilizan pines con soporte hardware PWM (Timer1) para generar señales precisas de 50Hz sin consumir ciclos de CPU.
-    \item \textbf{Agrupación por función}: Pines de steppers, gripper y límites agrupados en rangos contiguos facilita el cableado y debugging.
-    \item \textbf{Reserva de pines analógicos}: Se mantienen libres los 16 pines analógicos (A0-A15) para futuras expansiones (sensores de corriente, temperatura, etc.).
-    \item \textbf{Separación de señales críticas}: STEP/DIR alejados de pines de comunicación para minimizar acoplamiento capacitivo y ruido.
-\end{itemize}
-
-Esta distribución permite un cableado ordenado con cables de longitud similar (~30cm) desde el Arduino hasta la shield de drivers, minimizando caídas de tensión y susceptibilidad a EMI.
+\begin{figure}[H]
+    \centering
+    % TODO: Insertar imagen del pinout del Arduino Mega con las asignaciones marcadas
+    \includegraphics[width=0.7\textwidth]{imagenes/pinout_arduino_mega.png}
+    \caption{Distribución de pines del Arduino Mega 2560 para el Nivel Regulatorio}
+    \label{fig:pinout_arduino_mega}
+\end{figure}
