@@ -1,37 +1,23 @@
-El desarrollo del sistema cosechador automático de lechugas hidropónicas cumplió satisfactoriamente los objetivos planteados, validando la viabilidad técnica de la automatización en agricultura vertical mediante la integración coherente de mecatrónica, visión artificial e inteligencia artificial. El proyecto permitió demostrar que es posible superar las limitaciones operativas de accesibilidad inherentes a los sistemas de cultivo vertical mediante soluciones robóticas que combinan precisión de posicionamiento, detección inteligente y control coordinado.
+El sistema cosechador automático de lechugas hidropónicas cumplió los objetivos planteados, validando la viabilidad técnica de automatización en agricultura vertical mediante integración de mecatrónica, visión artificial e inteligencia artificial.
 
-\subsection*{Logros técnicos alcanzados}
+\subsection*{Logros técnicos}
 
-El prototipo desarrollado logró implementar exitosamente una arquitectura de control jerárquico con separación funcional clara entre el nivel regulatorio (control de actuadores y sensores en tiempo real) y el nivel supervisor (gestión de secuencias operativas y coordinación con inteligencia artificial). Esta arquitectura demostró ser robusta, escalable y modular, facilitando el desarrollo, depuración y futura extensión del sistema.
+\textbf{Control jerárquico:} Arquitectura con separación funcional entre nivel regulatorio (control de actuadores en tiempo real) y supervisor (gestión de secuencias y coordinación con IA). Demostró ser robusta, escalable y modular.
 
-El sistema de visión artificial e inteligencia artificial desarrollado alcanzó métricas de desempeño sobresalientes: detección de elementos de referencia y cultivos con tasas superiores al 90\%, clasificación de madurez con exactitud del 97\%, y repetibilidad del 88\% en detecciones múltiples. Estos resultados validan la efectividad de los algoritmos basados en procesamiento morfológico de imágenes y análisis estadístico de descriptores geométricos para la tarea de cosecha selectiva automatizada.
+\textbf{Visión e IA:} Métricas de desempeño: detección >90\%, clasificación de madurez 97\%, repetibilidad 88\%. Algoritmos basados en procesamiento morfológico y análisis estadístico de descriptores geométricos.
 
-El sistema mecánico integrado (estructura cartesiana XZ + brazo serie de 2 GDL) demostró capacidad operacional funcional con precisión de posicionamiento del 1\% en lazo abierto y tasa de agarres exitosos del 82\% con realimentación visual. La configuración híbrida seleccionada optimiza la relación entre complejidad cinemática, costo de implementación y efectividad operativa, validando el concepto de división funcional entre posicionamiento global (estructura cartesiana) y manipulación local (brazo robótico).
+\textbf{Sistema mecánico:} Estructura cartesiana XZ + brazo serie 2 GDL. Precisión de posicionamiento 1\% en lazo abierto, tasa de agarres exitosos 82\% con realimentación visual.
 
-\subsection*{Transferibilidad y escalabilidad}
+\subsection*{Escalabilidad}
 
-Uno de los resultados más significativos del proyecto es la confirmación de que tanto el software de control como los algoritmos de inteligencia artificial son directamente transferibles a sistemas de escala industrial sin modificaciones estructurales. La arquitectura modular permite escalar dimensiones físicas mediante ajustes paramétricos (conversiones pasos/mm, límites de carrera, perfiles de velocidad) sin necesidad de reestructuración del código. Esta característica valida el enfoque de diseño orientado a la escalabilidad propuesto desde las etapas iniciales del proyecto.
+Software y algoritmos de IA son transferibles a escala industrial sin modificaciones estructurales. La arquitectura modular permite escalar mediante ajustes paramétricos (conversiones pasos/mm, límites, perfiles de velocidad).
 
-\subsection*{Limitaciones identificadas y caminos de mejora}
+\subsection*{Limitaciones identificadas}
 
-El proceso de validación experimental permitió identificar tres áreas críticas que requieren atención en la implementación a escala real:
+\textbf{Rigidez estructural:} Material PETG del prototipo presenta flexibilidad excesiva generando vibraciones. Requiere transición a materiales de mayor módulo elástico.
 
-\subsubsection*{Rigidez estructural del brazo robótico}
-
-El material empleado para el prototipo (petg) presenta flexibilidad excesiva que genera vibraciones residuales tras movimientos rápidos, limitando la velocidad operativa y afectando la precisión final. La transición a materiales de mayor módulo elástico permitira eliminar el problema.
-
-\subsubsection*{Sensibilidad del sistema de visión a iluminación}
-
-Los algoritmos demostraron funcionamiento robusto bajo iluminación controlada (800-1200 lux), pero son sensibles a variaciones significativas de intensidad o direccionalidad. La implementación de iluminación artificial estabilizada o el desarrollo de algoritmos adaptativos de ecualización dinámica garantizarán operación confiable en entornos con iluminación variable.
-
-Estas limitaciones no comprometen la validez del concepto desarrollado, sino que representan oportunidades de mejora claramente caracterizadas para guiar la siguiente fase de desarrollo.
+\textbf{Iluminación:} Sistema funciona entre 800-1200 lux pero es sensible a variaciones. Requiere iluminación estabilizada o algoritmos adaptativos.
 
 \subsection*{Viabilidad económica}
 
-El análisis económico preliminar estima un costo de desarrollo del prototipo de aproximadamente \$6.200.000 (ARS), con un período de recupero de inversión proyectado de 4 años basado en una capacidad de cosecha mensual de 55-60 lechugas a precio promedio de \$2.500 por unidad. Estos valores proporcionan una base inicial para evaluar la viabilidad comercial, aunque se reconoce la necesidad de análisis económicos más detallados que incorporen costos operativos (mantenimiento, energía, reposición de componentes) y evalúen escenarios de implementación a mayor escala con múltiples unidades operando simultáneamente.
-
-\subsection*{Contribución al campo de la agricultura automatizada}
-
-El proyecto aporta una demostración concreta de que la integración de tecnologías de visión artificial, control jerárquico y mecatrónica es aplicable efectivamente a la problemática de la cosecha en agricultura vertical, un área donde la investigación y desarrollo tecnológico es aún incipiente en el contexto local. La arquitectura de control jerárquico implementada, la metodología de calibración espacial mediante marcadores visuales, y el enfoque de clasificación estadística simple pero efectiva constituyen contribuciones metodológicas replicables en proyectos similares de automatización agrícola.
-
-En conclusión, el proyecto Cosechador de Lechugas Automático con Unidad de Detección por Inteligencia Artificial alcanzó exitosamente sus objetivos, demostrando que la automatización robótica es una solución viable y efectiva para superar las limitaciones operativas de los sistemas de agricultura vertical. El prototipo validó conceptos técnicos clave, identificó caminos claros de mejora, y estableció una base tecnológica escalable para el desarrollo de sistemas industriales que contribuyan a mejorar la competitividad, seguridad y sostenibilidad de la agricultura urbana en contextos de creciente demanda alimentaria y restricciones de espacio cultivable.
+Costo de desarrollo: \$6.200.000 ARS. Período de recupero proyectado: 4 años (capacidad 55-60 lechugas/mes a \$2.500/unidad). Se requiere análisis detallado incluyendo costos operativos y escenarios de escalamiento.

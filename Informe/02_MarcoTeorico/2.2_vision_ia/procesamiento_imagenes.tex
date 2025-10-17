@@ -1,4 +1,4 @@
-\subsection{Procesamiento Digital de Imágenes}
+\subsection{Procesamiento digital de imágenes}
 
 El procesamiento digital de imágenes transforma datos visuales crudos capturados por cámaras en información estructurada procesable por algoritmos de decisión. Una imagen digital se define matemáticamente como una función bidimensional discreta $f(x,y)$ donde las coordenadas espaciales representan posiciones y el valor de la función indica intensidad luminosa. Para imágenes a color en formato RGB:
 
@@ -19,8 +19,6 @@ La operación de convolución se define matemáticamente como:
 \end{equation}
 
 donde $I$ es la imagen de entrada, $K$ es el kernel de tamaño $(2a+1) \times (2b+1)$, y el resultado $(I \ast K)(x,y)$ representa el valor procesado del píxel en la posición $(x,y)$. En términos simples, para cada píxel se calcula una suma ponderada de los valores de sus píxeles vecinos, donde los pesos están dados por el kernel.
-
-\textbf{Ejemplo de aplicación:} Un kernel gaussiano se utiliza para suavizar imágenes (reducir ruido), mientras que los kernels de Sobel detectan bordes al resaltar cambios bruscos de intensidad. Los kernels morfológicos (elementos estructurantes) operan sobre imágenes binarias para modificar formas geométricas.
 
 \textbf{Elemento estructurante:} En operaciones morfológicas sobre imágenes binarias (blanco-negro), el kernel se denomina \textit{elemento estructurante} y define la forma y tamaño del vecindario considerado. Por ejemplo:
 \begin{itemize}

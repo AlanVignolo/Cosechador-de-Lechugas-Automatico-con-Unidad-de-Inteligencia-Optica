@@ -1,46 +1,15 @@
-\subsubsection {Alcance del Sistema}
-\begin{itemize}[label=\textbullet]
-    \item Manipulación automatizada de lechugas en cultivos hidropónicos verticales dentro de un área de trabajo  determinada    \item Sistema cartesiano de dos ejes (XZ) con robot serie de 2 grados de libertad
-    \item Detección y clasificación de cultivos mediante visión artificial e inteligencia artificial (detección de marcadores, identificación de tubos de cultivo y clasificación de madurez)
-    \item Control jerárquico con dos niveles: supervisor (Raspberry Pi 5) y regulatorio (Arduino Mega 2560)
-    \item Optimización de trayectorias para maximizar la eficiencia de cosecha
-\end{itemize}
+\subsubsection{Alcance del Sistema}
 
-\subsubsection{LIMITACIONES}
-Limitaciones Mecánicas:
-\begin{itemize}[label=\textbullet]
-    \item Área de trabajo limitada y diseñada para sistemas hidropónicos verticales específicos
-    \item Capacidad de carga restringida.
-    \item Velocidades de operación limitadas por la estabilidad mecánica y precisión requerida
-\end{itemize}
+El proyecto abarca el diseño y desarrollo de un sistema de cosecha automatizada de lechugas en cultivos hidropónicos verticales, implementando una estructura cartesiana de dos ejes con robot serie de dos grados de libertad. El sistema integra detección y clasificación mediante visión artificial (marcadores de referencia, tubos de cultivo y madurez de lechugas), arquitectura de control jerárquica de dos niveles (supervisorio y regulatorio), y optimización de trayectorias para maximizar eficiencia de cosecha.
 
-Limitaciones del Sistema de Visión e IA:
-\begin{itemize}[label=\textbullet]
-    \item Requiere condiciones de iluminación controladas para garantizar la precisión de detección
-    \item Clasificación limitada a lechugas; no es generalizable a otros cultivos sin reentrenamiento
-    \item Dependencia de marcadores físicos para calibración y navegación
-    \item Tiempo de procesamiento de imágenes puede afectar el tiempo de ciclo total
-\end{itemize}
+\subsubsection{Limitaciones}
 
-Limitaciones del Control:
-\begin{itemize}[label=\textbullet]
-    \item Dependencia de finales de carrera para referenciado.
-    \item Comunicación UART entre niveles supervisorio y regulatorio introduce latencia
-\end{itemize}
+\textbf{Alcance del Prototipo:} El desarrollo constituye un prototipo académico de validación, no diseñado para producción industrial continua. No contempla operación multi-robot simultánea ni el empaquetado o transporte posterior de cultivos cosechados. Se limita a lechugas dentro del rango dimensional esperado en el diseño.
 
-Limitaciones del Alcance del Proyecto:
-\begin{itemize}[label=\textbullet]
-    \item Prototipo académico; no diseñado para producción industrial continua
-    \item No incluye sistema de cosecha para lechugas fuera del rango dimensional esperado
-    \item Ausencia de manejo de múltiples robots en operación simultánea
-    \item No contempla el empaquetado o transporte posterior de las lechugas cosechadas
-\end{itemize}
+\textbf{Aspectos Mecánicos y Ambientales:} El sistema opera en área de trabajo acotada, diseñada para configuraciones hidropónicas verticales específicas. La capacidad de carga y velocidades de operación están limitadas por estabilidad mecánica y precisión requerida. Requiere operación en interiores con iluminación controlada, superficie vertical nivelada, y no es resistente a condiciones de campo abierto.
 
-Limitaciones Ambientales:
-\begin{itemize}[label=\textbullet]
-    \item Diseñado para operación en interiores con iluminación artificial
-    \item No resistente a condiciones de campo abierto (lluvia, viento, temperaturas extremas)
-    \item Requiere superficie vertical nivelada y estable para montaje
-\end{itemize}
+\textbf{Sistema de Visión e IA:} Requiere condiciones de iluminación controladas para precisión de detección. La clasificación está limitada a lechugas, requiriendo reentrenamiento para generalización a otros cultivos. Depende de marcadores físicos para calibración y navegación inicial.
+
+\textbf{Sistema de Control:} Utiliza finales de carrera para referenciado de ejes. La comunicación serial entre niveles jerárquicos introduce latencia inherente al protocolo empleado.
 
 

@@ -1,133 +1,33 @@
-El desarrollo y validación experimental del prototipo de cosechador automático permitió evaluar el cumplimiento de los objetivos planteados e identificar aspectos críticos para la implementación del sistema a escala real. A continuación se presenta un análisis detallado de los resultados obtenidos, comparándolos con los objetivos específicos del proyecto y estableciendo la transferibilidad de cada subsistema hacia la aplicación industrial.
+\subsection{Cumplimiento de objetivos y transferibilidad}
 
-\subsection{Cumplimiento de objetivos específicos}
+La validación experimental del prototipo confirmó el cumplimiento de los objetivos planteados y permitió establecer la transferibilidad de cada subsistema hacia el sistema a escala real.
 
-\subsubsection{Sistema de inteligencia artificial y visión por computadora}
+\subsubsection{Sistema de visión artificial}
 
-El objetivo de implementar un sistema de visión artificial capaz de detectar y clasificar cultivos se cumplió satisfactoriamente. Los resultados experimentales demostraron:
+El sistema de visión cumplió su objetivo de detección y clasificación, alcanzando tasas superiores al 90\% en detección de elementos, 85\% en clasificación de madurez, y 82\% en agarres exitosos con integración de control. Los algoritmos desarrollados son directamente transferibles al sistema real sin modificaciones estructurales, requiriendo únicamente recalibración de parámetros de cámara y ajuste de relaciones píxel-mundo según la nueva geometría.
 
-\begin{itemize}
-    \item \textbf{Detección de elementos:} Tasas de detección superiores al 90\% para marcadores de referencia (cinta), tubos de cultivo y lechugas bajo condiciones de iluminación controladas
-    \item \textbf{Clasificación de madurez:} Precisión del 85\% en la distinción entre lechugas maduras e inmaduras, con mayor exactitud en casos extremos y menor precisión en estados intermedios de madurez
-    \item \textbf{Repetibilidad:} Consistencia del 88\% en 500 detecciones repetidas, validando la estabilidad algorítmica
-    \item \textbf{Posicionamiento coordinado:} Integración exitosa con el sistema de control, logrando agarres efectivos en el 82\% de los intentos
-\end{itemize}
+La limitación crítica identificada es la sensibilidad a condiciones de iluminación, que reduce tasas de detección ante variaciones significativas de intensidad o direccionalidad de luz.
 
-\paragraph{Transferibilidad al sistema real:}
+\subsubsection{Sistema de control coordinado}
 
-Los algoritmos de visión artificial e inteligencia artificial desarrollados son directamente adaptables al sistema a escala real sin modificaciones sustanciales en su estructura. La arquitectura de procesamiento implementada (detección de marcadores, segmentación de tubos, clasificación de cultivos) es independiente de las dimensiones físicas del sistema, requiriendo únicamente recalibración de parámetros intrínsecos de la cámara y ajuste de las relaciones píxel-mundo según la nueva geometría. El pipeline de procesamiento, las redes neuronales entrenadas y los algoritmos de toma de decisiones pueden ser replicados íntegramente.
+La arquitectura de control jerárquico alcanzó plenamente su objetivo, demostrando sincronización efectiva entre ejes, precisión del 1\% en posicionamiento a lazo abierto sin errores acumulativos, y respuesta inmediata ante señales de seguridad. El software de control (nivel regulatorio y supervisor) es transferible al sistema real, requiriendo únicamente actualización de parámetros: conversión pasos/mm, límites de carrera, perfiles de velocidad según masas reales, y timeouts ajustados a distancias mayores.
 
-\paragraph{Limitación crítica identificada:}
+\subsubsection{Arquitectura modular}
 
-La principal limitación del sistema de visión es su sensibilidad a las condiciones de iluminación. Las pruebas demostraron que variaciones significativas en la intensidad o direccionalidad de la luz reducen la tasa de detección. Para la implementación a escala real se recomienda:
-
-
-\subsubsection{Sistema de control de movimiento coordinado}
-
-El objetivo de desarrollar una arquitectura de control jerárquico para la gestión coordinada de los ejes horizontal y vertical se alcanzó plenamente. Las pruebas validaron:
-
-\begin{itemize}
-    \item \textbf{Control simultáneo de ejes:} Sincronización efectiva entre movimientos horizontal (dos motores acoplados) y vertical (tornillo de potencia), configurando un sistema cartesiano XZ funcional
-    \item \textbf{Precisión de posicionamiento:} Error promedio del 1\% tanto en eje horizontal como vertical en operación a lazo abierto, sin errores acumulativos en recorridos largos
-    \item \textbf{Arquitectura jerárquica:} Correcta implementación del nivel regulatorio (Arduino) para control de bajo nivel y nivel supervisor (Raspberry Pi) para gestión de secuencias y coordinación con visión artificial
-    \item \textbf{Seguridad operacional:} Respuesta inmediata ante activación de finales de carrera con protocolos de recuperación funcionales
-\end{itemize}
-
-\paragraph{Transferibilidad al sistema real:}
-
-El software de control desarrollado, tanto para el nivel regulatorio como para el nivel supervisor, es transferible al sistema a escala real. La lógica de control de motores paso a paso, los algoritmos de generación de trayectorias, la máquina de estados supervisora y los protocolos de comunicación UART son independientes de las dimensiones físicas del sistema. La adaptación requiere únicamente actualizar parámetros como:
-
-\begin{itemize}
-    \item Conversión pasos/mm según nuevas relaciones de transmisión
-    \item Límites de carrera y dimensiones del espacio de trabajo
-    \item Perfiles de velocidad y aceleración según masas e inercias del sistema real
-    \item Tiempos de espera (timeouts) ajustados a distancias mayores
-\end{itemize}
-
-El principio de control jerárquico con separación funcional entre niveles demostró ser robusto y escalable, cumpliendo plenamente con el objetivo de diseño modular.
-
-\subsubsection{Arquitectura modular y escalable}
-
-El diseño del prototipo con criterios de modularidad permitió validar la separación funcional entre subsistemas. Las pruebas confirmaron:
-
-\begin{itemize}
-    \item Independencia entre módulos mecánico, de control y de visión mediante interfaces bien definidas
-    \item Facilidad para modificar o reemplazar componentes sin afectar otros subsistemas
-    \item Capacidad de ajuste paramétrico sin reestructuración de software
-\end{itemize}
-
-La arquitectura demostró ser efectivamente escalable, proporcionando una base sólida para la extensión hacia sistemas de mayor envergadura.
-
-\subsubsection{Validación experimental del prototipo}
-
-El objetivo de construir y validar un prototipo físico funcional se cumplió satisfactoriamente. Las pruebas experimentales permitieron:
-
-\begin{itemize}
-    \item Verificar la efectividad de los algoritmos de visión en condiciones reales de operación
-    \item Evaluar el desempeño del sistema de control en términos de precisión, velocidad y respuesta ante perturbaciones
-    \item Comprobar la integración funcional entre diseño mecánico, actuación y software de control
-    \item Identificar limitaciones específicas y oportunidades de mejora documentadas
-    \item Demostrar la viabilidad técnica del concepto de cosecha automatizada en sistemas hidropónicos verticales
-\end{itemize}
+El diseño modular validó exitosamente la separación funcional entre subsistemas mediante interfaces bien definidas, facilitando modificaciones de componentes sin afectar otros módulos y permitiendo ajustes paramétricos sin reestructuración de software.
 
 \subsection{Limitaciones identificadas y consideraciones de diseño}
 
-El proceso de validación experimental permitió identificar aspectos críticos que requieren atención para la implementación a escala industrial:
+\subsubsection{Aspectos mecánicos}
 
-\subsubsection{Rigidez del robot serie}
+\textbf{Robot serie:} El material del brazo (PETG) presenta flexibilidad excesiva para velocidades elevadas, generando vibraciones residuales que afectan precisión final, tiempo de estabilización y velocidad segura de operación.
 
-Las pruebas de operación dinámica revelaron que el material del robot serie (petg) presenta flexibilidad excesiva para operación a velocidades elevadas. Las vibraciones residuales observadas tras movimientos rápidos afectan:
+\textbf{Oscilaciones estructurales:} Se observaron oscilaciones menores durante la activación del brazo, atribuidas al juego en perfiles utilizados y rigidez lateral insuficiente de la solución implementada. El análisis de elementos finitos indica que el principio estructural es válido para el sistema real, requiriendo únicamente escalamiento dimensional apropiado. La limitación se proyecta eliminable mediante perfiles de mayor rigidez lateral (fig. \ref{fig:barra_lateral}).
 
-\begin{itemize}
-    \item Precisión final de posicionamiento del efector
-    \item Tiempo de estabilización antes del agarre
-    \item Velocidad máxima segura de operación
-\end{itemize}
+\textbf{Fricción horizontal:} El sistema de desplazamiento horizontal (fig. \ref{fig:perfil_porton}, \ref{fig:carro_porton}) presentó fricción superior a la esperada, manifestándose en fuerza de arranque elevada y variaciones según posición del carro.
 
-\subsubsection{Oscilaciones estructurales del prototipo}
+\subsubsection{Validación estructural}
 
-Durante la activación del brazo se observaron pequeñas oscilaciones en el conjunto de la estructura. Este fenómeno está directamente relacionado con la configuración estructural elegida para el prototipo, ya que se utilizaron perfiles que contienen juego y la solución propuesta para disminuir las oscilaciones no cuenta con la rigidez lateral suficiente para eliminar completamente las mismas.
+A pesar de las limitaciones mencionadas, la estructura general del prototipo demostró rigidez suficiente para extrapolación al sistema real. Los soportes fabricados en PLA presentaron resistencia adecuada, el sistema de tres varillas proporcionó estabilidad sin rotaciones indeseadas, los dos motores sincronizados fueron efectivos, y no se observaron deformaciones permanentes ni fatiga de materiales.
 
-A pesar de estas oscilaciones menores, el sistema demostró capacidad operacional funcional. Para el sistema a escala real, se proyecta que esta limitación será eliminada completamente mediante el perfil que aporta rigidez lateral previamente mencionado (fig. \ref{fig:barra_lateral}).
-
-El análisis de elementos finitos realizado sobre el soporte superior del prototipo indica que el principio estructural es válido, requiriendo únicamente escalamiento dimensional apropiado para las cargas del sistema real.
-
-\subsubsection{Fricción en el sistema de movimiento horizontal}
-
-El sistema de desplazamiento horizontal implementado (perfil de portón y carro (fig. \ref{fig:perfil_porton}, \ref{fig:carro_porton}))presentó niveles de fricción superiores a los esperados. Esta fricción se manifiesta como:
-
-\begin{itemize}
-    \item Fuerza de arranque elevada que requiere torque inicial mayor
-    \item Variaciones en la resistencia al movimiento según posición del carro
-\end{itemize}
-
-\subsubsection{Estructura del prototipo: rigidez adecuada}
-
-A pesar de las limitaciones mencionadas, las pruebas confirmaron que la estructura general del prototipo presenta rigidez suficiente para extrapolarse al sistema real. Específicamente:
-
-\begin{itemize}
-    \item Los soportes superior, medio e inferior fabricados en PLA demostraron resistencia mecánica adecuada bajo cargas operacionales
-    \item El sistema de tres varillas paralelas (tornillo de potencia + dos guías lisas) proporcionó estabilidad y ausencia de rotaciones indeseadas
-    \item La configuración de dos motores sincronizados para el eje horizontal demostró ser efectiva para el control de sistemas simétricos
-    \item No se observaron deformaciones permanentes ni fatiga de materiales durante el período de pruebas
-\end{itemize}
-
-El concepto estructural validado en el prototipo sirve como base sólida para el diseño del sistema a escala real, requiriendo únicamente escalamiento proporcional de dimensiones y especificación de materiales según las cargas incrementadas.
-
-%\subsection{Síntesis: validación de objetivos}
-
-%El proyecto alcanzó exitosamente los objetivos planteados, demostrando la viabilidad técnica de la cosecha automatizada mediante integración de visión artificial, control jerárquico y mecatrónica. Los resultados específicos incluyen:
-
-%\begin{itemize}
-%    \item \textbf{Sistema de IA validado:} Detección precisa de cultivos (>90\%), clasificación efectiva de madurez (85\%) y posicionamiento coordinado funcional (82\% de agarres exitosos)
-
-%    \item \textbf{Control coordinado demostrado:} Arquitectura jerárquica implementada satisfactoriamente con control simultáneo de ejes, precisión del 1\% en posicionamiento y respuesta robusta ante eventos de seguridad
-
-%    \item \textbf{Escalabilidad confirmada:} Diseño modular con transferibilidad directa de software de IA y control hacia sistema real, requiriendo únicamente ajustes paramétricos
-
-%    \item \textbf{Prototipo funcional validado:} Ciclos completos de cosecha ejecutados exitosamente, identificación de limitaciones específicas y establecimiento de recomendaciones técnicas para implementación industrial
-%\end{itemize}
-
-Las limitaciones identificadas (rigidez del brazo, sensibilidad a iluminación, fricción del sistema horizontal, oscilaciones estructurales menores) son inherentes a la naturaleza de prototipo de validación y han sido caracterizadas con suficiente detalle para guiar el diseño del sistema a escala real. La arquitectura de control y los algoritmos de visión artificial desarrollados constituyen activos tecnológicos directamente transferibles, validando el enfoque de diseño modular y escalable propuesto en los objetivos del proyecto.
-
-El prototipo cumplió su función primordial de demostrar la viabilidad del concepto, validar tecnologías clave y proporcionar conocimiento técnico para el desarrollo de sistemas de agricultura automatizada en entornos hidropónicos verticales.
+El concepto estructural validado sirve como base sólida, requiriendo escalamiento proporcional y especificación de materiales según cargas incrementadas. Las limitaciones identificadas (rigidez del brazo, fricción horizontal, oscilaciones estructurales) son inherentes al prototipo de validación y han sido caracterizadas para guiar el diseño a escala real. La arquitectura de control y algoritmos de visión constituyen activos transferibles, validando el enfoque modular y escalable propuesto.

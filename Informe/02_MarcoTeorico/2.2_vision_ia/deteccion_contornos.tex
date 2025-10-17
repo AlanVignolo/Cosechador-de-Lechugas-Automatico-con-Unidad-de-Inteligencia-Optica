@@ -52,7 +52,7 @@ Este punto resulta fundamental para cálculos de desviación espacial en sistema
 
 Las imágenes binarias reales contienen múltiples contornos, muchos correspondientes a ruido o elementos irrelevantes. El filtrado elimina contornos no deseados según criterios del problema. El \textbf{filtrado por área} establece límites: $A_{min} \leq A_{contorno} \leq A_{max}$. Los umbrales se definen según el tamaño esperado de objetos; por ejemplo, $A_{min} = 0.01 \cdot A_{imagen}$ filtra ruido puntual mientras que $A_{max} = 0.6 \cdot A_{imagen}$ elimina regiones que abarcan casi toda la imagen.
 
-El \textbf{filtrado por posición} descarta contornos que tocan bordes de la imagen (generalmente incompletos) o que no contienen el punto central (bajo asunción de objeto centrado en campo de visión). El \textbf{filtrado por forma} emplea relación de aspecto $AR = w/h$ del bounding box para discriminar orientaciones: valores $AR > 2$ indican objetos horizontales, $AR < 0.5$ objetos verticales, y valores intermedios formas aproximadamente cuadradas.
+El filtrado por posición descarta contornos que tocan bordes de la imagen (generalmente incompletos) o que no contienen el punto central (bajo asunción de objeto centrado en campo de visión). El filtrado por forma emplea relación de aspecto $AR = w/h$ del bounding box para discriminar orientaciones: valores $AR > 2$ indican objetos horizontales, $AR < 0.5$ objetos verticales, y valores intermedios formas aproximadamente cuadradas.
 
 Cuando múltiples contornos cumplen filtros básicos, se implementa un \textbf{sistema de scoring} que pondera múltiples criterios para seleccionar el mejor candidato. Un score típico combina área normalizada, distancia del centroide al centro de imagen, y métricas de calidad de forma:
 
