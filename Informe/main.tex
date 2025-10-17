@@ -33,6 +33,22 @@
 \usepackage{comment}
 \usepackage{subcaption}
 \usepackage{hyperref}
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+\pdfminorversion=7
+
+% Permitir compilación aunque falten imágenes
+\makeatletter
+\def\Gin@extensions{.pdf,.png,.jpg,.jpeg}
+\let\Gin@setfile@orig\Gin@setfile
+\def\Gin@setfile#1#2#3{%
+  \IfFileExists{#3}{%
+    \Gin@setfile@orig{#1}{#2}{#3}%
+  }{%
+    \fbox{\parbox{0.8\textwidth}{\centering\textbf{Imagen no encontrada:} \\ \texttt{#3}}}%
+  }%
+}
+\makeatother
 
 \excludecomment{debug}
 
@@ -93,55 +109,56 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Introducción}
 
-\section{Contexto y Motivación}
+\section{Contexto y motivación}
 \input{01_Introduccion/contexto_motivacion}
-
-\section{Objetivos del Proyecto}
+\newpage
+\section{Objetivos del proyecto}
 \input{01_Introduccion/objetivos}
 
-\section{Alcance y Limitaciones}
+\section{Alcance y limitaciones}
 \input{01_Introduccion/alcance_limitaciones}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CAPÍTULO 2: MARCO TEÓRICO
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Marco Teórico}
+\chapter{Marco teórico}
 
-\section{Sistemas de Control Jerárquico}
+\section{Sistemas de control jerárquico}
 \input{02_MarcoTeorico/2.1_control_jerarquico/Sist_control_jerarquico}
 
-\section{Fundamentos de Visión Artificial e Inteligencia Artificial}
+\section{Fundamentos de visión artificial e inteligencia artificial}
 \input{02_MarcoTeorico/2.2_vision_ia/procesamiento_imagenes}
 \input{02_MarcoTeorico/2.2_vision_ia/deteccion_bordes}
 \input{02_MarcoTeorico/2.2_vision_ia/deteccion_contornos}
 \input{02_MarcoTeorico/2.2_vision_ia/analisis_morfologico}
 \input{02_MarcoTeorico/2.2_vision_ia/metricas_evaluacion}
 
-\section{Estructuras Cartesianas y Robots serie}
+\section{Estructuras cartesianas y robots serie}
 \input{02_MarcoTeorico/2.3_cinematica/robots_Cartesianos_y_serie.tex}
 
-\section{Sistemas de Transmisión Mecánica}
+\section{Sistemas de transmisión mecánica}
 \input{02_MarcoTeorico/2.4_transmision/transmision.tex}
 
-\section{Control de Motores Paso a Paso}
+\section{Control de motores paso a paso}
 \input{02_MarcoTeorico/2.5_motores/principio_funcionamiento}
 %\input{02_MarcoTeorico/2.5_motores/modos_operacion}
 %\input{02_MarcoTeorico/2.5_motores/drivers_electronica}
-
+\section{Microcontroladores y comunicación}
+\input{02_MarcoTeorico/2.6_Comunicacio_y_micros/com_y_micro}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CAPÍTULO 3: DESARROLLO DEL SISTEMA
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Desarrollo del Sistema}
+\chapter{Desarrollo del sistema}
 
-\section{Arquitectura General del Sistema}
-\input{03_Desarrollo/3.1_arquitectura_general/diagrama_bloques}
+\section{Arquitectura general del sistema}
+\input{03_Desarrollo/3.1_arquitectura_general/descr_gral}
 \input{03_Desarrollo/3.1_arquitectura_general/interaccion_niveles}
 \input{03_Desarrollo/3.1_arquitectura_general/flujo_informacion}
 \input{03_Desarrollo/3.1_arquitectura_general/maquina_estados_global}
 
-\section{Modelado y Diseño Mecánico}
+\section{Modelado y diseño mecánico}
 
-\subsection{Especificaciones de Diseño y Restricciones}
+\subsection{Especificaciones de diseño y restricciones}
 \input{03_Desarrollo/3.2_modelado_mecanico/especificaciones_diseno}
 
 %\subsection{Análisis Cinemático del Sistema}
@@ -151,29 +168,31 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 
 %\subsection{Diseño Estructural}
 %\input{03_Desarrollo/3.2_modelado_mecanico/calculos_resistencia}
-\subsection{Sistema de Movimiento Horizontal}
+\subsection{Sistema de movimiento horizontal}
 \input{03_Desarrollo/3.2_modelado_mecanico/Movimiento_Horizontal.tex}
 
 %\input{03_Desarrollo/3.2_modelado_mecanico/calculo_cargas_horizontal}
 
-\subsection{Sistema de Movimiento Vertical}
+\subsection{Sistema de movimiento vertical}
 \input{03_Desarrollo/3.2_modelado_mecanico/Movimiento_Vertical.tex}
 
 %\input{03_Desarrollo/3.2_modelado_mecanico/seleccion_guias}
 
-\subsection{Brazo Robótico}
+\subsection{Robot serie}
 \input{03_Desarrollo/3.2_modelado_mecanico/configuracion_brazo}
-%\input{03_Desarrollo/3.2_modelado_mecanico/cinematica_brazo}
+%\input{03_Desarrollo/3.2_modelado_mecanico/cinematicas.tex}
+\input{03_Desarrollo/3.2_modelado_mecanico/dinámica_brazo.tex}
 \input{03_Desarrollo/3.2_modelado_mecanico/seleccion_servos}
+\input{03_Desarrollo/3.2_modelado_mecanico/gripper_real.tex}
 
 \subsection{Modelado CAD}
 %\input{03_Desarrollo/3.2_modelado_mecanico/diseno_piezas_3d}
 \input{03_Desarrollo/3.2_modelado_mecanico/Modelado3D_real.tex}
 %\input{03_Desarrollo/3.2_modelado_mecanico/tolerancias_ajustes}
 
-\section{Sistema de Control de Bajo Nivel (Nivel Regulatorio)}
+\section{Sistema de Control de bajo nivel (nivel regulatorio)}
 
-\subsection{Arquitectura del Nivel Regulatorio}
+\subsection{Arquitectura del nivel regulatorio}
 \input{03_Desarrollo/3.3_nivel_regulatorio/arquitectura_regulatorio}
 
 \subsection{Hardware de Control - Arduino Mega 2560}
@@ -190,55 +209,55 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 % \input{03_Desarrollo/3.3_nivel_regulatorio/finales_carrera}
 % \input{03_Desarrollo/3.3_nivel_regulatorio/sistema_seguridad}
 
-\subsection{Control de Movimiento}
+\subsection{Control de movimiento}
 \input{03_Desarrollo/3.3_nivel_regulatorio/generacion_trayectorias}
 \input{03_Desarrollo/3.3_nivel_regulatorio/control_velocidad}
 \input{03_Desarrollo/3.3_nivel_regulatorio/conversion_pasos_mm}
 
-\subsection{Protocolo de Comunicación UART}
+\subsection{Protocolo de comunicación UART}
 \input{03_Desarrollo/3.3_nivel_regulatorio/estructura_comandos}
 \input{03_Desarrollo/3.3_nivel_regulatorio/manejo_errores}
 
-\section{Sistema de Supervisión y Alta Gestión (Nivel Supervisor)}
+\section{Sistema de supervisión y alta gestión (nivel supervisor)}
 
-\subsection{Arquitectura del Nivel Supervisor}
+\subsection{Arquitectura del nivel supervisor}
 \input{03_Desarrollo/3.4_nivel_supervisor/arquitectura_supervisor}
 
-\subsection{Hardware Supervisor - Raspberry Pi 5}
+\subsection{Hardware supervisor - Raspberry Pi 5}
 \input{03_Desarrollo/3.4_nivel_supervisor/justificacion_raspberry}
 
-\subsection{Máquina de Estados Supervisora}
+\subsection{Máquina de estados supervisora}
 \input{03_Desarrollo/3.4_nivel_supervisor/diagrama_estados}
 \input{03_Desarrollo/3.4_nivel_supervisor/transiciones_condiciones}
 \input{03_Desarrollo/3.4_nivel_supervisor/manejo_excepciones}
 
-\subsection{Coordinación con Nivel Regulatorio}
+\subsection{Coordinación con nivel regulatorio}
 \input{03_Desarrollo/3.4_nivel_supervisor/gestion_comandos}
 \input{03_Desarrollo/3.4_nivel_supervisor/sincronizacion_movimientos}
 \input{03_Desarrollo/3.4_nivel_supervisor/recuperacion_fallas}
 
-\section{Inteligencia Artificial y Visión por Computadora}
+\section{Inteligencia artificial y visión por computadora}
 
 \subsection{Arquitectura y Pipeline de Procesamiento}
 \input{03_Desarrollo/3.5_ia_vision/arquitectura_general}
 \input{03_Desarrollo/3.5_ia_vision/hardware_preprocesamiento}
 
-\subsection{Detector de Marcadores de Referencia}
+\subsection{Detector de marcadores de referencia}
 \input{03_Desarrollo/3.5_ia_vision/3.5.3_detector_marcadores/fundamento}
 \input{03_Desarrollo/3.5_ia_vision/3.5.3_detector_marcadores/pipeline_procesamiento}
 \input{03_Desarrollo/3.5_ia_vision/3.5.3_detector_marcadores/aplicaciones}
 \input{03_Desarrollo/3.5_ia_vision/3.5.3_detector_marcadores/calibracion_resultados}
 
-\subsection{Detector de Tubos de Cultivo}
+\subsection{Detector de tubos de cultivo}
 \input{03_Desarrollo/3.5_ia_vision/3.5.4_detector_tubos/fundamento}
 \input{03_Desarrollo/3.5_ia_vision/3.5.4_detector_tubos/pipeline_procesamiento}
 \input{03_Desarrollo/3.5_ia_vision/3.5.4_detector_tubos/aplicacion_resultados}
 
-\subsection{Clasificador de Cultivos}
+\subsection{Clasificador de cultivos}
 \input{03_Desarrollo/3.5_ia_vision/3.5.5_clasificador_cultivos/fundamento_pipeline}
 \input{03_Desarrollo/3.5_ia_vision/3.5.5_clasificador_cultivos/analisis_estadistico_resultados}
 
-\subsection{Mapeo y Optimización de Rutas}
+\subsection{Mapeo y optimización de rutas}
 \input{03_Desarrollo/3.5_ia_vision/mapeo_navegacion}
 \input{03_Desarrollo/3.5_ia_vision/optimizacion_trayectorias}
 
@@ -255,6 +274,7 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{04_Pruebas/4.1_estructura_y_mec/estr_y_mec.tex}
 \input{04_Pruebas/4.1_estructura_y_mec/Sistema_mov_horizontal.tex}
 \input{04_Pruebas/4.1_estructura_y_mec/Sistema_mov_vertical.tex}
+\input{04_Pruebas/4.1_estructura_y_mec/Robot_serie.tex}
 \input{04_Pruebas/4.1_estructura_y_mec/Modelado_3d.tex}
 %\input{04_Pruebas/Sistema_movi_vertical}
 %\input{03_Desarrollo/3.2_modelado_mecanico/Modelado_3d.tex}
@@ -263,30 +283,10 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 %\input{04_Pruebas/4.1_metodologia/diseno_experimental}
 %\input{04_Pruebas/4.1_metodologia/metricas_evaluacion}
 
-\section{Pruebas del Sistema Mecánico}
-\input{04_Pruebas/4.2_mecanico/precision_posicionamiento}
-\input{04_Pruebas/4.2_mecanico/repetibilidad}
-\input{04_Pruebas/4.2_mecanico/velocidades_maximas}
-\input{04_Pruebas/4.2_mecanico/vibraciones_estabilidad}
+\section{Pruebas}
+\input{04_Pruebas/pruebas.tex}
 
-\section{Pruebas del Sistema de Control}
-\input{04_Pruebas/4.3_control/respuesta_temporal}
-\input{04_Pruebas/4.3_control/manejo_errores}
-\input{04_Pruebas/4.3_control/finales_carrera}
-
-\section{Pruebas del Sistema de IA}
-\input{04_Pruebas/4.4_ia/precision_deteccion}
-\input{04_Pruebas/4.4_ia/tasa_clasificacion}
-\input{04_Pruebas/4.4_ia/tiempo_procesamiento}
-\input{04_Pruebas/4.4_ia/robustez_variaciones}
-\input{04_Pruebas/4.4_ia/validacion_mapeo}
-
-\section{Pruebas de Integración}
-\input{04_Pruebas/4.5_integracion/ciclo_completo}
-\input{04_Pruebas/4.5_integracion/eficiencia_sistema}
-\input{04_Pruebas/4.5_integracion/casos_extremos}
-
-\section{Análisis de Resultados}
+\section{Análisis de resultados}
 \input{04_Pruebas/4.6_analisis/comparacion_objetivos}
 \input{04_Pruebas/4.6_analisis/limitaciones}
 \input{04_Pruebas/4.6_analisis/mejoras_potenciales}
