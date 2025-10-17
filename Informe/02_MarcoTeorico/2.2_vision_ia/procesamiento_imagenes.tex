@@ -20,7 +20,7 @@ La operación de convolución se define matemáticamente como:
 
 donde $I$ es la imagen de entrada, $K$ es el kernel de tamaño $(2a+1) \times (2b+1)$, y el resultado $(I \ast K)(x,y)$ representa el valor procesado del píxel en la posición $(x,y)$. En términos simples, para cada píxel se calcula una suma ponderada de los valores de sus píxeles vecinos, donde los pesos están dados por el kernel.
 
-\paragraph{\underline{Elemento estructurante:}} En operaciones morfológicas sobre imágenes binarias (blanco-negro), el kernel se denomina elemento estructurante y define la forma y tamaño del vecindario considerado. Por ejemplo:
+\paragraph{\underline{Elemento estructurante:}}En operaciones morfológicas sobre imágenes binarias (blanco-negro), el kernel se denomina elemento estructurante y define la forma y tamaño del vecindario considerado. Por ejemplo:
 \begin{itemize}[label=$\bullet$]
 \item Cuadrado $3 \times 3$: afecta los 8 vecinos inmediatos del píxel central
 \item Cuadrado $5 \times 5$: afecta un vecindario más amplio (24 píxeles alrededor)
