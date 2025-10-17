@@ -1,2 +1,42 @@
-% Objetivos
+% Objetivos del Proyecto
 
+El presente proyecto tiene como propósito general el diseño, desarrollo e implementación de un sistema cosechador automático de lechugas para cultivos hidropónicos verticales, integrando tecnologías de visión artificial, control de movimiento y arquitecturas de control jerárquico. Para alcanzar este propósito, se establecen los siguientes objetivos específicos:
+
+\subsection*{Objetivo General}
+
+Desarrollar un prototipo funcional de robot cosechador automático con capacidad de detección por visión artificial y control coordinado de movimiento, validando la viabilidad técnica de la automatización en sistemas de cultivo hidropónico vertical.
+
+\subsection*{Objetivos Específicos}
+
+\subsubsection*{1. Sistema de Inteligencia Artificial y Visión por Computadora}
+
+Implementar un sistema de visión artificial capaz de:
+
+\begin{itemize}
+    \item Detectar de manera precisa y confiable la ubicación espacial de lechugas en el entorno de cultivo hidropónico vertical
+    \item Clasificar el estado de madurez de los cultivos para determinar su aptitud para cosecha
+    \item Identificar elementos de referencia (tubos de cultivo, marcadores) para la navegación y mapeo del espacio de trabajo
+\end{itemize}
+
+\subsubsection*{2. Sistema de Control de Movimiento Coordinado}
+
+Desarrollar una arquitectura de control que permita:
+
+\begin{itemize}
+    \item Gestionar coordinadamente el movimiento simultáneo de los ejes horizontal (X) y vertical (Z), configurando un sistema cartesiano de posicionamiento bidimensional
+    \item Integrar el control de bajo nivel (nivel regulatorio) en microcontrolador Arduino para la actuación directa sobre motores y sensores
+    \item Implementar el control de alto nivel (nivel supervisor) en Raspberry Pi para la toma de decisiones, gestión de secuencias operativas y coordinación con el sistema de visión artificial
+    \item Garantizar sincronización temporal entre movimientos, trayectorias suaves y respuesta adecuada ante señales de seguridad (finales de carrera)
+\end{itemize}
+
+\subsubsection*{3. Validación Experimental del Prototipo}
+
+Construir y validar un prototipo físico funcional que permita:
+
+\begin{itemize}
+    \item Verificar experimentalmente la efectividad de los algoritmos de detección y clasificación por visión artificial en condiciones reales de operación
+    \item Evaluar el desempeño del sistema de control propuesto en términos de precisión de posicionamiento y velocidad de operación 
+    \item Comprobar la integración funcional entre el diseño mecánico, el sistema de actuación y el software de control
+    \item Identificar limitaciones, puntos críticos y oportunidades de mejora para futuras iteraciones del diseño
+    \item Demostrar la viabilidad técnica y operativa del concepto de cosecha automatizada en sistemas hidropónicos verticales
+\end{itemize}

@@ -1,0 +1,113 @@
+
+\subsubsection{Cálculo de torque para la articulación 2 (codo)}
+
+\paragraph{Caso 1: Posición horizontal en reposo}
+
+Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
+
+La expresión de $\tau_2$ se reduce al término gravitacional:
+
+\begin{equation}
+\tau_{2,est} = gm_2l_2\cos(\theta_2) = 9.81 \cdot 0.425 \cdot 0.125 \cdot \cos(0°) = 0.521 \, \text{N·m}
+\end{equation}
+
+\paragraph{Caso 2: Aceleración máxima}
+
+Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 1.57$ rad/s$^2$
+
+\begin{multline}
+\tau_{2,din} = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(0) + gm_2l_2\cos(0) \\
+= (0.425 \cdot 0.125^2 + 1.95 \times 10^{-5}) \cdot 1.57 + 0.425 \cdot 0.16 \cdot 0.125 \cdot 1.57 \cdot 1 \\
++ 9.81 \cdot 0.425 \cdot 0.125 \cdot 1 \\
+= 0.0104 + 0.0133 + 0.521 = 0.545 \, \text{N·m}
+\end{multline}
+
+\paragraph{Caso 3: Efectos centrífugos}
+
+Configuración: $\theta_1 = 45°$, $\theta_2 = 45°$, $\dot{\theta}_1 = 0.785$ rad/s, $\dot{\theta}_2 = 0$ rad/s, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
+
+\begin{multline}
+\tau_{2,cent} = m_2L_1l_2\dot{\theta}_1^2\sin(\theta_2) + gm_2l_2\cos(\theta_2) \\
+= 0.425 \cdot 0.16 \cdot 0.125 \cdot 0.785^2 \cdot \sin(45°) + 9.81 \cdot 0.425 \cdot 0.125 \cdot \cos(45°) \\
+= 0.0029 + 0.368 = 0.371 \, \text{N·m}
+\end{multline}
+
+El torque máximo requerido para el codo es:
+
+\begin{equation}
+\tau_{2,max} = \max(0.521, 0.545, 0.371) = 0.545 \, \text{N·m} = 55.6 \, \text{kg·cm}
+\end{equation}
+
+Aplicando un factor de seguridad de 1.5:
+
+\begin{equation}
+\tau_{2,req} = 1.5 \cdot 0.545 = 0.818 \, \text{N·m} \approx 83.4 \, \text{kg·cm}
+\end{equation}
+
+\subsubsection{Cálculo de torque para la articulación 1 (hombro)}
+
+\paragraph{Caso 1: Posición horizontal en reposo}
+
+Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
+
+\begin{equation}
+\tau_{1,est} = g(m_1l_1 + m_2L_1)\cos(\theta_1)
+= 9.81(0.075 \cdot 0.16 + 0.425 \cdot 0.16) \cdot \cos(0°)
+= 0.785 \, \text{N·m}
+\end{equation}
+
+\paragraph{Caso 2: Aceleración máxima}
+
+Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 1.57$ rad/s$^2$
+
+\begin{multline}
+\tau_{1,din} = (m_1l_1^2 + m_2L_1^2 + I_1)\ddot{\theta}_1 + m_2L_1l_2\ddot{\theta}_2\cos(0) + g(m_1l_1 + m_2L_1)\cos(0) = 0.818 \, \text{N·m}
+\end{multline}
+
+\paragraph{Caso 3: Efectos centrífugos}
+
+Configuración: $\theta_1 = 0°$, $\theta_2 = 45°$, $\dot{\theta}_1 = 0$ rad/s, $\dot{\theta}_2 = 0.785$ rad/s, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
+
+\begin{multline}
+\tau_{1,cent} = - m_2L_1l_2\dot{\theta}_2^2\sin(\theta_2) + g(m_1l_1 + m_2L_1)\cos(\theta_1) = 0.782 \, \text{N·m}
+\end{multline}
+
+El torque máximo requerido para el hombro es:
+
+\begin{equation}
+\tau_{1,max} = \max(0.785, 0.818, 0.782) = 0.818 \, \text{N·m} 
+\end{equation}
+
+Aplicando un factor de seguridad de 1.5:
+
+\begin{equation}
+\tau_{1,req} = 1.5 \cdot 0.818 = 1.227 \, \text{N·m}
+\end{equation}
+
+%\subsubsection{Resultados y selección de servomotores para el prototipo}
+
+%La Tabla \ref{tab:resultados_torque_prototipo} resume los torques mínimos requeridos para cada articulación del prototipo, calculados mediante las ecuaciones de Euler-Lagrange.
+
+%\begin{table}[H]
+%\centering
+%\caption{Torques calculados para el prototipo por análisis dinámico}
+%\label{tab:resultados_torque_prototipo}
+%\begin{tabular}{lccc}
+%\hline
+%\textbf{Articulación} & \textbf{Torque Máximo} & \textbf{Con Factor} & \textbf{Requerido} \\
+% & \textbf{Calculado} & \textbf{de Seguridad 1.5} & \\
+% & \textbf{(N·m)} & \textbf{(N·m)} & \textbf{(kg·cm)} \\
+%\hline
+%Codo (Articulación 2) & 0.641 & 0.962 & 98.1 \\
+%Hombro (Articulación 1) & 0.941 & 1.412 & 144.0 \\
+%\hline
+%\end{tabular}
+%\end{table}
+
+En base a estos requerimientos obtenidos del análisis dinámico riguroso, se selecciona el servomotor \textbf{MG996R} con 1.08N$\cdot$m a 6V para el codo y el servomotor \textbf{DS3218} para el hombro, el mismo tiene un torque de 1.96 N$\cdot$m a 6v
+
+\subsection{Efector final tipo pinza}
+
+Las caracteristicas del efector son las mismas que las descriptas en la sección \ref{sec:efector_final}.\\
+
+Se selecciona el motor paso a paso cilíndrico \textbf{GM20BY} con reductor planetario integrado, el mismo que en la sección \ref{sec:motor_gripper}.

@@ -1,10 +1,12 @@
-Se cuenta con un brazo de dos grados de libertad controlables para el posicionamiento del efector final que es de tipo pinza.
+Se cuenta con un robot serie de dos grados de libertad controlables para el posicionamiento del efector final que es de tipo pinza.
 
-\subsubsection{Descripción del Sistema}
+\subsubsection{Descripción del sistema}
+\label{sec:desc_brazo}
 
-El brazo robótico consiste en una configuración de dos eslabones articulados mediante juntas rotacionales, con un efector final tipo pinza. Este sistema posee dos grados de libertad, definidos por los ángulos de rotación $\theta_1$ y $\theta_2$ de cada articulación.
+El robot serie consiste en una configuración de dos eslabones articulados mediante juntas rotacionales, con un efector final tipo pinza. Este sistema posee dos grados de libertad, definidos por los ángulos de rotación $\theta_1$ y $\theta_2$ de cada articulación.
 
-\subsubsection{Parámetros Geométricos}
+\subsubsection{Parámetros geométricos}
+\label{sec:Param_brazo}
 
 \begin{itemize}
     \item $L_1$: Longitud del primer eslabón
@@ -13,44 +15,62 @@ El brazo robótico consiste en una configuración de dos eslabones articulados m
     \item $\theta_2$: Ángulo de la segunda articulación (codo)
 \end{itemize}
 
-%\subsubsection{Cinemática Directa}
+\subsubsection{Cinemática Directa}
 
-%La cinemática directa establece la relación entre las coordenadas articulares $(\theta_1, \theta_2)$ y la posición del efector final $(x, y)$ en el plano.
+La cinemática directa establece la relación entre las coordenadas articulares $(\theta_1, \theta_2)$ y la posición del efector final $(x, y)$ en el plano.
 
-%La posición del efector final se calcula mediante:
+La posición del efector final se calcula mediante:
 
-%\begin{align}
-%    x &= L_1 \cdot \cos(\theta_1) + L_2 \cdot \cos(\theta_1 + \theta_2) \\
-%    y &= L_1 \cdot \sin(\theta_1) + L_2 \cdot \sin(\theta_1 + \theta_2)
-%\end{align}
+\begin{align}
+    x &= L_1 \cos(\theta_1) + L_2 \cos(\theta_1 + \theta_2) \label{eq:x_cin_dir}\\
+    y &= L_1 \sin(\theta_1) + L_2 \sin(\theta_1 + \theta_2) \label{eq:y_cin_dir}
+\end{align}
 
-%La orientación del efector final está dada por:
+La orientación del efector final está dada por:
 
-%\begin{equation}
-%    \phi = \theta_1 + \theta_2
-%\end{equation}
+\begin{equation}
+    \phi = \theta_1 + \theta_2
+\end{equation}
+Utilizando \ref{eq:x_cin_dir} y \ref{eq:y_cin_dir} se puede obtener la distancia a la que está el brazo a partir de ángulos que fueron obtenidos de forma experimental.
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+Caso & $\theta_1 (\deg)$ & $\theta_2 (\deg)$ & $x$ (mm) & $y$ (mm) & $d$ (mm) \\
+\hline
+1 - \text{Recoger lechuga} & $32$ & $-24$ & $259.5$ & $102.2$ & $278.9$ \\
+\hline
+2 - \text{Depositar lechuga} & $-32$ & $-34$ & $186.5$ & $-199.0$ & $272.7$ \\
+\hline
+3 - \text{Mover lechuga} & $90$ & $0$ & $0.0$ & $285.0$ & $285.0$ \\
+\hline
+4 - \text{Movimiento} & $-42$ & $-114$ & $4.7$ & $-157.9$ & $158.0$ \\
+\hline
+\end{tabular}
+\caption{Resultados cinemáticos con $L_1 = 160$ mm y $L_2 = 125$ mm}
+\end{table}
 
-%\subsubsection{Cinemática Inversa}
+\subsubsection{Cinemática Inversa}
 
-%La cinemática inversa determina los ángulos articulares necesarios para alcanzar una posición deseada $(x_d, y_d)$. Este problema presenta dos soluciones posibles (configuración de codo arriba y codo abajo).
+La cinemática inversa determina los ángulos articulares necesarios para alcanzar una posición deseada $(x_d, y_d)$. Este problema presenta dos soluciones posibles (configuración de codo arriba y codo abajo).
 
-%Primero se calcula el ángulo $\theta_2$:
+Primero se calcula el ángulo $\theta_2$:
 
-%\begin{equation}
-%    \cos(\theta_2) = \frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}
-%\end{equation}
+\begin{equation}
+    \cos(\theta_2) = \frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}
+\end{equation}
 
-%\begin{equation}
-%    \theta_2 = \pm \arccos\left(\frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}\right)
-%\end{equation}
+\begin{equation}
+    \theta_2 = \pm \arccos\left(\frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}\right)
+\end{equation}
 
-%Luego se determina $\theta_1$:
+Luego se determina $\theta_1$:
 
-%\begin{equation}
-%    \theta_1 = \arctan2(y_d, x_d) - \arctan2(L_2 \cdot \sin(\theta_2), L_1 + L_2 \cdot \cos(\theta_2))
-%\end{equation}
+\begin{equation}
+    \theta_1 = \arctan2(y_d, x_d) - \arctan2(L_2 \cdot \sin(\theta_2), L_1 + L_2 \cdot \cos(\theta_2))
+\end{equation}
 
-\subsubsection{Espacio de Trabajo}
+\subsubsection{Espacio de trabajo}
 
 El espacio de trabajo accesible para el efector final es un anillo circular con:
 
@@ -87,12 +107,6 @@ El espacio de trabajo accesible para el efector final es un anillo circular con:
    % J_{21} &= L_1 \cdot \cos(\theta_1) + L_2 \cdot \cos(\theta_1 + \theta_2) \\
     %J_{22} &= L_2 \cdot \cos(\theta_1 + \theta_2)
 %\end{align}
-
-\subsubsection{Efector final tipo pinza
-}
-
-El gripper se ubica en el extremo del segundo eslabón y posee un grado de libertad adicional (no considerado en los 2 GDL principales) para la apertura/cierre de las mandíbulas, controlado por el parámetro $d$ (distancia entre mandíbulas).
-
 \subsubsection{Singularidades}
 
 El sistema presenta singularidades cuando el determinante del Jacobiano es cero:

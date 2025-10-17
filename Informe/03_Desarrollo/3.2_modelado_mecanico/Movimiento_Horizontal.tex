@@ -31,21 +31,41 @@ Este valor es aceptable considerando que representa menos del 0.03\% de la longi
 Como complemento, se seleccionan dos carros lineales estándar de 100\,mm de ancho, cada uno equipado con 4 ruedas tipo DELRIN que se desplazan sobre el perfil V-Slot.
 \begin{figure}[H]
     \centering
-    \begin{subfigure}{0.4\textwidth}
+    \begin{subfigure}{0.35\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{img/vslot_40x80.png}
+        \includegraphics[width=0.7\textwidth]{img/vslot_40x80.png}
         \caption{\textit{Perfil v-slot.}}
         \label{fig:vslot_40x80}
     \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.4\textwidth}
+    \hspace{0.5cm}
+    \begin{subfigure}{0.35\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{img/carro_perfilvslot.png}
+        \includegraphics[width=0.7\textwidth]{img/carro_perfilvslot.png}
         \caption{\textit{Sistema de ruedas para deslizamiento sobre perfil v-slot.}}
         \label{fig:carro_perfilvslot}
     \end{subfigure}
     \caption{\textit{Sistema de deslizamiento con perfil v-slot.}}
 \end{figure}
+Además se agrega una varilla como la mostrada en la figura \ref{fig:barra_lateral} para contrarrestar la fuerza que genera el robot serie al moverse. Dicho esfuerzos pueden verse graficados en la fig. \ref{fig:esfuerzo_lateral}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.35\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/barra_lateral.png}
+        \caption{\textit{Barra lateral.}}
+        \label{fig:barra_lateral}
+    \end{subfigure}
+    \hspace{0.5cm}
+    \begin{subfigure}{0.35\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{img/sbr20uu.png}
+        \caption{\textit{Carro para deslizamiento sobre barra lateral.}}
+        \label{fig:sbr20uu}
+    \end{subfigure}
+    \caption{Sistema de rigidez horizontal.}
+\end{figure}
+
 
 \subsubsection{Sistema de transmisión por correa}
 El sistema utiliza correa dentada GT2 con poleas de igual diámetro en ambos extremos. La longitud de correa necesaria se calcula como:

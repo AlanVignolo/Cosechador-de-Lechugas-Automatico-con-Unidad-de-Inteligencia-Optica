@@ -1,50 +1,52 @@
-\subsection{Movimiento Horizontal}
+\subsection{Movimiento horizontal}
 
-\subsubsection{Parámetros del Sistema}
+\subsubsection{Parámetros del sistema}
 
 El sistema de movimiento horizontal utiliza una transmisión por correa dentada GT2 con las siguientes especificaciones:
 
 \begin{itemize}
-    \item \textbf{Carga total:} $m = 3.5$ kg
-    \item \textbf{Longitud de la correa:} $L = 2.84$ m (eq. \ref{eq:longitud_correa})
-    \item \textbf{Diámetro de poleas:} $D_p = 12$ mm y 20 dientes
-    \item \textbf{Radio de poleas:} $r = 6$ mm = $0.006$ m
-    \item \textbf{Ancho de la correa:} $b = 10$ mm
-    \item \textbf{Paso de la correa GT2:} $p = 2$ mm
+    \item Carga total: $m = 1.5$ kg
+    \item Longitud de la correa: $L = 2.84$ m (ec. \ref{eq:longitud_correa})
+    \item Diámetro de poleas: $D_p = 12$ mm y 20 dientes
+    \item Radio de poleas: $r = 6$ mm = $0.006$ m
+    \item Ancho de la correa: $b = 10$ mm
+    \item Paso de la correa GT2: $p = 2$ mm
+    \item desplazamiento lineal por revolución: $d_{rev} = 40 \frac{mm}{rev}$
 \end{itemize}
 
-\subsubsection{Desplazamiento Lineal por Revolución}
+\subsubsection{Cálculo de fuerzas actuantes}
 
-El desplazamiento lineal del carro por cada revolución completa del motor es:
+\paragraph{Fuerza de aceleración}
 
-\begin{equation}
-    d_{rev} = N_d \cdot p = 20 \cdot 2 = 40 \text{ mm/rev}
-\end{equation}
-
-\subsubsection{Cálculo de Fuerzas Actuantes}
-
-\paragraph{Fuerza de Aceleración}
-
-Considerando una aceleración deseada de $a = 0.5$ m/s$^2$ (valor típico para aplicaciones de posicionamiento preciso):
+Considerando una aceleración deseada de $a = 0.188$ m/s$^2$:
 
 \begin{equation}
-    F_a = m \cdot a = 3.5 \cdot 0.5 = 1.75 \text{ N}
+    F_a = m \cdot a = 0.32 \text{ N}
 \end{equation}
 
-\paragraph{Fuerza de Fricción}
+\paragraph{Fuerza de fricción}
 
-La fuerza de fricción se calcula con un coeficiente de fricción dinámico típico para carros con rodamientos lineales ($\mu = 0.02$):
+Se toma un coeficiente de fricción de 0.15 debido a que el sistema no es tan preciso y puede tener fricción de desplazamiento.
 
 \begin{equation}
-    F_f = \mu \cdot m \cdot g = 0.02 \cdot 3.5 \cdot 9.81 = 0.69 \text{ N}
+    F_f = \mu \cdot m \cdot g = 0.39 \text{ N}
 \end{equation}
 
-\paragraph{Fuerza Total Requerida}
+\paragraph{Resistencia interna de correa}
+Para esto, se toma un valor empírico, considerando el largo.
+\[F_{intcorrea} \approx 0.25N\]
+\paragraph{Otras pérdidas}
+
+\begin{equation}
+    F_{otras}= 0.1*(F_a+F_f)=0.07N
+\end{equation}
+
+\paragraph{Fuerza total requerida}
 
 La fuerza total que debe ejercer el motor es la suma de la fuerza de aceleración y la fuerza de fricción:
 
 \begin{equation}
-    F_{total} = F_a + F_f = 1.75 + 0.69 = 2.44 \text{ N}
+    F_{total} = F_a + F_f + F_{intcorrea} + F_{otras} = 1.05 \text{ N}
 \end{equation}
 
 \subsubsection{Torque Requerido en el Motor}
@@ -52,26 +54,20 @@ La fuerza total que debe ejercer el motor es la suma de la fuerza de aceleració
 El torque necesario en el eje del motor se calcula multiplicando la fuerza total por el radio de la polea:
 
 \begin{equation}
-    T_{req} = F_{total} \cdot r = 2.44 \cdot 0.006 = 0.01464 \text{ N·m} = 14.64 \text{ mN·m}
+    T_{req} = F_{total} \cdot r = 0.013\text{ N·m}
 \end{equation}
 
-Expresado en kg·cm (unidad común en especificaciones de motores):
+Para garantizar un funcionamiento confiable del sistema, se aplica un factor de seguridad de 2.5:
 
 \begin{equation}
-    T_{req} = \frac{0.01464}{0.0981} = 0.149 \text{ kg·cm} \approx 0.15 \text{ kg·cm}
+    T_{motor} = T_{req} \cdot FS = 0.013 \cdot 2.5
 \end{equation}
 
-Para garantizar un funcionamiento confiable del sistema, se aplica un factor de seguridad de 2.5 a 3:
+\subsubsection{Selección del motor}
 
-\begin{equation}
-    T_{motor} = T_{req} \cdot FS = 0.15 \cdot 2.5 = 0.375 \text{ kg·cm}
-\end{equation}
+Considerando el torque calculado con factor de seguridad, se selecciona el motor paso a paso  \textbf{Nema 17 medium} que posee  0.35Nm a 24V y 1.8A. 
 
-\subsubsection{Selección del Motor}
-
-Considerando el torque calculado con factor de seguridad, se selecciona el motor paso a paso Nema 17 medium que posee  0.45Nm a 24V y 1.8A. 
-
-\subsubsection{Resolución de Posicionamiento}
+\subsubsection{Resolución de posicionamiento}
 
 Con microstepping de 8 pasos (configuración típica con driver TB6600):
 
@@ -83,12 +79,12 @@ Con microstepping de 8 pasos (configuración típica con driver TB6600):
     \text{Resolución} = \frac{d_{rev}}{\text{Pasos totales/rev}} = \frac{40}{1600} = 0.025 \text{ mm/paso}
 \end{equation}
 
-\subsubsection{Velocidad Máxima del Sistema}
+\subsubsection{Velocidad máxima del sistema}
 
-Considerando una velocidad angular máxima del motor de 300 RPM (valor conservador para NEMA 17):
+Considerando una velocidad máxima de 0.25 \(\frac{m}{s}\) se tiene que la velocidad angular máxima del motor es:
 
 \begin{equation}
-    v_{max} = \frac{300 \cdot 40}{60000} = 0.2 \text{ m/s} = 200 \text{ mm/s}
+    n_{max} = \frac{250 \frac{mm}{s} \cdot 60 \text {s}}{40 \frac{mm}{rev}} = 375 \text{ rpm}
 \end{equation}
 Como se puede observar en la figura \ref{fig:Curva_din_nema17medium} para la velocidad máxima se cumple con el torque necesario.
 \begin{figure}[H]
