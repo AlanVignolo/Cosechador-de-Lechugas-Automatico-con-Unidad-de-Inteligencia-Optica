@@ -1,0 +1,98 @@
+En sistemas de control jerárquico, es común utilizar distintas plataformas de hardware según las capacidades de procesamiento requeridas en cada nivel. Los microcontroladores se especializan en tareas de control en tiempo real y manejo directo de periféricos, mientras que los microprocesadores ofrecen mayor capacidad de cómputo para algoritmos complejos y gestión de alto nivel.
+
+\subsubsection{Arduino Mega 2560}
+
+El Arduino Mega 2560 es una plataforma de desarrollo basada en el microcontrolador ATmega2560 de 8 bits. Sus características principales incluyen:
+
+\begin{itemize}
+    \item \textbf{Procesador:} ATmega2560 con arquitectura AVR a 16 MHz
+    \item \textbf{Memoria:} 256 KB de memoria Flash, 8 KB de SRAM y 4 KB de EEPROM
+    \item \textbf{Entradas/Salidas:} 54 pines digitales (15 con PWM) y 16 entradas analógicas
+    \item \textbf{Interfaces de comunicación:} 4 puertos UART, I²C y SPI
+    \item \textbf{Tensión de operación:} 5V
+\end{itemize}
+
+Esta plataforma es ideal para tareas de control en tiempo real, generación de señales PWM, lectura de sensores y control directo de actuadores. Su arquitectura de 8 bits y ejecución determinística la hacen especialmente adecuada para el nivel regulatorio de un sistema de control jerárquico.
+
+\subsubsection{Raspberry Pi 5}
+
+La Raspberry Pi 5 es un computador de placa única (SBC) basado en un procesador ARM de 64 bits. Sus características principales son:
+
+\begin{itemize}
+    \item \textbf{Procesador:} Broadcom BCM2712 Quad-core ARM Cortex-A76 a 2.4 GHz
+    \item \textbf{Memoria RAM:} 4 u 8 GB LPDDR4X
+    \item \textbf{GPU:} VideoCore VII con soporte para gráficos OpenGL ES 3.1
+    \item \textbf{Conectividad:} Gigabit Ethernet, Wi-Fi 802.11ac, Bluetooth 5.0
+    \item \textbf{Interfaces:} GPIO de 40 pines, UART, I²C, SPI, USB 3.0, HDMI
+    \item \textbf{Sistema operativo:} Linux (Raspberry Pi OS, Ubuntu, etc.)
+\end{itemize}
+
+La Raspberry Pi es ideal para tareas computacionalmente intensivas como procesamiento de imágenes, inteligencia artificial, gestión de bases de datos y supervisión de sistemas complejos. Su capacidad para ejecutar sistemas operativos completos permite el desarrollo de aplicaciones de alto nivel en lenguajes como Python o C++.
+
+\subsubsection{Protocolo de comunicación UART}
+
+UART (Universal Asynchronous Receiver-Transmitter) es un protocolo de comunicación serial asíncrono ampliamente utilizado para la interconexión entre microcontroladores y computadores. Sus características principales son:
+
+\begin{itemize}
+    \item \textbf{Comunicación punto a punto:} Conexión directa entre dos dispositivos mediante dos líneas: TX (transmisión) y RX (recepción)
+    \item \textbf{Asíncrono:} No requiere señal de reloj compartida; los dispositivos deben configurarse con la misma velocidad de transmisión (baud rate)
+    \item \textbf{Configuración común:} 8 bits de datos, 1 bit de parada, sin paridad (8N1)
+    \item \textbf{Velocidades típicas:} 9600, 19200, 38400, 57600, 115200 baudios
+    \item \textbf{Niveles lógicos:} 0V para nivel bajo y 3.3V o 5V para nivel alto (según el dispositivo)
+\end{itemize}
+
+\textbf{Estructura de una trama UART:}
+
+Una trama UART típica consiste en:
+\begin{enumerate}
+    \item \textbf{Bit de inicio (Start bit):} Marca el comienzo de la transmisión (nivel bajo)
+    \item \textbf{Bits de datos:} Generalmente 8 bits que contienen la información
+    \item \textbf{Bit de paridad (opcional):} Para detección de errores
+    \item \textbf{Bits de parada (Stop bits):} Uno o dos bits que marcan el fin de la trama (nivel alto)
+\end{enumerate}
+
+\subsubsection{Comunicación entre Raspberry Pi y Arduino Mega}
+
+La comunicación entre una Raspberry Pi y un Arduino Mega mediante UART permite implementar una arquitectura de control jerárquico donde:
+
+\begin{itemize}
+    \item La \textbf{Raspberry Pi} actúa como nivel supervisor, ejecutando algoritmos de alto nivel, procesamiento de imágenes, toma de decisiones y coordinación global del sistema
+    \item El \textbf{Arduino Mega} funciona como nivel regulatorio, gestionando el control en tiempo real de actuadores, lectura de sensores y ejecución de comandos de bajo nivel
+\end{itemize}
+
+\textbf{Configuración de la conexión:}
+
+\begin{enumerate}
+    \item \textbf{Conexión física:}
+    \begin{itemize}
+        \item TX de Raspberry Pi $\rightarrow$ RX del Arduino (GPIO14/TX)
+        \item RX de Raspberry Pi $\leftarrow$ TX del Arduino (GPIO15/RX)
+        \item GND común entre ambos dispositivos
+    \end{itemize}
+
+    \item \textbf{Consideración de niveles lógicos:}
+    \begin{itemize}
+        \item Raspberry Pi opera a 3.3V mientras Arduino Mega opera a 5V
+        \item Alternativamente, los pines RX del Arduino son tolerantes a 3.3V en la mayoría de los casos
+    \end{itemize}
+
+    \item \textbf{Configuración de parámetros:}
+    \begin{itemize}
+        \item Ambos dispositivos deben configurarse con la misma velocidad de transmisión (típicamente 115200 baudios)
+        \item Configuración estándar: 8 bits de datos, sin paridad, 1 bit de parada (8N1)
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Protocolo de comunicación:}
+
+Para una comunicación robusta, es recomendable implementar un protocolo de aplicación sobre UART que incluya:
+
+\begin{itemize}
+    \item \textbf{Delimitadores de mensaje:} Caracteres especiales que indican inicio y fin de mensaje.
+    \item \textbf{Estructura de comandos:} Formato definido para envío de instrucciones.
+    \item \textbf{Checksum o CRC:} Para verificación de integridad de datos.
+    \item \textbf{Confirmaciones (ACK/NACK):} Para asegurar recepción correcta de mensajes.
+    \item \textbf{Manejo de errores:} Reintentos y timeout en caso de fallas de comunicación.
+\end{itemize}
+
+Esta arquitectura de comunicación permite que la Raspberry Pi se enfoque en tareas complejas de alto nivel mientras que el Arduino garantiza el control de bajo nivel, comunicándose de forma eficiente mediante un canal UART confiable.

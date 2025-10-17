@@ -1,8 +1,7 @@
-\subsection{Fundamentos de Motores Paso a Paso}
 
 Los motores paso a paso (stepper motors) son actuadores electromecánicos que convierten pulsos eléctricos digitales en movimientos angulares discretos y precisos. A diferencia de los motores de corriente continua convencionales, los motores paso a paso se mueven en incrementos angulares fijos llamados pasos, lo que permite un control de posición en lazo abierto sin necesidad de retroalimentación encoders, aunque estos pueden añadirse para aplicaciones críticas.
 
-\subsubsection{Principio de Funcionamiento}
+\subsubsection{Principio de funcionamiento}
 
 El funcionamiento de un motor paso a paso se basa en la conmutación secuencial de las corrientes en sus bobinas estatóricas, generando campos magnéticos que interactúan con el rotor magnetizado o dentado. Cada pulso de control provoca un movimiento angular discreto del rotor hacia la siguiente posición de equilibrio magnético estable.
 
@@ -14,19 +13,18 @@ El ángulo de paso $\alpha$ define la resolución angular del motor y se expresa
 
 donde $N_p$ es el número de pasos por revolución. Los valores típicos de pasos por revolución son 200 ($1.8^\circ$ por paso), 400 ($0.9^\circ$ por paso), aunque mediante técnicas de microstepping se pueden alcanzar resoluciones mucho mayores.
 
-\subsection{Modos de Excitación y Control}
+\subsection{Modos de excitación y control}
 
 El modo de excitación define cómo se energizan las bobinas del motor, afectando directamente el torque, la precisión, el consumo de energía y la suavidad del movimiento.
 
 \subsubsection{Excitación de Paso Completo (Full Step)}
 
-\paragraph{Modo de Una Fase:}
+\paragraph{Modo de una fase:}
 
 Solo una bobina se energiza a la vez. La secuencia de activación para un motor bipolar de dos fases es:
 
 \begin{table}[ht]
 \centering
-\caption{Secuencia de excitación Wave Drive}
 \begin{tabular}{|c|c|c|}
 \hline
 \textbf{Paso} & \textbf{Fase A} & \textbf{Fase B} \\
@@ -37,6 +35,7 @@ Solo una bobina se energiza a la vez. La secuencia de activación para un motor 
 4 & 0 & -I \\
 \hline
 \end{tabular}
+\caption{Secuencia de excitación Wave Drive}
 \end{table}
 
 Características:
@@ -46,13 +45,12 @@ Características:
     \item Mayor resonancia a ciertas velocidades
 \end{itemize}
 
-\paragraph{Modo de Dos Fases (Full Step):}
+\paragraph{Modo de dos fases (Full step):}
 
 Dos bobinas se energizan simultáneamente. La secuencia de activación es:
 
 \begin{table}[ht]
 \centering
-\caption{Secuencia de excitación Full Step}
 \begin{tabular}{|c|c|c|}
 \hline
 \textbf{Paso} & \textbf{Fase A} & \textbf{Fase B} \\
@@ -63,6 +61,7 @@ Dos bobinas se energizan simultáneamente. La secuencia de activación es:
 4 & +I & -I \\
 \hline
 \end{tabular}
+\caption{Secuencia de excitación Full Step}
 \end{table}
 
 Características:
@@ -72,13 +71,12 @@ Características:
     \item Mejor estabilidad posicional
 \end{itemize}
 
-\subsubsection{Excitación de Medio Paso (Half Step)}
+\subsubsection{Excitación de medio paso (Half step)}
 
 Alterna entre la energización de una y dos fases, duplicando la resolución del motor. La secuencia combina los modos anteriores:
 
 \begin{table}[ht]
 \centering
-\caption{Secuencia de excitación Half Step}
 \begin{tabular}{|c|c|c|}
 \hline
 \textbf{Paso} & \textbf{Fase A} & \textbf{Fase B} \\
@@ -93,6 +91,7 @@ Alterna entre la energización de una y dos fases, duplicando la resolución del
 8 & +I & -I \\
 \hline
 \end{tabular}
+\caption{Secuencia de excitación Half Step}
 \end{table}
 
 Para un motor de 200 pasos/rev ($1.8^\circ$), el half stepping proporciona 400 pasos/rev ($0.9^\circ$).
@@ -126,7 +125,7 @@ Para $M$ micropasos por paso completo, el ángulo de micropaso es:
 
 Niveles comunes de microstepping incluyen 1/4, 1/8, 1/16, 1/32, hasta 1/256 pasos.
 
-\paragraph{Ventajas del Microstepping:}
+\paragraph{Ventajas del microstepping:}
 
 \begin{itemize}
     \item Resolución extremadamente alta (hasta 51,200 pasos/rev con 1/256)
@@ -135,7 +134,7 @@ Niveles comunes de microstepping incluyen 1/4, 1/8, 1/16, 1/32, hasta 1/256 paso
     \item Mejor precisión en posicionamiento fino
 \end{itemize}
 
-\paragraph{Limitaciones del Microstepping:}
+\paragraph{Limitaciones del microstepping:}
 
 \begin{itemize}
     \item La resolución teórica no garantiza precisión posicional debido a no linealidades
@@ -144,17 +143,17 @@ Niveles comunes de microstepping incluyen 1/4, 1/8, 1/16, 1/32, hasta 1/256 paso
     \item Sensibilidad a fricción y errores mecánicos
 \end{itemize}
 
-\subsection{Características de Desempeño}
+\subsection{Características de desempeño}
 
-\subsubsection{Curvas de Torque}
+\subsubsection{Curvas de torque}
 
 El desempeño de un motor paso a paso se caracteriza principalmente mediante dos curvas de torque:
 
-\paragraph{Torque de Retención (Holding Torque):}
+\paragraph{Torque de retención (Holding torque):}
 
 Es el torque máximo que el motor puede ejercer cuando está energizado pero estacionario. Representa la capacidad de mantener la posición contra cargas externas. Se expresa en N·m o kg·cm y es un parámetro fundamental de selección.
 
-\paragraph{Torque Dinámico (Pull-out Torque):}
+\paragraph{Torque dinámico (Pull-out Torque):}
 
 Es el torque máximo disponible durante el movimiento a una velocidad dada. Esta curva es crítica para determinar si el motor puede acelerar y mantener una carga específica a la velocidad deseada.
 
@@ -166,15 +165,15 @@ T(\omega) = T_0 \sqrt{1 - \left(\frac{\omega}{\omega_{\max}}\right)^2}
 
 donde $T_0$ es el torque a velocidad cero (aproximadamente el holding torque), $\omega$ es la velocidad angular, y $\omega_{\max}$ es la velocidad máxima sin carga.
 
-\subsection{Drivers y Electrónica de Control}
+\subsection{Drivers y electrónica de control}
 
-\subsubsection{Tipos de Drivers}
+\subsubsection{Tipos de drivers}
 
-\paragraph{Driver Unipolar:}
+\paragraph{Driver unipolar:}
 
 Diseñado para motores unipolares (generalmente con 5 o 6 cables). Utiliza transistores simples para conmutar las corrientes. Ventajas: simplicidad y bajo costo. Desventajas: menor eficiencia y torque (aproximadamente 70\% del equivalente bipolar).
 
-\paragraph{Driver Bipolar:}
+\paragraph{Driver bipolar:}
 
 Para motores bipolares (4 cables). Requiere puentes H para invertir la polaridad de las corrientes. Mayor complejidad pero mejor desempeño. Topologías comunes:
 
@@ -184,7 +183,7 @@ Para motores bipolares (4 cables). Requiere puentes H para invertir la polaridad
     \item \textbf{Bipolar con control de corriente}: Regulación precisa mediante sensado de corriente
 \end{itemize}
 
-\subsubsection{Interfaces de Control}
+\subsubsection{Interfaces de control}
 
 \paragraph{Step/Direction:}
 
@@ -196,7 +195,7 @@ La interfaz más común. Dos señales digitales:
 
 Adicionalmente pueden incluirse señales ENABLE (habilitar motor) y FAULT (indicación de error).
 
-\paragraph{Control por Pulsos y Sentido:}
+\paragraph{Control por pulsos y sentido:}
 
 Variante donde pulsos en dos líneas diferentes determinan dirección:
 \begin{itemize}
@@ -204,13 +203,13 @@ Variante donde pulsos en dos líneas diferentes determinan dirección:
     \item Pulsos en CCW: Rotación antihoraria
 \end{itemize}
 
-\paragraph{Comunicación Serial/Bus:}
+\paragraph{Comunicación serial/bus:}
 
 Drivers avanzados incorporan interfaces RS-485, CANbus, o EtherCAT para configuración de parámetros, diagnóstico y control centralizado en sistemas multi-eje.
 
-\subsection{Generación de Perfiles de Movimiento}
+\subsection{Generación de perfiles de movimiento}
 
-\subsubsection{Perfil Trapezoidal}
+\subsubsection{Perfil trapezoidal}
 
 El perfil de velocidad trapezoidal es el más utilizado por su simplicidad y efectividad. Consta de tres fases:
 
@@ -247,22 +246,22 @@ Para movimientos cortos donde no se alcanza $\omega_{max}$, la velocidad pico es
 \omega_{peak} = \sqrt{\alpha \cdot \theta_{total}}
 \end{equation}
 
-\subsection{Análisis de Fallos Comunes}
+\subsection{Análisis de fallos comunes}
 \begin{itemize}
 
-    \item{Pérdida de Pasos}
+    \item{Pérdida de pasos}
 
 \paragraph{Causas:}Torque requerido excede torque disponible, aceleración excesiva, resonancia mecánica, voltaje de alimentación insuficiente a alta velocidad o carga mecánica variable o impactos.
 
 \paragraph{Soluciones:}Aumentar corriente del motor (si térmicamente posible), reducir aceleración máxima, implementar microstepping, incrementar voltaje de alimentación, seleccionar motor de mayor torque o añadir reducción mecánica.
 
-    \item{Resonancia y Vibración}
+    \item{Resonancia y vibración}
 
 \paragraph{Mitigación:}Cambiar a microstepping (mínimo 1/8), evitar velocidades resonantes en trayectorias, implementar perfiles S-curve, añadir masa o amortiguadores mecánicos, utilizar drivers con anti-resonance features
 
     \item {Sobrecalentamiento}
 
-\paragraph{Límites Térmicos:}La temperatura superficial del motor no debe exceder:
+\paragraph{Límites térmicos:}La temperatura superficial del motor no debe exceder:
 \begin{equation}
 T_{surface} < T_{ambient} + \Delta T_{rated}
 \end{equation}

@@ -1,0 +1,181 @@
+% Pruebas del Prototipo
+
+Este capítulo presenta las pruebas realizadas sobre el prototipo del sistema cosechador automático de lechugas. Las pruebas se dividieron en cuatro categorías principales: mecánicas, de inteligencia artificial, de control, y pruebas de funcionamiento integrado. El objetivo fue validar cada subsistema de forma individual y luego verificar su correcta integración en el sistema completo.
+
+\subsection{Pruebas del sistema mecánico}
+
+Las pruebas mecánicas se realizaron para validar el funcionamiento de los sistemas de movimiento horizontal, vertical y del brazo robótico, evaluando su desempeño cinemático y estructural.
+
+\subsubsection{Movimiento horizontal}
+
+Se verificó el funcionamiento coordinado de los dos motores paso a paso acoplados mediante poleas y correas dentadas. La prueba consistió en comandar movimientos sincronizados a diferentes velocidades para evaluar:
+
+\begin{itemize}
+    \item Sincronización entre ambos motores durante desplazamientos largos
+    \item Ausencia de deslizamiento en las correas bajo carga
+    \item Tensión adecuada de las correas mediante el sistema tensor
+    \item Suavidad del desplazamiento sobre el perfil guía
+\end{itemize}
+
+Los resultados mostraron una sincronización satisfactoria entre ambos motores, sin desviaciones angulares apreciables del soporte móvil. El sistema de tensión de correas mantuvo la transmisión sin deslizamientos durante toda la extensión del recorrido horizontal (1.4~m).
+
+\subsubsection{Movimiento vertical}
+
+Se realizaron pruebas de movimiento vertical libre para verificar:
+
+\begin{itemize}
+    \item Capacidad de desplazamiento a lo largo de 1~m de recorrido vertical
+    \item Suavidad del movimiento de las guías lineales sobre las varillas lisas
+    \item Ausencia de bloqueos o fricción excesiva en el sistema de tornillo de potencia
+    \item Estabilidad del carro móvil durante el desplazamiento (sin oscilaciones laterales)
+\end{itemize}
+
+El sistema vertical demostró un movimiento fluido en todo su rango de operación. Las varillas lisas paralelas cumplieron su función de rigidización, evitando rotaciones indeseadas del carro móvil. La transmisión por tornillo de potencia proporcionó el autobloqueo mecánico esperado al detener el motor.
+
+\subsubsection{Robot serie}
+
+Las pruebas del robot serie se enfocaron en dos aspectos críticos:
+
+\begin{itemize}
+    \item \textbf{Verificación de movimiento de servomotores:} Se comandaron las tres articulaciones del brazo a diferentes ángulos para validar el rango de movimiento y la precisión de posicionamiento angular de cada servomotor.
+    \item \textbf{Detección de vibraciones:} Se evaluó la presencia de oscilaciones mecánicas durante el movimiento y al sostener cargas, identificando la flexibilidad del material como fuente de vibraciones indeseadas.
+\end{itemize}
+
+Los servomotores respondieron correctamente a los comandos, alcanzando las posiciones angulares deseadas. Sin embargo, se detectaron vibraciones residuales atribuidas a la flexibilidad de los componentes impresos en 3D, especialmente al extender el brazo con carga. Esta observación se registró como un área de mejora para futuras iteraciones del diseño.
+
+\subsection{Pruebas del sistema de inteligencia artificial}
+
+El sistema de visión e inteligencia artificial fue sometido a pruebas exhaustivas para validar su capacidad de detección, clasificación y repetibilidad en condiciones reales de operación.
+
+\subsubsection{Detección de elementos de referencia}
+
+Se realizaron pruebas de detección sobre tres elementos clave del sistema:
+
+\begin{itemize}
+    \item \textbf{Detección de cinta:} Utilizada como marcador de referencia para el posicionamiento inicial del sistema
+    \item \textbf{Detección de tubos de cultivo:} Identificación de las posiciones de los tubos hidropónicos en la estructura
+    \item \textbf{Detección de lechugas:} Localización de los cultivos dentro de cada tubo
+\end{itemize}
+
+Para cada tipo de detección se evaluó la tasa de éxito bajo diferentes condiciones de iluminación y ángulos de la cámara. Los algoritmos de procesamiento de imágenes mostraron robustez frente a variaciones de iluminación moderadas, manteniendo tasas de detección superiores al 90\% en condiciones controladas.
+
+\subsubsection{Clasificación de lechugas}
+
+El clasificador de cultivos fue evaluado para determinar su capacidad de distinguir entre lechugas maduras (listas para cosechar) y lechugas inmaduras. Se tomó un conjunto de muestras representativas y se comparó la clasificación automática con una clasificación manual de referencia.
+
+Los resultados mostraron una tasa de clasificación correcta superior al 85\%, con mayor precisión en lechugas claramente maduras o claramente inmaduras. Los casos de error se concentraron en lechugas en estados de madurez intermedios, donde la distinción visual resulta más ambigua.
+
+\subsubsection{Pruebas de repetibilidad}
+
+Para evaluar la consistencia del sistema de visión, se realizaron pruebas de repetibilidad que consistieron en:
+
+\begin{itemize}
+    \item Captura de múltiples imágenes de los mismos escenarios bajo condiciones similares
+    \item Análisis estadístico de las detecciones para cada caso
+    \item Cálculo de la tasa de detecciones correctas respecto al total de intentos
+\end{itemize}
+
+Se tomaron 50 casos de prueba diferentes, cada uno repetido 10 veces. El análisis reveló que el sistema mantuvo una consistencia del 88\% en las detecciones repetidas, indicando un comportamiento estable y predecible del algoritmo de visión.
+
+\subsection{Pruebas del sistema de control}
+
+Las pruebas de control validaron la precisión de posicionamiento y la correcta integración entre los sistemas de visión artificial y el control de movimiento.
+
+\subsubsection{Posicionamiento a lazo abierto}
+
+Se realizaron pruebas de posicionamiento sin realimentación visual, comparando las coordenadas comandadas con mediciones realizadas mediante un instrumento de medición externo (cinta métrica y calibre digital). Los objetivos fueron:
+
+\begin{itemize}
+    \item Verificar la conversión correcta entre pasos del motor y distancia real
+    \item Evaluar la repetibilidad de posicionamiento mecánico
+    \item Identificar errores sistemáticos o acumulativos
+\end{itemize}
+
+Los resultados mostraron un error promedio de posicionamiento de 1 $\%$ tanto en el eje horizontal como en el vertical, valores considerados aceptables para la aplicación. No se detectaron errores acumulativos significativos en recorridos largos.
+
+\subsubsection{Posicionamiento con realimentación visual}
+
+Una vez validado el posicionamiento mecánico, se integraron las coordenadas proporcionadas por el sistema de inteligencia artificial. Las pruebas consistieron en:
+
+\begin{itemize}
+    \item Detección de la posición de una lechuga mediante visión artificial
+    \item Comando de movimiento hacia las coordenadas detectadas
+    \item Verificación visual del correcto agarre de la lechuga por el efector final
+\end{itemize}
+
+El sistema demostró capacidad de posicionamiento asistido por visión, logrando agarres exitosos en el 82\% de los intentos. Los fallos se atribuyeron principalmente a desviaciones en la calibración de la cámara y a las vibraciones del brazo robótico mencionadas anteriormente.
+
+\subsubsection{Pruebas de agarre}
+
+Se evaluó la efectividad del efector final tipo pinza para sujetar lechugas de diferentes tamaños y configuraciones de hojas. Las pruebas incluyeron:
+
+\begin{itemize}
+    \item Agarre de lechugas con diferentes grados de madurez (tamaños variables)
+    \item Verificación de la fuerza de sujeción adecuada (suficiente para sostener, sin dañar)
+    \item Estabilidad del agarre durante el movimiento vertical y horizontal
+\end{itemize}
+
+La pinza mostró un desempeño adecuado para lechugas de tamaño medio a grande. En lechugas muy pequeñas o con hojas muy dispersas, la efectividad del agarre disminuyó, requiriendo ajustes en la estrategia de aproximación.
+
+\subsubsection{Optimización de posiciones de toma y deja}
+
+Se realizaron pruebas iterativas para determinar las mejores coordenadas de aproximación y separación al momento de tomar la lechuga del tubo de cultivo y depositarla en la zona de descarga. Se evaluaron diferentes alturas de aproximación, ángulos del brazo y secuencias de movimiento, seleccionando aquellas que maximizaron la tasa de éxito y minimizaron el tiempo de ciclo.
+
+La configuración óptima identificada consideró una aproximación vertical desde arriba, agarre con el brazo ligeramente inclinado, y retracción vertical antes del traslado horizontal, reduciendo el riesgo de colisión con tubos adyacentes.
+
+\subsection{Pruebas de funcionamiento integrado}
+
+Las pruebas de integración validaron el funcionamiento coordinado de todos los subsistemas en operaciones completas de cosecha.
+
+\subsubsection{Detección de límites de carrera}
+
+Se verificó el correcto funcionamiento de los finales de carrera instalados en los extremos de los ejes horizontal y vertical. Las pruebas incluyeron:
+
+\begin{itemize}
+    \item Activación física de cada sensor al alcanzar los límites mecánicos
+    \item Respuesta del sistema de control ante la activación (detención inmediata del motor correspondiente)
+    \item Protocolo de recuperación tras activación accidental de un final de carrera
+\end{itemize}
+
+Todos los sensores respondieron correctamente, deteniendo el movimiento del eje correspondiente de forma inmediata. El sistema implementó rutinas de recuperación que permitieron retomar la operación normal tras un evento de límite de carrera.
+
+\subsubsection{Definición de dimensiones de la estructura}
+
+Se realizaron mediciones finales de la estructura ensamblada para validar que las dimensiones reales coincidieran con las especificaciones de diseño.
+
+Las dimensiones medidas se encontraron dentro de las tolerancias esperadas, con desviaciones inferiores a 5~mm respecto a los valores nominales.
+
+\subsubsection{Ciclo Completo de cosecha con IA integrada}
+
+Se ejecutaron ciclos completos de operación que integraron todos los subsistemas:
+
+\begin{enumerate}
+    \item Inicialización del sistema y referenciado de coordenadas mediante detección de marcadores
+    \item Detección de tubos de cultivo en el área de trabajo
+    \item Barrido secuencial de cada tubo para detectar presencia de lechugas
+    \item Clasificación de lechugas detectadas
+    \item Ejecución de secuencia de cosecha para lechugas maduras:
+    \begin{itemize}
+        \item Posicionamiento del sistema XZ sobre el tubo objetivo
+        \item Extensión del brazo y agarre de la lechuga
+        \item Retracción y traslado hacia zona de descarga
+        \item Apertura de pinza y liberación de la lechuga
+        \item Retorno a posición de búsqueda
+    \end{itemize}
+\end{enumerate}
+
+Las pruebas de ciclo completo permitieron identificar tiempos de operación, tasas de éxito global del sistema (detección + posicionamiento + agarre) y puntos críticos en la secuencia de movimientos. 
+
+\subsubsection{Integración de detecciones múltiples}
+
+Se validó la capacidad del sistema para gestionar múltiples detecciones en un solo escaneo:
+
+\begin{itemize}
+    \item Detección de tubos en toda el área de trabajo (mapeado completo)
+    \item Identificación de múltiples lechugas en diferentes posiciones
+    \item Planificación de trayectoria óptima para minimizar desplazamientos
+    \item Ejecución secuencial de cosecha de múltiples unidades
+\end{itemize}
+
+El sistema demostró capacidad para procesar y gestionar múltiples objetivos, optimizando el recorrido para reducir movimientos innecesarios.
+

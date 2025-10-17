@@ -1,0 +1,39 @@
+\subsection{Cinemática en el espacio articular}
+
+En esta sección se aborda el análisis cinemático de un manipulador robótico serie de dos grados de libertad operando exclusivamente en el espacio articular. Este enfoque permite un control directo sobre las variables articulares del sistema, evitando la necesidad de resolver transformaciones al espacio cartesiano.
+
+\subsubsection{Definición del espacio de configuraciones}
+
+El estado del manipulador queda completamente determinado por el vector de coordenadas articulares:
+
+\begin{equation}
+\mathbf{q} = \begin{bmatrix} \theta_1 \\ \theta_2 \end{bmatrix}
+\end{equation}
+
+donde $\theta_1$ y $\theta_2$ representan los ángulos de las articulaciones 1 y 2 respectivamente, medidos en sus sistemas de referencia locales.
+
+El procedimiento implementado para el control cinemático en espacio articular se desarrolla según los siguientes pasos:
+
+\begin{enumerate}
+    \item \textbf{Definición de consigna}: Se especifica el vector de configuración deseado $\mathbf{q}_d = [\theta_{1d}, \theta_{2d}]^T$, estableciendo directamente los valores angulares objetivo para cada articulación.
+    
+    \item \textbf{Envío de comandos}: Los valores angulares se transmiten como señales de control a los actuadores correspondientes de cada eslabón.
+    
+    \item \textbf{Verificación de posición}: Se evalúa si la configuración alcanzada corresponde a la pose deseada del efector final, mediante observación directa o retroalimentación sensorial.
+\end{enumerate}
+
+La implementación del control cinemático en el espacio articular presenta las siguientes ventajas operativas:
+
+\begin{itemize}
+    \item \textbf{Simplicidad computacional}: Se elimina la necesidad de resolver el problema de cinemática inversa, el cual puede presentar múltiples soluciones o complejidad analítica considerable.
+    
+    \item \textbf{Control directo}: Los comandos se envían directamente a los actuadores sin transformaciones intermedias, reduciendo la latencia del sistema.
+    
+    \item \textbf{Evitación de singularidades}: Al operar en el espacio de configuraciones, se evitan las singularidades cinemáticas inherentes al espacio cartesiano.
+    
+    \item \textbf{Predictibilidad}: El comportamiento del sistema es determinista y predecible para cualquier configuración dentro del espacio de trabajo articular.
+\end{itemize}
+
+\subsection{Limitaciones}
+
+Si bien el enfoque presenta ventajas significativas, es importante señalar que la planificación de trayectorias en el espacio cartesiano requiere de la transformación mediante la cinemática directa para verificar que las configuraciones articulares seleccionadas efectivamente posicionan el efector final en las coordenadas espaciales deseadas.

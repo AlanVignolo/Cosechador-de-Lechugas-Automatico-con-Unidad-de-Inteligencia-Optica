@@ -1,0 +1,51 @@
+\subsection{Efector final tipo pinza}
+\label{sec:efector_final}
+El gripper se ubica en el extremo del segundo eslabón y posee un grado de libertad adicional (no considerado en los 2 GDL principales) para la apertura/cierre de las mandíbulas, controlado por el parámetro $d$ (distancia entre mandíbulas).
+
+\subsubsection{Selección del motor del efector final}
+\label{sec:motor_gripper}
+El gripper debe manipular lechugas con una masa máxima de:
+\begin{equation}
+m_{\text{lechuga}} = 400 \text{ g} = 0.4 \text{ kg}
+\end{equation}
+
+El mecanismo de transmisión utiliza un sistema de cremallera-piñón, donde la fuerza necesaria para sujetar el objeto se calcula considerando un factor de seguridad:
+
+\begin{equation}
+F_{\text{agarre}} = m_{\text{lechuga}} \cdot g \cdot k_s
+\end{equation}
+
+donde $g = 9.81$ m/s$^2$ y $k_s = 1.5$ (factor de seguridad). Por lo tanto:
+
+\begin{equation}
+F_{\text{agarre}} = 0.4 \times 9.81 \times 1.5 = 5.89 \text{ N}
+\end{equation}
+
+\subsubsection{Cálculo del torque requerido}
+
+Considerando un piñón con radio $r_p = 10$ mm = 0.01 m, el torque mínimo necesario es:
+
+\begin{equation}
+\tau_{\text{min}} = F_{\text{agarre}} \cdot r_p = 5.89 \times 0.01 = 0.059 \text{ N·m} = 5.9 \text{ N·cm}
+\end{equation}
+
+Añadiendo pérdidas por fricción en las cremalleras ($\eta = 0.8$):
+
+\begin{equation}
+\tau_{\text{requerido}} = \frac{\tau_{\text{min}}}{\eta} = \frac{5.9}{0.8} = 7.4 \text{ N·cm}
+\end{equation}
+
+Se selecciona el motor paso a paso cilíndrico \textbf{GM20BY} con reductor planetario integrado, cuyas especificaciones son:
+
+\begin{itemize}
+    \item Diámetro: $\phi = 20$ mm
+    \item Longitud: $L = 35$ mm
+    \item Masa: $m_{\text{motor}} = 65$ g = 0.065 kg
+    \item Torque nominal: $\tau = 50$ N·cm (con reducción 64:1)
+\end{itemize}
+
+El motor proporciona un torque de 50 N·cm, superando ampliamente el requerimiento:
+
+\begin{equation}
+\text{Factor de seguridad} = \frac{\tau_{\text{motor}}}{\tau_{\text{requerido}}} = \frac{50}{7.4} = 6.76
+\end{equation}
