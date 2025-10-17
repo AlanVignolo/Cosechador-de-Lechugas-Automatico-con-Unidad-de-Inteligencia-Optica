@@ -1,5 +1,3 @@
-\subsubsection{Máquina de Estados del Brazo Robótico}
-
 El control del brazo se implementa mediante una máquina de estados finitos que define cuatro posiciones operacionales discretas. Cada posición corresponde a una configuración angular específica de los servomotores, optimizada para una fase del ciclo de cosecha (Tabla \ref{tab:estados_brazo}).
 
 \begin{table}[H]
@@ -24,13 +22,13 @@ Depositar & 90° & 20° & Abierto & Liberación sobre contenedor \\
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.4\textwidth}
         \centering
         \includegraphics[width=\textwidth]{imagenes/brazo_movimiento.png}
         \caption{Posición Movimiento}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.4\textwidth}
         \centering
         \includegraphics[width=\textwidth]{imagenes/brazo_recoger.png}
         \caption{Posición Recoger}
@@ -38,13 +36,13 @@ Depositar & 90° & 20° & Abierto & Liberación sobre contenedor \\
 
     \vspace{0.5cm}
 
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.4\textwidth}
         \centering
         \includegraphics[width=\textwidth]{imagenes/brazo_transportar.png}
         \caption{Posición Transportar}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.45\textwidth}
+    \begin{subfigure}[b]{0.4\textwidth}
         \centering
         \includegraphics[width=\textwidth]{imagenes/brazo_depositar.png}
         \caption{Posición Depositar}
@@ -53,12 +51,12 @@ Depositar & 90° & 20° & Abierto & Liberación sobre contenedor \\
     \label{fig:posiciones_brazo}
 \end{figure}
 
-\textbf{Interpolación de trayectorias.} Las transiciones entre posiciones se ejecutan mediante interpolación lineal de ángulos. Dada una transición desde la posición A hacia la posición B, el sistema genera una trayectoria continua dividida en puntos intermedios muestreados cada 50ms durante un período $T$ de 3 a 5 segundos. Para cada servomotor $i$, el ángulo en el instante $t$ se calcula según:
+Las transiciones entre posiciones se ejecutan mediante interpolación lineal de ángulos. Dada una transición desde la posición A hacia la posición B, el sistema genera una trayectoria continua dividida en puntos intermedios muestreados cada 50ms durante un período $T$ de 1 a 3 segundos. Para cada servomotor $i$, el ángulo en el instante $t$ se calcula según:
 
 \begin{equation}
 \theta_i(t) = \theta_i^A + \frac{t}{T} \cdot (\theta_i^B - \theta_i^A)
 \end{equation}
 
-Esta interpolación garantiza movimientos suaves que minimizan vibraciones mecánicas y cargas sobre los actuadores. Las transiciones están reguladas por condiciones que verifican la validez de cada cambio de estado, evitando secuencias que comprometan la seguridad o integridad del sistema. Por ejemplo, no se permite cambiar directamente de posición de movimiento a depositar sin haber ejecutado previamente una recolección exitosa.
+Esta interpolación garantiza movimientos suaves que minimizan vibraciones mecánicas y cargas sobre los actuadores. Las transiciones están reguladas por condiciones que verifican la validez de cada cambio de estado, evitando secuencias que comprometan la seguridad o integridad del sistema. 
 
-\textbf{Sincronización con sistema XY.} Los movimientos del sistema cartesiano solo se permiten cuando el brazo se encuentra en posición de movimiento o transporte, garantizando que no ocurran colisiones durante desplazamientos. Mientras el brazo ejecuta una trayectoria de transición, se bloquean tanto comandos de movimiento XY como nuevas transiciones del brazo. Cada transición tiene un timeout de 20 segundos; si no se completa en ese período, se genera una excepción y el sistema intenta retornar a la posición de movimiento segura.
+Los movimientos del sistema cartesiano solo se permiten cuando el brazo se encuentra en posición de movimiento o transporte, garantizando que no ocurran colisiones durante desplazamientos. Mientras el brazo ejecuta una trayectoria de transición, se bloquean tanto comandos de movimiento XY como nuevas transiciones del brazo. Para algunos movimientos críticos, el robot debe estar en una posición XY determinada para evitar colisiones con el entorno.

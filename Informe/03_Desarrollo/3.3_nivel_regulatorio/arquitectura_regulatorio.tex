@@ -1,7 +1,5 @@
 El Nivel Regulatorio constituye el sistema de control en tiempo real del robot. Su responsabilidad principal es la gestión directa de actuadores (motores paso a paso, servomotores, gripper) y sensores (finales de carrera), ejecutando comandos de movimiento con precisión temporal estricta.
 
-\subsubsection{Organización Modular del Firmware}
-
 El firmware se estructura en tres capas jerárquicas que separan las responsabilidades según el nivel de abstracción (Figura \ref{fig:arquitectura_regulatorio}):
 
 \textbf{Capa de Controladores de Hardware}: Interactúa directamente con los periféricos del microcontrolador mediante registros y temporizadores. Incluye el controlador de motores paso a paso que genera pulsos mediante el Timer1, el controlador de servomotores que utiliza PWM por hardware con Timer4 y Timer5, el controlador del actuador de agarre que maneja el motor paso a paso, y el controlador de comunicación serial que implementa buffers circulares manejados por interrupciones.
@@ -14,7 +12,7 @@ El firmware se estructura en tres capas jerárquicas que separan las responsabil
     \centering
     % TODO: Insertar diagrama de capas del firmware regulatorio
     % Mostrar: Aplicación → Control → Drivers → Hardware
-    \includegraphics[width=0.7\textwidth]{imagenes/arquitectura_regulatorio_capas.png}
+    \includegraphics[width=0.6\textwidth]{imagenes/arquitectura_regulatorio_capas.png}
     \caption{Arquitectura en capas del firmware del Nivel Regulatorio}
     \label{fig:arquitectura_regulatorio}
 \end{figure}

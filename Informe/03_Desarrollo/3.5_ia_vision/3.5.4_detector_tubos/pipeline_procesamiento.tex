@@ -52,17 +52,11 @@ La orientación vertical del kernel (mayor altura que ancho) favorece la conexi�
 
 \vspace{0.3cm}
 
-\begin{subfigure}[b]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{imagenes/detector_tubos_6_lineas.png}
-    \caption{Líneas superior e inferior detectadas}
-\end{subfigure}
-
-\caption{Pipeline de procesamiento del detector de tubos mostrando las transformaciones sucesivas hasta la identificación de bordes del tubo}
+\caption{Procesamiento del detector de tubos mostrando las transformaciones sucesivas hasta la identificación de bordes del tubo}
 \label{fig:proceso_tubos}
 \end{figure}
 
-\textbf{Etapa 4: Detección de Contornos y Scoring}
+\textbf{Etapa 4: detección de contornos y scoring}
 
 Sobre la imagen de bordes refinados se ejecuta el algoritmo de detección de contornos de Suzuki-Abe. Los contornos detectados se filtran aplicando criterio de área mínima de 250 píxeles, eliminando pequeñas regiones de ruido residual.
 
@@ -72,25 +66,11 @@ Los contornos candidatos (verticales) se someten a un sistema de scoring que eva
 
 El contorno con mayor puntuación total se selecciona como el tubo objetivo.
 
-\textbf{Etapa 5: Extracción de Coordenadas de Líneas}
-
-Una vez identificado el contorno correspondiente al tubo, se extrae su rectángulo delimitador $(x, y, w, h)$. Las coordenadas verticales de las líneas superior e inferior se obtienen directamente de este rectángulo:
-
-\begin{equation}
-y_{superior} = y
-\end{equation}
-
-\begin{equation}
-y_{inferior} = y + h
-\end{equation}
-
-Adicionalmente se calcula el centro vertical del tubo como:
-
-\begin{equation}
-y_{centro} = y + \frac{h}{2}
-\end{equation}
-
-Esta información vectorial $(y_{superior}, y_{inferior}, y_{centro})$ constituye la salida del detector, proporcionando la representación mínima necesaria para el mapeo del entorno.
+\begin{figure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/detector_tubos_6_lineas.png}
+    \caption{Líneas superior e inferior detectadas}
+\end{figure}
 
 \subsubsection{Consideraciones de Robustez}
 

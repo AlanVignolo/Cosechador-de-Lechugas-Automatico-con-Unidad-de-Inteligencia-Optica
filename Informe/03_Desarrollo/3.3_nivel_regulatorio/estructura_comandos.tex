@@ -1,5 +1,3 @@
-\subsubsection{Protocolo de Comunicación UART}
-
 El protocolo de comunicación entre el nivel regulatorio y el supervisor utiliza mensajes ASCII delimitados con formato estructurado. Cada comando sigue la estructura \texttt{<COMANDO:param1,param2>\textbackslash n}, donde los elementos son delimitadores \texttt{<} y \texttt{>}, identificador de comando (1-3 caracteres ASCII), separador de dos puntos (opcional), parámetros separados por comas, y terminador de línea.
 
 La Tabla \ref{tab:comandos_uart} presenta el conjunto completo de comandos implementados.
@@ -69,4 +67,4 @@ El firmware genera dos tipos de respuestas: comandos exitosos retornan mensajes 
 \label{tab:eventos_asincronos}
 \end{table}
 
-El firmware utiliza un parser basado en máquina de estados que almacena bytes en buffer circular de 256 bytes. Cuando detecta los delimitadores, analiza y ejecuta el comando, enviando la respuesta inmediatamente. El procesamiento completo toma menos de 1ms, garantizando latencia total inferior a 20ms a 115200 baudios.
+El firmware utiliza un parser basado en máquina de estados que almacena bytes en buffer circular de 256 bytes. Cuando detecta los delimitadores, analiza y ejecuta el comando, enviando la respuesta inmediatamente.

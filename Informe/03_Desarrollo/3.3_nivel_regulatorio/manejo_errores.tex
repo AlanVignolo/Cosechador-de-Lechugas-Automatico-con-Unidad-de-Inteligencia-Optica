@@ -26,7 +26,7 @@ Tiempo trayectoria & 0 - 10,000 ms & INVALID\_PARAM \\
 \label{tab:validacion_comandos}
 \end{table}
 
-El firmware implementa watchdog de comunicación: si no recibe heartbeat (\texttt{HB:1}) del supervisor en 90 segundos consecutivos, asume pérdida de comunicación y ejecuta detención de emergencia automática, deshabilitando todos los motores y entrando en modo seguro hasta recibir comando de reset.
+El firmware implementa watchdog de comunicación: si no recibe heartbeat (\texttt{HB:1}) del supervisor en 5 segundos consecutivos, asume pérdida de comunicación y ejecuta detención de emergencia automática, deshabilitando todos los motores y entrando en modo seguro hasta recibir comando de reset.
 
 El buffer UART circular (256 bytes) implementa protección contra overflow verificando espacio disponible antes de cada escritura. Si el buffer está lleno, el byte se descarta y se envía error de overflow. La Tabla \ref{tab:codigos_error} lista los códigos de error definidos.
 
@@ -53,4 +53,4 @@ SYSTEM\_ERROR & Error interno del firmware. \\
 \label{tab:codigos_error}
 \end{table}
 
-Los finales de carrera se monitorean continuamente en el loop principal (frecuencia >10kHz). El sistema detecta la activación de cualquier límite (nivel lógico bajo con debounce de 6 lecturas consecutivas) y ejecuta inmediatamente la detención de emergencia: deshabilita los drivers (ENABLE = HIGH), detiene la generación de pulsos, envía notificación asíncrona al supervisor indicando el límite activado, y bloquea nuevos comandos de movimiento hasta reset manual. El tiempo de respuesta típico es inferior a 200µs desde la activación física del sensor, suficiente para protección mecánica del sistema considerando las velocidades máximas de operación (0.375 m/s).
+Los finales de carrera se monitorean continuamente. El sistema detecta la activación de cualquier límite y ejecuta inmediatamente la detención de emergencia: deshabilita los drivers (ENABLE = HIGH), detiene la generación de pulsos, envía notificación asíncrona al supervisor indicando el límite activado, y bloquea nuevos comandos de movimiento hacia el lado en el que se encuentra el fin de carrera. Esto previene daños mecánicos por intentos de movimiento en dirección bloqueada.

@@ -1,6 +1,4 @@
-\subsubsection{Procesos Principales del Sistema}
-
-El sistema implementa dos workflows de alto nivel que orquestan la operación del robot: detección y mapeo del workspace, y cosecha automatizada. Ambos workflows integran movimientos XY, control del brazo, visión artificial, y manejo de excepciones.
+El sistema implementa dos procesos de alto nivel que orquestan la operación del robot: detección y mapeo del workspace, y cosecha automatizada. Ambos workflows integran movimientos XY, control del brazo, visión artificial, y manejo de excepciones.
 
 \textbf{Proceso 1: Detección y Mapeo del Workspace}
 
@@ -17,7 +15,7 @@ Inicialización & Verifica posición segura del brazo. Ejecuta homing de ejes XY
 \hline
 Escaneo vertical & Movimiento descendente con velocidad 0.30 m/s capturando frames continuamente. Detector de ArUco identifica tubos y registra posiciones Y. Genera archivo de configuración de tubos. \\
 \hline
-Escaneo horizontal & Para cada tubo detectado: posiciona sistema en altura del tubo, ejecuta barrido horizontal (0.375 m/s) con detector de cintas. Registra posiciones X de plantas en matriz de cintas. \\
+Escaneo horizontal & Para cada tubo detectado: posiciona sistema en altura del tubo, ejecuta barrido horizontal a velocidad  reducida con detector de cintas. Registra posiciones X de plantas en matriz de cintas. \\
 \hline
 Retorno & Resincroniza posición consultando firmware. Ejecuta movimiento diagonal directo a origen (0,0). Resetea tracking global. \\
 \hline
@@ -26,7 +24,7 @@ Retorno & Resincroniza posición consultando firmware. Ejecuta movimiento diagon
 \label{tab:proceso_deteccion}
 \end{table}
 
-El proceso genera dos salidas persistentes: archivo de configuración de tubos con posiciones Y, y matriz de cintas con posiciones X de cada planta. Tiempo típico: 120-180 segundos dependiendo del tamaño del workspace.
+El proceso genera dos salidas persistentes: archivo de configuración de tubos con posiciones Y, y matriz de cintas con posiciones X de cada planta.
 
 \textbf{Proceso 2: Cosecha Automatizada}
 
@@ -58,16 +56,14 @@ Finalización & Todas las cintas procesadas. & Movimiento a borde seguro. Transi
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{imagenes/workflow_deteccion.png}
+    \includegraphics[width=0.6\textwidth]{imagenes/workflow_deteccion.png}
     \caption{Diagrama del proceso de detección y mapeo}
     \label{fig:workflow_deteccion}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{imagenes/workflow_cosecha.png}
+    \includegraphics[width=0.6\textwidth]{imagenes/workflow_cosecha.png}
     \caption{Diagrama del proceso de cosecha automatizada}
     \label{fig:workflow_cosecha}
 \end{figure}
-
-Tiempo típico del proceso de cosecha: 15-20 segundos por planta (incluyendo navegación, clasificación, corrección de posición, recolección y depósito). Un workspace completo de 20-30 plantas se procesa en aproximadamente 8-12 minutos de operación continua.

@@ -9,9 +9,3 @@ La asignación de pines del microcontrolador se diseñó como se presenta en la 
     \caption{Distribución de pines del Arduino Mega 2560 para el Nivel Regulatorio}
     \label{fig:pinout_arduino_mega}
 \end{figure}
-
-El eje horizontal de movimiento (X) utiliza los pines 22, 23 y 24 para las señales STEP, DIR y ENABLE respectivamente, mientras que el eje vertical (Y) utiliza los pines 25, 26 y 27 con las mismas funciones. Los servomotores del brazo se conectan a pines con capacidad PWM por hardware: el servomotor 1 utiliza el pin 11 y el servomotor 2 el pin 12. El actuador de agarre, implementado con un motor paso a paso, requiere cuatro señales de fase conectadas a los pines 30 a 33.
-
-Los finales de carrera ocupan los pines 40 a 43. El pin 40 corresponde al límite mínimo del eje horizontal, el pin 41 al límite máximo horizontal, el pin 42 al límite mínimo vertical, y el pin 43 al límite máximo vertical. Estos pines utilizan resistencias pull-up internas activadas por software.
-
-La comunicación serial con la Raspberry Pi utiliza los pines 0 (RX0) y 1 (TX0), correspondientes al USART0 del ATmega2560.

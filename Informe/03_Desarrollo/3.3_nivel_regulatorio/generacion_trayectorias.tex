@@ -1,5 +1,3 @@
-\subsubsection{Perfiles de Velocidad para Control de Movimiento}
-
 El sistema implementa perfiles de velocidad trapezoidales con aceleraciones fijas, garantizando comportamiento predecible independientemente de la distancia del movimiento. Las distancias de aceleración y desaceleración permanecen constantes, variando únicamente la longitud de la zona de crucero.
 
 Para movimientos largos (superiores a 25mm), el perfil se compone de las fases mostradas en la Tabla \ref{tab:perfil_trapezoidal}. Esta estrategia asegura que las aceleraciones sean idénticas para todos los movimientos, proporcionando comportamiento mecánico consistente. Por ejemplo, un movimiento de 25mm tiene 12.5mm de aceleración/desaceleración y 12.5mm de crucero, mientras que un movimiento de 250mm mantiene los mismos 12.5mm de aceleración/desaceleración pero dispone de 237.5mm de crucero.
@@ -39,9 +37,9 @@ Para movimientos largos (superiores a 25mm), el perfil se compone de las fases m
     \label{fig:perfil_trapezoidal}
 \end{figure}
 
-Cuando la distancia total es menor que 25mm (suma de las zonas de aceleración y desaceleración), el perfil se convierte en triangular. El sistema mantiene las mismas aceleraciones de la Tabla \ref{tab:perfil_trapezoidal}, pero calcula el punto medio del movimiento donde debe iniciar la desaceleración para alcanzar exactamente la posición final. En este caso, la velocidad máxima alcanzada es menor que la velocidad de crucero nominal, ya que el motor comienza a frenar antes de alcanzarla. Por ejemplo, un movimiento de 10mm acelera durante 5mm hasta alcanzar aproximadamente 0.15 m/s, y luego desacelera durante los siguientes 5mm hasta detenerse (Figura \ref{fig:perfil_comparacion}).
+Cuando la distancia total es menor que 25mm, el perfil se convierte en triangular. El sistema mantiene las mismas aceleraciones de la Tabla \ref{tab:perfil_trapezoidal}, pero calcula el punto medio del movimiento donde debe iniciar la desaceleración para alcanzar exactamente la posición final. En este caso, la velocidad máxima alcanzada es menor que la velocidad de crucero nominal, ya que el motor comienza a frenar antes de alcanzarla. 
 
-Para movimientos muy cortos (menos de 2.5mm), el sistema reduce la velocidad máxima permitida a 0.10 m/s para mantener precisión en el posicionamiento final, típico en operaciones de ajuste fino.
+Para movimientos muy cortos (menos de 3 mm), el sistema reduce la velocidad máxima permitida a 0.10 m/s para mantener precisión en el posicionamiento final, típico en operaciones de ajuste fino.
 
 \begin{figure}[H]
     \centering
@@ -52,15 +50,15 @@ Para movimientos muy cortos (menos de 2.5mm), el sistema reduce la velocidad má
     \label{fig:perfil_comparacion}
 \end{figure}
 
-La velocidad instantánea en cada paso se calcula mediante interpolación lineal dentro de cada zona. El firmware ejecuta este cálculo continuamente en el loop principal a frecuencia superior a 10kHz, actualizando el registro OCR1A del Timer1 que controla la frecuencia de generación de pulsos STEP. La conversión entre velocidad deseada $v$ (en pasos/s) y el valor del registro es:
+La velocidad instantánea en cada paso se calcula mediante interpolación lineal dentro de cada zona. El firmware ejecuta este cálculo continuamente, actualizando el registro OCR1A del Timer1 que controla la frecuencia de generación de pulsos STEP. La conversión entre velocidad deseada $v$ (en pasos/s) y el valor del registro es:
 
 \begin{equation}
 OCR1A = \frac{f_{CPU}}{2 \cdot prescaler \cdot v} - 1 = \frac{1,000,000}{v} - 1
 \end{equation}
 
-donde $f_{CPU} = 16$ MHz y prescaler = 8. Por ejemplo, para $v = 5,000$ pasos/s (0.125 m/s), $OCR1A = 199$. El sistema soporta velocidades entre 500 pasos/s (inicio/fin de movimientos) y 15,000 pasos/s (crucero máximo). Velocidades superiores causan jitter excesivo y riesgo de pérdida de pasos.
+donde $f_{CPU} = 16$ MHz y prescaler = 8. El sistema soporta velocidades entre 500 pasos/s (inicio/fin de movimientos) y 15,000 pasos/s (crucero máximo). Velocidades superiores causan jitter excesivo y riesgo de pérdida de pasos.
 
-Para movimientos diagonales que involucran ambos ejes simultáneamente, el firmware sincroniza los perfiles mediante escalamiento proporcional de velocidades. El eje con mayor distancia a recorrer (eje dominante) utiliza su velocidad de crucero nominal, mientras que el eje subordinado escala su velocidad proporcionalmente: $v_{sub} = v_{dom} \times (d_{sub}/d_{dom})$. Este escalamiento se aplica a todas las fases del perfil, garantizando que ambos ejes completen el movimiento en el mismo tiempo y generando trayectorias rectilíneas en el plano XY (Figura \ref{fig:sincronizacion_multieje}). Por ejemplo, para un movimiento de 100mm horizontal y 50mm vertical, el eje horizontal mantiene 0.375 m/s de crucero mientras que el vertical se reduce a 0.1875 m/s, completando ambos en 0.35s.
+Para movimientos diagonales que involucran ambos ejes simultáneamente, el firmware sincroniza los perfiles mediante escalamiento proporcional de velocidades. El eje con mayor distancia a recorrer (eje dominante) utiliza su velocidad de crucero nominal, mientras que el eje subordinado escala su velocidad proporcionalmente: $v_{sub} = v_{dom} \times (d_{sub}/d_{dom})$. Este escalamiento se aplica a todas las fases del perfil, garantizando que ambos ejes completen el movimiento casi al mismo tiempo y generando trayectorias rectilíneas en el plano XY (Figura \ref{fig:sincronizacion_multieje}).
 
 \begin{figure}[H]
     \centering
