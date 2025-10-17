@@ -1,4 +1,4 @@
-\subsection{Detección y Análisis de Contornos}
+\subsection{Detección y análisis de contornos}
 
 La detección de contornos identifica las fronteras entre regiones con propiedades visuales distintas en imágenes binarias, proporcionando información estructural esencial para reconocimiento y clasificación de elementos. Un contorno se define matemáticamente como la secuencia ordenada de píxeles que forman el límite de una región conexa: $C = \{(x_i, y_i)\}_{i=1}^{n}$ donde $(x_i, y_i) \in \partial R$, siendo $\partial R$ la frontera topológica de la región $R$. Formalmente, un punto pertenece a la frontera si es parte de la región pero tiene al menos un vecino que no pertenece a ella. La conectividad del contorno se define por el vecindario considerado: 4-conectividad (vecinos arriba, abajo, izquierda, derecha) o 8-conectividad (incluyendo diagonales, generando contornos más suaves).
 
@@ -6,41 +6,41 @@ La detección de contornos identifica las fronteras entre regiones con propiedad
 
 El algoritmo de Suzuki-Abe, implementado en OpenCV mediante la función \texttt{findContours}, detecta simultáneamente contornos externos e internos organizándolos jerárquicamente. El algoritmo recorre la imagen binaria en orden raster (de izquierda a derecha, de arriba hacia abajo) y, al encontrar un píxel de objeto no visitado, inicia el rastreo del contorno siguiendo la frontera. La jerarquía resultante representa relaciones de anidamiento entre contornos mediante estructura de árbol.
 
-\textbf{Modos de recuperación de contornos:}
+\paragraph{\underline{Modos de recuperación de contornos:}}
 
 Los modos de recuperación determinan qué contornos se extraen de la imagen:
 
-\begin{itemize}
-\item \textbf{RETR\_EXTERNAL}: Extrae solo contornos externos de nivel superior, ignorando contornos internos (huecos dentro de objetos). Este modo es suficiente para aplicaciones donde interesan objetos individuales sin necesidad de analizar su estructura interna.
+\begin{itemize}[label=$\bullet$]
+\item RETR\_EXTERNAL: extrae solo contornos externos de nivel superior, ignorando contornos internos (huecos dentro de objetos). Este modo es suficiente para aplicaciones donde interesan objetos individuales sin necesidad de analizar su estructura interna.
 
-\item \textbf{RETR\_LIST}: Extrae todos los contornos detectados (externos e internos) sin establecer relaciones jerárquicas entre ellos. Los contornos se almacenan en una lista plana.
+\item RETR\_LIST: extrae todos los contornos detectados (externos e internos) sin establecer relaciones jerárquicas entre ellos. Los contornos se almacenan en una lista plana.
 
-\item \textbf{RETR\_TREE}: Construye la jerarquía completa de contornos anidados, estableciendo relaciones padre-hijo entre contornos externos y sus contornos internos. Útil cuando se necesita analizar la estructura topológica completa.
+\item RETR\_TREE: construye la jerarquía completa de contornos anidados, estableciendo relaciones padre-hijo entre contornos externos y sus contornos internos. Útil cuando se necesita analizar la estructura topológica completa.
 \end{itemize}
 
-\textbf{Métodos de aproximación de contornos:}
+\paragraph{\underline{Métodos de aproximación de contornos:}}
 
 El parámetro de aproximación controla cómo se representan los puntos del contorno:
 
-\begin{itemize}
-\item \textbf{CHAIN\_APPROX\_NONE}: Almacena todos los puntos del contorno sin compresión, preservando información geométrica completa. Por ejemplo, un segmento horizontal de 100 píxeles se representa con 100 puntos.
+\begin{itemize}[label=$\bullet$]
+\item CHAIN\_APPROX\_NONE: almacena todos los puntos del contorno sin compresión, preservando información geométrica completa. Por ejemplo, un segmento horizontal de 100 píxeles se representa con 100 puntos.
 
-\item \textbf{CHAIN\_APPROX\_SIMPLE}: Comprime segmentos horizontales, verticales y diagonales almacenando solo los puntos extremos, reduciendo significativamente el uso de memoria. El mismo segmento horizontal de 100 píxeles se representa con solo 2 puntos (inicio y fin).
+\item CHAIN\_APPROX\_SIMPLE: comprime segmentos horizontales, verticales y diagonales almacenando solo los puntos extremos, reduciendo significativamente el uso de memoria. El mismo segmento horizontal de 100 píxeles se representa con solo 2 puntos (inicio y fin).
 \end{itemize}
 
-\subsubsection{Descriptores Geométricos}
+\subsubsection{Descriptores geométricos}
 
-Los descriptores cuantifican propiedades estructurales de contornos. El \textbf{área} encerrada se calcula mediante la fórmula del Shoelace:
+Los descriptores cuantifican propiedades estructurales de contornos. El área encerrada se calcula mediante la fórmula del Shoelace:
 
 \begin{equation}
 A = \frac{1}{2}\left|\sum_{i=0}^{n-1}(x_i y_{i+1} - x_{i+1}y_i)\right|
 \end{equation}
 
-donde $(x_n, y_n) = (x_0, y_0)$ cierra el contorno. Este método tiene complejidad $\mathcal{O}(n)$ y proporciona área exacta del polígono. El \textbf{perímetro} se calcula sumando distancias euclidianas entre puntos consecutivos: $P = \sum_{i=0}^{n-1}\sqrt{(x_{i+1}-x_i)^2 + (y_{i+1}-y_i)^2}$.
+donde $(x_n, y_n) = (x_0, y_0)$ cierra el contorno. Este método tiene complejidad $\mathcal{O}(n)$ y proporciona área exacta del polígono. El perímetro se calcula sumando distancias euclidianas entre puntos consecutivos: $P = \sum_{i=0}^{n-1}\sqrt{(x_{i+1}-x_i)^2 + (y_{i+1}-y_i)^2}$.
 
-El \textbf{rectángulo delimitador} (bounding box) es el rectángulo alineado a ejes que contiene completamente al contorno: $\text{BBox} = (x_{min}, y_{min}, w, h)$ donde $x_{min} = \min_i x_i$, $y_{min} = \min_i y_i$, $w = \max_i x_i - x_{min}$ y $h = \max_i y_i - y_{min}$. Este descriptor permite filtrar contornos por relación de aspecto o dimensiones absolutas.
+El rectángulo delimitador (bounding box) es el rectángulo alineado a ejes que contiene completamente al contorno: $\text{BBox} = (x_{min}, y_{min}, w, h)$ donde $x_{min} = \min_i x_i$, $y_{min} = \min_i y_i$, $w = \max_i x_i - x_{min}$ y $h = \max_i y_i - y_{min}$. Este descriptor permite filtrar contornos por relación de aspecto o dimensiones absolutas.
 
-El \textbf{centroide} representa el centro de masa geométrico del contorno:
+El centroide representa el centro de masa geométrico del contorno:
 
 \begin{equation}
 \bar{x} = \frac{1}{6A}\sum_{i=0}^{n-1}(x_i + x_{i+1})(x_i y_{i+1} - x_{i+1}y_i), \quad \bar{y} = \frac{1}{6A}\sum_{i=0}^{n-1}(y_i + y_{i+1})(x_i y_{i+1} - x_{i+1}y_i)
@@ -48,13 +48,13 @@ El \textbf{centroide} representa el centro de masa geométrico del contorno:
 
 Este punto resulta fundamental para cálculos de desviación espacial en sistemas de corrección de posicionamiento visual.
 
-\subsubsection{Filtrado y Selección de Contornos}
+\subsubsection{Filtrado y selección de contornos}
 
-Las imágenes binarias reales contienen múltiples contornos, muchos correspondientes a ruido o elementos irrelevantes. El filtrado elimina contornos no deseados según criterios del problema. El \textbf{filtrado por área} establece límites: $A_{min} \leq A_{contorno} \leq A_{max}$. Los umbrales se definen según el tamaño esperado de objetos; por ejemplo, $A_{min} = 0.01 \cdot A_{imagen}$ filtra ruido puntual mientras que $A_{max} = 0.6 \cdot A_{imagen}$ elimina regiones que abarcan casi toda la imagen.
+Las imágenes binarias reales contienen múltiples contornos, muchos correspondientes a ruido o elementos irrelevantes. El filtrado elimina contornos no deseados según criterios del problema. El filtrado por área establece límites: $A_{min} \leq A_{contorno} \leq A_{max}$. Los umbrales se definen según el tamaño esperado de objetos; por ejemplo, $A_{min} = 0.01 \cdot A_{imagen}$ filtra ruido puntual mientras que $A_{max} = 0.6 \cdot A_{imagen}$ elimina regiones que abarcan casi toda la imagen.
 
 El filtrado por posición descarta contornos que tocan bordes de la imagen (generalmente incompletos) o que no contienen el punto central (bajo asunción de objeto centrado en campo de visión). El filtrado por forma emplea relación de aspecto $AR = w/h$ del bounding box para discriminar orientaciones: valores $AR > 2$ indican objetos horizontales, $AR < 0.5$ objetos verticales, y valores intermedios formas aproximadamente cuadradas.
 
-Cuando múltiples contornos cumplen filtros básicos, se implementa un \textbf{sistema de scoring} que pondera múltiples criterios para seleccionar el mejor candidato. Un score típico combina área normalizada, distancia del centroide al centro de imagen, y métricas de calidad de forma:
+Cuando múltiples contornos cumplen filtros básicos, se implementa un sistema de scoring que pondera múltiples criterios para seleccionar el mejor candidato. Un score típico combina área normalizada, distancia del centroide al centro de imagen, y métricas de calidad de forma:
 
 \begin{equation}
 S_{total} = w_1 \cdot S_{área} + w_2 \cdot S_{posición} + w_3 \cdot S_{forma}
@@ -62,11 +62,11 @@ S_{total} = w_1 \cdot S_{área} + w_2 \cdot S_{posición} + w_3 \cdot S_{forma}
 
 donde los pesos $w_i$ (con $\sum w_i = 1$) reflejan importancia relativa de cada aspecto según el problema. Cada componente $S_i$ se normaliza típicamente al rango $[0,1]$ para que contribuyan de manera equilibrada al score total. El contorno con mayor score es seleccionado como el objeto de interés.
 
-\subsubsection{Análisis de Regiones Parciales}
+\subsubsection{Análisis de regiones parciales}
 
 En aplicaciones donde la geometría varía entre zonas del objeto, analizar regiones específicas del contorno proporciona descriptores más robustos que el contorno completo. Este enfoque particiona el contorno en segmentos y analiza cada uno por separado.
 
-\textbf{Ejemplo de partición por altura:} Para objetos con base regular pero parte superior irregular, se puede analizar únicamente una región inferior del contorno:
+\paragraph{\underline{Ejemplo de partición por altura:}} \textit{Para objetos con base regular pero parte superior irregular, se puede analizar únicamente una región inferior del contorno:}
 
 \begin{equation}
 R_{base} = \{(x,y) \in C : y \geq y_{max} - \alpha h\}
@@ -74,10 +74,10 @@ R_{base} = \{(x,y) \in C : y \geq y_{max} - \alpha h\}
 
 donde $C$ es el contorno completo, $h$ es la altura del bounding box, y $\alpha \in (0,1)$ define la fracción de altura a analizar (típicamente $\alpha = 0.1$ para el 10\% inferior). Sobre esta región se pueden calcular descriptores específicos como:
 
-\begin{itemize}
-\item \textbf{Ancho efectivo de la base}: $w_{base} = \max_{(x,y) \in R_{base}} x - \min_{(x,y) \in R_{base}} x + 1$
+\begin{itemize}[label=$\bullet$]
+\item Ancho efectivo de la base: $w_{base} = \max_{(x,y) \in R_{base}} x - \min_{(x,y) \in R_{base}} x + 1$
 
-\item \textbf{Ocupación de la base}: Fracción de píxeles presentes respecto al rectángulo delimitador de la región, calculada como:
+\item Ocupación de la base: fracción de píxeles presentes respecto al rectángulo delimitador de la región, calculada como:
 \begin{equation}
 \text{Ocupación} = \frac{|R_{base}|}{w_{base} \cdot (\alpha h)}
 \end{equation}
