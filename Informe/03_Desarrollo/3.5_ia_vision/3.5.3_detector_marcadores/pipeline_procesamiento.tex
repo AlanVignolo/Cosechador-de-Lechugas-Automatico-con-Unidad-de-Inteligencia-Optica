@@ -1,4 +1,6 @@
-El algoritmo de detección de marcadores explota el alto contraste entre el marcador negro y el fondo claro mediante procesamiento en el canal de valor (V) del espacio HSV. Esta elección se fundamenta en la invariancia del canal V ante cambios en la tonalidad cromática de la iluminación, propiedad demostrada en el marco teórico (Sección 2.2.1).
+\subsubsection{Algoritmo de Detección de Cintas}
+
+El algoritmo de detección de cintas de referencia explota el alto contraste entre la cinta negra y el fondo claro mediante procesamiento en el canal de valor (V) del espacio HSV. Esta elección se fundamenta en la invariancia del canal V ante cambios en la tonalidad cromática de la iluminación, propiedad demostrada en el marco teórico (Sección 2.2.1).
 
 \textbf{Etapa 1: Conversión al Espacio HSV}
 
@@ -41,9 +43,9 @@ donde $|R_{base}|$ denota el número de píxeles en la región. Un valor $Q_{bas
 
 Esta métrica resulta efectiva para distinguir cintas de otros elementos oscuros: las cintas genuinas presentan típicamente $Q_{base} > 0.8$, mientras que plantas u otros objetos tienen $Q_{base} < 0.5$. Se establece un umbral de aceptación de 0.7 como compromiso entre sensibilidad y especificidad.
 
-\subsubsection{Sistema de Scoring Multicriteria}
+\subsubsection{Sistema de Evaluación Ponderada}
 
-Cuando múltiples contornos cumplen los criterios de área mínima y calidad basal, se implementa un sistema de scoring ponderado que considera tres factores para seleccionar el mejor candidato.
+Cuando múltiples contornos cumplen los criterios de área mínima y calidad basal, se implementa un sistema de evaluación ponderada que considera tres factores para seleccionar el mejor candidato.
 
 El primer factor evalúa el área del contorno normalizada respecto a los límites mínimo y máximo esperados:
 
@@ -63,13 +65,13 @@ donde $c_x$ es la coordenada horizontal del centroide, $x_{centro}$ es la coorde
 
 El tercer factor corresponde directamente a la calidad basal $Q_{base}$ calculada previamente, que favorece contornos con bordes inferiores bien definidos.
 
-El score total se calcula como combinación lineal ponderada de estos tres factores:
+La puntuación total se calcula como combinación lineal ponderada de estos tres factores:
 
 \begin{equation}
-S_{total} = w_1 \cdot S_{área} + w_2 \cdot S_{posición} + w_3 \cdot Q_{base}
+P_{total} = w_1 \cdot S_{área} + w_2 \cdot S_{posición} + w_3 \cdot Q_{base}
 \end{equation}
 
-Los pesos se establecieron como $w_1 = 0.3$, $w_2 = 0.4$ y $w_3 = 0.3$, otorgando mayor importancia a la posición dado que las desviaciones típicas son inferiores a 50 milímetros, resultando en centroides próximos al centro de la imagen. El contorno con mayor score total se selecciona como la cinta de referencia.
+Los pesos se establecieron como $w_1 = 0.3$, $w_2 = 0.4$ y $w_3 = 0.3$, otorgando mayor importancia a la posición dado que las desviaciones típicas son inferiores a 50 milímetros, resultando en centroides próximos al centro de la imagen. El contorno con mayor puntuación total se selecciona como la cinta de referencia.
 
 \begin{figure}[H]
 \centering
@@ -96,9 +98,9 @@ Los pesos se establecieron como $w_1 = 0.3$, $w_2 = 0.4$ y $w_3 = 0.3$, otorgand
 \begin{subfigure}[b]{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{imagenes/detector_marcadores_4_contornos.png}
-    \caption{Contornos detectados con scoring}
+    \caption{Contornos detectados con evaluación ponderada}
 \end{subfigure}
 
-\caption{Pipeline de procesamiento del detector de marcadores mostrando las transformaciones sucesivas de la imagen}
+\caption{Secuencia de procesamiento del detector de cintas mostrando las transformaciones sucesivas de la imagen}
 \label{fig:proceso_marcadores}
 \end{figure}

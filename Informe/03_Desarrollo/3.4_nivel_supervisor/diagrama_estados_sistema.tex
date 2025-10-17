@@ -1,30 +1,22 @@
-El supervisor opera mediante una máquina de estados finitos que gobierna el comportamiento del robot durante todas las operaciones. Esta arquitectura permite transiciones deterministas entre estados, sincronización de subsistemas, y manejo robusto de excepciones con recuperación automática.
+Los procesos implementados en el nivel supervisor coordinan múltiples operaciones siguiendo secuencias predefinidas. Cada proceso se construye mediante composición de operaciones básicas: movimientos XY, transiciones de brazo, captura de imágenes, y ejecución de algoritmos de visión.
 
-Además el sistema define ocho estados operacionales principles (Figura \ref{fig:maquina_estados_supervisor}):
+El sistema define cuatro procesos principales implementados en workflow\_orchestrator:
 
 \begin{itemize}
-    \item \textbf{Inicialización}: Arranque del sistema. Ejecuta homing de ejes XY, calibra dimensiones del workspace, inicializa cámara y modelos de inteligencia artificial, y verifica comunicación con nivel regulatorio.
+    \item \textbf{Homing Simple}: Secuencia de referenciado del sistema. Verifica que el brazo esté en posición de movimiento, configura velocidades reducidas, mueve el eje horizontal hasta el límite derecho, retrocede un offset, mueve el eje vertical hasta el límite superior, baja un offset, establece el origen (0,0), y restaura velocidades normales. Guarda la referencia en homing\_reference.json.
 
-    \item \textbf{Exploración}: Escaneo sistemático del workspace mediante barrido vertical y horizontal. Genera mapas persistentes y retorna a origen.
+    \item \textbf{Calibración del Workspace}: Medición de las dimensiones útiles del espacio de trabajo. Ejecuta homing inicial, se mueve hacia el límite izquierdo registrando la distancia horizontal mediante mensaje de emergencia, se mueve hacia el límite inferior registrando la distancia vertical, calcula las dimensiones restando márgenes de seguridad, y ejecuta homing final. Guarda las dimensiones en workspace\_dimensions.json.
 
-    \item \textbf{Navegación}: Movimiento del sistema XY hacia objetivo identificado. Calcula trayectoria, envía comandos al nivel regulatorio, y verifica llegada a destino.
+    \item \textbf{Mapeo del Entorno}: Escaneo sistemático para detectar posiciones de tubos y plantas. Realiza escaneo vertical descendente con detector de tubos registrando coordenadas Y en configuracion\_tubos.json. Para cada tubo detectado, ejecuta escaneo horizontal con detector de cintas registrando coordenadas X en matriz\_cintas.json. Retorna a origen tras completar.
 
-    \item \textbf{Clasificación}: Análisis de planta con visión artificial. Captura imagen, ejecuta algoritmo de inteligencia artificial, e interpreta resultado según umbrales de confianza configurados.
-    
-    \item \textbf{Corrección de posición}: Ajuste fino de posición XY basado en retroalimentación visual. Utiliza detección de marcadores para centrar la planta en el campo de visión del gripper.  
-
-    \item \textbf{Movimiento del brazo}: Control del brazo robótico para recolección, movimiento o depósito. 
-
-    \item \textbf{Espera}: Estado inactivo aguardando comandos. Monitorea conexión con nivel regulatorio mediante heartbeat periódico y procesa comandos recibidos por interfaz.
-
-    \item \textbf{Emergencia}: Parada segura ante fallas detectadas. Detiene movimientos inmediatamente, intenta llevar brazo a posición segura, y preserva estado del sistema para diagnóstico.
+    \item \textbf{Cosecha Interactiva}: Proceso completo de recolección. Para cada posición en matriz\_cintas: navega a la posición, captura imagen y ejecuta clasificador morfológico, si detecta lechuga madura ejecuta corrección de posición con detectores de cintas, transfiere el brazo a posición de recoger, cierra el gripper, eleva a posición de transporte, navega a zona de depósito, transfiere a posición depositar, abre el gripper, y retorna a posición de transporte.
 \end{itemize}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{imagenes/maquina_estados_supervisor.png}
-    \caption{Máquina de estados del nivel supervisor}
-    \label{fig:maquina_estados_supervisor}
+    \includegraphics[width=0.85\textwidth]{imagenes/workflow_procesos_supervisor.png}
+    \caption{Diagrama de flujo de los procesos principales del nivel supervisor}
+    \label{fig:workflow_procesos_supervisor}
 \end{figure}
 
-Las transiciones entre estados están reguladas por condiciones que garantizan seguridad y consistencia operacional. Las condiciones típicas incluyen verificación de sistema referenciado antes de movimientos, validación de posición dentro del workspace, disponibilidad de cámara, y compatibilidad de estado del brazo.
+Las secuencias verifican condiciones de seguridad antes de ejecutar acciones críticas: sistema referenciado antes de movimientos, posición del brazo compatible con desplazamientos XY, disponibilidad de cámara para captura, y límites del workspace respetados. Los errores durante ejecución (límite activado inesperadamente, pérdida de comunicación, fallo de captura) detienen el proceso y preservan el estado para diagnóstico.

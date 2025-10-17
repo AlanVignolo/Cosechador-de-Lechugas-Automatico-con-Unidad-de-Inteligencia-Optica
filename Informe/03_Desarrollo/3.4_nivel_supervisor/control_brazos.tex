@@ -22,34 +22,39 @@ Depositar & 90° & 20° & Abierto & Liberación sobre contenedor \\
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.4\textwidth}
+    % Fila superior
+    \begin{subfigure}[b]{0.35\textwidth}
         \centering
         \includegraphics[width=\textwidth]{imagenes/brazo_movimiento.png}
         \caption{Posición Movimiento}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.4\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{imagenes/brazo_recoger.png}
-        \caption{Posición Recoger}
-    \end{subfigure}
-
-    \vspace{0.5cm}
-
-    \begin{subfigure}[b]{0.4\textwidth}
+    \begin{subfigure}[b]{0.35\textwidth}
         \centering
         \includegraphics[width=\textwidth]{imagenes/brazo_transportar.png}
         \caption{Posición Transportar}
     \end{subfigure}
+
+    % Espacio moderado entre filas
+    \vspace{0.25cm}
+
+    % Fila inferior
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imagenes/brazo_recoger.png}
+        \caption{Posición Recoger}
+    \end{subfigure}
     \hfill
-    \begin{subfigure}[b]{0.4\textwidth}
+    \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{imagenes/brazo_depositar.png}
         \caption{Posición Depositar}
     \end{subfigure}
+
     \caption{Cuatro posiciones operacionales del brazo robótico}
     \label{fig:posiciones_brazo}
 \end{figure}
+
 
 Las transiciones entre posiciones se ejecutan mediante interpolación lineal de ángulos. Dada una transición desde la posición A hacia la posición B, el sistema genera una trayectoria continua dividida en puntos intermedios muestreados cada 50ms durante un período $T$ de 1 a 3 segundos. Para cada servomotor $i$, el ángulo en el instante $t$ se calcula según:
 

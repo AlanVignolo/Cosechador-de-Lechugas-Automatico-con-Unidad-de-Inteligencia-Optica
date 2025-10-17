@@ -1,8 +1,10 @@
-El algoritmo de detección de tubos implementa una secuencia de cinco etapas que progresivamente extraen y refinan información estructural hasta identificar las líneas características.
+\subsubsection{Algoritmo de Detección de Tubos}
+
+El algoritmo de detección de tubos implementa una secuencia de cuatro etapas que progresivamente extraen y refinan información estructural hasta identificar las coordenadas de los bordes del tubo.
 
 \textbf{Etapa 1: Detección de Bordes mediante Canny}
 
-La primera etapa aplica el algoritmo de Canny, fundamentado teóricamente en la Sección 2.2.1 del marco teórico. El proceso inicia convirtiendo la imagen RGB a escala de grises y aplicando filtrado gaussiano con kernel de $5 \times 5$ píxeles para reducción de ruido. Sobre la imagen suavizada se calculan los gradientes de intensidad mediante operadores de Sobel.
+La primera etapa aplica el algoritmo de Canny, fundamentado teóricamente en la Sección 2.2.1 del marco teórico. El proceso inicia convirtiendo la imagen RGB a escala de grises y aplicando filtrado gaussiano con elemento estructurante de $5 \times 5$ píxeles para reducción de ruido. Sobre la imagen suavizada se calculan los gradientes de intensidad mediante operadores de Sobel.
 
 La supresión de no-máximos adelgaza los bordes candidatos, preservando únicamente píxeles que son máximos locales en la dirección perpendicular al gradiente. Finalmente, la doble umbralización con histéresis clasifica píxeles en bordes fuertes y débiles. Los parámetros de umbralización se establecieron como $T_{bajo} = 20$ y $T_{alto} = 172$ tras experimentación empírica, valores que maximizan la detección de los bordes sutiles del tubo minimizando falsos positivos de ruido.
 
@@ -56,15 +58,15 @@ La orientación vertical del kernel (mayor altura que ancho) favorece la conexi�
 \label{fig:proceso_tubos}
 \end{figure}
 
-\textbf{Etapa 4: detección de contornos y scoring}
+\textbf{Etapa 4: Detección de Contornos y Evaluación Ponderada}
 
 Sobre la imagen de bordes refinados se ejecuta el algoritmo de detección de contornos de Suzuki-Abe. Los contornos detectados se filtran aplicando criterio de área mínima de 250 píxeles, eliminando pequeñas regiones de ruido residual.
 
 Para cada contorno que supera el filtrado de área se calcula su rectángulo delimitador y se evalúa la relación de aspecto $AR = w/h$. Los tubos, al observarse desde una perspectiva frontal, presentan geometría predominantemente vertical, resultando en relaciones de aspecto $AR < 0.9$. Contornos con $AR \geq 0.9$ se descartan por corresponder a elementos horizontales o cuadrados.
 
-Los contornos candidatos (verticales) se someten a un sistema de scoring que evalúa simultáneamente tres criterios. El primer criterio considera la relación de aspecto: valores $AR < 0.5$ (fuertemente verticales) reciben 35 puntos, valores $0.5 \leq AR < 0.7$ reciben 25 puntos, y valores $0.7 \leq AR < 0.9$ reciben 15 puntos. El segundo criterio evalúa el área normalizada del contorno, favoreciendo áreas intermedias consistentes con el tamaño esperado del tubo. El tercer criterio analiza la homogeneidad de la saturación dentro de la región delimitada: regiones con baja desviación estándar de saturación (color uniforme) reciben puntuación mayor.
+Los contornos candidatos (verticales) se someten a un sistema de evaluación que pondera simultáneamente cuatro criterios. El primer criterio considera la relación de aspecto: valores $AR < 0.5$ (fuertemente verticales) aportan 35 puntos, valores $0.5 \leq AR < 0.7$ aportan 25 puntos, y valores $0.7 \leq AR < 0.9$ aportan 15 puntos. El segundo criterio evalúa las dimensiones del rectángulo delimitador: anchos entre 15-80 píxeles y alturas entre 30-150 píxeles (consistentes con tubos a distancia típica) aportan 25 puntos. El tercer criterio analiza la saturación media dentro de la región: valores menores a 35 (tubo blanco de baja saturación) aportan hasta 50 puntos. El cuarto criterio considera la posición horizontal del centroide: contornos cercanos al centro de la imagen (desviación menor al 25\% del ancho) aportan 20 puntos.
 
-El contorno con mayor puntuación total se selecciona como el tubo objetivo.
+El contorno con mayor puntuación total se selecciona como el tubo objetivo. Sus coordenadas Y superior e inferior se extraen directamente del rectángulo delimitador.
 
 \begin{figure}[b]{0.48\textwidth}
     \centering
@@ -74,8 +76,6 @@ El contorno con mayor puntuación total se selecciona como el tubo objetivo.
 
 \subsubsection{Consideraciones de Robustez}
 
-El algoritmo implementa mecanismos de validación para garantizar robustez ante casos ambiguos. Cuando no se detectan contornos válidos (ningún contorno cumple los criterios de área, relación de aspecto y scoring), el sistema retorna valores nulos indicando ausencia de tubo en el campo de visión. Esto ocurre naturalmente cuando el robot se posiciona entre tubos o cuando las condiciones de iluminación son extremadamente deficientes.
+El algoritmo implementa mecanismos de validación para garantizar robustez ante casos ambiguos. Cuando no se detectan contornos válidos (ningún contorno cumple los criterios de área, relación de aspecto y evaluación ponderada), el sistema retorna valores nulos indicando ausencia de tubo en el campo de visión. Esto ocurre naturalmente cuando el robot se posiciona entre tubos o cuando las condiciones de iluminación son extremadamente deficientes.
 
-Cuando se detectan múltiples contornos candidatos con puntuaciones similares (diferencia menor al 10 por ciento), el sistema genera una advertencia de detección ambigua pero procede seleccionando el contorno de mayor score. Esta situación puede ocurrir cuando hay elementos estructurales del invernadero (postes, soportes) que presentan geometría y propiedades cromáticas similares a los tubos.
-
-El tiempo total de procesamiento del pipeline completo es de aproximadamente 120 milisegundos, desglosado en: conversión a escala de grises y filtrado gaussiano (12 ms), detección de bordes Canny (35 ms), conversión a HSV y extracción de canal S (15 ms), umbralización y operación AND (8 ms), morfología de cierre (18 ms), detección de contornos (20 ms), y cálculo de scoring y extracción de coordenadas (12 ms).
+Cuando se detectan múltiples contornos candidatos con puntuaciones similares (diferencia menor al 10 por ciento), el sistema genera una advertencia de detección ambigua pero procede seleccionando el contorno de mayor puntuación. Esta situación puede ocurrir cuando hay elementos estructurales del invernadero (postes, soportes) que presentan geometría y propiedades cromáticas similares a los tubos.

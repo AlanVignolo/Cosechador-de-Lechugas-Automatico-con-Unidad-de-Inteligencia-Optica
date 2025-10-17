@@ -37,7 +37,7 @@ L? & - & Estado de finales de carrera & \texttt{<L?>} \\
 \hline
 S & - & Emergency stop (inmediato) & \texttt{<S>} \\
 \hline
-HB & 1 & Heartbeat (keep-alive) & \texttt{<HB:1>} \\
+HB & 1 & Señal de sincronización periódica & \texttt{<HB:1>} \\
 \hline
 \end{tabular}
 \caption{Comandos UART del Nivel Regulatorio}
@@ -67,4 +67,4 @@ El firmware genera dos tipos de respuestas: comandos exitosos retornan mensajes 
 \label{tab:eventos_asincronos}
 \end{table}
 
-El firmware utiliza un parser basado en máquina de estados que almacena bytes en buffer circular de 256 bytes. Cuando detecta los delimitadores, analiza y ejecuta el comando, enviando la respuesta inmediatamente.
+El firmware utiliza un analizador sintáctico basado en máquina de estados que almacena bytes en buffer circular de 256 bytes. Cuando detecta los delimitadores, analiza y ejecuta el comando, enviando la respuesta inmediatamente.
