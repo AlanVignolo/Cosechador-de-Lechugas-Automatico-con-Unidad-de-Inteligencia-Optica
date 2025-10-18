@@ -37,7 +37,7 @@ El sistema vertical demostró un movimiento fluido en todo su rango de operació
 Las pruebas del robot serie se enfocaron en dos aspectos críticos:
 
 \begin{itemize}
-    \item \textbf{Verificación de movimiento de servomotores:} Se comandaron las tres articulaciones del brazo a diferentes ángulos para validar el rango de movimiento y la precisión de posicionamiento angular de cada servomotor.
+    \item \textbf{Verificación de movimiento de servomotores:} Se comandaron las dos articulaciones del brazo a diferentes ángulos para validar el rango de movimiento y la precisión de posicionamiento angular de cada servomotor.
     \item \textbf{Detección de vibraciones:} Se evaluó la presencia de oscilaciones mecánicas durante el movimiento y al sostener cargas, identificando la flexibilidad del material como fuente de vibraciones indeseadas.
 \end{itemize}
 
@@ -75,7 +75,7 @@ Para evaluar la consistencia del sistema de visión, se realizaron pruebas de re
     \item Cálculo de la tasa de detecciones correctas respecto al total de intentos
 \end{itemize}
 
-Se tomaron 50 casos de prueba diferentes, cada uno repetido 10 veces. El análisis reveló que el sistema mantuvo una consistencia del 88\% en las detecciones repetidas, indicando un comportamiento estable y predecible del algoritmo de visión.
+Se tomaron 25 casos de prueba diferentes, cada uno repetido 10 veces. El análisis reveló que el sistema mantuvo una consistencia del 88\% en las detecciones repetidas, indicando un comportamiento estable y predecible del algoritmo de visión.
 
 \subsection{Pruebas del sistema de control}
 
@@ -91,14 +91,14 @@ Se realizaron pruebas de posicionamiento sin realimentación visual, comparando 
     \item Identificar errores sistemáticos o acumulativos
 \end{itemize}
 
-Los resultados mostraron un error promedio de posicionamiento de 1 $\%$ tanto en el eje horizontal como en el vertical, valores considerados aceptables para la aplicación. No se detectaron errores acumulativos significativos en recorridos largos.
+Los resultados mostraron un error promedio de posicionamiento de 1 $\%$ tanto en el eje horizontal como en el vertical, valores considerados aceptables para la aplicación. No se detectaron errores acumulativos significativos en recorridos largos y ni a lo largo del tiempo.
 
 \subsubsection{Posicionamiento con realimentación visual}
 
 Una vez validado el posicionamiento mecánico, se integraron las coordenadas proporcionadas por el sistema de inteligencia artificial. Las pruebas consistieron en:
 
 \begin{itemize}
-    \item Detección de la posición de una lechuga mediante visión artificial
+    \item Detección de la posición de la cinta de referencia mediante visión artificial
     \item Comando de movimiento hacia las coordenadas detectadas
     \item Verificación visual del correcto agarre de la lechuga por el efector final
 \end{itemize}
@@ -111,11 +111,10 @@ Se evaluó la efectividad del efector final tipo pinza para sujetar lechugas de 
 
 \begin{itemize}
     \item Agarre de lechugas con diferentes grados de madurez (tamaños variables)
-    \item Verificación de la fuerza de sujeción adecuada (suficiente para sostener, sin dañar)
     \item Estabilidad del agarre durante el movimiento vertical y horizontal
 \end{itemize}
 
-La pinza mostró un desempeño adecuado para lechugas de tamaño medio a grande. En lechugas muy pequeñas o con hojas muy dispersas, la efectividad del agarre disminuyó, requiriendo ajustes en la estrategia de aproximación.
+La pinza mostró un desempeño adecuado para lechugas de tamaño medio a grande. Se distinguieron algunos inconvenientes en el agarre cuando las hojas de las lechugas caian de forma dispersa alrededor del vaso.
 
 \subsubsection{Optimización de posiciones de toma y deja}
 
@@ -134,10 +133,9 @@ Se verificó el correcto funcionamiento de los finales de carrera instalados en 
 \begin{itemize}
     \item Activación física de cada sensor al alcanzar los límites mecánicos
     \item Respuesta del sistema de control ante la activación (detención inmediata del motor correspondiente)
-    \item Protocolo de recuperación tras activación accidental de un final de carrera
 \end{itemize}
 
-Todos los sensores respondieron correctamente, deteniendo el movimiento del eje correspondiente de forma inmediata. El sistema implementó rutinas de recuperación que permitieron retomar la operación normal tras un evento de límite de carrera.
+Todos los sensores respondieron correctamente, deteniendo el movimiento del eje correspondiente de forma inmediata.
 
 \subsubsection{Definición de dimensiones de la estructura}
 
@@ -164,18 +162,4 @@ Se ejecutaron ciclos completos de operación que integraron todos los subsistema
     \end{itemize}
 \end{enumerate}
 
-Las pruebas de ciclo completo permitieron identificar tiempos de operación, tasas de éxito global del sistema (detección + posicionamiento + agarre) y puntos críticos en la secuencia de movimientos. 
-
-\subsubsection{Integración de detecciones múltiples}
-
-Se validó la capacidad del sistema para gestionar múltiples detecciones en un solo escaneo:
-
-\begin{itemize}
-    \item Detección de tubos en toda el área de trabajo (mapeado completo)
-    \item Identificación de múltiples lechugas en diferentes posiciones
-    \item Planificación de trayectoria óptima para minimizar desplazamientos
-    \item Ejecución secuencial de cosecha de múltiples unidades
-\end{itemize}
-
-El sistema demostró capacidad para procesar y gestionar múltiples objetivos, optimizando el recorrido para reducir movimientos innecesarios.
-
+Las pruebas de ciclo completo permitieron identificar tasas de éxito global del sistema (detección + posicionamiento + agarre) y puntos críticos en la secuencia de movimientos. 

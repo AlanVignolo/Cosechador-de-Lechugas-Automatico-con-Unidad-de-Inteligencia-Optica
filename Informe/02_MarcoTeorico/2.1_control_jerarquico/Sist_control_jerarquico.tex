@@ -1,4 +1,4 @@
-El marco teórico de los sistemas de control jerárquicos (SCH) se sustenta en el principio de descomposición-coordinación para la gestión de sistemas dinámicos complejos de alta dimensionalidad. Este enfoque se basa en la conceptualización de un sistema global como un conjunto de subsistemas o niveles de control interconectados. Estos niveles se organizan verticalmente, lo que permite una asignación específica de tareas basada en la prioridad decisional, el alcance operacional y el horizonte temporal de control, resultando en una mejora significativa de la eficiencia, confiabilidad y adaptabilidad del sistema integral.
+El marco teórico de los sistemas de control jerárquicos se sustenta en el principio de descomposición-coordinación para la gestión de sistemas dinámicos complejos de alta dimensionalidad. Este enfoque se basa en la conceptualización de un sistema global como un conjunto de subsistemas o niveles de control interconectados. Estos niveles se organizan verticalmente, lo que permite una asignación específica de tareas basada en la prioridad decisional, el alcance operacional y el horizonte temporal de control, resultando en una mejora significativa de la eficiencia, confiabilidad y adaptabilidad del sistema integral.
 
 Un sistema de control jerárquico constituye, fundamentalmente, una estructura de control distribuida. La acción de control final es el resultado de una secuencia de decisiones concatenadas a lo largo de la pirámide, donde la información y las consignas fluyen verticalmente desde los niveles superiores hacia los inferiores, mientras que los datos de estado y realimentación fluyen en sentido ascendente. Este flujo bidireccional de información permite que los niveles superiores tomen decisiones estratégicas basadas en el estado global del sistema, mientras que los niveles inferiores ejecutan acciones de control local con alta frecuencia y precisión.
 
@@ -15,7 +15,7 @@ La estructura jerárquica se diferencia rigurosamente por las funciones, la frec
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{img/jerarquia_control.png}
+    \includegraphics[width=0.8\textwidth]{img/jerarquia_control.jpg}
     \caption{Estructura piramidal de un sistema de control jerárquico mostrando los tres niveles, sus horizontes temporales y el flujo bidireccional de información (consignas descendentes y estado ascendente).}
     \label{fig:jerarquia_control}
 \end{figure}
@@ -28,4 +28,3 @@ La adopción de una arquitectura de control jerárquica ofrece ventajas distinti
 \end{itemize}
 Es crucial diferenciar el control jerárquico del control centralizado puro. Aunque el flujo de información y comando es vertical, el control jerárquico opera bajo un paradigma de control distribuido. El nivel superior impone únicamente las metas u objetivos macro, mientras que la implementación, la corrección de errores en corto plazo y la gestión de la dinámica local son responsabilidades inherentes y autónomas de los controladores ubicados en los niveles inferiores. Esta distribución de responsabilidades permite que cada nivel opere con la frecuencia y detalle apropiado a su función, evitando la saturación computacional característica de los sistemas centralizados.
 
-En el contexto de sistemas robóticos de manufactura y cosecha automatizada, la arquitectura jerárquica resulta especialmente apropiada. El nivel supervisor coordina tareas de alto nivel como planificación de trayectorias, gestión de secuencias operativas y toma de decisiones basadas en visión artificial. Simultáneamente, el nivel regulatorio ejecuta control de movimiento en tiempo real, generación de perfiles de velocidad y gestión de señales de seguridad (finales de carrera, sensores de colisión), garantizando la respuesta inmediata necesaria para la estabilidad y protección del sistema físico.

@@ -1,8 +1,8 @@
-\subsection{Clasificación Basada en Análisis Morfológico}
+\subsection{Clasificación basada en análisis morfológico}
 
 La clasificación morfológica de objetos utiliza características geométricas y estadísticas extraídas de contornos e imágenes para asignar categorías a elementos detectados. A diferencia de métodos de aprendizaje profundo que requieren extensos conjuntos de entrenamiento y elevada capacidad computacional, este enfoque se fundamenta en reglas explícitas derivadas del conocimiento del dominio y análisis estadístico de muestras representativas. El método resulta particularmente efectivo cuando las clases presentan diferenciación clara en características medibles como tamaño, forma o color, y cuando se dispone de entornos controlados donde las condiciones de captura son predecibles.
 
-\subsubsection{Clasificación por Umbrales sobre Descriptores}
+\subsubsection{Clasificación por umbrales sobre descriptores}
 
 El método más directo establece límites de decisión basados en valores de descriptores geométricos. Para un descriptor $d$ (como área, perímetro, o relación de aspecto) y un conjunto de clases $\mathcal{C} = \{c_1, c_2, ..., c_n\}$, la regla de clasificación se define mediante umbrales $t_0, t_1, ..., t_n$ que particionan el espacio de características:
 
@@ -12,7 +12,7 @@ El método más directo establece límites de decisión basados en valores de de
 
 donde $x$ es el objeto a clasificar y $d(x)$ su valor de descriptor.
 
-Para objetos que se diferencian principalmente por tamaño, el área en píxeles constituye un descriptor efectivo. La robustez del método depende de la \textbf{separabilidad entre clases}: la distancia entre centroides de clases adyacentes debe ser significativa respecto a la dispersión intra-clase para minimizar errores de clasificación. Matemáticamente, se busca que:
+Para objetos que se diferencian principalmente por tamaño, el área en píxeles constituye un descriptor efectivo. La robustez del método depende de la separabilidad entre clases: la distancia entre centroides de clases adyacentes debe ser significativa respecto a la dispersión intra-clase para minimizar errores de clasificación. Matemáticamente, se busca que:
 
 \begin{equation}
 |\mu_i - \mu_{i+1}| \gg \sigma_i + \sigma_{i+1}
@@ -34,7 +34,7 @@ t_i^* = \frac{\mu_i + \mu_{i+1}}{2}
 
 Este criterio resulta de igualar las densidades de probabilidad gaussianas de ambas clases y resolver para el punto de intersección.
 
-\subsubsection{Clasificación Multi-Criterio con Distancia Normalizada}
+\subsubsection{Clasificación multi-criterio con distancia normalizada}
 
 Cuando un único descriptor no proporciona separabilidad suficiente, se emplean múltiples características simultáneamente. Un enfoque común combina descriptores geométricos con información de color o textura. Dado un contorno detectado, se pueden calcular múltiples características como:
 
@@ -44,7 +44,7 @@ r_{color} = \frac{N_{píxeles\_color\_objetivo}}{N_{píxeles\_totales}}, \quad I
 
 donde $N$ es el número total de píxeles en la región $R$ delimitada por el contorno, $N_{píxeles\_color\_objetivo}$ es el número de píxeles que satisfacen un criterio de color específico, e $I(x,y)$ es la intensidad del píxel.
 
-Cada objeto se representa como un vector en el espacio de características $\mathbf{x} = [d_1, d_2, ..., d_m]^T$ donde cada $d_j$ es un descriptor (área, relación de aspecto, ratio de color, intensidad media, etc.). Para cada clase $c_i$, se define un \textbf{prototipo} mediante las medias $\boldsymbol{\mu}_i = [\mu_{1,i}, \mu_{2,i}, ..., \mu_{m,i}]^T$ y desviaciones estándar $\boldsymbol{\sigma}_i = [\sigma_{1,i}, \sigma_{2,i}, ..., \sigma_{m,i}]^T$ calculadas sobre un conjunto de muestras representativas (conjunto de entrenamiento).
+Cada objeto se representa como un vector en el espacio de características $\mathbf{x} = [d_1, d_2, ..., d_m]^T$ donde cada $d_j$ es un descriptor (área, relación de aspecto, ratio de color, intensidad media, etc.). Para cada clase $c_i$, se define un prototipo mediante las medias $\boldsymbol{\mu}_i = [\mu_{1,i}, \mu_{2,i}, ..., \mu_{m,i}]^T$ y desviaciones estándar $\boldsymbol{\sigma}_i = [\sigma_{1,i}, \sigma_{2,i}, ..., \sigma_{m,i}]^T$ calculadas sobre un conjunto de muestras representativas (conjunto de entrenamiento).
 
 La clasificación de un objeto nuevo se realiza calculando su distancia normalizada a cada prototipo de clase. La normalización por desviación estándar garantiza que descriptores con diferentes rangos contribuyan equitativamente:
 
@@ -66,13 +66,13 @@ La confianza de la clasificación se estima mediante la relación entre distanci
 
 donde $D_{min}$ es la distancia a la clase predicha y $D_{max}$ la distancia a la clase más lejana. Valores cercanos a 1 indican alta confianza (objeto claramente perteneciente a una clase); valores cercanos a 0.5 sugieren ambigüedad (objeto equidistante entre clases). Esta información de confianza puede emplearse en el nivel supervisor para implementar estrategias de verificación adicional cuando la clasificación es incierta.
 
-\subsubsection{Ventajas y Limitaciones del Enfoque}
+\subsubsection{Ventajas y limitaciones del enfoque}
 
-\textbf{Resumen:}
+Resumen:
 
-El enfoque morfológico para clasificación presenta \textbf{ventajas significativas} como su interpretabilidad (reglas explícitas), eficiencia computacional (funciona en tiempo real sin GPUs), requisitos mínimos de datos (decenas vs miles de imágenes), control directo de parámetros y bajo costo de implementación.
+El enfoque morfológico para clasificación presenta ventajas significativas como su interpretabilidad (reglas explícitas), eficiencia computacional (funciona en tiempo real sin GPUs), requisitos mínimos de datos (decenas vs miles de imágenes), control directo de parámetros y bajo costo de implementación.
 
-Sin embargo, tiene \textbf{limitaciones importantes}: requiere diseño manual de características con conocimiento experto, tiene capacidad expresiva limitada para patrones complejos, es sensible a variaciones de iluminación y perspectiva, y funciona mejor solo con 2-5 categorías bien diferenciadas, degradándose con más clases o cuando hay solapamiento entre ellas.
+Sin embargo, tiene limitaciones importantes: requiere diseño manual de características con conocimiento experto, tiene capacidad expresiva limitada para patrones complejos, es sensible a variaciones de iluminación y perspectiva, y funciona mejor solo con 2-5 categorías bien diferenciadas, degradándose con más clases o cuando hay solapamiento entre ellas.
 
 En esencia: es un método eficiente, interpretable y económico para problemas de clasificación simples en entornos controlados, pero carece de la flexibilidad y capacidad de generalización del aprendizaje profundo.
 

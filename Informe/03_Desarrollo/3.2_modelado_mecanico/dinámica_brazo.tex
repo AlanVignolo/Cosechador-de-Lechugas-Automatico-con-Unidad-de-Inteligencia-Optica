@@ -31,7 +31,7 @@ El sistema consiste en dos eslabones rígidos conectados en serie mediante artic
 \end{itemize}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth]{img/DCL_brazo.png}
+    \includegraphics[width=0.4\textwidth]{img/DCL_brazo.png}
     \caption{\textit{Diagrama cinemático y de eslabones del manipulador robótico planar}}
     \label{fig:DCL_brazo}
 \end{figure}
@@ -207,52 +207,3 @@ Aplicando las ecuaciones de Euler-Lagrange $\tau_i = \frac{d}{dt}\left(\frac{\pa
 \tau_2 = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(\theta_1 - \theta_2) + m_2L_1l_2\dot{\theta}_1^2\sin(\theta_1 - \theta_2) + gm_2l_2\cos(\theta_2)
 \label{ec:torqueT2}
 \end{multline}
-
-\subsubsection{Forma Matricial de las Ecuaciones}
-
-Las ecuaciones de movimiento pueden expresarse en forma matricial compacta:
-\begin{equation}
-\mathbf{M}(\boldsymbol{\theta})\ddot{\boldsymbol{\theta}} + \mathbf{C}(\boldsymbol{\theta}, \dot{\boldsymbol{\theta}})\dot{\boldsymbol{\theta}} + \mathbf{G}(\boldsymbol{\theta}) = \boldsymbol{\tau}
-\end{equation}
-
-donde:
-\begin{itemize}
-    \item $\mathbf{M}(\boldsymbol{\theta})$ es la matriz de inercia (simétrica y definida positiva)
-    \item $\mathbf{C}(\boldsymbol{\theta}, \dot{\boldsymbol{\theta}})$ contiene los términos de Coriolis y centrífugos
-    \item $\mathbf{G}(\boldsymbol{\theta})$ es el vector de términos gravitacionales
-    \item $\boldsymbol{\tau} = [\tau_1, \tau_2]^T$ es el vector de torques aplicados
-\end{itemize}
-
-\textbf{Matriz de Inercia:}
-\begin{equation}
-\mathbf{M} = \begin{bmatrix}
-m_1l_1^2 + m_2L_1^2 + I_1 & m_2L_1l_2\cos(\theta_1 - \theta_2) \\
-m_2L_1l_2\cos(\theta_1 - \theta_2) & m_2l_2^2 + I_2
-\end{bmatrix}
-\end{equation}
-
-\textbf{Vector de Coriolis y centrífugos:}
-\begin{equation}
-\mathbf{C}\dot{\boldsymbol{\theta}} = \begin{bmatrix}
--m_2L_1l_2\sin(\theta_1 - \theta_2)\dot{\theta}_2^2 \\
-m_2L_1l_2\sin(\theta_1 - \theta_2)\dot{\theta}_1^2
-\end{bmatrix}
-\end{equation}
-
-\textbf{Vector gravitacional:}
-\begin{equation}
-\mathbf{G} = \begin{bmatrix}
--g(m_1l_1 + m_2L_1)\cos(\theta_1) \\
--gm_2l_2\cos(\theta_2)
-\end{bmatrix}
-\end{equation}
-
-Las ecuaciones obtenidas presentan las siguientes características físicas relevantes:
-
-\begin{enumerate}
-    \item \textbf{Acoplamiento dinámico}: Los términos fuera de la diagonal en la matriz de inercia ($m_2L_1l_2\cos(\theta_1 - \theta_2)$) indican que el movimiento de una articulación afecta directamente a la otra. Este acoplamiento es más fuerte cuando los eslabones están alineados ($\theta_1 \approx \theta_2$) y se debilita cuando son perpendiculares. 
-    \item \textbf{Efectos centrífugos}: Los términos proporcionales a $\dot{\theta}_i^2$ representan fuerzas centrífugas que dependen de las velocidades angulares al cuadrado.
-    \item \textbf{Efectos de Coriolis}: Los términos de acoplamiento entre velocidades reflejan las fuerzas de Coriolis que surgen cuando ambas articulaciones se mueven simultáneamente.
-    \item \textbf{Efectos gravitacionales}: Los términos gravitacionales son proporcionales al coseno de los ángulos, lo que indica que el torque gravitacional es máximo cuando los eslabones están horizontales y nulo cuando están verticales.
-\end{enumerate}
-

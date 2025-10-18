@@ -1,60 +1,21 @@
-\subsection{Detección de Bordes y Líneas}
+\subsection{Detección de bordes}
 
-La detección de bordes identifica transiciones abruptas de intensidad en imágenes, correspondientes a límites entre objetos o regiones con propiedades visuales distintas. Estos bordes representan características estructurales fundamentales para reconocimiento de formas, medición dimensional y localización de elementos en el espacio. En aplicaciones de robótica agrícola, la detección de bordes permite identificar límites de tubos de cultivo, bordes de recipientes y estructuras de soporte sin depender exclusivamente del color o textura.
+La detección de bordes identifica transiciones abruptas de intensidad en imágenes, correspondientes a límites entre objetos o regiones con propiedades visuales distintas. En aplicaciones de robótica agrícola, la detección de bordes permite identificar límites de tubos de cultivo y estructuras de soporte.
 
 \subsubsection{Algoritmo de Canny}
 
-El algoritmo de Canny, propuesto por John Canny en 1986, constituye uno de los métodos más efectivos y ampliamente utilizados para detección de bordes. El algoritmo se fundamenta en tres criterios de optimización: buena detección (baja tasa de falsos positivos y negativos), buena localización (bordes detectados próximos a los bordes reales), y respuesta única (un único punto de borde por cada borde real). La implementación sigue una secuencia de cinco etapas que progresivamente refinan la información hasta obtener bordes delgados y precisos.
+El algoritmo de Canny constituye uno de los métodos más efectivos para detección de bordes. Se fundamenta en tres criterios: buena detección (baja tasa de falsos positivos y negativos), buena localización (bordes detectados próximos a los bordes reales), y respuesta única (un único punto de borde por cada borde real).
 
-\textbf{Reducción de Ruido mediante Filtrado Gaussiano}
-
-La primera etapa aplica un filtro gaussiano bidimensional para suavizar la imagen y reducir ruido que podría generar bordes espurios. El kernel gaussiano se define como:
+El algoritmo aplica primero un filtro gaussiano bidimensional para suavizar la imagen y reducir ruido:
 
 \begin{equation}
 G(x,y) = \frac{1}{2\pi\sigma^2} e^{-\frac{x^2 + y^2}{2\sigma^2}}
 \end{equation}
 
-donde $\sigma$ controla el grado de suavizado. La imagen suavizada $I_s$ resulta de la convolución: $I_s = I \ast G$. Valores típicos de $\sigma$ entre 1.0 y 1.5 proporcionan balance entre reducción de ruido y preservación de bordes genuinos.
-
-\textbf{Cálculo de Gradientes}
-
-La segunda etapa calcula la magnitud y dirección del gradiente de intensidad en cada píxel. El gradiente se aproxima mediante operadores de Sobel:
+donde $\sigma$ controla el grado de suavizado. La imagen suavizada resulta de la convolución: $I_s = I \ast G$. Luego calcula la magnitud y dirección del gradiente de intensidad mediante operadores de Sobel:
 
 \begin{equation}
 G_x = \begin{bmatrix} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1 \end{bmatrix} \ast I_s, \quad G_y = \begin{bmatrix} 1 & 2 & 1 \\ 0 & 0 & 0 \\ -1 & -2 & -1 \end{bmatrix} \ast I_s
 \end{equation}
 
-La magnitud del gradiente $M = \sqrt{G_x^2 + G_y^2}$ indica la fuerza del borde, mientras que la dirección $\theta = \arctan(G_y/G_x)$ indica su orientación. Píxeles con alta magnitud de gradiente son candidatos a pertenecer a bordes.
-
-\textbf{Supresión de No Máximos}
-
-La tercera etapa adelgaza los bordes candidatos preservando únicamente píxeles que son máximos locales en la dirección del gradiente. Para cada píxel, se compara su magnitud de gradiente con la de sus dos vecinos en dirección perpendicular al borde. Si la magnitud del píxel no es mayor que ambos vecinos, se descarta. Esta operación garantiza que los bordes tengan grosor de un píxel, mejorando la localización.
-
-\textbf{Doble Umbralización con Histéresis}
-
-La cuarta etapa aplica dos umbrales para clasificar píxeles en tres categorías: bordes fuertes (magnitud > umbral alto), bordes débiles (magnitud entre umbral bajo y alto), y no bordes (magnitud < umbral bajo). Los bordes fuertes se aceptan inmediatamente. Los bordes débiles se aceptan únicamente si están conectados directa o indirectamente a un borde fuerte, mediante un algoritmo de seguimiento de contornos. Esta estrategia de histéresis reduce falsos positivos permitiendo que bordes genuinos con secciones débiles sean preservados, mientras que bordes débiles aislados (probablemente ruido) son rechazados.
-
-La relación típica entre umbrales es $T_{alto} = 2 \cdot T_{bajo}$ o $3 \cdot T_{bajo}$, estableciéndose los valores absolutos experimentalmente según las características de la imagen. Para imágenes con buena iluminación, valores típicos como $T_{bajo} = 50$ y $T_{alto} = 150$ (en escala 0-255) suelen resultar efectivos.
-
-\subsubsection{Transformada de Hough para Detección de Líneas}
-
-Una vez detectados los bordes mediante Canny, la transformada de Hough permite identificar estructuras geométricas específicas como líneas rectas. El método se basa en representar cada punto de borde en un espacio de parámetros donde líneas rectas se manifiestan como puntos. Una línea recta en el espacio de imagen se parametriza mediante su distancia perpendicular al origen $\rho$ y el ángulo de la perpendicular $\theta$:
-
-\begin{equation}
-\rho = x \cos\theta + y \sin\theta
-\end{equation}
-
-Cada píxel de borde $(x_i, y_i)$ genera una curva sinusoidal en el espacio $(\theta, \rho)$ representando todas las líneas que podrían pasar por ese punto. Líneas colineales en el espacio de imagen producen curvas que se intersectan en un punto común del espacio de parámetros. Detectar estas intersecciones mediante acumulación de votos en un arreglo discretizado permite identificar las líneas presentes en la imagen.
-
-La transformada de Hough probabilística optimiza este proceso muestreando aleatoriamente puntos de borde en lugar de procesarlos todos, reduciendo significativamente el costo computacional manteniendo precisión adecuada. El algoritmo retorna los puntos extremos de los segmentos de línea detectados, permitiendo filtrar líneas por longitud mínima y separación máxima entre segmentos.
-
-\textbf{Parámetros de configuración:} Los parámetros clave de la transformada de Hough incluyen:
-\begin{itemize}
-\item \textbf{Resolución angular} ($\Delta\theta$): precisión en la discretización del ángulo
-\item \textbf{Resolución de distancia} ($\Delta\rho$): precisión en la discretización de la distancia
-\item \textbf{Umbral de votos}: número mínimo de puntos de borde que deben alinearse para considerar una línea válida
-\item \textbf{Longitud mínima}: filtro para descartar segmentos de línea muy cortos
-\item \textbf{Gap máximo}: distancia máxima permitida entre segmentos para considerarlos parte de la misma línea
-\end{itemize}
-
-La combinación de Canny y Hough constituye una herramienta fundamental para detectar estructuras rectilíneas en imágenes, aplicable a múltiples dominios como detección de carriles en vehículos autónomos, inspección de piezas manufacturadas, y localización de estructuras geométricas regulares.
+La magnitud del gradiente $M = \sqrt{G_x^2 + G_y^2}$ indica la fuerza del borde. Posteriormente aplica supresión de no máximos para adelgazar los bordes, preservando únicamente píxeles que son máximos locales en la dirección del gradiente. Finalmente, usa doble umbralización con histéresis: los bordes fuertes (magnitud > umbral alto) se aceptan inmediatamente, mientras que los bordes débiles se aceptan únicamente si están conectados a un borde fuerte.

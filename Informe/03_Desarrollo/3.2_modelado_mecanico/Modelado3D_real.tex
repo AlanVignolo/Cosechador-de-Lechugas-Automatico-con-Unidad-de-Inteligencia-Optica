@@ -79,7 +79,7 @@ El soporte medio constituye el elemento móvil del eje vertical, desplazándose 
     \label{fig:soporte_medio_Real}
 \end{figure}
 
-El contrapeso ajustable permite compensar el momento generado por el brazo extendido, reduciendo las cargas laterales sobre las guías lineales y mejorando la precisión de posicionamiento vertical. El diseño modular facilita el reemplazo del brazo o la cámara sin necesidad de rediseñar el soporte completo.
+El contrapeso permite compensar el momento generado por el brazo extendido, reduciendo las cargas laterales sobre las guías lineales y mejorando la precisión de posicionamiento vertical. El diseño modular facilita el reemplazo del brazo o la cámara sin necesidad de rediseñar el soporte completo.
 
 \subsubsection{Soporte Inferior}
 
@@ -120,10 +120,8 @@ El efector final implementa un mecanismo de pinza paralela actuado mediante tran
 
 \begin{itemize}
     \item \textbf{Transmisión:} Sistema piñón-cremallera con relación 1:1, proporcionando movimiento sincronizado de ambas mordazas hacia el centro
-    \item \textbf{Rango de apertura:} 0-80 mm, adecuado para lechugas de tamaño pequeño a grande
-    \item \textbf{Fuerza de agarre:} Controlada mediante limitación de corriente del servomotor, evitando daño mecánico a los cultivos
+    \item \textbf{Rango de apertura:} 0-50 mm, adecuado para lechugas de tamaño pequeño a grande
     \item \textbf{Mordazas:} Geometría curva con superficie texturizada para mejorar fricción sin penetrar las hojas
-    \item \textbf{Resorte de retorno:} Sistema de resortes internos que garantiza apertura automática ante falla de alimentación
 \end{itemize}
 
 \begin{figure}[H]
@@ -144,15 +142,3 @@ El efector final implementa un mecanismo de pinza paralela actuado mediante tran
     \caption{Efector final tipo gripper con transmisión por piñón-cremallera para agarre adaptativo de lechugas.}
 \end{figure}
 
-\paragraph{Consideraciones de diseño para manipulación de cultivos}
-
-El agarre de lechugas presenta desafíos particulares debido a la estructura delicada y heterogénea de las hojas. El diseño implementa las siguientes soluciones:
-
-\begin{itemize}
-    \item Mordazas con geometría envolvente que distribuyen la fuerza de agarre sobre mayor superficie de contacto
-    \item Control de fuerza máxima mediante limitación de torque del servomotor
-    \item Superficies de contacto texturizadas que incrementan fricción sin elementos penetrantes
-    \item Velocidad de cierre controlada para evitar impactos bruscos
-\end{itemize}
-
-La combinación de estos elementos permite tasas de agarre exitoso superiores al 80\% en pruebas con lechugas de diferentes tamaños y configuraciones de hojas, como se detalla en la sección de pruebas experimentales del presente informe.
