@@ -2,7 +2,7 @@ El nivel supervisor constituye la capa de coordinación del sistema, responsable
 
 \textbf{Responsabilidades principales:}
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Planificación de secuencias}: Descompone tareas complejas (ej: "cosechar lechuga en posición X,Y") en secuencias ordenadas de comandos básicos. Determina qué hacer primero, qué condiciones verificar, y cómo responder ante eventos inesperados.
 
     \item \textbf{Gestión de estado global}: Mantiene información sobre el sistema que el nivel regulatorio no conoce: posición global acumulada desde el homing, dimensiones calibradas del workspace, mapas de ubicaciones de tubos y plantas, y estado del proceso en ejecución. Este estado se actualiza mediante callbacks que procesan mensajes asíncronos del firmware (STEPPER\_MOVE\_COMPLETED, LIMIT\_TRIGGERED).
@@ -142,7 +142,7 @@ Navega a cada posición registrada en matriz\_cintas.json, clasifica la planta, 
 
 Durante la ejecución de cualquier proceso, el supervisor monitorea eventos inesperados:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Límite activado inesperadamente}: Si recibe LIMIT\_TRIGGERED durante un movimiento que no debería alcanzar límites, detiene el proceso, registra el error, y preserva el estado para diagnóstico.
     \item \textbf{Pérdida de comunicación}: Si un comando no recibe respuesta en tiempo límite configurado (ej: 30s para movimientos largos), aborta el proceso e intenta re-establecer comunicación.
     \item \textbf{Fallo de detector}: Si un algoritmo de visión no retorna resultados válidos (ej: no detecta tubo esperado), registra la falla e intenta continuar con la siguiente posición, o solicita intervención del usuario según la severidad.

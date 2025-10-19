@@ -1,15 +1,13 @@
 \subsubsection{Dimensionamiento de servomotores}
 
-El brazo robótico diseñado para la cosecha de lechugas cuenta con dos grados de libertad, equivalentes a una articulación de hombro y una de codo. Para el dimensionamiento de los servomotores se utilizan las expresiones de torque obtenidas mediante el análisis dinámico por Euler-Lagrange, evaluadas en las configuraciones críticas de operación del sistema.
+El brazo robótico diseñado para la cosecha de lechugas cuenta con dos grados de libertad, equivalentes a una articulación de hombro y una de codo. Para el dimensionamiento de los servomotores se utilizan las expresiones de torque obtenidas mediante el análisis dinámico por Euler-Lagrange, evaluadas en las configuraciones críticas de operación del sistema.\\
 
-\paragraph{Parámetros del sistema}
+\underline{Parámetros del sistema}\\
 
 Los parámetros físicos y operacionales del brazo robótico se detallan en la Tabla \ref{tab:parametros_brazo}.
 
 \begin{table}[htbp]
 \centering
-\caption{Parámetros del brazo robótico}
-\label{tab:parametros_brazo}
 \begin{tabular}{lcc}
 \hline
 \textbf{Parámetro} & \textbf{Valor} & \textbf{Unidad} \\
@@ -26,15 +24,17 @@ Velocidad angular máxima ($\omega_{\max}$) & 45 & $^{\circ}$/s \\
 Tiempo de aceleración ($t_{ac}$) & 0.5 & s \\
 \hline
 \end{tabular}
+\caption{\textit{Parámetros del brazo robótico}}
+\label{tab:parametros_brazo}
 \end{table}
 
 Los momentos de inercia se calcularon considerando los eslabones como barras delgadas uniformes respecto a sus centros de masa: $I = \frac{1}{12}mL^2$.
 
 Del análisis dinámico desarrollado previamente, se tienen las expresiones \ref{ec:torqueT1} (hombro) y \ref{ec:torqueT2}(codo) para los torques en cada articulación:
 
-Estas ecuaciones capturan los efectos inerciales, de acoplamiento dinámico entre articulaciones, términos centrífugos y efectos gravitacionales.
+Estas ecuaciones capturan los efectos inerciales, de acoplamiento dinámico entre articulaciones, términos centrífugos y efectos gravitacionales. \\
 
-\paragraph{Configuraciones críticas de análisis}
+\underline{Configuraciones críticas de análisis}\\
 
 Para el dimensionamiento se consideran tres configuraciones críticas que representan las condiciones de carga más exigentes:
 
@@ -46,7 +46,7 @@ Para el dimensionamiento se consideran tres configuraciones críticas que repres
 
 \subsubsection{Cálculo de torque para la articulación 2 (codo)}
 
-\paragraph{Caso 1: Posición horizontal en reposo}
+\underline{Caso 1: Posición horizontal en reposo} \\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
 
@@ -56,28 +56,22 @@ La expresión de $\tau_2$ se reduce al término gravitacional:
 \tau_{2,est} = gm_2l_2\cos(\theta_2) = 9.81 \cdot 0.55 \cdot 0.125 \cdot \cos(0°) = 0.674 \, \text{N·m}
 \end{equation}
 
-\paragraph{Caso 2: Aceleración máxima}
+\underline{Caso 2: Aceleración máxima}\\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 1.57$ rad/s$^2$
 
-\begin{multline}
+\begin{equation}
 \tau_{2,din} = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(0) + gm_2l_2\cos(0)
-%= (0.55 \cdot 0.125^2 + 2.15 \times 10^{-5}) \cdot 1.57 + 0.55 \cdot 0.16 \cdot 0.125 \cdot 1.57 + 0.674 \\
-%= 8.59 \times 10^{-3} \cdot 1.57 + 1.1 \times 10^{-2} \cdot 1.57 + 0.674 \\
-%= 0.0135 + 0.0173 + 0.674 
 = 0.705 \, \text{N·m}
-\end{multline}
+\end{equation}
 
-\paragraph{Caso 3: Efectos centrífugos}
+\underline{Caso 3: Efectos centrífugos} \\
 
 Configuración: $\theta_1 = 45°$, $\theta_2 = 45°$, $\dot{\theta}_1 = 0.785$ rad/s, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
 
-\begin{multline}
-\tau_{2,cent} = m_2L_1l_2\dot{\theta}_1^2\sin(\theta_1 - \theta_2) + gm_2l_2\cos(\theta_2) 
-%= 0.55 \cdot 0.16 \cdot 0.125 \cdot (0.785)^2 \cdot \sin(0°) + 9.81 \cdot 0.55 \cdot 0.125 \cdot \cos(45°) \\
-%= 0 + 0.477 
-= 0.477 \, \text{N·m}
-\end{multline}
+\begin{equation}
+\tau_{2,cent} = m_2L_1l_2\dot{\theta}_1^2\sin(\theta_1 - \theta_2) + gm_2l_2\cos(\theta_2) = 0.477 \, \text{N·m}
+\end{equation}
 
 El torque máximo requerido para el codo es:
 
@@ -93,7 +87,7 @@ Aplicando un factor de seguridad de 1.5:
 
 \subsubsection{Cálculo de torque para la articulación 1 (hombro)}
 
-\paragraph{Caso 1: Posición horizontal en reposo}
+\underline{Caso 1: Posición horizontal en reposo} \\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
 
@@ -103,31 +97,25 @@ Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\thet
 = 1.098 \, \text{N·m}
 \end{equation}
 
-\paragraph{Caso 2: Aceleración máxima}
+\underline{Caso 2: Aceleración máxima} \\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 1.57$ rad/s$^2$
 
-\begin{multline}
-\tau_{1,din} = (m_1l_1^2 + m_2L_1^2 + I_1)\ddot{\theta}_1 + m_2L_1l_2\ddot{\theta}_2\cos(0) + g(m_1l_1 + m_2L_1)\cos(0)
-%= (0.15 \cdot 0.16^2 + 0.55 \cdot 0.16^2 + 3.2 \times 10^{-5}) \cdot 1.57 \\
-%+ 0.55 \cdot 0.16 \cdot 0.125 \cdot 1.57 + 1.098 \\
-%= (3.84 \times 10^{-3} + 1.408 \times 10^{-2} + 3.2 \times 10^{-5}) \cdot 1.57 + 1.73 \times 10^{-2} + 1.098 \\
-%= 1.824 \times 10^{-2} \cdot 1.57 + 1.73 \times 10^{-2} + 1.098 \\
-%= 0.0286 + 0.0173 + 1.098 
-= 1.144 \, \text{N·m}
-\end{multline}
+\begin{equation}
+\tau_{1,din} = (m_1l_1^2 + m_2L_1^2 + I_1)\ddot{\theta}_1 + m_2L_1l_2\ddot{\theta}_2\cos(0) + g(m_1l_1 + m_2L_1)\cos(0) = 1.144 \, \text{N·m}
+\end{equation}
 
-\paragraph{Caso 3: Efectos centrífugos}
+\underline{Caso 3: Efectos centrífugos} \\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 45°$, $\dot{\theta}_2 = 0.785$ rad/s, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
 
-\begin{multline}
+\begin{equation}
 \tau_{1,cent} = - m_2L_1l_2\dot{\theta}_2^2\sin(\theta_1 - \theta_2) + g(m_1l_1 + m_2L_1)\cos(\theta_1)
 %= - 0.55 \cdot 0.16 \cdot 0.125 \cdot (0.785)^2 \cdot \sin(-45°) + 1.098 \\
 %= - 1.1 \times 10^{-2} \cdot 0.616 \cdot (-0.707) + 1.098 \\
 %= 4.78 \times 10^{-3} + 1.098 
 = 1.103 \, \text{N·m}
-\end{multline}
+\end{equation}
 
 El torque máximo requerido para el hombro es:
 

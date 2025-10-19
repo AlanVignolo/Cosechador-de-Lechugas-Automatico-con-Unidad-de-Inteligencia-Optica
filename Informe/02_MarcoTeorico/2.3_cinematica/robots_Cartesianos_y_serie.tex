@@ -1,62 +1,61 @@
-\subsection{Estructuras Cartesianas}
+\subsection{Estructuras capacidadartesianas}
 
 Las estructuras cartesianas, también conocidas como sistemas de coordenadas cartesianas o robots cartesianos, son mecanismos de posicionamiento que permiten el movimiento controlado en un espacio tridimensional mediante el desplazamiento lineal a lo largo de tres ejes perpendiculares entre sí: X, Y y Z. Estos sistemas son ampliamente utilizados en aplicaciones industriales y de fabricación digital, como impresoras 3D, máquinas CNC (Control Numérico Computarizado), plotters y sistemas de pick-and-place.
 
-\subsubsection{Principio de Funcionamiento}
+\subsubsection{Principio de funcionamiento}
 
 El principio fundamental de las estructuras cartesianas se basa en la descomposición del movimiento espacial en tres componentes lineales independientes. Cada eje está constituido por:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Guías lineales:} Elementos mecánicos que definen la trayectoria del movimiento y minimizan la fricción. Pueden ser barras cilíndricas pulidas, rieles con rodamientos lineales o perfiles de aluminio con rodamientos en V.
-    
+
     \item \textbf{Sistema de transmisión:} Mecanismo encargado de convertir el movimiento rotacional del motor en desplazamiento lineal. Los más comunes incluyen tornillos de bolas, tornillos trapezoidales, correas dentadas y cremalleras.
-    
+
     \item \textbf{Actuadores:} Generalmente motores paso a paso (stepper) o servomotores, que proporcionan el movimiento controlado y preciso necesario para el posicionamiento.
-    
+
     \item \textbf{Estructura de soporte:} Marco rígido que mantiene la alineación de todos los componentes y soporta las cargas operativas.
 \end{itemize}
 
-\subsubsection{Configuraciones Comunes}
+\subsubsection{Configuraciones comunes}
 
 Existen diversas configuraciones de estructuras cartesianas, cada una con ventajas específicas según la aplicación:
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Configuración de Pórtico (Gantry):}En esta configuración, utilizada frecuentemente en máquinas CNC y algunas impresoras 3D, el eje X se monta sobre dos columnas verticales (eje Y) que se desplazan simultáneamente. Esta disposición proporciona mayor rigidez y capacidad de carga, siendo ideal para áreas de trabajo amplias.
+    \item \textbf{Configuración CoreXY:}Sistema en el que los ejes X e Y comparten dos motores mediante un sistema de correas cruzadas. Esta configuración reduce la masa móvil en el eje vertical y permite velocidades de desplazamiento superiores, siendo popular en impresoras 3D de alto rendimiento.
+    \item \textbf{Configuración Cartesiana Pura:} Cada eje se mueve de forma completamente independiente, con el efector final (cabezal de impresión, husillo, etc.) montado sucesivamente sobre cada eje. Es la configuración más simple conceptualmente y facilita el mantenimiento.
+\end{itemize}
 
-\paragraph{Configuración de Pórtico (Gantry):}En esta configuración, utilizada frecuentemente en máquinas CNC y algunas impresoras 3D, el eje X se monta sobre dos columnas verticales (eje Y) que se desplazan simultáneamente. Esta disposición proporciona mayor rigidez y capacidad de carga, siendo ideal para áreas de trabajo amplias.
-
-\paragraph{Configuración CoreXY:}Sistema en el que los ejes X e Y comparten dos motores mediante un sistema de correas cruzadas. Esta configuración reduce la masa móvil en el eje vertical y permite velocidades de desplazamiento superiores, siendo popular en impresoras 3D de alto rendimiento.
-
-\paragraph{Configuración Cartesiana Pura:} Cada eje se mueve de forma completamente independiente, con el efector final (cabezal de impresión, husillo, etc.) montado sucesivamente sobre cada eje. Es la configuración más simple conceptualmente y facilita el mantenimiento.
-
-\subsubsection{Ventajas de las Estructuras Cartesianas}
+\subsubsection{Ventajas de las estructuras cartesianas}
 
 Las estructuras cartesianas presentan múltiples ventajas que explican su amplia adopción:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Precisión y repetibilidad:} El movimiento lineal directo minimiza errores acumulativos y permite alcanzar tolerancias del orden de micrones.
-    
+
     \item \textbf{Simplicidad de control:} La cinemática directa simplifica significativamente los algoritmos de control, ya que existe una correspondencia uno a uno entre las coordenadas del espacio de trabajo y las posiciones de los actuadores.
-    
+
     \item \textbf{Volumen de trabajo optimizado:} El espacio útil de trabajo se aproxima al volumen total de la máquina, maximizando la eficiencia espacial.
-    
+
     \item \textbf{Escalabilidad:} Es relativamente sencillo modificar las dimensiones de trabajo extendiendo o reduciendo la longitud de los ejes.
-    
+
     \item \textbf{Rigidez estructural:} Las guías lineales y la disposición ortogonal proporcionan alta rigidez, crucial para aplicaciones de mecanizado.
 \end{itemize}
 
-\subsection{Robots Serie}
+\subsection{Robots serie}
 
 Los robots serie, también denominados robots en cadena cinemática abierta, son aquellos en los que los eslabones están conectados secuencialmente mediante juntas, formando una cadena cinemática desde la base hasta el efector final. Cada eslabón está conectado al anterior mediante una única junta, que puede ser rotacional (R) o prismática (P).
 
-\subsubsection{Grados de Libertad}
+\subsubsection{Grados de libertad}
 
 El número de grados de libertad de un robot serie corresponde al número de juntas activas en la cadena cinemática. Para manipulación completa en el espacio tridimensional (posición y orientación arbitrarias), se requieren 6 GDL. Un robot con $n$ juntas tiene $n$ grados de libertad:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Si $n < 6$: El robot tiene movilidad limitada y no puede alcanzar poses arbitrarias
     \item Si $n = 6$: El robot puede alcanzar cualquier posición y orientación dentro de su espacio de trabajo
     \item Si $n > 6$: El robot es redundante, ofreciendo múltiples configuraciones para una misma pose del efector final
 \end{itemize}
 
-\subsubsection{Espacio de Trabajo}
+\subsubsection{Espacio de trabajo}
 
 El espacio de trabajo de un robot serie es generalmente más complejo que el de un robot cartesiano y depende fuertemente de la configuración específica de juntas. Típicamente, el espacio de trabajo tiene forma de cáscara esférica, toroidal, o cilíndrica, con regiones inaccesibles y posibles singularidades.
 
@@ -74,7 +73,7 @@ donde $f(\mathbf{q})$ es la función de cinemática directa y $\mathcal{Q}$ es e
 
 El espacio de trabajo se subdivide en:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Espacio alcanzable}: Conjunto de puntos que el efector final puede alcanzar desde al menos una orientación
     \item \textbf{Espacio diestro}: Conjunto de puntos alcanzables desde múltiples orientaciones
     \item \textbf{Singularidades}: Configuraciones donde se pierde un grado de libertad instantáneo
@@ -82,7 +81,7 @@ El espacio de trabajo se subdivide en:
 
 \subsubsection{Cinemática}
 
-\paragraph{Cinemática Directa:} 
+\underline{Cinemática directa:}
 
 La cinemática directa de robots serie se resuelve mediante la convención de Denavit-Hartenberg (DH), que establece un sistema de coordenadas en cada junta y describe la transformación entre eslabones consecutivos mediante cuatro parámetros: $a_i$ (longitud del eslabón), $\alpha_i$ (ángulo de torsión), $d_i$ (offset), y $\theta_i$ (ángulo de junta).
 
@@ -104,11 +103,11 @@ La pose del efector final respecto a la base se obtiene mediante la composición
 {}^0T_n = {}^0T_1 \cdot {}^1T_2 \cdot \ldots \cdot {}^{n-1}T_n
 \end{equation}
 
-\paragraph{Cinemática Inversa:}
+\underline{Cinemática Inversa:}
 
 El problema de cinemática inversa consiste en determinar las variables de junta $\mathbf{q}$ que posicionan el efector final en una pose deseada. A diferencia de los robots cartesianos, este problema puede tener:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Múltiples soluciones (hasta 16 para robots de 6 GDL)
     \item Una única solución
     \item Ninguna solución (pose fuera del espacio de trabajo)
@@ -116,7 +115,7 @@ El problema de cinemática inversa consiste en determinar las variables de junta
 
 Los métodos de solución incluyen técnicas geométricas, algebraicas, y numéricas como el método de Newton-Raphson o el Jacobiano inverso.
 
-\subsubsection{Jacobiano y Singularidades}
+\subsubsection{Jacobiano y singularidades}
 
 El Jacobiano del robot relaciona las velocidades de las juntas con las velocidades del efector final:
 
@@ -128,7 +127,7 @@ donde $\dot{\mathbf{x}} \in \mathbb{R}^6$ representa las velocidades lineales y 
 
 Las singularidades ocurren cuando $\det(J(\mathbf{q})) = 0$, resultando en pérdida de movilidad o control. Se clasifican en:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Singularidades de frontera}: En los límites del espacio de trabajo
     \item \textbf{Singularidades internas}: Dentro del espacio de trabajo, donde dos o más ejes se alinean
 \end{itemize}
@@ -175,7 +174,7 @@ donde $M(\mathbf{q})$ es la matriz de inercia, $C(\mathbf{q}, \dot{\mathbf{q}})$
 
 En la práctica industrial y de fabricación digital contemporánea, el cálculo explícito del modelo dinámico completo del robot mediante las ecuaciones de Euler-Lagrange raramente se realiza a nivel del controlador del robot. Esto se debe a que los actuadores modernos incorporan sus propios sistemas de control que gestionan la dinámica local de forma autónoma.
 
-\paragraph{Servomotores y Drivers Inteligentes}
+\underline{Servomotores y drivers inteligentes}
 
 Los servomotores vienen equipados con drivers que implementan lazos de control en cascada: lazo de corriente que controla el par motor instantáneo con frecuencias de actualización, lazo de velocidad que regula la velocidad angular mediante un controlador PID típicamente a 1-5 kHz y lazo de posición que gestiona el posicionamiento angular con actualizaciones de 100-1000 Hz.
 
@@ -183,7 +182,7 @@ Estos drivers manejan internamente: compensación de inercia del rotor, limitaci
 
 El controlador del robot simplemente envía consignas de posición, velocidad o par sin necesidad de calcular los torques requeridos.
 
-\paragraph{Motores Paso a Paso con Control de Lazo Abierto}
+\underline{Motores paso a paso con control de lazo abierto}
 
 El driver genera las secuencias de pulsos para los devanados del motor, envía sol pulsos de paso y dirección y la dinámica item El controlador envía únicamente pulsos de paso y dirección y la dinámica se gestiona limitando aceleraciones máximas en el firmware
 
@@ -193,40 +192,33 @@ Incluso aquí, el modelo dinámico se reduce a parámetros empíricos de acelera
 
 Esta arquitectura de control distribuido tiene consecuencias importantes.
 
-\paragraph{Ventajas:}
+\underline{Ventajas:}
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Simplificación del software de control}: El programador del robot trabaja en el espacio de juntas o cartesiano sin preocuparse por la física subyacente.
-    
+
     \item \textbf{Modularidad}: Se pueden intercambiar actuadores de diferentes fabricantes manteniendo la misma lógica de control superior.
-    
+
     \item \textbf{Robustez}: Los lazos internos de los drivers responden mucho más rápido que cualquier controlador de alto nivel podría.
-    
+
     \item \textbf{Menor carga computacional}: El procesador principal del robot (Arduino, Raspberry Pi, controlador industrial) solo ejecuta cinemática y planificación de trayectorias.
 \end{itemize}
 
-\paragraph{Limitaciones:}
+\underline{Limitaciones:}
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Desacoplamiento de ejes}: Cada motor actúa independientemente sin considerar las interacciones dinámicas con otros eslabones. Esto puede causar:
-    \begin{itemize}
+    \begin{itemize}[label=$\bullet$]
         \item Vibraciones residuales en movimientos rápidos
         \item Mayor consumo energético
         \item Limitaciones en la precisión a altas velocidades
     \end{itemize}
-    
+
     \item \textbf{Sobre-dimensionamiento}: Sin modelo dinámico, los motores suelen seleccionarse con márgenes de seguridad conservadores.
-    
+
     \item \textbf{Dificultad en movimientos coordinados complejos}: Tareas como manipulación de objetos flexibles o control de fuerza son más desafiantes.
 \end{itemize}
 
-La mayoría de aplicaciones de robótica industrial, estructuras cartesianas e impresoras 3D, \textbf{el control dinámico está efectivamente ``resuelto'' por los fabricantes de actuadores}. El ingeniero de aplicación se concentra en:
-
-\begin{itemize}
-    \item Cinemática (directa e inversa)
-    \item Planificación de trayectorias
-    \item Configuración adecuada de parámetros PID en los drivers
-    \item Selección apropiada de actuadores según carga y dinámica esperada
-\end{itemize}
+La mayoría de aplicaciones de robótica industrial, estructuras cartesianas e impresoras 3D, el control dinámico está efectivamente ``resuelto'' por los fabricantes de actuadores. 
 
 Solo en aplicaciones que requieren máximo rendimiento, eficiencia energética óptima, o capacidades avanzadas como control de fuerza, se justifica implementar control basado en modelo dinámico completo.

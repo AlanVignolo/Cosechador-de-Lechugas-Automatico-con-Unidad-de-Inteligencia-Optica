@@ -2,7 +2,7 @@ Los procesos implementados en el nivel supervisor coordinan múltiples operacion
 
 El sistema define cuatro procesos principales implementados en workflow\_orchestrator:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Homing Simple}: Secuencia de referenciado del sistema. Verifica que el brazo esté en posición de movimiento, configura velocidades reducidas, mueve el eje horizontal hasta el límite derecho, retrocede un offset, mueve el eje vertical hasta el límite superior, baja un offset, establece el origen (0,0), y restaura velocidades normales. Guarda la referencia en homing\_reference.json.
 
     \item \textbf{Calibración del Workspace}: Medición de las dimensiones útiles del espacio de trabajo. Ejecuta homing inicial, se mueve hacia el límite izquierdo registrando la distancia horizontal mediante mensaje de emergencia, se mueve hacia el límite inferior registrando la distancia vertical, calcula las dimensiones restando márgenes de seguridad, y ejecuta homing final. Guarda las dimensiones en workspace\_dimensions.json.

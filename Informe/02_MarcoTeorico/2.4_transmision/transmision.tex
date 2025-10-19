@@ -8,8 +8,8 @@ Se cuenta con diversos sistemas de transmisión, en este proyecto se emplea dos 
 
 La transmisión por correa dentada consiste en una correa flexible con dientes en su superficie interna que engranan con poleas dentadas solidarias a los ejes motor y conducido. Este sistema permite transmitir potencia y movimiento entre ejes paralelos con alta eficiencia y sin deslizamiento.
 
-\paragraph{Ventajas del sistema}
-\begin{itemize}
+\underline{Ventajas del sistema}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Transmisión sincrónica:} Los dientes de la correa engranan positivamente con las poleas, eliminando el deslizamiento y garantizando una relación de transmisión exacta
     \item \textbf{Alta eficiencia:} Eficiencia típica del 96-98\%, superior a sistemas de correas trapezoidales
     \item \textbf{Bajo mantenimiento:} No requiere lubricación y presenta mínimo desgaste en condiciones normales de operación
@@ -18,7 +18,7 @@ La transmisión por correa dentada consiste en una correa flexible con dientes e
     \item \textbf{Bajo momento de inercia:} La correa es liviana, lo que facilita arranques y paradas rápidas
 \end{itemize}
 
-\paragraph{Componentes del sistema}
+\underline{Componentes del sistema}
 \begin{enumerate}
     \item \textbf{Polea motriz:} Montada en el eje del motor, transmite el movimiento rotacional a la correa. Su diámetro primitivo determina la velocidad de salida junto con el diámetro de la polea conducida.
 
@@ -29,7 +29,7 @@ La transmisión por correa dentada consiste en una correa flexible con dientes e
     donde $D$ son los diámetros primitivos, $n$ las velocidades angulares y $z$ el número de dientes de las poleas motriz (1) y conducida (2).
 
     \item \textbf{Correa dentada:} Elemento flexible con perfil dentado estandarizado. Los perfiles más comunes son:
-    \begin{itemize}
+    \begin{itemize}[label=$\bullet$]
         \item GT2 (2\,mm de paso): Utilizado en aplicaciones de precisión como impresoras 3D y CNC
         \item GT3 (3\,mm de paso): Mayor capacidad de carga que GT2
         \item HTD (High Torque Drive): Para aplicaciones de alta potencia
@@ -37,7 +37,7 @@ La transmisión por correa dentada consiste en una correa flexible con dientes e
     \end{itemize}
 \end{enumerate}
 
-\paragraph{Cálculo de la relación de transmisión}
+\underline{Cálculo de la relación de transmisión}
 Para un sistema con polea motriz de $z_1$ dientes y polea conducida de $z_2$ dientes:
 \begin{equation}
     n_2 = n_1 \cdot \frac{z_1}{z_2}
@@ -48,9 +48,9 @@ La longitud de correa requerida para una distancia entre centros $C$ se calcula 
     L = 2C + \frac{\pi(D_1 + D_2)}{2} + \frac{(D_2 - D_1)^2}{4C}
 \end{equation}
 
-\paragraph{Tensado de la correa}
+\underline{Tensado de la correa}
 El tensado adecuado es crítico para el funcionamiento correcto:
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Tensión insuficiente:} Produce saltos de dientes y pérdida de sincronismo
     \item \textbf{Tensión excesiva:} Incrementa el desgaste de la correa y aumenta la carga sobre los rodamientos
 \end{itemize}
@@ -65,10 +65,10 @@ donde $P$ es la potencia transmitida, $v$ la velocidad lineal de la correa y $m$
 
 La transmisión por varilla roscada, también conocida como sistema tornillo-tuerca, convierte el movimiento rotacional en movimiento lineal mediante el principio de la rosca helicoidal. Cuando la varilla roscada gira, la tuerca acoplada a ella se desplaza linealmente a lo largo del eje de la varilla.
 
-\paragraph{Tipos de roscas}
+\underline{Tipos de roscas}
 \begin{enumerate}
     \item \textbf{Rosca trapezoidal (ACME o TR):}
-    \begin{itemize}
+    \begin{itemize}[label=$\bullet$]
         \item Perfil trapezoidal con ángulo de flanco de 30° (ACME) o 15° (TR métrica)
         \item Alta resistencia al desgaste
         \item Buena capacidad de carga axial
@@ -78,7 +78,7 @@ La transmisión por varilla roscada, también conocida como sistema tornillo-tue
     \end{itemize}
 
     \item \textbf{Husillo de bolas:}
-    \begin{itemize}
+    \begin{itemize}[label=$\bullet$]
         \item Recirculación de bolas entre la rosca y la tuerca
         \item Mínima fricción (contacto rodante vs. deslizante)
         \item Eficiencia típica: 90-95\%
@@ -88,7 +88,7 @@ La transmisión por varilla roscada, también conocida como sistema tornillo-tue
     \end{itemize}
 \end{enumerate}
 
-\paragraph{Relación de transmisión}
+\underline{Relación de transmisión}
 El desplazamiento lineal por revolución está determinado por el paso de la rosca:
 \begin{equation}
     \Delta x = n \cdot p
@@ -122,7 +122,7 @@ El torque total resulta:
 \end{equation}
 
 donde:
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item F: Carga a desplazar.
     \item $d_m$: diámetro medio de la rosca
     \item $d_c$: diámetro medio del collarín
@@ -138,7 +138,7 @@ La eficiencia de la transmisión se define como:
 
 Para roscas trapezoidales típicas con $\mu \approx 0.1-0.2$ (lubricadas), la eficiencia varía entre 30\% y 50\%.
 
-\paragraph{Condición de auto-frenado}
+\underline{Condición de auto-frenado}
 Un sistema de tornillo-tuerca es auto-frenante (la carga no puede hacer girar la varilla) cuando:
 \begin{equation}
     \alpha < \phi \quad \Rightarrow \quad \tan(\alpha) < \mu
@@ -146,7 +146,7 @@ Un sistema de tornillo-tuerca es auto-frenante (la carga no puede hacer girar la
 
 Esto es deseable en aplicaciones verticales donde se requiere mantener la posición sin energía en el motor.
 
-\paragraph{Carga crítica y pandeo}
+\underline{Carga crítica y pandeo}
 Para varillas largas trabajando a compresión, debe verificarse la carga crítica de Euler:
 \begin{equation}
     P_{\text{cr}} = \frac{\pi^2 \cdot E \cdot I}{(K \cdot L)^2}
@@ -154,9 +154,9 @@ Para varillas largas trabajando a compresión, debe verificarse la carga crític
 
 donde $E$ es el módulo de Young, $I$ el momento de inercia de la sección, $L$ la longitud y $K$ el factor de longitud efectiva según las condiciones de apoyo.
 
-\paragraph{Vida útil y desgaste}
+\underline{Vida útil y desgaste}
 El desgaste en roscas trapezoidales depende de:
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Presión de contacto entre rosca y tuerca
     \item Velocidad de deslizamiento
     \item Calidad de la lubricación
