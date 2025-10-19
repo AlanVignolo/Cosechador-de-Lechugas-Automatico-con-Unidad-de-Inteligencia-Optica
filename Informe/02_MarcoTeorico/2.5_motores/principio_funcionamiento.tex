@@ -19,7 +19,7 @@ El modo de excitación define cómo se energizan las bobinas del motor, afectand
 
 \subsubsection{Excitación de Paso Completo (Full Step)}
 
-\paragraph{Modo de una fase:}
+\underline{Modo de una fase:}
 
 Solo una bobina se energiza a la vez. La secuencia de activación para un motor bipolar de dos fases es:
 
@@ -45,7 +45,7 @@ Características:
     \item Mayor resonancia a ciertas velocidades
 \end{itemize}
 
-\paragraph{Modo de dos fases (Full step):}
+\underline{Modo de dos fases (Full step):}
 
 Dos bobinas se energizan simultáneamente. La secuencia de activación es:
 
@@ -125,7 +125,7 @@ Para $M$ micropasos por paso completo, el ángulo de micropaso es:
 
 Niveles comunes de microstepping incluyen 1/4, 1/8, 1/16, 1/32, hasta 1/256 pasos.
 
-\paragraph{Ventajas del microstepping:}
+\underline{Ventajas del microstepping:}
 
 \begin{itemize}
     \item Resolución extremadamente alta (hasta 51,200 pasos/rev con 1/256)
@@ -134,7 +134,7 @@ Niveles comunes de microstepping incluyen 1/4, 1/8, 1/16, 1/32, hasta 1/256 paso
     \item Mejor precisión en posicionamiento fino
 \end{itemize}
 
-\paragraph{Limitaciones del microstepping:}
+\underline{Limitaciones del microstepping:}
 
 \begin{itemize}
     \item La resolución teórica no garantiza precisión posicional debido a no linealidades
@@ -149,11 +149,11 @@ Niveles comunes de microstepping incluyen 1/4, 1/8, 1/16, 1/32, hasta 1/256 paso
 
 El desempeño de un motor paso a paso se caracteriza principalmente mediante dos curvas de torque:
 
-\paragraph{Torque de retención (Holding torque):}
+\underline{Torque de retención (Holding torque):}
 
 Es el torque máximo que el motor puede ejercer cuando está energizado pero estacionario. Representa la capacidad de mantener la posición contra cargas externas. Se expresa en N·m o kg·cm y es un parámetro fundamental de selección.
 
-\paragraph{Torque dinámico (Pull-out Torque):}
+\underline{Torque dinámico (Pull-out Torque):}
 
 Es el torque máximo disponible durante el movimiento a una velocidad dada. Esta curva es crítica para determinar si el motor puede acelerar y mantener una carga específica a la velocidad deseada.
 
@@ -169,11 +169,11 @@ donde $T_0$ es el torque a velocidad cero (aproximadamente el holding torque), $
 
 \subsubsection{Tipos de drivers}
 
-\paragraph{Driver unipolar:}
+\underline{Driver unipolar:}
 
 Diseñado para motores unipolares (generalmente con 5 o 6 cables). Utiliza transistores simples para conmutar las corrientes. Ventajas: simplicidad y bajo costo. Desventajas: menor eficiencia y torque (aproximadamente 70\% del equivalente bipolar).
 
-\paragraph{Driver bipolar:}
+\underline{Driver bipolar:}
 
 Para motores bipolares (4 cables). Requiere puentes H para invertir la polaridad de las corrientes. Mayor complejidad pero mejor desempeño. Topologías comunes:
 
@@ -185,7 +185,7 @@ Para motores bipolares (4 cables). Requiere puentes H para invertir la polaridad
 
 \subsubsection{Interfaces de control}
 
-\paragraph{Step/Direction:}
+\underline{Step/Direction:}
 
 La interfaz más común. Dos señales digitales:
 \begin{itemize}
@@ -195,7 +195,7 @@ La interfaz más común. Dos señales digitales:
 
 Adicionalmente pueden incluirse señales ENABLE (habilitar motor) y FAULT (indicación de error).
 
-\paragraph{Control por pulsos y sentido:}
+\underline{Control por pulsos y sentido:}
 
 Variante donde pulsos en dos líneas diferentes determinan dirección:
 \begin{itemize}
@@ -203,7 +203,7 @@ Variante donde pulsos en dos líneas diferentes determinan dirección:
     \item Pulsos en CCW: Rotación antihoraria
 \end{itemize}
 
-\paragraph{Comunicación serial/bus:}
+\underline{Comunicación serial/bus:}
 
 Drivers avanzados incorporan interfaces RS-485, CANbus, o EtherCAT para configuración de parámetros, diagnóstico y control centralizado en sistemas multi-eje.
 
@@ -251,24 +251,24 @@ Para movimientos cortos donde no se alcanza $\omega_{max}$, la velocidad pico es
 
     \item{Pérdida de pasos}
 
-\paragraph{Causas:}Torque requerido excede torque disponible, aceleración excesiva, resonancia mecánica, voltaje de alimentación insuficiente a alta velocidad o carga mecánica variable o impactos.
+\underline{Causas:}Torque requerido excede torque disponible, aceleración excesiva, resonancia mecánica, voltaje de alimentación insuficiente a alta velocidad o carga mecánica variable o impactos.
 
-\paragraph{Soluciones:}Aumentar corriente del motor (si térmicamente posible), reducir aceleración máxima, implementar microstepping, incrementar voltaje de alimentación, seleccionar motor de mayor torque o añadir reducción mecánica.
+\underline{Soluciones:}Aumentar corriente del motor (si térmicamente posible), reducir aceleración máxima, implementar microstepping, incrementar voltaje de alimentación, seleccionar motor de mayor torque o añadir reducción mecánica.
 
     \item{Resonancia y vibración}
 
-\paragraph{Mitigación:}Cambiar a microstepping (mínimo 1/8), evitar velocidades resonantes en trayectorias, implementar perfiles S-curve, añadir masa o amortiguadores mecánicos, utilizar drivers con anti-resonance features
+\underline{Mitigación:}Cambiar a microstepping (mínimo 1/8), evitar velocidades resonantes en trayectorias, implementar perfiles S-curve, añadir masa o amortiguadores mecánicos, utilizar drivers con anti-resonance features
 
     \item {Sobrecalentamiento}
 
-\paragraph{Límites térmicos:}La temperatura superficial del motor no debe exceder:
+\underline{Límites térmicos:}La temperatura superficial del motor no debe exceder:
 \begin{equation}
 T_{surface} < T_{ambient} + \Delta T_{rated}
 \end{equation}
 
 Típicamente, $\Delta T_{rated} = 80^\circ$C sobre ambiente.
 
-\paragraph{Soluciones:}Reducir corriente en configuración del driver (sacrificando torque), implementar reducción de corriente en reposo, mejorar ventilación o añadir disipadores, reducir ciclo de trabajo, seleccionar motor de mayor frame size con mejor capacidad térmica.
+\underline{Soluciones:}Reducir corriente en configuración del driver (sacrificando torque), implementar reducción de corriente en reposo, mejorar ventilación o añadir disipadores, reducir ciclo de trabajo, seleccionar motor de mayor frame size con mejor capacidad térmica.
 \end{itemize}
 
 %Los motores paso a paso continúan siendo una solución óptima para aplicaciones que requieren posicionamiento preciso, control digital directo, y operación confiable sin sistemas de retroalimentación complejos. La selección adecuada mediante un proceso sistemático, combinada con configuración apropiada del driver y técnicas de control avanzadas, garantiza un desempeño óptimo y vida útil prolongada del sistema.

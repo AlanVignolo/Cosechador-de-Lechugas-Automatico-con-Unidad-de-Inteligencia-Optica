@@ -5,7 +5,7 @@ La coordinación entre el Nivel Supervisor y el Nivel Regulatorio se realiza med
 Los comandos siguen un formato consistente basado en caracteres ASCII delimitados. Los delimitadores enmarcan cada comando, el separador de dos puntos divide el identificador de los parámetros, y los parámetros múltiples se separan con comas. Este formato mantiene compatibilidad directa con el protocolo implementado en el nivel regulatorio.
 
 \textbf{Comandos de movimiento:}
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \texttt{M:x,y} - Movimiento relativo en mm (ej: \texttt{M:50.5,-20.3})
     \item \texttt{V:h\_speed,v\_speed} - Configuración de velocidades en pasos/s
     \item \texttt{XY?} - Consulta de posición actual en mm
@@ -13,7 +13,7 @@ Los comandos siguen un formato consistente basado en caracteres ASCII delimitado
 \end{itemize}
 
 \textbf{Comandos de brazo y gripper:}
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \texttt{A:s1,s2,t} - Movimiento de ambos servos a ángulos (s1, s2) en tiempo t (ms)
     \item \texttt{P:num,angle} - Movimiento de servo individual (num=1 o 2)
     \item \texttt{G:O} / \texttt{G:C} - Apertura/cierre de gripper con confirmación
@@ -22,7 +22,7 @@ Los comandos siguen un formato consistente basado en caracteres ASCII delimitado
 \end{itemize}
 
 \textbf{Comandos de sistema:}
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \texttt{S?} - Consulta de estado completo del sistema
     \item \texttt{L?} - Consulta de estado de finales de carrera
     \item \texttt{S} - Emergency stop (detención inmediata de todos los motores)
@@ -36,7 +36,7 @@ El \texttt{UARTManager} implementa un sistema de colas para separar respuestas s
 \textbf{Respuestas síncronas:} Cada comando enviado espera una respuesta del firmware con prefijo \texttt{RESPONSE} seguido de los datos solicitados, utilizando el mismo formato delimitado. El timeout por defecto es 5 segundos. Si no hay respuesta, se genera \texttt{UARTTimeoutException} y se reintentan hasta 3 veces con backoff exponencial (1s, 2s, 4s).
 
 \textbf{Eventos asíncronos:} El firmware puede enviar notificaciones no solicitadas en cualquier momento:
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \texttt{STEPPER\_MOVE\_COMPLETED:...} - Movimiento XY completado con datos de posición
     \item \texttt{LIMIT\_TRIGGERED:tipo} - Final de carrera activado
     \item \texttt{STEPPER\_EMERGENCY\_STOP:...} - Parada de emergencia ejecutada
@@ -54,14 +54,14 @@ El supervisor registra funciones callback para eventos específicos mediante mé
 Antes de enviar un comando al firmware, el \texttt{CommandManager} realiza validaciones:
 
 \textbf{Rangos de parámetros:}
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Ángulos de servo: 10° - 160° (clampeo automático)
     \item Velocidades: 100 - 8000 pasos/s
     \item Tiempos de trayectoria: 0 - 10000 ms
 \end{itemize}
 
 \textbf{Precondiciones de estado:}
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Movimientos XY requieren sistema homed (excepto homing mismo)
     \item Comandos de brazo requieren conexión UART activa
     \item Emergency stop siempre permitido (máxima prioridad)

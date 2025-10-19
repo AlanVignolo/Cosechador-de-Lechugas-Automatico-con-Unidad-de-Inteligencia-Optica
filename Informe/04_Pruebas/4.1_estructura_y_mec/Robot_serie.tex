@@ -2,7 +2,7 @@
 \subsection{Robot serie}
 \subsubsection{Cálculo de torque para la articulación 2 (codo)}
 
-\paragraph{Caso 1: Posición horizontal en reposo}
+\underline{Caso 1: Posición horizontal en reposo}\\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
 
@@ -12,26 +12,21 @@ La expresión de $\tau_2$ se reduce al término gravitacional:
 \tau_{2,est} = gm_2l_2\cos(\theta_2) = 9.81 \cdot 0.425 \cdot 0.125 \cdot \cos(0°) = 0.521 \, \text{N·m}
 \end{equation}
 
-\paragraph{Caso 2: Aceleración máxima}
+\underline{Caso 2: Aceleración máxima}\\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 1.57$ rad/s$^2$
 
-\begin{multline}
-\tau_{2,din} = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(0) + gm_2l_2\cos(0) \\
-= (0.425 \cdot 0.125^2 + 1.95 \times 10^{-5}) \cdot 1.57 + 0.425 \cdot 0.16 \cdot 0.125 \cdot 1.57 \cdot 1 \\
-+ 9.81 \cdot 0.425 \cdot 0.125 \cdot 1 \\
-= 0.0104 + 0.0133 + 0.521 = 0.545 \, \text{N·m}
-\end{multline}
+\begin{equation}
+\tau_{2,din} = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(0) + gm_2l_2\cos(0) = 0.545 \, \text{N·m}
+\end{equation}
 
-\paragraph{Caso 3: Efectos centrífugos}
+\underline{Caso 3: Efectos centrífugos} \\
 
 Configuración: $\theta_1 = 45°$, $\theta_2 = 45°$, $\dot{\theta}_1 = 0.785$ rad/s, $\dot{\theta}_2 = 0$ rad/s, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
 
-\begin{multline}
-\tau_{2,cent} = m_2L_1l_2\dot{\theta}_1^2\sin(\theta_2) + gm_2l_2\cos(\theta_2) \\
-= 0.425 \cdot 0.16 \cdot 0.125 \cdot 0.785^2 \cdot \sin(45°) + 9.81 \cdot 0.425 \cdot 0.125 \cdot \cos(45°) \\
-= 0.0029 + 0.368 = 0.371 \, \text{N·m}
-\end{multline}
+\begin{equation}
+\tau_{2,cent} = m_2L_1l_2\dot{\theta}_1^2\sin(\theta_2) + gm_2l_2\cos(\theta_2)  = 0.371 \, \text{N·m}
+\end{equation}
 
 El torque máximo requerido para el codo es:
 
@@ -47,7 +42,7 @@ Aplicando un factor de seguridad de 1.5:
 
 \subsubsection{Cálculo de torque para la articulación 1 (hombro)}
 
-\paragraph{Caso 1: Posición horizontal en reposo}
+\underline{Caso 1: Posición horizontal en reposo}\\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
 
@@ -57,21 +52,21 @@ Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\thet
 = 0.785 \, \text{N·m}
 \end{equation}
 
-\paragraph{Caso 2: Aceleración máxima}
+\underline{Caso 2: Aceleración máxima}\\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 1.57$ rad/s$^2$
 
-\begin{multline}
+\begin{equation}
 \tau_{1,din} = (m_1l_1^2 + m_2L_1^2 + I_1)\ddot{\theta}_1 + m_2L_1l_2\ddot{\theta}_2\cos(0) + g(m_1l_1 + m_2L_1)\cos(0) = 0.818 \, \text{N·m}
-\end{multline}
+\end{equation}
 
-\paragraph{Caso 3: Efectos centrífugos}
+\underline{Caso 3: Efectos centrífugos}\\
 
 Configuración: $\theta_1 = 0°$, $\theta_2 = 45°$, $\dot{\theta}_1 = 0$ rad/s, $\dot{\theta}_2 = 0.785$ rad/s, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$
 
-\begin{multline}
+\begin{equation}
 \tau_{1,cent} = - m_2L_1l_2\dot{\theta}_2^2\sin(\theta_2) + g(m_1l_1 + m_2L_1)\cos(\theta_1) = 0.782 \, \text{N·m}
-\end{multline}
+\end{equation}
 
 El torque máximo requerido para el hombro es:
 

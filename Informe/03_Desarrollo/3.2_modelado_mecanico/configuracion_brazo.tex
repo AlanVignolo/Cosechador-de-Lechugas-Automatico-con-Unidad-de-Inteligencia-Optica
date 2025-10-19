@@ -8,14 +8,14 @@ El robot serie consiste en una configuración de dos eslabones articulados media
 \subsubsection{Parámetros geométricos}
 \label{sec:Param_brazo}
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item $L_1$: Longitud del primer eslabón
     \item $L_2$: Longitud del segundo eslabón
     \item $\theta_1$: Ángulo de la primera articulación (base)
     \item $\theta_2$: Ángulo de la segunda articulación (codo)
 \end{itemize}
 
-\subsubsection{Cinemática Directa}
+\subsubsection{Cinemática directa}
 
 La cinemática directa establece la relación entre las coordenadas articulares $(\theta_1, \theta_2)$ y la posición del efector final $(x, y)$ en el plano.
 
@@ -47,22 +47,27 @@ Caso & $\theta_1 (\deg)$ & $\theta_2 (\deg)$ & $x$ (mm) & $y$ (mm) & $d$ (mm) \\
 4 - \text{Movimiento} & $-42$ & $-114$ & $4.7$ & $-157.9$ & $158.0$ \\
 \hline
 \end{tabular}
-\caption{Resultados cinemáticos con $L_1 = 160$ mm y $L_2 = 125$ mm}
+\caption{\textit{Resultados cinemáticos con $L_1 = 160$ mm y $L_2 = 125$ mm.}}
 \end{table}
 
-\subsubsection{Cinemática Inversa}
+\subsubsection{Cinemática inversa}
 
 La cinemática inversa determina los ángulos articulares necesarios para alcanzar una posición deseada $(x_d, y_d)$. Este problema presenta dos soluciones posibles (configuración de codo arriba y codo abajo).
 
 Primero se calcula el ángulo $\theta_2$:
 
+\noindent
+\begin{minipage}{0.48\textwidth}
 \begin{equation}
     \cos(\theta_2) = \frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}
 \end{equation}
-
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
 \begin{equation}
     \theta_2 = \pm \arccos\left(\frac{x_d^2 + y_d^2 - L_1^2 - L_2^2}{2 \cdot L_1 \cdot L_2}\right)
 \end{equation}
+\end{minipage}
 
 Luego se determina $\theta_1$:
 
@@ -74,7 +79,7 @@ Luego se determina $\theta_1$:
 
 El espacio de trabajo accesible para el efector final es un anillo circular con:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Radio máximo: $R_{max} = L_1 + L_2$ (brazo completamente extendido)
     \item Radio mínimo: $R_{min} = |L_1 - L_2|$ (brazo completamente plegado)
 \end{itemize}

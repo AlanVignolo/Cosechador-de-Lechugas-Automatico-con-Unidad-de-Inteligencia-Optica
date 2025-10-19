@@ -34,7 +34,7 @@ Los timeouts se calculan dinámicamente basados en la operación:
 \textbf{Transiciones de brazo:} Timeout fijo de 20s (trayectoria más larga: \texttt{movimiento} $\rightarrow$ \texttt{recoger\_lechuga}: 3-5s nominales).
 
 \textbf{Operaciones de IA:} Timeout variable según módulo:
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Detección ArUco: 5s (procesamiento simple)
     \item Clasificación de planta: 15s (inferencia de red neuronal)
     \item Escaneo completo de tubo: 60s (múltiples capturas + procesamiento)

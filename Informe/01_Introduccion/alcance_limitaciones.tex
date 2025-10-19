@@ -1,15 +1,15 @@
-\subsubsection{Alcance del Sistema}
+\subsubsection{Alcance del sistema}
 
 El proyecto abarca el diseño y desarrollo de un sistema de cosecha automatizada de lechugas en cultivos hidropónicos verticales, implementando una estructura cartesiana de dos ejes con robot serie de dos grados de libertad. El sistema integra detección y clasificación mediante visión artificial (marcadores de referencia, tubos de cultivo y madurez de lechugas), arquitectura de control jerárquica de dos niveles (supervisorio y regulatorio), y optimización de trayectorias para maximizar eficiencia de cosecha.
 
 \subsubsection{Limitaciones}
 
-\textbf{Alcance del Prototipo:} El desarrollo constituye un prototipo académico de validación, no diseñado para producción industrial continua. No contempla operación multi-robot simultánea ni el empaquetado o transporte posterior de cultivos cosechados. Se limita a lechugas dentro del rango dimensional esperado en el diseño.
+\textbf{Alcance del prototipo:} El desarrollo constituye un prototipo académico de validación, no diseñado para producción industrial continua. No contempla operación multi-robot simultánea ni el empaquetado o transporte posterior de cultivos cosechados. Se limita a lechugas dentro del rango dimensional esperado en el diseño.
 
-\textbf{Aspectos Mecánicos y Ambientales:} El sistema opera en área de trabajo acotada, diseñada para configuraciones hidropónicas verticales específicas. La capacidad de carga y velocidades de operación están limitadas por estabilidad mecánica y precisión requerida. Requiere operación en interiores con iluminación controlada, superficie vertical nivelada, y no es resistente a condiciones de campo abierto.
+\textbf{Aspectos mecánicos y ambientales:} El sistema opera en área de trabajo acotada, diseñada para configuraciones hidropónicas verticales específicas. La capacidad de carga y velocidades de operación están limitadas por estabilidad mecánica y precisión requerida. Requiere operación en interiores con iluminación controlada, superficie vertical nivelada, y no es resistente a condiciones de campo abierto.
 
-\textbf{Sistema de Visión e IA:} Requiere condiciones de iluminación controladas para precisión de detección. La clasificación está limitada a lechugas, requiriendo reentrenamiento para generalización a otros cultivos. Depende de marcadores físicos para calibración y navegación inicial.
+\textbf{Sistema de visión e IA:} Requiere condiciones de iluminación controladas para precisión de detección. La clasificación está limitada a lechugas, requiriendo reentrenamiento para generalización a otros cultivos. Depende de marcadores físicos para calibración y navegación inicial.
 
-\textbf{Sistema de Control:} Utiliza finales de carrera para referenciado de ejes. La comunicación serial entre niveles jerárquicos introduce latencia inherente al protocolo empleado.
+\textbf{Sistema de control:} Utiliza finales de carrera para referenciado de ejes. La comunicación serial entre niveles jerárquicos introduce latencia inherente al protocolo empleado.
 
 

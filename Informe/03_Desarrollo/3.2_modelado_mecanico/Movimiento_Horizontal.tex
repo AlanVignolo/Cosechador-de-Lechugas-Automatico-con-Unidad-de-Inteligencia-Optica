@@ -2,13 +2,13 @@
 El perfil horizontal soporta la mayor parte de la carga total del sistema, compuesta por el peso de la lechuga, las varillas (lisas y roscadas), y los soportes medio e inferior.
 
 Se selecciona un perfil de aluminio V-Slot con ruedas de precisión, que ofrece:
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Capacidad de carga de hasta 50\,kg
     \item Sistema de ajuste para eliminación de juego mecánico
     \item Alta precisión de movimiento
 \end{itemize}
 
-\paragraph{Cálculo de deflexión}
+\underline{Cálculo de deflexión} \\
 Para verificar la rigidez del perfil, se analiza como una viga simplemente apoyada bajo carga centrada:
 \begin{equation}
 \delta = \frac{F \cdot L^3}{48 \cdot E \cdot I}
@@ -16,7 +16,7 @@ Para verificar la rigidez del perfil, se analiza como una viga simplemente apoya
 \end{equation}
 
 donde:
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item $E = 69\,000$\,N/mm$^2$ (módulo de Young del aluminio)
     \item $L = 3\,000$\,mm (longitud del perfil)
     \item $I$ = momento de inercia del perfil
@@ -40,14 +40,20 @@ Como complemento, se seleccionan dos carros lineales estándar de 100\,mm de anc
     \hspace{0.5cm}
     \begin{subfigure}{0.35\textwidth}
         \centering
-        \includegraphics[width=0.7\textwidth]{img/carro_perfilvslot.png}
+        \includegraphics[width=0.4\textwidth]{img/carro_perfilvslot.png}
         \caption{\textit{Sistema de ruedas para deslizamiento sobre perfil v-slot.}}
         \label{fig:carro_perfilvslot}
     \end{subfigure}
     \caption{\textit{Sistema de deslizamiento con perfil v-slot.}}
 \end{figure}
-Además se agrega una varilla como la mostrada en la figura \ref{fig:barra_lateral} para contrarrestar la fuerza que genera el robot serie al moverse. Dicho esfuerzos pueden verse graficados en la fig. \ref{fig:esfuerzo_lateral}
-
+Al activarse los motores del robot serie se genera una fuerza F1 como la que se muestra en \ref{fig:esfuerzo_lateral}. Dicha fuerza genera que toda la estructura vertical se mueva hacia atras.
+\begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{img/esfuerzo_lateral.png}
+        \caption{\textit{Analisis cualitativo de fuerzas.}}
+        \label{fig:esfuerzo_lateral}
+\end{figure}
+Para eliminar ese movimiento se coloca un perfil como el de la fig \ref{fig:barra_lateral}, en conjunto con sus rodamientos (fig. \ref{fig:sbr20uu}) acoplados al soporte superior. De esta manera se genera una fuerza semejante a F1 pero en sentido contrario.
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.35\textwidth}
@@ -59,7 +65,7 @@ Además se agrega una varilla como la mostrada en la figura \ref{fig:barra_later
     \hspace{0.5cm}
     \begin{subfigure}{0.35\textwidth}
         \centering
-        \includegraphics[width=0.7\textwidth]{img/sbr20uu.png}
+        \includegraphics[width=0.65\textwidth]{img/sbr20uu.png}
         \caption{\textit{Carro para deslizamiento sobre barra lateral.}}
         \label{fig:sbr20uu}
     \end{subfigure}
@@ -73,52 +79,59 @@ El sistema utiliza correa dentada GT2 con poleas de igual diámetro en ambos ext
 L = 2C + \pi D = 6.06\,\text{m}
 \label{eq:longitud_correa}
 \end{equation}
-donde $C$ es la distancia entre centros de las poleas y $D$ el diámetro de las mismas.
+donde $C$ es la distancia entre centros de las poleas y $D$ el diámetro de las mismas. \\
 
-\paragraph{Distribución de cargas en el sistema}
+\underline{Distribución de cargas en el sistema} \\
 La carga total de 12.8\,kg se distribuye entre dos subsistemas mecánicos:
 
-\begin{itemize}
-    \item \textbf{Carga soportada por el perfil V-Slot ($\approx$70\%):} El perfil y los carros lineales soportan directamente el peso vertical de la carga (8.96\,kg) a través de las ruedas DELRIN. Esta carga genera únicamente esfuerzos de compresión y flexión en el perfil, sin afectar directamente al sistema de transmisión.
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Carga soportada por el perfil V-Slot:} El perfil y los carros lineales soportan directamente el peso vertical de la carga (8.96\,kg) a través de las ruedas DELRIN. Esta carga genera únicamente esfuerzos de compresión y flexión en el perfil, sin afectar directamente al sistema de transmisión.
     
-    \item \textbf{Carga dinámica del motor ($\approx$30\%):} El motor debe vencer las fuerzas necesarias para acelerar y mover horizontalmente la masa efectiva del sistema (3.84\,kg). Esta masa efectiva es menor que la carga total debido a que:
+    \item \textbf{Carga dinámica del motor:} El motor debe vencer las fuerzas necesarias para acelerar y mover horizontalmente la masa efectiva del sistema (12.72\,kg). Esta masa efectiva es menor que la carga total debido a que:
     \begin{enumerate}
         \item Las ruedas del carro transforman el rozamiento estático en rodadura, reduciendo significativamente la resistencia al movimiento
         \item El perfil V-Slot absorbe las cargas verticales, dejando al motor únicamente las fuerzas inerciales horizontales y las fricciones residuales del sistema
     \end{enumerate}
 \end{itemize}
 
-Esta distribución asume un coeficiente de fricción por rodadura de $\mu_{\text{rod}} \approx 0.001$ para ruedas DELRIN sobre aluminio, lo que implica que la fuerza horizontal necesaria es aproximadamente el 30\% del peso total.
+Esta distribución asume un coeficiente de fricción por rodadura de $\mu_{\text{rod}} \approx 0.001$ para ruedas DELRIN sobre aluminio.\\
+\underline{Selección polea y correa} \\
 
-\paragraph{Verificación del porcentaje adoptado}
-Para validar el porcentaje del 30\%, se analiza la relación entre la fuerza de fricción por rodadura y el peso total:
+Se selecciona una polea GT2 de 40 dientes y diametro de 25.5mm que tiene 80mm/rev
 
-\[\frac{F_{\text{fricción}}}{W_{\text{total}}} = \mu_{\text{rod}} = \frac{F_{\text{rod}}}{m \cdot g}\]
-Con un coeficiente de fricción por rodadura típico de $\mu_{\text{rod}} = 0.001$ (DELRIN sobre aluminio):
+\begin{enumerate}
+    \item \textbf{Precisión de posicionamiento:} El desplazamiento lineal por revolución determina la resolución del sistema:
+    \begin{equation}
+    \text{Resolución} = \frac{P}{n_{\text{pasos/rev}}} = 0.05mm/paso
+    \end{equation}
+    donde P=80mm/rev, $n_{\text{pasos/rev}} = 200 \times 8 = 1600$ pasos (con 8 micropasos). Esto implica 20 pasos/mm.
+    \item \textbf{Velocidad de operación:} Para una velocidad lineal objetivo de $v_{\text{max}} = 250$\,mm/s, la velocidad angular requerida es:
+    \begin{equation}
+    n = \frac{v_{\text{max}}}{P} \times 60 = 187.5 [\text{RPM}] 
+    \end{equation}
+    Velocidad que se encuentra en la zona de torque máximo.
+\end{enumerate}
+Para esta polea, se selecciona una correa dentada de 10mm de ancho.
 
-\[F_{\text{rod}} = 0.001 \cdot 12.8\,\text{kg} \cdot 9.81\,\text{m/s}^2 \approx 0.125\,\text{N}\]
-
-Esta fuerza representa solo el 0.1\% de la carga. Sin embargo, al incluir la aceleración, fricciones de rodamientos, tensión de correa y un factor de seguridad, la fuerza total aumenta significativamente. El 30\% de la masa total es una estimación conservadora que incluye todos estos efectos y proporciona un margen adecuado para variaciones en las condiciones de operación.
-
-\paragraph{Análisis de fuerzas}
+\underline{Análisis de fuerzas} \\
 Para determinar el torque motor requerido, se consideran las siguientes fuerzas resistivas:
 
 \begin{enumerate}
     \item \textbf{Fricción por rodadura:}
     \begin{equation}
-    F_{\text{rod}} = \mu_{\text{rodadura}} \cdot m \cdot g \cdot \frac{1}{r_{\text{rueda}}}
+    F_{\text{rod}} = \mu_{\text{rodadura}} \cdot m \cdot g \cdot \frac{1}{r_{\text{rueda}}}= 0.021N
     \end{equation}
     donde $\mu_{\text{rodadura}}$ depende del material de las ruedas DELRIN sobre aluminio.
     
     \item \textbf{Fuerza de aceleración:}
     \begin{equation}
-    F_{\text{acel}} = (m_{\text{carga}} + m_{\text{correa}}) \cdot a_{\text{max}}
+    F_{\text{acel}} = (m_{\text{carga}} + m_{\text{correa}}) \cdot a_{\text{max}} = 2.43 N
     \end{equation}
     Incluye la masa de la carga útil y la masa lineal de la correa GT2.
     
     \item \textbf{Fricción en rodamientos de poleas:}
     \begin{equation}
-    F_{\text{friccion\_rod}} = T_{\text{correa}} \cdot \mu_{\text{rodamientos}} \cdot n
+    F_{\text{friccion\_rod}} = T_{\text{correa}} \cdot \mu_{\text{rodamientos}} \cdot n = 0.12N
     \end{equation}
     con $n = 2$ (polea conducida y tensor).
     
@@ -130,26 +143,27 @@ Para determinar el torque motor requerido, se consideran las siguientes fuerzas 
     
     \item \textbf{Otras pérdidas:}
     \begin{equation}
-    F_{\text{otras}} = 0.1 \cdot (F_{\text{acel}} + F_{\text{rod}})
+    F_{\text{otras}} = 0.1 \cdot (F_{\text{acel}} + F_{\text{rod}})=0.26N
     \end{equation}
     Se estima un 10\% adicional para pérdidas no modeladas.
 \end{enumerate}
 
-\paragraph{Cálculo del torque motor}
-Considerando la distribución de cargas analizada anteriormente, donde el motor debe mover efectivamente el 30\% de la masa total (3.84\,kg), la fuerza total requerida en la base del sistema es:
+\underline{Cálculo del torque motor} \\
+Considerando la distribución de cargas analizada anteriormente, donde el motor debe mover la masa total (12.72\,kg), la fuerza total requerida en la base del sistema es:
 \begin{equation}
-F_{\text{tbase}} = 1.46\,\text{N}
+F_{\text{tbase}} = 3.33\,\text{N}
 \end{equation}
+
 
 Aplicando un factor de seguridad de 2.5 para contemplar condiciones adversas de operación y degradación del sistema con el uso, el torque motor necesario resulta:
 \begin{equation}
-T_{\text{motor}} = F_{\text{tbase}} \cdot 2.5 \cdot r_{\text{polea}} \approx 0.04\,\text{Nm}
+T_{\text{motor}} = F_{\text{tbase}} \cdot 2.5 \cdot r_{\text{polea}} \approx 0.1\,\text{Nm}
 \label{eq:torque_motor}
 \end{equation}
 
-\paragraph{Selección del motor}
-Se selecciona un motor paso a paso NEMA 17. Analizando la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema34}), se verifica que para la velocidad máxima de operación de 250\,mm/s (239\,rpm), el torque disponible supera ampliamente el requerimiento calculado de 0.04\,Nm, garantizando un margen de seguridad adecuado para la operación continua del sistema.
-
+\underline{Selección del motor} \\
+Se selecciona un motor paso a paso NEMA 17. Analizando la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema34}), se verifica que para la velocidad máxima de operación de 250\,mm/s (187.5\,rpm), el torque disponible supera ampliamente el requerimiento calculado de 0.1\,Nm, garantizando un margen de seguridad adecuado para la operación continua del sistema.
+Se selecciona una polea de 10mm de ancho y 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.65\textwidth]{img/Nema17.png}

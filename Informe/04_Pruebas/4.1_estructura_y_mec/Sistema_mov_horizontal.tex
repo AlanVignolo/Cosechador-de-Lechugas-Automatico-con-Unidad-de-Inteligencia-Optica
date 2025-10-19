@@ -4,63 +4,67 @@
 
 El sistema de movimiento horizontal utiliza una transmisión por correa dentada GT2 con las siguientes especificaciones:
 
-\begin{itemize}
-    \item Carga total: $m = 1.5$ kg
+\begin{itemize}[label=$\bullet$]
+    \item Carga total: $m = 6$ kg
     \item Longitud de la correa: $L = 2.84$ m (ec. \ref{eq:longitud_correa})
     \item Diámetro de poleas: $D_p = 12$ mm y 20 dientes
     \item Radio de poleas: $r = 6$ mm = $0.006$ m
     \item Ancho de la correa: $b = 10$ mm
     \item Paso de la correa GT2: $p = 2$ mm
     \item desplazamiento lineal por revolución: $d_{rev} = 40 \frac{mm}{rev}$
+    \item resolución = 
 \end{itemize}
 
 \subsubsection{Cálculo de fuerzas actuantes}
 
-\paragraph{Fuerza de aceleración}
+\underline{Fuerza de aceleración}\\
 
 Considerando una aceleración deseada de $a = 0.188$ m/s$^2$:
 
 \begin{equation}
-    F_a = m \cdot a = 0.32 \text{ N}
+    F_a = m \cdot a = 1.16\text{ N}
 \end{equation}
 
-\paragraph{Fuerza de fricción}
+\underline{Fuerza de fricción}\\
 
 Se toma un coeficiente de fricción de 0.15 debido a que el sistema no es tan preciso y puede tener fricción de desplazamiento.
 
 \begin{equation}
-    F_f = \mu \cdot m \cdot g = 0.39 \text{ N}
+    F_f = \mu \cdot m \cdot g = 1.47 \text{ N}
 \end{equation}
 
-\paragraph{Resistencia interna de correa}
+\underline{Resistencia interna de correa}\\
 Para esto, se toma un valor empírico, considerando el largo.
-\[F_{intcorrea} \approx 0.25N\]
-\paragraph{Otras pérdidas}
+\begin{equation}
+F_{intcorrea} \approx 0.25N
+\end{equation}
+
+\underline{Otras pérdidas}\\
 
 \begin{equation}
-    F_{otras}= 0.1*(F_a+F_f)=0.07N
+    F_{otras}= 0.1*(F_a+F_f)=0.26N
 \end{equation}
 
-\paragraph{Fuerza total requerida}
+\underline{Fuerza total requerida}\\
 
 La fuerza total que debe ejercer el motor es la suma de la fuerza de aceleración y la fuerza de fricción:
 
 \begin{equation}
-    F_{total} = F_a + F_f + F_{intcorrea} + F_{otras} = 1.05 \text{ N}
+    F_{total} = F_a + F_f + F_{intcorrea} + F_{otras} = 3.14 \text{ N}
 \end{equation}
 
-\subsubsection{Torque Requerido en el Motor}
+\subsubsection{Torque requerido en el motor}
 
 El torque necesario en el eje del motor se calcula multiplicando la fuerza total por el radio de la polea:
 
 \begin{equation}
-    T_{req} = F_{total} \cdot r = 0.013\text{ N·m}
+    T_{req} = F_{total} \cdot r = 0.04\text{ N·m}
 \end{equation}
 
 Para garantizar un funcionamiento confiable del sistema, se aplica un factor de seguridad de 2.5:
 
 \begin{equation}
-    T_{motor} = T_{req} \cdot FS = 0.013 \cdot 2.5
+    T_{motor} = T_{req} \cdot FS = 0.05 \cdot 2.5
 \end{equation}
 
 \subsubsection{Selección del motor}

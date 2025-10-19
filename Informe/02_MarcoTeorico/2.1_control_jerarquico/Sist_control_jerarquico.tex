@@ -15,16 +15,16 @@ La estructura jerárquica se diferencia rigurosamente por las funciones, la frec
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{img/jerarquia_control.jpg}
+    \includegraphics[width=0.8\textwidth]{img/jerarquia_control.png}
     \caption{Estructura piramidal de un sistema de control jerárquico mostrando los tres niveles, sus horizontes temporales y el flujo bidireccional de información (consignas descendentes y estado ascendente).}
     \label{fig:jerarquia_control}
 \end{figure}
 La adopción de una arquitectura de control jerárquica ofrece ventajas distintivas que justifican su uso en sistemas complejos:
-\begin{itemize}
-    \item Gestión de la Complejidad Dimensional: Permite abordar sistemas de gran escala al descomponer el problema de control multivariable en tareas más simples y manejables a nivel de subsistema.
-    \item Confiabilidad y Robustez: Incrementa la resiliencia operativa, ya que el fallo localizado de un controlador en un nivel inferior solo afecta a un subsistema local, previniendo el colapso de la operación integral de la planta.
-    \item Modularidad y Escalabilidad: Facilita la adición, modificación o reemplazo de subsistemas o unidades de control sin generar un impacto sistémico en el resto de la jerarquía.
-    \item Eficiencia Operacional: Permite la aplicación de diferentes horizontes temporales y estrategias de control especializadas en cada nivel, optimizando tanto la estabilidad (Nivel 1) como la eficiencia global (Niveles 2 y 3).
+\begin{itemize}[label=$\bullet$]
+    \item \textbf{Gestión de la Complejidad Dimensional}: Permite abordar sistemas de gran escala al descomponer el problema de control multivariable en tareas más simples y manejables a nivel de subsistema.
+    \item \textbf{Confiabilidad y Robustez}: Incrementa la resiliencia operativa, ya que el fallo localizado de un controlador en un nivel inferior solo afecta a un subsistema local, previniendo el colapso de la operación integral de la planta.
+    \item \textbf{Modularidad y Escalabilidad}: Facilita la adición, modificación o reemplazo de subsistemas o unidades de control sin generar un impacto sistémico en el resto de la jerarquía.
+    \item \textbf{Eficiencia Operacional}: Permite la aplicación de diferentes horizontes temporales y estrategias de control especializadas en cada nivel, optimizando tanto la estabilidad (Nivel 1) como la eficiencia global (Niveles 2 y 3).
 \end{itemize}
 Es crucial diferenciar el control jerárquico del control centralizado puro. Aunque el flujo de información y comando es vertical, el control jerárquico opera bajo un paradigma de control distribuido. El nivel superior impone únicamente las metas u objetivos macro, mientras que la implementación, la corrección de errores en corto plazo y la gestión de la dinámica local son responsabilidades inherentes y autónomas de los controladores ubicados en los niveles inferiores. Esta distribución de responsabilidades permite que cada nivel opere con la frecuencia y detalle apropiado a su función, evitando la saturación computacional característica de los sistemas centralizados.
 
