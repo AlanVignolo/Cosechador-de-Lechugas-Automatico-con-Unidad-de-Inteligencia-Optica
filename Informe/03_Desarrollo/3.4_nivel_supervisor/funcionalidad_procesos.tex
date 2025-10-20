@@ -12,7 +12,7 @@ El nivel supervisor constituye la capa de coordinación del sistema, responsable
 
 \paragraph{\underline{Modelo de ejecución orientado a eventos:}}
 
-\textit{El supervisor utiliza un modelo orientado a eventos mediante callbacks.} Cuando envía un comando de movimiento, registra un callback que será invocado cuando llegue el mensaje de completado. Durante la espera, el bucle principal continúa procesando otros eventos. Este diseño evita bloqueos y permite respuesta inmediata a eventos inesperados.
+El supervisor utiliza un modelo orientado a eventos mediante callbacks. Cuando envía un comando de movimiento, registra un callback que será invocado cuando llegue el mensaje de completado. Durante la espera, el bucle principal continúa procesando otros eventos. Este diseño evita bloqueos y permite respuesta inmediata a eventos inesperados.
 
 \subsubsection{Procesos implementados}
 
@@ -76,7 +76,7 @@ Paso & Acción \\
 
 \paragraph{\underline{Proceso 3: mapeo del entorno:}}
 
-\textit{Escanea el workspace para detectar posiciones de tubos (coordenadas Y) y plantas (coordenadas X), generando mapas que guían la navegación posterior.}
+Escanea el workspace para detectar posiciones de tubos (coordenadas Y) y plantas (coordenadas X), generando mapas que guían la navegación posterior.
 
 \begin{table}[H]
 \centering
@@ -102,7 +102,7 @@ Paso & Acción \\
 
 \paragraph{\underline{Proceso 4: cosecha interactiva:}}
 
-\textit{Navega a cada posición registrada, clasifica la planta, y si está madura ejecuta la recolección.}
+Navega a cada posición registrada, clasifica la planta, y si está madura ejecuta la recolección.
 
 \begin{table}[H]
 \centering
@@ -132,7 +132,7 @@ Paso & Acción \\
 
 \paragraph{\underline{Manejo de errores durante procesos:}}
 
-\textit{Durante la ejecución de cualquier proceso, el supervisor monitorea eventos inesperados:}
+Durante la ejecución de cualquier proceso, el supervisor monitorea eventos inesperados:
 
 \begin{itemize}[label=$\bullet$]
     \item Límite activado inesperadamente: detiene el proceso, registra el error, y preserva el estado para diagnóstico
@@ -142,7 +142,7 @@ Paso & Acción \\
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{imagenes/diagrama_flujo_cosecha.png}
+    \includegraphics[width=0.3\textwidth]{imagenes/diagrama_flujo_cosecha.png}
     \caption{\textit{Diagrama de flujo detallado del proceso de cosecha mostrando decisiones según clasificación}}
     \label{fig:flujo_cosecha}
 \end{figure}

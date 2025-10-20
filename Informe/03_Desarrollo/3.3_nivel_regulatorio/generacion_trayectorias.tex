@@ -1,31 +1,57 @@
 El sistema implementa perfiles de velocidad trapezoidales con aceleraciones fijas, garantizando comportamiento predecible independientemente de la distancia del movimiento. Las distancias de aceleración y desaceleración permanecen constantes, variando únicamente la longitud de la zona de crucero.
 
-Para movimientos largos (superiores a 25mm), el perfil se compone de las fases mostradas en la Tabla \ref{tab:perfil_trapezoidal}. Esta estrategia asegura que las aceleraciones sean idénticas para todos los movimientos, proporcionando comportamiento mecánico consistente. Por ejemplo, un movimiento de 25mm tiene 12.5mm de aceleración/desaceleración y 12.5mm de crucero, mientras que un movimiento de 250mm mantiene los mismos 12.5mm de aceleración/desaceleración pero dispone de 237.5mm de crucero.
+El perfil se compone de las fases mostradas en las Tablas \ref{tab:perfil_horizontal} y \ref{tab:perfil_vertical}. Esta estrategia asegura que las aceleraciones sean idénticas para todos los movimientos, proporcionando comportamiento mecánico consistente.
 
 \begin{table}[H]
 \centering
 \small
 \begin{tabular}{|l|c|c|c|c|}
 \hline
-\textbf{Fase} & \textbf{Distancia} & \textbf{$v_i$} & \textbf{$v_f$} & \textbf{Aceleración} \\
+\textbf{Fase} & \textbf{Distancia} & \textbf{$v_i$ (m/s)} & \textbf{$v_f$ (m/s)} & \textbf{Aceleración (m/s²)} \\
 \hline
 1. Arranque & Instant. & 0 & 0.05 & - \\
 \hline
-2. Acel. suave & 5 mm & 0.05 & 0.10 & 0.05 m/s² \\
+2. Acel. suave & 5 mm & 0.05 & 0.10 & 0.05 \\
 \hline
-3. Acel. fuerte & 7.5 mm & 0.10 & 0.375 (H) / 0.30 (V) & 0.37 / 0.27 m/s² \\
+3. Acel. fuerte & 7.5 mm & 0.10 & 0.375 & 0.37 \\
 \hline
-4. Crucero & Variable & 0.375 / 0.30 & 0.375 / 0.30 & 0 \\
+4. Crucero & Variable & 0.375 & 0.375 & 0 \\
 \hline
-5. Decel. fuerte & 7.5 mm & 0.375 / 0.30 & 0.10 & -0.37 / -0.27 m/s² \\
+5. Decel. fuerte & 7.5 mm & 0.375 & 0.10 & -0.37 \\
 \hline
-6. Decel. suave & 5 mm & 0.10 & 0.05 & -0.05 m/s² \\
+6. Decel. suave & 5 mm & 0.10 & 0.05 & -0.05 \\
 \hline
 7. Detención & Instant. & 0.05 & 0 & - \\
 \hline
 \end{tabular}
-\caption{\textit{Fases del perfil trapezoidal de velocidad con aceleraciones fijas. Velocidades en m/s, H: horizontal, V: vertical}}
-\label{tab:perfil_trapezoidal}
+\caption{\textit{Fases del perfil trapezoidal de velocidad para movimiento horizontal}}
+\label{tab:perfil_horizontal}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Fase} & \textbf{Distancia} & \textbf{$v_i$ (m/s)} & \textbf{$v_f$ (m/s)} & \textbf{Aceleración (m/s²)} \\
+\hline
+1. Arranque & Instant. & 0 & 0.05 & - \\
+\hline
+2. Acel. suave & 5 mm & 0.05 & 0.10 & 0.05 \\
+\hline
+3. Acel. fuerte & 7.5 mm & 0.10 & 0.30 & 0.27 \\
+\hline
+4. Crucero & Variable & 0.30 & 0.30 & 0 \\
+\hline
+5. Decel. fuerte & 7.5 mm & 0.30 & 0.10 & -0.27 \\
+\hline
+6. Decel. suave & 5 mm & 0.10 & 0.05 & -0.05 \\
+\hline
+7. Detención & Instant. & 0.05 & 0 & - \\
+\hline
+\end{tabular}
+\caption{\textit{Fases del perfil trapezoidal de velocidad para movimiento vertical}}
+\label{tab:perfil_vertical}
 \end{table}
 
 \begin{figure}[H]

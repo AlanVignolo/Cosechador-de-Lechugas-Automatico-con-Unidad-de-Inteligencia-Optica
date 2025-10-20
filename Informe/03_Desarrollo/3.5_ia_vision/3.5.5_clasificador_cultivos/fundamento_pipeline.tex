@@ -2,7 +2,7 @@
 
 El sistema de clasificación determina la presencia o ausencia de lechuga en una posición de cultivo y su estado de madurez. Se implementó mediante análisis morfológico basado en segmentación cromática y clasificación por área, que proporciona precisión adecuada con costo computacional reducido compatible con ejecución en tiempo real.
 
-\textbf{Etapa 1: segmentación cromática}
+\textbf{Etapa 1: Segmentación cromática}
 
 El sistema explota el contraste cromático entre las lechugas verdes y el entorno del sistema hidropónico (tubos blancos de PVC). La segmentación se realiza definiendo un rango de valores en los tres canales del espacio HSV correspondiente a las tonalidades verdes de las lechugas hidropónicas.
 
@@ -25,7 +25,7 @@ Cada píxel se evalúa individualmente: si sus componentes de matiz, saturación
 \label{fig:clasificador_etapa1}
 \end{figure}
 
-\textbf{Etapa 2: refinamiento morfológico}
+\textbf{Etapa 2: Refinamiento morfológico}
 
 La máscara binaria presenta imperfecciones causadas por variaciones locales de iluminación y limitaciones del sensor. Se aplica una secuencia de operaciones morfológicas para refinarla:
 
@@ -68,13 +68,13 @@ Se emplea un elemento estructurante rectangular de 3×3 píxeles como compromiso
 \label{fig:clasificador_etapa2}
 \end{figure}
 
-\textbf{Etapa 3: detección y filtrado de contornos}
+\textbf{Etapa 3: Detección y filtrado de contornos}
 
 Sobre la máscara refinada se ejecuta detección de contornos que identifica las fronteras entre vegetación y fondo. Se emplea extracción de contornos externos únicamente, dado que las lechugas no presentan huecos internos relevantes.
 
 Los contornos detectados se filtran por área mínima de 5000 píxeles, eliminando ruido residual y pequeñas sombras. De los contornos válidos, se selecciona el de mayor área bajo la hipótesis de que la lechuga constituye el objeto verde dominante en la escena.
 
-\textbf{Etapa 4: clasificación por área}
+\textbf{Etapa 4: Clasificación por área}
 
 El área del contorno seleccionado (en píxeles) constituye el descriptor empleado para clasificación. Se compara contra umbrales establecidos estadísticamente mediante análisis de muestras representativas. Áreas superiores al umbral indican lechuga madura lista para cosecha, mientras que áreas inferiores corresponden a plantas inmaduras o posiciones vacías.
 

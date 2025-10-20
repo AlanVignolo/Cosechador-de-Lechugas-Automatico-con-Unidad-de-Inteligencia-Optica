@@ -1,0 +1,72 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#f5f5f5','primaryTextColor':'#000','primaryBorderColor':'#424242','lineColor':'#616161','secondaryColor':'#fafafa','tertiaryColor':'#f5f5f5'}}}%%
+
+flowchart TD
+    Start([INICIO]):::startEnd
+    
+    LoadMaps[Cargar tubos y cintas<br/>JSON]:::process
+    
+    CheckHoming{¿Robot<br/>homed?}:::decision
+    
+    DoHoming[Ejecutar homing]:::process
+    
+    ArmSafe[Brazo → mover_lechuga<br/>posición segura]:::process
+    
+    LoopTubes[Para cada tubo]:::loop
+    
+    LoopBelts[Para cada cinta del tubo]:::loop
+    
+    Navigate[Mover a X_cinta, Y_tubo]:::process
+    
+    ClassifyIA{Clasificar IA:<br/>¿Estado?}:::decision
+    
+    Empty[VACÍO<br/>Continuar]:::skip
+    NotReady[NO LISTA<br/>Continuar]:::skip
+    
+    CorrectPos[Corrección posición IA<br/>Horizontal + Vertical]:::critical
+    
+    Pick[Brazo → recoger_lechuga<br/>extender + cerrar gripper]:::critical
+    
+    Transport[Brazo → mover_lechuga<br/>con planta]:::critical
+    
+    MoveDeposit[Mover a zona depósito<br/>X_fin, Y_fin-250mm]:::process
+    
+    Deposit[Brazo → depositar_lechuga<br/>inclinar + abrir gripper]:::critical
+    
+    ReturnArm[Brazo → mover_lechuga<br/>sin planta]:::critical
+    
+    MoreBelts{¿Más<br/>cintas?}:::decision
+    
+    ReturnOrigin[Volver a origen 0, 0]:::process
+    
+    End([FIN]):::startEnd
+    
+    Start --> LoadMaps
+    LoadMaps --> CheckHoming
+    CheckHoming -->|NO| DoHoming
+    DoHoming --> ArmSafe
+    CheckHoming -->|SÍ| ArmSafe
+    ArmSafe --> LoopTubes
+    LoopTubes --> LoopBelts
+    LoopBelts --> Navigate
+    Navigate --> ClassifyIA
+    ClassifyIA -->|VACÍO| Empty
+    ClassifyIA -->|NO LISTA| NotReady
+    ClassifyIA -->|LISTA| CorrectPos
+    CorrectPos --> Pick
+    Pick --> Transport
+    Transport --> MoveDeposit
+    MoveDeposit --> Deposit
+    Deposit --> ReturnArm
+    ReturnArm --> MoreBelts
+    Empty --> MoreBelts
+    NotReady --> MoreBelts
+    MoreBelts -->|SÍ| LoopBelts
+    MoreBelts -->|NO| ReturnOrigin
+    ReturnOrigin --> End
+    
+    classDef startEnd fill:#2E7D32,stroke:#1B5E20,stroke-width:3px,color:#fff,font-weight:bold
+    classDef process fill:#1565C0,stroke:#0D47A1,stroke-width:2px,color:#fff,font-weight:bold
+    classDef decision fill:#D84315,stroke:#BF360C,stroke-width:2px,color:#fff,font-weight:bold
+    classDef critical fill:#6A1B9A,stroke:#4A148C,stroke-width:2px,color:#fff,font-weight:bold
+    classDef skip fill:#616161,stroke:#424242,stroke-width:2px,color:#fff
+    classDef loop fill:#00838F,stroke:#006064,stroke-width:2px,color:#fff,font-weight:bold
