@@ -2,7 +2,7 @@
 
 El sistema emplea dos reguladores DC-DC step-down para adaptar la tensión de alimentación principal (24V DC) a los niveles requeridos por diferentes subsistemas:
 
-\textbf{Regulador 24V → 5V.} Regulador conmutado step-down con capacidad de 5 A, eficiencia del 90\%, y rizado de salida inferior a 50 mV. Este regulador alimenta:
+\textbf{Regulador 24V - 5V.} Regulador conmutado step-down con capacidad de 5 A. Este regulador alimenta:
 \begin{itemize}[label=$\bullet$]
 \item Arduino Mega 2560 (consumo típico 0.5 A)
 \item Raspberry Pi 5 (consumo típico 3 A, picos de 4 A)
@@ -12,7 +12,7 @@ El sistema emplea dos reguladores DC-DC step-down para adaptar la tensión de al
 
 La capacidad total requerida es de 5 A, considerando operación simultánea de todos los dispositivos a carga máxima. El regulador seleccionado proporciona exactamente esta capacidad con margen de seguridad del 20\%.
 
-\textbf{Regulador 24V → 7V.} Regulador conmutado step-down con capacidad de 3 A, eficiencia del 88\%. Este regulador alimenta exclusivamente los circuitos lógicos de los tres drivers TB6600 (señales STEP/DIR/ENABLE). Cada driver consume aproximadamente 100 mA en su circuito lógico, resultando en consumo total de 300 mA.
+\textbf{Regulador 24V - 7V.} Regulador conmutado step-down con capacidad de 5 A. Este regulador alimenta los servo motores. Cada driver consume aproximadamente 100 mA en su circuito lógico, resultando en consumo total de 300 mA.
 
 La separación de la alimentación lógica de los drivers respecto a la alimentación de procesadores (5V) previene caídas de tensión causadas por conmutación de alta frecuencia que podrían inducir resets espurios del Arduino.
 

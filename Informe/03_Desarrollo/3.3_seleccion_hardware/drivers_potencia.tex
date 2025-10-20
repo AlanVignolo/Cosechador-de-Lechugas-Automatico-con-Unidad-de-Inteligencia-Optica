@@ -2,10 +2,8 @@
 
 El control de los tres motores paso a paso NEMA 17 se realiza mediante drivers TB6600, que proporcionan control de corriente mediante chopper y aislamiento óptico de señales lógicas. Cada driver opera con:
 
-\textbf{Alimentación.} Tensión de potencia de 24V DC para los motores, y tensión lógica de 5V DC para las señales STEP/DIR/ENABLE provenientes del Arduino. El aislamiento óptico entre circuitos de potencia y control protege al microcontrolador ante transitorios inductivos generados por conmutación de bobinas.
+Tensión de potencia de 24V DC para los motores, y tensión lógica de 5V DC para las señales STEP/DIR/ENABLE. 
 
-\textbf{Configuración de corriente.} Los motores NEMA 17 especificados tienen corriente nominal de 1.5 A por fase. Los drivers se configuran mediante DIP switches para limitar la corriente a 1.5 A, protegiendo los motores ante sobrecarga térmica.
-
-\textbf{Microstepping.} Los drivers soportan configuración de 1/8 micropasos, permitiendo resolución de 1600 pasos/revolución (frente a 200 pasos/revolución en modo completo). Esta resolución se traduce en precisión de posicionamiento de 0.025 mm en el eje vertical con husillo de 8 mm/rev.
+Los motores NEMA 17 especificados tienen corriente nominal de 1.5 A por fase. Los drivers se configuran mediante DIP switches para limitar la corriente a 1.5 A, protegiendo los motores ante sobrecarga térmica.
 
 Cada driver TB6600 tiene consumo máximo de 3 A a 24V cuando el motor está energizado y girando a máxima velocidad. En reposo (motor energizado pero detenido), el consumo se reduce a 1 A por driver.

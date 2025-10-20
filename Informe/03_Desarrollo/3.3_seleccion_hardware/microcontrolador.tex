@@ -1,17 +1,13 @@
 \subsection{Microcontrolador: Arduino Mega 2560}
 
-El controlador seleccionado es un Arduino Mega 2560 basado en el microcontrolador ATmega2560, que opera a 16 MHz con arquitectura de 8 bits. La selección se fundamenta en los siguientes criterios técnicos:
+El controlador de bajo nivel seleccionado es un Arduino Mega 2560 basado en el microcontrolador ATmega2560, que opera a 16 MHz con arquitectura de 8 bits. La selección se fundamenta en los siguientes criterios técnicos:
 
-\textbf{Compatibilidad con drivers TB6600.} Los drivers TB6600 seleccionados requieren señales lógicas de 5V para las entradas STEP, DIR y ENABLE. El Arduino Mega 2560 proporciona salidas digitales de 5V nativas, asegurando compatibilidad directa sin necesidad de circuitos de adaptación de nivel lógico. Esta característica resulta crítica dado que el sistema debe controlar 3 motores paso a paso simultáneamente (6 señales STEP/DIR más 3 señales ENABLE).
+Los drivers TB6600 seleccionados requieren señales lógicas de 5V para las entradas STEP, DIR y ENABLE. El Arduino Mega 2560 proporciona salidas digitales de 5V nativas, asegurando compatibilidad directa sin necesidad de circuitos de adaptación de nivel lógico. 
 
-\textbf{Capacidad de E/S.} El sistema requiere control de 3 motores paso a paso (6 pines STEP/DIR), 2 servomotores (2 pines PWM), 1 gripper (1 pin PWM), 6 finales de carrera (6 pines digitales), y comunicación UART bidireccional (2 pines TX/RX). El Arduino Mega proporciona 54 pines digitales (de los cuales 15 soportan PWM) y 16 entradas analógicas, superando ampliamente los 17 pines digitales requeridos.
+El Arduino Mega proporciona 54 pines digitales (de los cuales 15 soportan PWM) y 16 entradas analógicas, superando ampliamente los 17 pines digitales requeridos.
 
-\textbf{Timers hardware.} La generación de perfiles de velocidad trapezoidales requiere interrupciones de alta frecuencia (hasta 15 kHz) para emisión de pulsos STEP con precisión temporal. El ATmega2560 incorpora 6 timers hardware (cuatro de 8 bits y dos de 16 bits) que permiten generar señales PWM y manejar interrupciones sin sobrecarga del procesador principal.
+La generación de perfiles de velocidad trapezoidales requiere interrupciones de alta frecuencia (hasta 15 kHz) para emisión de pulsos STEP con precisión temporal. El ATmega2560 incorpora 6 timers hardware (cuatro de 8 bits y dos de 16 bits) que permiten generar señales PWM y manejar interrupciones sin sobrecarga del procesador principal.
 
-\textbf{Comunicación UART.} El microcontrolador dispone de 4 puertos UART hardware, permitiendo comunicación full-duplex con el nivel supervisor a 115200 baudios sin consumo de ciclos de CPU para manejo de protocolo.
-
-\textbf{Memoria.} El firmware del nivel regulatorio ocupa aproximadamente 18 kB de los 256 kB de memoria flash disponible, y utiliza 2.1 kB de los 8 kB de SRAM para variables y buffers. Este margen permite futuras expansiones del código sin limitaciones de memoria.
-
-\textbf{Ecosistema de desarrollo.} El entorno Arduino IDE proporciona bibliotecas maduras para control de servomotores (Servo.h), gestión de timers, y comunicación serial, reduciendo significativamente el tiempo de desarrollo comparado con programación directa de registros.
+El microcontrolador dispone de 4 puertos UART hardware, permitiendo comunicación con el nivel supervisor a 115200 baudios sin consumo de ciclos de CPU para manejo de protocolo.
 
 El Arduino Mega 2560 opera a 5V DC con consumo típico de 200 mA durante operación normal, alcanzando picos de 500 mA durante conmutación simultánea de múltiples salidas digitales.
