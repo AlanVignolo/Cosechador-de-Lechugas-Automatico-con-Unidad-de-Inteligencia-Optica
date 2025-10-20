@@ -10,15 +10,15 @@ Cada píxel se evalúa individualmente: si sus componentes de matiz, saturación
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}[b]{0.48\textwidth}
+\begin{subfigure}[b]{0.45\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imagenes/clasificador_1_original.jpg}
+    \includegraphics[width=0.6\textwidth]{imagenes/clasificador_1_original.jpg}
     \caption{Imagen RGB original}
 \end{subfigure}
 \hfill
-\begin{subfigure}[b]{0.48\textwidth}
+\begin{subfigure}[b]{0.45\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imagenes/clasificador_2_verde.jpg}
+    \includegraphics[width=0.6\textwidth]{imagenes/clasificador_2_verde.jpg}
     \caption{Máscara de vegetación verde}
 \end{subfigure}
 \caption{\textit{Etapa 1: Segmentación cromática en espacio HSV}}
@@ -29,7 +29,7 @@ Cada píxel se evalúa individualmente: si sus componentes de matiz, saturación
 
 La máscara binaria presenta imperfecciones causadas por variaciones locales de iluminación y limitaciones del sensor. Se aplica una secuencia de operaciones morfológicas para refinarla:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Cierre morfológico}: Rellena huecos pequeños dentro de las regiones y conecta componentes próximos fragmentados.
     \item \textbf{Apertura morfológica}: Elimina píxeles aislados y pequeñas protuberancias correspondientes a ruido.
 \end{itemize}
@@ -40,13 +40,13 @@ Se emplea un elemento estructurante rectangular de 3×3 píxeles como compromiso
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imagenes/clasificador_3_negro.jpg}
+    \includegraphics[width=0.6\textwidth]{imagenes/clasificador_3_negro.jpg}
     \caption{Máscara de regiones oscuras}
 \end{subfigure}
 \hfill
 \begin{subfigure}[b]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imagenes/clasificador_4_combinado.jpg}
+    \includegraphics[width=0.6\textwidth]{imagenes/clasificador_4_combinado.jpg}
     \caption{Combinación verde + negro}
 \end{subfigure}
 
@@ -54,13 +54,13 @@ Se emplea un elemento estructurante rectangular de 3×3 píxeles como compromiso
 
 \begin{subfigure}[b]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imagenes/clasificador_5_binario_final.jpg}
+    \includegraphics[width=0.6\textwidth]{imagenes/clasificador_5_binario_final.jpg}
     \caption{Máscara binaria refinada}
 \end{subfigure}
 \hfill
 \begin{subfigure}[b]{0.48\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{imagenes/clasificador_6_contornos.jpg}
+    \includegraphics[width=0.6\textwidth]{imagenes/clasificador_6_contornos.jpg}
     \caption{Contornos finales detectados}
 \end{subfigure}
 

@@ -8,7 +8,7 @@ La Figura \ref{fig:SuperiorReal_simplificado_vista} muestra la geometría genera
 
 Para el análisis por elementos finitos se consideró la condición de carga más desfavorable: sistema completamente extendido con carga máxima en el extremo del brazo. La carga total aplicada sobre el soporte superior se compone de:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Peso de las tres varillas verticales (dos lisas de acero + una roscada): $\approx$ 3.8 kg
     \item Peso del soporte medio con brazo y cámara: $\approx$ 1.5 kg
     \item Peso del motor vertical: $\approx$ 2.2 kg
@@ -23,22 +23,22 @@ La carga total considerada para el análisis fue de 9 kg ($\approx$ 88 N), aplic
     \begin{subfigure}{0.35\textwidth}
         \centering
         \includegraphics[width=0.7\textwidth]{img/SuperiorReal_simplificado_vista.jpg}
-        \caption{Vista del soporte superior mostrando la configuración estructural, alojamientos de varillas y zonas de montaje.}
+        \caption{\textit{Vista del soporte superior mostrando la configuración estructural, alojamientos de varillas y zonas de montaje.}}
         \label{fig:SuperiorReal_simplificado_vista}
     \end{subfigure}
     \hspace{0.5cm}
     \begin{subfigure}{0.35\textwidth}
         \centering
         \includegraphics[width=0.7\textwidth]{img/SuperiorReal_simplificado_fuerzas_app.jpg}
-        \caption{Distribución de cargas aplicadas sobre el soporte superior.}
+        \caption{\textit{Distribución de cargas aplicadas sobre el soporte superior.}}
         \label{fig:SuperiorReal_simplificado_fuerzas_app}
     \end{subfigure}
-    \caption{Soporte superior. Vista y fuerzas aplicadas}
+    \caption{\textit{Soporte superior. Vista y fuerzas aplicadas}}
 \end{figure}
 
 El análisis de esfuerzos mediante elementos finitos se realizó considerando material PLA con las siguientes propiedades mecánicas:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Módulo de Young: 3500 MPa
     \item Límite de fluencia: 50 MPa
     \item Coeficiente de Poisson: 0.36
@@ -46,7 +46,7 @@ El análisis de esfuerzos mediante elementos finitos se realizó considerando ma
 
 La Figura \ref{fig:SuperiorReal_simplificado_tensiones} presenta los resultados del análisis, mostrando las deformaciones resultantes. Los resultados indican:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Deformación máxima: $\approx$ 0.15 mm (en zonas de mayor voladizo)
     \item Factor de seguridad: $\frac{50\,\text{MPa}}{2.8\,\text{MPa}} \approx 18$ (ampliamente seguro)
 \end{itemize}
@@ -64,7 +64,7 @@ Los resultados confirman que el diseño propuesto es estructuralmente robusto, c
 
 El soporte medio constituye el elemento móvil del eje vertical, desplazándose a lo largo de las varillas mediante el giro de la varilla roscada. Este componente cumple funciones críticas en el sistema: montaje del brazo robótico serial, fijación de la cámara de visión artificial y mantenimiento del equilibrio dinámico mediante contrapeso.
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Sistema de guiado:} Incorpora dos rodamientos lineales LM16UU para deslizamiento sobre las varillas lisas de 8 mm, garantizando movimiento suave sin rotaciones indeseadas
     \item \textbf{Tuerca de transmisión:} Alojamiento central para tuerca TR16 que se acopla con la varilla roscada, convirtiendo el movimiento rotacional del motor en desplazamiento lineal
     \item \textbf{Montaje del brazo:} Base horizontal plana con patrón de agujeros para fijación del servomotor base del brazo robótico
@@ -85,9 +85,9 @@ El contrapeso permite compensar el momento generado por el brazo extendido, redu
 
 El soporte inferior cierra la estructura vertical del sistema, proporcionando la base de fijación para los extremos inferiores de las tres varillas y alojando componentes auxiliares del sistema de control.
 
-\paragraph{Funciones y características}
+\underline{Funciones y características}\\
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Anclaje de varillas:} Alojamientos pasantes para las dos varillas lisas con fijación mediante tornillos prisioneros, y soporte del extremo libre de la varilla roscada con rodamiento axial
     \item \textbf{Final de carrera inferior:} Montaje del microswitch de límite inferior del eje vertical, con placa de activación mecánica
 \end{itemize}
@@ -95,30 +95,30 @@ El soporte inferior cierra la estructura vertical del sistema, proporcionando la
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{img/InferiorReal_simplificado_vista.jpg}
-    \caption{Soporte inferior mostrando alojamientos de varillas, canales de gestión de cables y montaje del final de carrera.}
+    \caption{\textit{Soporte inferior mostrando alojamientos de varillas, canales de gestión de cables y montaje del final de carrera.}}
     \label{fig:soporte_inferior_real}
 \end{figure}
 
 El diseño incorpora tolerancias ajustadas para los alojamientos de las varillas, garantizando la perpendicularidad del eje vertical respecto al plano horizontal de desplazamiento.
 
-\subsubsection{Brazo Robótico Serial}
+\subsubsection{Brazo robótico serie}
 
 Se opta por el uso de PLA con fibra de carbono como material estructural proporciona mejor relación rigidez/peso que el PLA estándar, reduciendo las vibraciones residuales al finalizar movimientos rápidos y mejorando la precisión de posicionamiento del efector final.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{img/brazo_completo.jpg}
-    \caption{Vista completa del brazo robótico de 2 grados de libertad mostrando las dos articulaciones rotacionales y el efector final tipo pinza.}
+    \caption{\textit{Vista completa del brazo robótico de 2 grados de libertad mostrando las dos articulaciones rotacionales y el efector final tipo pinza.}}
     \label{fig:brazo_Real}
 \end{figure}
 
-\subsubsection{Efector Final - Gripper}
+\subsubsection{Efector final}
 
 El efector final implementa un mecanismo de pinza paralela actuado mediante transmisión piñón-cremallera, convirtiendo el movimiento rotacional del servomotor en desplazamiento lineal de las mordazas.
 
-\paragraph{Principio de funcionamiento}
+\underline{Principio de funcionamiento} \\
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item \textbf{Transmisión:} Sistema piñón-cremallera con relación 1:1, proporcionando movimiento sincronizado de ambas mordazas hacia el centro
     \item \textbf{Rango de apertura:} 0-50 mm, adecuado para lechugas de tamaño pequeño a grande
     \item \textbf{Mordazas:} Geometría curva con superficie texturizada para mejorar fricción sin penetrar las hojas
@@ -129,16 +129,16 @@ El efector final implementa un mecanismo de pinza paralela actuado mediante tran
     \begin{subfigure}{0.35\textwidth}
         \centering
         \includegraphics[width=0.7\textwidth]{img/gripper.jpg}
-        \caption{Sistema de transmisión piñón-cremallera del gripper mostrando el acoplamiento mecánico entre el servomotor y las mordazas móviles.}
+        \caption{\textit{Sistema de transmisión piñón-cremallera del gripper mostrando el acoplamiento mecánico entre el servomotor y las mordazas móviles.}}
         \label{fig:gripper_Real_transmision}
     \end{subfigure}
     \hspace{0.5cm}
     \begin{subfigure}{0.35\textwidth}
         \centering
         \includegraphics[width=0.7\textwidth]{img/pinza_tapa.png}
-        \caption{Vista del gripper ensamblado mostrando la configuración de mordazas paralelas y carcasa de protección.}
+        \caption{\textit{Vista del gripper ensamblado mostrando la configuración de mordazas paralelas y carcasa de protección.}}
         \label{fig:gripper_Real}
     \end{subfigure}
-    \caption{Efector final tipo gripper con transmisión por piñón-cremallera para agarre adaptativo de lechugas.}
+    \caption{\textit{Efector final tipo gripper con transmisión por piñón-cremallera para agarre adaptativo de lechugas.}}
 \end{figure}
 

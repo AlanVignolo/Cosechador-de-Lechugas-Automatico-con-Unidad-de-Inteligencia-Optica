@@ -15,7 +15,7 @@ donde $\tau_i$ representa el torque aplicado en la articulación $i$ y $\theta_i
 
 
 El sistema consiste en dos eslabones rígidos conectados en serie mediante articulaciones rotacionales. La configuración y parámetros se describen a continuación:
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item $L_1$: Longitud total del eslabón 1
     \item $L_2$: Longitud total del eslabón 2
     \item $l_1$: Distancia desde la articulación 1 al centro de masa del eslabón 1
@@ -25,7 +25,7 @@ El sistema consiste en dos eslabones rígidos conectados en serie mediante artic
 \end{itemize}
 
 \textbf{Coordenadas generalizadas:}
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item $\theta_1$: Ángulo de rotación de la articulación 1 (respecto al eje horizontal)
     \item $\theta_2$: Ángulo de rotación de la articulación 2 (respecto al eje horizontal)
 \end{itemize}
@@ -35,9 +35,8 @@ El sistema consiste en dos eslabones rígidos conectados en serie mediante artic
     \caption{\textit{Diagrama cinemático y de eslabones del manipulador robótico planar}}
     \label{fig:DCL_brazo}
 \end{figure}
-\paragraph{Energías del Eslabón 1}
-
-\subparagraph{Energía Potencial}
+\paragraph{Energías del eslabón 1}
+\subparagraph{Energía potencial}
 
 La energía potencial gravitacional del eslabón 1 está dada por:
 \begin{equation}
@@ -46,24 +45,29 @@ U_1 = m_1 \cdot g \cdot l_1 \cdot \sin(\theta_1)
 
 donde $g$ es la aceleración de la gravedad y la altura del centro de masa se mide desde un nivel de referencia horizontal.
 
-\subparagraph{Energía Cinética}
+\subparagraph{Energía cinética}
 
 La energía cinética del eslabón 1 tiene dos componentes: rotacional y traslacional.
 \begin{equation}
 K_1 = \frac{1}{2} I_1 \dot{\theta}_1^2 + \frac{1}{2} m_1 v_1^2
 \end{equation}
 
-Para calcular $v_1^2$, determinamos primero la posición del centro de masa del eslabón 1:
+Para calcular $v_1^2$, determinamos primero la posición del centro de masa del eslabón 1 y derivando respecto al tiempo:
+
+\noindent
+\begin{minipage}{0.48\textwidth}
 \begin{align}
 x_1 &= l_1 \cos(\theta_1) \\
 y_1 &= l_1 \sin(\theta_1)
 \end{align}
-
-Derivando respecto al tiempo:
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
 \begin{align}
 \dot{x}_1 &= -l_1 \sin(\theta_1) \dot{\theta}_1 \\
 \dot{y}_1 &= l_1 \cos(\theta_1) \dot{\theta}_1
 \end{align}
+\end{minipage}
 
 La velocidad al cuadrado del centro de masa es:
 \begin{equation}
@@ -93,17 +97,21 @@ La energía cinética del eslabón 2 es:
 K_2 = \frac{1}{2} I_2 \dot{\theta}_2^2 + \frac{1}{2} m_2 v_2^2
 \end{equation}
 
-La posición del centro de masa del eslabón 2 es:
+La posición del centro de masa del eslabón 2 es: \\
+\noindent
+\begin{minipage}{0.48\textwidth}
 \begin{align}
 x_2 &= L_1\cos(\theta_1) + l_2\cos(\theta_2) \\
 y_2 &= L_1\sin(\theta_1) + l_2\sin(\theta_2)
 \end{align}
-
-Derivando respecto al tiempo:
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
 \begin{align}
-\dot{x}_2 &= -L_1\sin(\theta_1)\dot{\theta}_1 - l_2\sin(\theta_2)\dot{\theta}_2 \\
-\dot{y}_2 &= L_1\cos(\theta_1)\dot{\theta}_1 + l_2\cos(\theta_2)\dot{\theta}_2
+\dot{x}_1 &= -l_1 \sin(\theta_1) \dot{\theta}_1 \\
+\dot{y}_1 &= l_1 \cos(\theta_1) \dot{\theta}_1
 \end{align}
+\end{minipage} 
 
 Reemplazando x e y y sus derivadas se puede obtener $v_2^2$:
 %\begin{multline}
@@ -201,7 +209,7 @@ Aplicando las ecuaciones de Euler-Lagrange $\tau_i = \frac{d}{dt}\left(\frac{\pa
 \label{ec:torqueT1}
 \end{multline}
 
-\paragraph{Torque en la Articulación 2}
+\paragraph{Torque en la articulación 2}
 
 \begin{multline}
 \tau_2 = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(\theta_1 - \theta_2) + m_2L_1l_2\dot{\theta}_1^2\sin(\theta_1 - \theta_2) + gm_2l_2\cos(\theta_2)
