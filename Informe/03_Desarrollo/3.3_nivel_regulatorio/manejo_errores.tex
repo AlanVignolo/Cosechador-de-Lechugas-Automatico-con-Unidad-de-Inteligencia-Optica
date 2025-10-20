@@ -1,4 +1,4 @@
-\subsubsection{Manejo de Errores y Protecciones}
+\subsubsection{Manejo de errores y protecciones}
 
 El firmware implementa mecanismos robustos de detección y manejo de errores para garantizar operación segura del sistema mecánico.
 
@@ -9,7 +9,7 @@ Antes de ejecutar cualquier comando, el analizador sintáctico valida sintaxis y
 \small
 \begin{tabular}{|l|l|l|}
 \hline
-\textbf{Parámetro} & \textbf{Rango Válido} & \textbf{Error} \\
+Parámetro & Rango válido & Error \\
 \hline
 Delimitadores & \texttt{<} y \texttt{>} presentes & INVALID\_CMD \\
 \hline
@@ -22,7 +22,7 @@ Velocidad V & 500 - 12,000 pasos/s & INVALID\_PARAM \\
 Tiempo trayectoria & 0 - 10,000 ms & INVALID\_PARAM \\
 \hline
 \end{tabular}
-\caption{Validaciones de comandos y rangos permitidos}
+\caption{\textit{Validaciones de comandos y rangos permitidos}}
 \label{tab:validacion_comandos}
 \end{table}
 
@@ -34,7 +34,7 @@ El buffer UART circular (256 bytes) implementa protección contra overflow verif
 \centering
 \begin{tabular}{|l|p{9cm}|}
 \hline
-\textbf{Código} & \textbf{Descripción y Causa} \\
+Código & Descripción y causa \\
 \hline
 INVALID\_CMD & Comando no reconocido o sintaxis incorrecta. \\
 \hline
@@ -49,7 +49,7 @@ TIMEOUT & Operación excedió tiempo límite configurado. \\
 SYSTEM\_ERROR & Error interno del firmware. \\
 \hline
 \end{tabular}
-\caption{Códigos de error del firmware}
+\caption{\textit{Códigos de error del firmware}}
 \label{tab:codigos_error}
 \end{table}
 
