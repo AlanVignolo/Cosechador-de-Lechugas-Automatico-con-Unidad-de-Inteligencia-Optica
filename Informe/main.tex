@@ -52,8 +52,10 @@
 
 \excludecomment{debug}
 
-% Renombrar figuras
+% Renombrar figuras y tablas
 \renewcommand{\figurename}{Fig.}
+\renewcommand{\tablename}{Tabla}
+\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
 \captionsetup{font=footnotesize}
 
 % Cabecera y pie de página
@@ -94,7 +96,8 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \setkeys{Gin}{draft=false}
 
 \maketitle
-\tableofcontents 
+\setcounter{tocdepth}{1}  % Mostrar solo capítulos y secciones (no subsecciones)
+\tableofcontents
 \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -115,7 +118,7 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \section{Objetivos del proyecto}
 \input{01_Introduccion/objetivos}
 
-\section{Alcance y limitaciones}
+\section{Alcance}
 \input{01_Introduccion/alcance_limitaciones}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -181,7 +184,7 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \subsection{Robot serie}
 \input{03_Desarrollo/3.2_modelado_mecanico/configuracion_brazo}
 %\input{03_Desarrollo/3.2_modelado_mecanico/cinematicas.tex}
-\input{03_Desarrollo/3.2_modelado_mecanico/dinámica_brazo.tex}
+\input{03_Desarrollo/3.2_modelado_mecanico/dinamica_brazo.tex}
 \input{03_Desarrollo/3.2_modelado_mecanico/seleccion_servos}
 \input{03_Desarrollo/3.2_modelado_mecanico/gripper_real.tex}
 
@@ -190,15 +193,20 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{03_Desarrollo/3.2_modelado_mecanico/Modelado3D_real.tex}
 %\input{03_Desarrollo/3.2_modelado_mecanico/tolerancias_ajustes}
 
-\section{Sistema de Control de bajo nivel (nivel regulatorio)}
+\section{Selección de hardware y análisis energético}
+\input{03_Desarrollo/3.3_seleccion_hardware/introduccion}
+
+\input{03_Desarrollo/3.3_seleccion_hardware/drivers_potencia}
+\input{03_Desarrollo/3.3_seleccion_hardware/camara}
+\input{03_Desarrollo/3.3_seleccion_hardware/microcontrolador}
+\input{03_Desarrollo/3.3_seleccion_hardware/computadora}
+\input{03_Desarrollo/3.3_seleccion_hardware/reguladores_voltaje}
+\input{03_Desarrollo/3.3_seleccion_hardware/analisis_energetico}
+
+\section{Sistema de control de bajo nivel (nivel regulatorio)}
 
 \subsection{Arquitectura del nivel regulatorio}
 \input{03_Desarrollo/3.3_nivel_regulatorio/arquitectura_regulatorio}
-
-\subsection{Hardware de Control}
-\input{03_Desarrollo/3.3_nivel_regulatorio/justificacion_arduino}
-\input{03_Desarrollo/3.3_nivel_regulatorio/perifericos_hardware}
-\input{03_Desarrollo/3.3_nivel_regulatorio/distribucion_pines}
 
 % \subsection{Selección y Dimensionamiento de Actuadores}
 % \input{03_Desarrollo/3.3_nivel_regulatorio/motores_paso_paso}
@@ -209,7 +217,7 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 % \input{03_Desarrollo/3.3_nivel_regulatorio/finales_carrera}
 % \input{03_Desarrollo/3.3_nivel_regulatorio/sistema_seguridad}
 
-\subsection{Control de movimiento}
+\subsection{Generación de trayectorias y control de movimiento}
 \input{03_Desarrollo/3.3_nivel_regulatorio/generacion_trayectorias}
 \input{03_Desarrollo/3.3_nivel_regulatorio/control_velocidad}
 \input{03_Desarrollo/3.3_nivel_regulatorio/conversion_pasos_mm}
@@ -218,31 +226,27 @@ Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artif
 \input{03_Desarrollo/3.3_nivel_regulatorio/estructura_comandos}
 \input{03_Desarrollo/3.3_nivel_regulatorio/manejo_errores}
 
-\section{Nivel Supervisor}
+\section{Nivel supervisor}
 
-\subsection{Hardware Supervisor}
-\input{03_Desarrollo/3.4_nivel_supervisor/justificacion_raspberry}
-
-\subsection{Arquitectura del Software}
+\subsection{Arquitectura del software}
 \input{03_Desarrollo/3.4_nivel_supervisor/arquitectura_supervisor}
 
-\subsection{Funcionalidad y Procesos}
+\subsection{Funcionalidad y procesos}
 \input{03_Desarrollo/3.4_nivel_supervisor/funcionalidad_procesos}
 
-\subsection{Seguimiento de Posición Global}
+\subsection{Seguimiento de posición global}
 \input{03_Desarrollo/3.4_nivel_supervisor/seguimiento_posicion}
 
-\subsection{Control del Brazo Robótico}
+\subsection{Control del brazo robótico}
 \input{03_Desarrollo/3.4_nivel_supervisor/control_brazos}
 
-\subsection{Manejo de Errores y Recuperación}
+\subsection{Manejo de errores y recuperación}
 \input{03_Desarrollo/3.4_nivel_supervisor/manejo_errores}
 
 \section{Inteligencia artificial y visión por computadora}
 
-\subsection{Arquitectura y Pipeline de Procesamiento}
+\subsection{Arquitectura y procesamiento}
 \input{03_Desarrollo/3.5_ia_vision/arquitectura_general}
-\input{03_Desarrollo/3.5_ia_vision/hardware_preprocesamiento}
 
 \subsection{Detector de marcadores de referencia}
 \input{03_Desarrollo/3.5_ia_vision/3.5.3_detector_marcadores/fundamento}

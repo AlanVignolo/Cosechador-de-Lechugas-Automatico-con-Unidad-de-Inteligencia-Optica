@@ -10,7 +10,7 @@ donde $R$, $G$ y $B$ representan los canales rojo, verde y azul respectivamente.
 
 \subsubsection{Operaciones de convolución y kernels}
 
-Muchas operaciones de procesamiento de imágenes se basan en la convolución, una operación matemática fundamental que aplica un kernel (también llamado \textit{filtro} o \textit{máscara}) sobre cada píxel de la imagen. Un kernel es una pequeña matriz (típicamente $3 \times 3$, $5 \times 5$ o $7 \times 7$) que define cómo se combinan los valores de los píxeles vecinos para producir un nuevo valor.
+Muchas operaciones de procesamiento de imágenes se basan en la convolución, una operación matemática fundamental que aplica un kernel (también llamado filtro o máscara) sobre cada píxel de la imagen. Un kernel es una pequeña matriz (típicamente $3 \times 3$, $5 \times 5$ o $7 \times 7$) que define cómo se combinan los valores de los píxeles vecinos para producir un nuevo valor.
 
 La operación de convolución se define matemáticamente como:
 
@@ -20,7 +20,7 @@ La operación de convolución se define matemáticamente como:
 
 donde $I$ es la imagen de entrada, $K$ es el kernel de tamaño $(2a+1) \times (2b+1)$, y el resultado $(I \ast K)(x,y)$ representa el valor procesado del píxel en la posición $(x,y)$. En términos simples, para cada píxel se calcula una suma ponderada de los valores de sus píxeles vecinos, donde los pesos están dados por el kernel.
 
-\paragraph{\underline{Elemento estructurante:}}En operaciones morfológicas sobre imágenes binarias (blanco-negro), el kernel se denomina elemento estructurante y define la forma y tamaño del vecindario considerado. Por ejemplo:
+underline{Elemento estructurante:}En operaciones morfológicas sobre imágenes binarias (blanco-negro), el kernel se denomina elemento estructurante y define la forma y tamaño del vecindario considerado. Por ejemplo:
 \begin{itemize}[label=$\bullet$]
 \item Cuadrado $3 \times 3$: afecta los 8 vecinos inmediatos del píxel central
 \item Cuadrado $5 \times 5$: afecta un vecindario más amplio (24 píxeles alrededor)
@@ -44,7 +44,7 @@ H &= \text{calculado según el canal RGB máximo}
 
 donde $V$ representa el valor (brillo), $S$ la saturación (pureza del color), y $H$ el matiz (tono del color).
 
-\paragraph{\underline{Canal V (valor):}} \textit{El canal $V$ captura la intensidad luminosa independientemente del color, representando el brillo máximo entre los tres canales RGB.} Esta propiedad lo convierte en un descriptor ideal para detectar objetos oscuros contra fondos claros o viceversa. Para detección de elementos de contraste oscuro, el canal $V$ permite segmentación robusta mediante umbralización:
+\underline{Canal V (valor):}El canal $V$ captura la intensidad luminosa independientemente del color, representando el brillo máximo entre los tres canales RGB. Esta propiedad lo convierte en un descriptor ideal para detectar objetos oscuros contra fondos claros o viceversa. Para detección de elementos de contraste oscuro, el canal $V$ permite segmentación robusta mediante umbralización:
 
 \begin{equation}
 \text{Objeto oscuro} \Leftrightarrow V(x,y) < T_V
@@ -58,7 +58,7 @@ T_V \in [30, 70]
 
 Las ventajas incluyen invariancia parcial a color (elementos oscuros se detectan independientemente de matiz), umbralización simple (un único parámetro $T_V$), robustez ante variaciones uniformes de iluminación, y eficiencia computacional al operar sobre un único canal.
 
-\paragraph{\underline{Propiedad de linealidad:}} \textit{Matemáticamente, el canal $V$ satisface una propiedad de linealidad respecto al escalamiento uniforme de intensidad.} Si escalamos una imagen RGB por un factor constante $\alpha > 0$ (por ejemplo, aumentando el brillo), el canal $V$ resultante también se escala por ese mismo factor:
+\underline{Propiedad de linealidad:} Matemáticamente, el canal $V$ satisface una propiedad de linealidad respecto al escalamiento uniforme de intensidad. Si escalamos una imagen RGB por un factor constante $\alpha > 0$ (por ejemplo, aumentando el brillo), el canal $V$ resultante también se escala por ese mismo factor:
 
 \begin{equation}
 V(\alpha \cdot \mathbf{I}_{RGB}) = \alpha \cdot V(\mathbf{I}_{RGB}) \quad \text{para } \alpha > 0
@@ -83,9 +83,9 @@ A diferencia de métodos adaptativos como Otsu (que calcula automáticamente el 
 
 \subsubsection{Operaciones morfológicas}
 
-Las operaciones morfológicas manipulan forma y estructura de objetos en imágenes binarias mediante elementos estructurantes, permitiendo eliminar ruido, rellenar huecos y separar objetos conectados.
+Las operaciones morfológicas manipulan forma y estructura de objetos en imágenes binarias mediante elementos estructurantes, permitiendo eliminar ruido, rellenar huecos y separar objetos conectados.\\
 
-\paragraph{\underline{Operaciones básicas:}}
+Operaciones básicas:
 
 \begin{itemize}[label=$\bullet$]
 \item Erosión (símbolo $\ominus$): reduce el tamaño de objetos eliminando píxeles del perímetro:
@@ -100,8 +100,8 @@ donde $A$ es la imagen binaria y $B$ el elemento estructurante.
 \end{equation}
 \end{itemize}
 
-\paragraph{\underline{Operaciones compuestas:}}
-
+Operaciones compuestas:
+\noindent
 Estas operaciones básicas se combinan para formar operaciones más complejas:
 
 \begin{itemize}[label=$\bullet$]
@@ -115,14 +115,13 @@ Elimina pequeños objetos y protuberancias manteniendo el tamaño aproximado de 
 \begin{equation}
 (A \bullet B) = (A \oplus B) \ominus B
 \end{equation}
-Rellena huecos pequeños y conecta componentes próximos. El cierre resulta esencial para consolidar regiones fragmentadas durante la segmentación.
+Rellena huecos pequeños y conecta componentes próximos. El cierre resulta esencial para consolidar regiones fragmentadas durante la segmentación. \\
 \end{itemize}
-
-\paragraph{\underline{Configuración de operaciones:}}
-
+Configuración de operaciones:
+\noindent
 La forma y tamaño del elemento estructurante $B$ determina el comportamiento: cuadrados $3 \times 3$ para operaciones isotrópicas básicas, cuadrados $5 \times 5$ con mayor alcance para eliminar ruido moderado, y rectangulares verticales $7 \times 3$ para conectividad preferencial vertical.
 
-Una secuencia típica de refinamiento morfológico aplica múltiples operaciones iteradas. El término iteraciones (abreviado como \textit{iter.}) indica cuántas veces consecutivas se repite la operación:
+Una secuencia típica de refinamiento morfológico aplica múltiples operaciones iteradas. El término iteraciones (abreviado como iter.) indica cuántas veces consecutivas se repite la operación:
 \begin{itemize}[label=$\bullet$]
 \item Apertura $(3 \times 3, 2 \text{ iter.})$: eliminar ruido puntual aplicando apertura 2 veces
 \item Cierre $(3 \times 3, 2 \text{ iter.})$: rellenar huecos pequeños aplicando cierre 2 veces

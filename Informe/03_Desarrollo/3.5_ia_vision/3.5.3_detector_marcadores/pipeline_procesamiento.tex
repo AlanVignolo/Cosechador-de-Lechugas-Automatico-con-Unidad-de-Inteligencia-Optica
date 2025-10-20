@@ -1,13 +1,13 @@
-\subsubsection{Algoritmo de Detección de Cintas}
+\subsubsection{Algoritmo de detección de cintas}
 
-El algoritmo de detección de cintas de referencia explota el alto contraste entre la cinta negra y el fondo claro mediante procesamiento en el canal de valor (V) del espacio HSV. Esta elección se fundamenta en la invariancia del canal V ante cambios en la tonalidad cromática de la iluminación, propiedad demostrada en el marco teórico (Sección 2.2.1).
+El algoritmo de detección de cintas de referencia explota el alto contraste entre la cinta negra y el fondo claro mediante procesamiento en el canal de valor (V) del espacio HSV. Esta elección se fundamenta en la invariancia del canal V ante cambios en la tonalidad cromática de la iluminación, propiedad demostrada en el marco teórico (Sección 2.2.1).\\
 
-\textbf{Etapa 1: Conversión al Espacio HSV}
+Etapa 1: Conversión al espacio HSV:\\
+\noindent
+El proceso inicia con la captura de una imagen RGB de la región donde se espera encontrar el marcador. La imagen se transforma al espacio HSV aplicando las ecuaciones de conversión estándar, y se extrae el canal V que representa el brillo de cada píxel.\\
 
-El proceso inicia con la captura de una imagen RGB de la región donde se espera encontrar el marcador. La imagen se transforma al espacio HSV aplicando las ecuaciones de conversión estándar, y se extrae el canal V que representa el brillo de cada píxel.
-
-\textbf{Etapa 2: Umbralización Inversa}
-
+Etapa 2: Umbralización inversa\\
+\noindent
 Sobre el canal V se aplica umbralización inversa con valor de referencia de 50, operación que asigna valor máximo (blanco) a los píxeles oscuros y valor nulo (negro) a los píxeles claros. Matemáticamente:
 
 \begin{equation}
@@ -17,13 +17,13 @@ I_{bin}(x,y) = \begin{cases}
 \end{cases}
 \end{equation}
 
-El valor de umbral 50 se determinó experimentalmente mediante análisis del imágenes representativas, identificando el punto que maximiza la separación entre la distribución de intensidades de las cintas negras y la distribución de intensidades del fondo blanco.
+El valor de umbral 50 se determinó experimentalmente mediante análisis del imágenes representativas, identificando el punto que maximiza la separación entre la distribución de intensidades de las cintas negras y la distribución de intensidades del fondo blanco.\\
 
-\textbf{Etapa 3: Detección de Contornos}
-
+Etapa 3: Detección de contornos\\
+\noindent
 Sobre la imagen binaria resultante se ejecuta el algoritmo de detección de contornos de Suzuki-Abe, obteniendo las fronteras de todas las regiones oscuras detectadas. Los contornos se filtran aplicando un criterio de área mínima de 500 píxeles, eliminando elementos espurios correspondientes a ruido o pequeñas sombras. Este umbral se estableció considerando que una cinta de 18 milímetros de ancho a 200 milímetros de distancia subtiende aproximadamente 120 píxeles de ancho en la imagen, resultando en áreas típicas superiores a 3000 píxeles para segmentos de cinta de longitud razonable.
 
-\subsubsection{Evaluación de Calidad del Contorno}
+\subsubsection{Evaluación de calidad del contorno}
 
 Los contornos que superan el filtrado de área se someten a evaluación de calidad para discriminar entre cintas de referencia genuinas y otros elementos oscuros presentes en la escena (como plantas o vasos). La evaluación se basa en el análisis de la región basal del contorno, definida como el 10 por ciento inferior de su rectángulo delimitador.
 
@@ -43,7 +43,7 @@ donde $|R_{base}|$ denota el número de píxeles en la región. Un valor $Q_{bas
 
 Esta métrica resulta efectiva para distinguir cintas de otros elementos oscuros: las cintas genuinas presentan típicamente $Q_{base} > 0.8$, mientras que plantas u otros objetos tienen $Q_{base} < 0.5$. Se establece un umbral de aceptación de 0.7 como compromiso entre sensibilidad y especificidad.
 
-\subsubsection{Sistema de Evaluación Ponderada}
+\subsubsection{Sistema de evaluación ponderada}
 
 Cuando múltiples contornos cumplen los criterios de área mínima y calidad basal, se implementa un sistema de evaluación ponderada que considera tres factores para seleccionar el mejor candidato.
 
@@ -101,6 +101,6 @@ Los pesos se establecieron como $w_1 = 0.3$, $w_2 = 0.4$ y $w_3 = 0.3$, otorgand
     \caption{Contornos detectados con evaluación ponderada}
 \end{subfigure}
 
-\caption{Secuencia de procesamiento del detector de cintas mostrando las transformaciones sucesivas de la imagen}
+\caption{\textit{Secuencia de procesamiento del detector de cintas mostrando las transformaciones sucesivas de la imagen}}
 \label{fig:proceso_marcadores}
 \end{figure}

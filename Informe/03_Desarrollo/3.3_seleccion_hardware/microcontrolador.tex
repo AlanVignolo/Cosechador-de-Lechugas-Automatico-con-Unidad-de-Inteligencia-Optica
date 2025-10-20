@@ -1,0 +1,13 @@
+\subsection{Microcontrolador: Arduino Mega 2560}
+
+El controlador de bajo nivel seleccionado es un Arduino Mega 2560 basado en el microcontrolador ATmega2560, que opera a 16 MHz con arquitectura de 8 bits. La selección se fundamenta en los siguientes criterios técnicos:
+
+Los drivers TB6600 seleccionados requieren señales lógicas de 5V para las entradas STEP, DIR y ENABLE. El Arduino Mega 2560 proporciona salidas digitales de 5V nativas, asegurando compatibilidad directa sin necesidad de circuitos de adaptación de nivel lógico. 
+
+El Arduino Mega proporciona 54 pines digitales (de los cuales 15 soportan PWM) y 16 entradas analógicas, superando ampliamente los 17 pines digitales requeridos.
+
+La generación de perfiles de velocidad trapezoidales requiere interrupciones de alta frecuencia (hasta 15 kHz) para emisión de pulsos STEP con precisión temporal. El ATmega2560 incorpora 6 timers hardware (cuatro de 8 bits y dos de 16 bits) que permiten generar señales PWM y manejar interrupciones sin sobrecarga del procesador principal.
+
+El microcontrolador dispone de 4 puertos UART hardware, permitiendo comunicación con el nivel supervisor a 115200 baudios sin consumo de ciclos de CPU para manejo de protocolo.
+
+El Arduino Mega 2560 opera a 5V DC con consumo típico de 200 mA durante operación normal, alcanzando picos de 500 mA durante conmutación simultánea de múltiples salidas digitales.

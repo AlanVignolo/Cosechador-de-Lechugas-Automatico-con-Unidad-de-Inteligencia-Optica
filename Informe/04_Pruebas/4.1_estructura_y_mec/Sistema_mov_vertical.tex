@@ -37,14 +37,15 @@ Se selecciona un motor paso a paso NEMA 23 con una alimentación de 24v, 4.5A y 
     \centering
     \includegraphics[width=0.65\textwidth]{img/nema23_proto.png}
     \caption{\textit{Curva dinámica torque-velocidad del motor paso a paso NEMA 23 para el prototipo.}}
-    \label{fig:Curva_din_nema17medium}
+    \label{fig:Curva_din_nema23_proto}
 \end{figure}
 
 Como se puede observar, para aproximadamente 600rpm se cumple con el torque requerido.\\
 
 \subsubsection{Justificación del diámetro de varilla}
 
-\underline{Análisis de pandeo}\\
+Análisis de pandeo\\
+\noindent
 Para una varilla con longitud de 1000 mm sometida a carga axial, se debe verificar que no sufra pandeo. La carga crítica de Euler es:
 
 \begin{equation}
@@ -92,14 +93,11 @@ n_{cr} = \frac{30}{\pi L^2} \sqrt{\frac{E I}{\rho A}} \approx 3600 \text{ RPM}
 \end{equation}
 
 La velocidad de operación ($\approx$ 600 RPM) está muy por debajo de la velocidad crítica, garantizando operación estable.
-
+La varilla roscada de 8 mm de diámetro con paso de 8 mm está correctamente dimensionada ya que:
 \begin{itemize}[label=$\bullet$]
-    \item La varilla roscada de 8 mm de diámetro con paso de 8 mm está correctamente dimensionada:
-    \begin{itemize}[label=$\bullet$]
         \item Factor de seguridad contra pandeo: 18.36
         \item Factor de seguridad contra tensión: 581
         \item Deflexión bajo carga: < 0.003 mm (despreciable)
         \item Velocidad de operación muy inferior a la velocidad crítica
-    \end{itemize}
-    %\item El driver TB6600 configurado a 24V proporciona la corriente y voltaje necesarios para mantener el torque requerido a la velocidad de operación.
 \end{itemize}
+    %\item El driver TB6600 configurado a 24V proporciona la corriente y voltaje necesarios para mantener el torque requerido a la velocidad de operación.

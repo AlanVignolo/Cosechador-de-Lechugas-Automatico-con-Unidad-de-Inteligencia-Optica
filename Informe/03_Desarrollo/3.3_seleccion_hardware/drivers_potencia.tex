@@ -1,0 +1,9 @@
+\subsection{Drivers de potencia TB6600}
+
+El control de los tres motores paso a paso NEMA 17 se realiza mediante drivers TB6600, que proporcionan control de corriente mediante chopper y aislamiento óptico de señales lógicas. Cada driver opera con:
+
+Tensión de potencia de 24V DC para los motores, y tensión lógica de 5V DC para las señales STEP/DIR/ENABLE. 
+
+Los motores NEMA 17 especificados tienen corriente nominal de 1.5 A por fase. Los drivers se configuran mediante DIP switches para limitar la corriente a 1.5 A, protegiendo los motores ante sobrecarga térmica.
+
+Cada driver TB6600 tiene consumo máximo de 3 A a 24V cuando el motor está energizado y girando a máxima velocidad. En reposo (motor energizado pero detenido), el consumo se reduce a 1 A por driver.
