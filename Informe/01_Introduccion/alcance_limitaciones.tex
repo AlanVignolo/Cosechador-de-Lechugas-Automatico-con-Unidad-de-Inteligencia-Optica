@@ -1,15 +1,13 @@
-\subsubsection{Alcance del sistema}
+El presente proyecto abarca el diseño, desarrollo e implementación de un prototipo de sistema robótico para cosecha automatizada de lechugas en cultivos hidropónicos verticales. El alcance del trabajo se define en los siguientes aspectos:
 
-El proyecto abarca el diseño y desarrollo de un sistema de cosecha automatizada de lechugas en cultivos hidropónicos verticales, implementando una estructura cartesiana de dos ejes con robot serie de dos grados de libertad. El sistema integra detección y clasificación mediante visión artificial (marcadores de referencia, tubos de cultivo y madurez de lechugas), arquitectura de control jerárquica de dos niveles (supervisorio y regulatorio), y optimización de trayectorias para maximizar eficiencia de cosecha.
+\textbf{Sistema mecánico.} Diseñar e implementar un sistema de movimiento que permita alcanzar las lechugas en el espacio de trabajo vertical, con capacidad de manipulación para su recolección. El diseño debe ser viable estructuralmente y cumplir con los requerimientos de precisión y estabilidad necesarios para la operación de cosecha en ambiente de invernadero.
 
-\subsubsection{Limitaciones}
+\textbf{Sistema de percepción.} Desarrollar capacidades de detección y clasificación que permitan al sistema identificar la ubicación de cultivos y determinar su estado de madurez. La solución debe operar bajo condiciones controladas de iluminación propias de ambientes de cultivo hidropónico en interiores.
 
-\textbf{Alcance del prototipo:} El desarrollo constituye un prototipo académico de validación, no diseñado para producción industrial continua. No contempla operación multi-robot simultánea ni el empaquetado o transporte posterior de cultivos cosechados. Se limita a lechugas dentro del rango dimensional esperado en el diseño.
+\textbf{Sistema de control.} Implementar el control necesario para coordinar los movimientos del robot, gestionar la secuencia de operaciones, y ejecutar los procesos de detección y cosecha de forma autónoma.
 
-\textbf{Aspectos mecánicos y ambientales:} El sistema opera en área de trabajo acotada, diseñada para configuraciones hidropónicas verticales específicas. La capacidad de carga y velocidades de operación están limitadas por estabilidad mecánica y precisión requerida. Requiere operación en interiores con iluminación controlada, superficie vertical nivelada, y no es resistente a condiciones de campo abierto.
+\textbf{Procesos operativos.} Que el sistema cumpla con el objetivo de explorar el espacio de cultivo, identificar lechugas maduras, y ejecutar su recolección depositándolas en un contenedor designado. El proceso contempla hasta la deposición del cultivo cosechado.
 
-\textbf{Sistema de visión e IA:} Requiere condiciones de iluminación controladas para precisión de detección. La clasificación está limitada a lechugas, requiriendo reentrenamiento para generalización a otros cultivos. Depende de marcadores físicos para calibración y navegación inicial.
+\textbf{Validación experimental.} Que el sistema sea capaz de cumplir con las pruebas planteadas para verificar su funcionamiento en condiciones reales de operación, caracterizando su desempeño mediante métricas apropiadas de precisión, exactitud y eficiencia.
 
-\textbf{Sistema de control:} Utiliza finales de carrera para referenciado de ejes. La comunicación serial entre niveles jerárquicos introduce latencia inherente al protocolo empleado.
-
-
+El desarrollo constituye un prototipo académico de validación de concepto orientado a demostrar la viabilidad técnica de cosecha automatizada en cultivos hidropónicos verticales, trabajando específicamente con lechugas dentro de configuraciones estándar de tubos de PVC en ambiente de invernadero.

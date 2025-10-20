@@ -1,6 +1,6 @@
 El algoritmo de detección de tubos implementa una secuencia de cinco etapas que progresivamente extraen y refinan información estructural hasta identificar las líneas características.
 
-\textbf{Etapa 1: Detección de Bordes mediante Canny}
+\textbf{Etapa 1: detección de bordes mediante Canny}
 
 La primera etapa aplica el algoritmo de Canny, fundamentado teóricamente en la Sección 2.2.1 del marco teórico. El proceso inicia convirtiendo la imagen RGB a escala de grises y aplicando filtrado gaussiano con kernel de $5 \times 5$ píxeles para reducción de ruido. Sobre la imagen suavizada se calculan los gradientes de intensidad mediante operadores de Sobel.
 
@@ -8,7 +8,7 @@ La supresión de no-máximos adelgaza los bordes candidatos, preservando únicam
 
 El resultado de esta etapa es una imagen binaria donde los píxeles blancos corresponden a transiciones abruptas de intensidad, típicamente concentrados en los bordes superior e inferior del tubo y en las interfaces con elementos de cultivo.
 
-\textbf{Etapa 2: Filtrado por Canal de Saturación}
+\textbf{Etapa 2: filtrado por canal de saturación}
 
 Los bordes detectados por Canny incluyen tanto los bordes objetivo (límites del tubo) como bordes espurios causados por vegetación, sombras de hojas y texturas del fondo. Para discriminar los bordes del tubo de otros elementos, se explota una propiedad cromática: el tubo de PVC blanco presenta saturación muy baja (color cercano al gris neutral), mientras que la vegetación presenta saturación moderada a alta debido a sus tonalidades verdes.
 
@@ -16,7 +16,7 @@ La imagen se transforma al espacio HSV y se extrae el canal S (saturación). Se 
 
 Los bordes de Canny se filtran mediante operación AND binaria con esta máscara de saturación, preservando únicamente bordes que ocurren en regiones de baja saturación. Esta estrategia elimina efectivamente los bordes causados por vegetación verde, que presenta alta saturación.
 
-\textbf{Etapa 3: Refinamiento Morfológico}
+\textbf{Etapa 3: refinamiento morfológico}
 
 Los bordes filtrados presentan típicamente discontinuidades causadas por variaciones locales de iluminación o por oclusiones parciales debidas a hojas que cubren pequeñas secciones del tubo. Para conectar segmentos de borde fragmentados se aplica operación de cierre morfológico con elemento estructurante rectangular de $3 \times 9$ píxeles.
 
@@ -52,7 +52,7 @@ La orientación vertical del kernel (mayor altura que ancho) favorece la conexi�
 
 \vspace{0.3cm}
 
-\caption{Procesamiento del detector de tubos mostrando las transformaciones sucesivas hasta la identificación de bordes del tubo}
+\caption{\textit{Procesamiento del detector de tubos mostrando las transformaciones sucesivas hasta la identificación de bordes del tubo}}
 \label{fig:proceso_tubos}
 \end{figure}
 
@@ -69,11 +69,11 @@ El contorno con mayor puntuación total se selecciona como el tubo objetivo.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.48\textwidth]{imagenes/detector_tubos_6_lineas.png}
-    \caption{Líneas superior e inferior detectadas}
+    \caption{\textit{Líneas superior e inferior detectadas}}
     \label{fig:detector_tubos_lineas}
 \end{figure}
 
-\subsubsection{Consideraciones de Robustez}
+\subsubsection{Consideraciones de robustez}
 
 El algoritmo implementa mecanismos de validación para garantizar robustez ante casos ambiguos. Cuando no se detectan contornos válidos (ningún contorno cumple los criterios de área, relación de aspecto y scoring), el sistema retorna valores nulos indicando ausencia de tubo en el campo de visión. Esto ocurre naturalmente cuando el robot se posiciona entre tubos o cuando las condiciones de iluminación son extremadamente deficientes.
 

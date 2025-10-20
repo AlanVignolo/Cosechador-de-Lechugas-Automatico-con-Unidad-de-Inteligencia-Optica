@@ -1,0 +1,13 @@
+\subsection{Computadora embebida: Raspberry Pi 5}
+
+El nivel supervisor se implementa sobre una Raspberry Pi 5 con procesador ARM Cortex-A76 quad-core a 2.4 GHz y 8 GB de memoria RAM LPDDR4X. La selección se justifica por:
+
+\textbf{Soporte nativo para cámara USB 3.0.} La cámara seleccionada requiere interfaz USB 3.0 para transmitir video Full HD a 30 fps sin compresión (ancho de banda de aproximadamente 1 Gbps). La Raspberry Pi 5 incorpora 4 puertos USB 3.0 nativos que proporcionan hasta 5 Gbps por puerto, garantizando ancho de banda suficiente para captura de imágenes de alta resolución en tiempo real. El sistema operativo Raspberry Pi OS proporciona soporte nativo para el controlador V4L2 (Video4Linux2), permitiendo integración directa con bibliotecas de procesamiento de imágenes sin desarrollo de drivers adicionales.
+
+\textbf{Capacidad de procesamiento.} Los algoritmos de visión por computadora (detección de bordes Canny, operaciones morfológicas, detección de contornos) requieren operaciones matriciales intensivas sobre imágenes de 1920×1080 píxeles. El procesador quad-core a 2.4 GHz permite ejecutar el pipeline completo de clasificación en menos de 150 ms por frame, compatible con operación en tiempo real.
+
+\textbf{Conectividad.} La plataforma incorpora puerto UART GPIO accesible mediante pines header para comunicación con el Arduino, conectividad Ethernet Gigabit para transferencia de datos y actualización remota del sistema, y WiFi dual-band para monitoreo inalámbrico durante operación.
+
+\textbf{Ecosistema de software.} Python 3.11 con bibliotecas científicas maduras (NumPy, OpenCV, PySerial) permite desarrollo ágil de algoritmos de visión. La compatibilidad con OpenCV 4.x está completamente validada en la plataforma, simplificando la implementación de pipelines de procesamiento de imágenes. El sistema operativo Linux proporciona capacidades multitarea para ejecución concurrente de procesos de control, visión, y comunicación.
+
+La Raspberry Pi 5 opera a 5V DC mediante conector USB-C, con consumo típico de 3 A (15 W) durante procesamiento intensivo de imágenes, y mínimo de 1 A (5 W) en estado idle.

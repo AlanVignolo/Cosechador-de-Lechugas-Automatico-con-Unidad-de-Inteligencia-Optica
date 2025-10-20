@@ -1,0 +1,62 @@
+\subsection{Análisis energético y dimensionamiento de fuente}
+
+La Tabla \ref{tab:consumo_energetico} presenta el consumo eléctrico de cada componente del sistema en diferentes estados operativos.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Componente} & \textbf{Voltaje} & \textbf{Idle (A)} & \textbf{Operación (A)} & \textbf{Pico (A)} \\
+\hline
+\multicolumn{5}{|c|}{\textbf{Alimentación 24V}} \\
+\hline
+Driver TB6600 (×3) & 24V & 3.0 & 6.0 & 9.0 \\
+\hline
+Regulador 24V→5V & 24V & 0.3 & 1.1 & 1.4 \\
+\hline
+Regulador 24V→7V & 24V & 0.05 & 0.15 & 0.2 \\
+\hline
+\multicolumn{2}{|l|}{\textbf{Subtotal 24V}} & \textbf{3.35} & \textbf{7.25} & \textbf{10.6} \\
+\hline
+\hline
+\multicolumn{5}{|c|}{\textbf{Alimentación 5V (desde regulador)}} \\
+\hline
+Arduino Mega 2560 & 5V & 0.2 & 0.35 & 0.5 \\
+\hline
+Raspberry Pi 5 & 5V & 1.0 & 2.5 & 4.0 \\
+\hline
+Cámara USB & 5V & 0.3 & 0.5 & 0.5 \\
+\hline
+\multicolumn{2}{|l|}{\textbf{Subtotal 5V}} & \textbf{1.5} & \textbf{3.35} & \textbf{5.0} \\
+\hline
+\hline
+\multicolumn{5}{|c|}{\textbf{Alimentación 7V (desde regulador)}} \\
+\hline
+Lógica drivers TB6600 & 7V & 0.1 & 0.2 & 0.3 \\
+\hline
+\hline
+\multicolumn{5}{|c|}{\textbf{Consumo total en fuente de 24V}} \\
+\hline
+\multicolumn{2}{|l|}{Idle} & \multicolumn{3}{c|}{3.35 A @ 24V = \textbf{80 W}} \\
+\hline
+\multicolumn{2}{|l|}{Operación normal} & \multicolumn{3}{c|}{7.25 A @ 24V = \textbf{174 W}} \\
+\hline
+\multicolumn{2}{|l|}{Pico máximo} & \multicolumn{3}{c|}{10.6 A @ 24V = \textbf{254 W}} \\
+\hline
+\end{tabular}
+\caption{\textit{Consumo eléctrico del sistema por componente y estado operativo}}
+\label{tab:consumo_energetico}
+\end{table}
+
+\textbf{Dimensionamiento de la fuente.} El consumo en operación normal (174 W) ocurre cuando los motores están en movimiento continuo y el sistema de visión está procesando imágenes simultáneamente. Los picos de 254 W ocurren durante aceleraciones bruscas con los tres motores iniciando movimiento simultáneamente.
+
+Se selecciona una fuente conmutada de 24V DC con capacidad nominal de 12.5 A (300 W), proporcionando un margen de seguridad del 18\% sobre el pico máximo calculado. Este margen considera:
+
+\begin{itemize}[label=$\bullet$]
+\item Degradación de la fuente con el tiempo (típicamente 10-15\% de pérdida de capacidad tras 2 años de operación continua)
+\item Transitorios de corriente durante arranque inicial del sistema
+\item Posibles expansiones futuras del hardware (sensores adicionales, iluminación LED, etc.)
+\end{itemize}
+
+La eficiencia de los reguladores step-down (90\% para 24V→5V y 88\% para 24V→7V) ya está considerada en los cálculos de consumo de la fuente primaria. Las pérdidas totales por conversión de voltaje son de aproximadamente 15 W en operación normal.

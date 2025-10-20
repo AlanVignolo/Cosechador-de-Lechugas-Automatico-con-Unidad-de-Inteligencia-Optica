@@ -9,7 +9,7 @@ La Tabla \ref{tab:comandos_uart} presenta el conjunto completo de comandos imple
 \hline
 \textbf{Comando} & \textbf{Parámetros} & \textbf{Descripción} & \textbf{Ejemplo} \\
 \hline
-\multicolumn{4}{|c|}{\textbf{Control de Movimiento}} \\
+\multicolumn{4}{|c|}{\textbf{Control de movimiento}} \\
 \hline
 M & x, y (mm) & Movimiento relativo en plano XY & \texttt{<M:50.5,-20>} \\
 \hline
@@ -19,7 +19,7 @@ H & - & Ejecutar secuencia de homing & \texttt{<H>} \\
 \hline
 XY? & - & Consultar posición actual & \texttt{<XY?>} \\
 \hline
-\multicolumn{4}{|c|}{\textbf{Control de Brazo y Gripper}} \\
+\multicolumn{4}{|c|}{\textbf{Control de brazo y gripper}} \\
 \hline
 A & s1, s2, t (°, °, ms) & Mover ambos servos con tiempo & \texttt{<A:90,45,2000>} \\
 \hline
@@ -29,7 +29,7 @@ G & O/C & Abrir (O) o Cerrar (C) gripper & \texttt{<G:O>} \\
 \hline
 Q & - & Consultar ángulos de servos & \texttt{<Q>} \\
 \hline
-\multicolumn{4}{|c|}{\textbf{Sistema y Monitoreo}} \\
+\multicolumn{4}{|c|}{\textbf{Sistema y monitoreo}} \\
 \hline
 S? & - & Estado completo del sistema & \texttt{<S?>} \\
 \hline
@@ -40,7 +40,7 @@ S & - & Emergency stop (inmediato) & \texttt{<S>} \\
 HB & 1 & Señal de sincronización periódica & \texttt{<HB:1>} \\
 \hline
 \end{tabular}
-\caption{Comandos UART del Nivel Regulatorio}
+\caption{Comandos UART del nivel regulatorio}
 \label{tab:comandos_uart}
 \end{table}
 
