@@ -1,17 +1,17 @@
 \subsubsection{Aplicación: Escaneo vertical para mapeo automático}
 
-El detector de tubos se emplea exclusivamente en el contexto de escaneo vertical durante la fase de mapeo autónomo del entorno. En esta operación, el robot se posiciona en una coordenada horizontal fija y ejecuta un barrido vertical completo, capturando imágenes periódicamente mientras se desplaza en dirección Y.
+El detector de tubos se emplea exclusivamente en el contexto de escaneo vertical durante la fase de mapeo autónomo del entorno. En esta operación, el robot se posiciona en una coordenada horizontal fija y ejecuta un barrido vertical completo, capturando imágenes periódicamente mientras se desplaza en dirección Y.\\
 
-\textbf{Protocolo de escaneo}
-
+Protocolo de escaneo\\
+\noindent
 El robot inicia el barrido desde la posición vertical mínima (típicamente $Y = 0$ mm) y se desplaza hacia arriba a velocidad reducida de 30 mm/s, significativamente menor que la velocidad nominal de 50 mm/s del eje vertical. Esta reducción de velocidad es necesaria para garantizar calidad de imagen suficiente considerando que las capturas se realizan con el robot en movimiento.
 
 Durante el desplazamiento, el sistema captura imágenes a intervalos regulares de 50 milímetros de desplazamiento vertical. Para un espacio de trabajo de 1200 mm de altura, esto resulta en 24 capturas por barrido vertical. Cada imagen capturada se procesa inmediatamente mediante el pipeline del detector de tubos.
 
-Cuando el detector identifica exitosamente un tubo (retorna valores válidos para $y_{superior}$ e $y_{inferior}$), el sistema registra la coordenada Y actual del robot como ubicación de una fila de estaciones. Esta coordenada se almacena en una lista temporal de filas detectadas.
+Cuando el detector identifica exitosamente un tubo (retorna valores válidos para $y_{superior}$ e $y_{inferior}$), el sistema registra la coordenada Y actual del robot como ubicación de una fila de estaciones. Esta coordenada se almacena en una lista temporal de filas detectadas.\\
 
-\textbf{Mecanismo de debouncing espacial}
-
+Mecanismo de debouncing espacial\\
+\noindent
 Dado que el tubo presenta dimensión vertical de aproximadamente 100 mm y el robot se desplaza en incrementos de 50 mm, es probable que un mismo tubo sea detectado en múltiples capturas consecutivas. Para evitar registros duplicados de la misma fila, se implementa debouncing espacial: tras registrar una detección, se inhabilita el registro de nuevas detecciones durante los siguientes 120 mm de desplazamiento vertical.
 
 Este valor de debouncing se seleccionó considerando que la separación mínima entre filas de tubos es de 200 mm. El umbral de 120 mm garantiza que no se confundan dos tubos adyacentes mientras permite tolerancia para variabilidad en las distancias reales del sistema hidropónico.
@@ -22,18 +22,18 @@ Matemáticamente, una nueva detección en coordenada $Y_{actual}$ se registra ú
 |Y_{actual} - Y_{última}| > 120 \text{ mm}
 \end{equation}
 
-donde $Y_{última}$ es la coordenada de la última detección registrada.
+donde $Y_{última}$ es la coordenada de la última detección registrada.\\
 
-\textbf{Confirmación temporal}
-
+Confirmación temporal\\
+\noindent
 Adicionalmente al debouncing espacial, se implementa confirmación temporal que requiere detección consistente durante múltiples frames consecutivos. Específicamente, un tubo se considera confirmado únicamente si es detectado en al menos 3 de 5 capturas consecutivas.
 
 Este criterio rechaza detecciones espurias causadas por reflejos transitorios, sombras temporales de elementos móviles, o artefactos de captura. La ventana de confirmación de 5 frames corresponde a aproximadamente 250 mm de desplazamiento (5 frames × 50 mm/frame), compatible con el tamaño vertical de los tubos.
 
 El algoritmo mantiene un buffer circular de los últimos 5 resultados de detección. Cuando el buffer contiene al menos 3 resultados positivos, se confirma la presencia del tubo y se registra la coordenada promedio de las detecciones positivas, reduciendo el efecto del ruido de medición.
 
-\textbf{Construcción del vector de filas}
-
+Construcción del vector de filas\\
+\noindent
 Al finalizar el barrido vertical completo, el sistema ha construido un vector de coordenadas Y que identifica todas las filas de tubos presentes en el entorno:
 
 \begin{equation}

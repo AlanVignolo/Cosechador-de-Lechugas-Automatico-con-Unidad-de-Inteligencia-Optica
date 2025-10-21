@@ -10,7 +10,7 @@ Las pruebas mecánicas se realizaron para validar el funcionamiento de los siste
 
 Se verificó el funcionamiento coordinado de los dos motores paso a paso acoplados mediante poleas y correas dentadas. La prueba consistió en comandar movimientos sincronizados a diferentes velocidades para evaluar:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Sincronización entre ambos motores durante desplazamientos largos
     \item Ausencia de deslizamiento en las correas bajo carga
     \item Tensión adecuada de las correas mediante el sistema tensor
@@ -23,7 +23,7 @@ Los resultados mostraron una sincronización satisfactoria entre ambos motores, 
 
 Se realizaron pruebas de movimiento vertical libre para verificar:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Capacidad de desplazamiento a lo largo de 1~m de recorrido vertical
     \item Suavidad del movimiento de las guías lineales sobre las varillas lisas
     \item Ausencia de bloqueos o fricción excesiva en el sistema de tornillo de potencia
@@ -36,9 +36,9 @@ El sistema vertical demostró un movimiento fluido en todo su rango de operació
 
 Las pruebas del robot serie se enfocaron en dos aspectos críticos:
 
-\begin{itemize}
-    \item \textbf{Verificación de movimiento de servomotores:} Se comandaron las dos articulaciones del brazo a diferentes ángulos para validar el rango de movimiento y la precisión de posicionamiento angular de cada servomotor.
-    \item \textbf{Detección de vibraciones:} Se evaluó la presencia de oscilaciones mecánicas durante el movimiento y al sostener cargas, identificando la flexibilidad del material como fuente de vibraciones indeseadas.
+\begin{itemize}[label=$\bullet$]
+    \item \underline{Verificación de movimiento de servomotores:} Se comandaron las dos articulaciones del brazo a diferentes ángulos para validar el rango de movimiento y la precisión de posicionamiento angular de cada servomotor.
+    \item \underline{Detección de vibraciones:} Se evaluó la presencia de oscilaciones mecánicas durante el movimiento y al sostener cargas, identificando la flexibilidad del material como fuente de vibraciones indeseadas.
 \end{itemize}
 
 Los servomotores respondieron correctamente a los comandos, alcanzando las posiciones angulares deseadas. Sin embargo, se detectaron vibraciones residuales atribuidas a la flexibilidad de los componentes impresos en 3D, especialmente al extender el brazo con carga. Esta observación se registró como un área de mejora para futuras iteraciones del diseño.
@@ -51,10 +51,10 @@ El sistema de visión e inteligencia artificial fue sometido a pruebas exhaustiv
 
 Se realizaron pruebas de detección sobre tres elementos clave del sistema:
 
-\begin{itemize}
-    \item \textbf{Detección de cinta:} Utilizada como marcador de referencia para el posicionamiento inicial del sistema
-    \item \textbf{Detección de tubos de cultivo:} Identificación de las posiciones de los tubos hidropónicos en la estructura
-    \item \textbf{Detección de lechugas:} Localización de los cultivos dentro de cada tubo
+\begin{itemize}[label=$\bullet$]
+    \item \underline{Detección de cinta:} Utilizada como marcador de referencia para el posicionamiento inicial del sistema
+    \item \underline{Detección de tubos de cultivo:} Identificación de las posiciones de los tubos hidropónicos en la estructura
+    \item \underline{Detección de lechugas:} Localización de los cultivos dentro de cada tubo
 \end{itemize}
 
 Para cada tipo de detección se evaluó la tasa de éxito bajo diferentes condiciones de iluminación y ángulos de la cámara. Los algoritmos de procesamiento de imágenes mostraron robustez frente a variaciones de iluminación moderadas, manteniendo tasas de detección superiores al 90\% en condiciones controladas.
@@ -69,7 +69,7 @@ Los resultados mostraron una tasa de clasificación correcta superior al 85\%, c
 
 Para evaluar la consistencia del sistema de visión, se realizaron pruebas de repetibilidad que consistieron en:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Captura de múltiples imágenes de los mismos escenarios bajo condiciones similares
     \item Análisis estadístico de las detecciones para cada caso
     \item Cálculo de la tasa de detecciones correctas respecto al total de intentos
@@ -85,7 +85,7 @@ Las pruebas de control validaron la precisión de posicionamiento y la correcta 
 
 Se realizaron pruebas de posicionamiento sin realimentación visual, comparando las coordenadas comandadas con mediciones realizadas mediante un instrumento de medición externo (cinta métrica y calibre digital). Los objetivos fueron:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Verificar la conversión correcta entre pasos del motor y distancia real
     \item Evaluar la repetibilidad de posicionamiento mecánico
     \item Identificar errores sistemáticos o acumulativos
@@ -97,7 +97,7 @@ Los resultados mostraron un error promedio de posicionamiento de 1 $\%$ tanto en
 
 Una vez validado el posicionamiento mecánico, se integraron las coordenadas proporcionadas por el sistema de inteligencia artificial. Las pruebas consistieron en:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Detección de la posición de la cinta de referencia mediante visión artificial
     \item Comando de movimiento hacia las coordenadas detectadas
     \item Verificación visual del correcto agarre de la lechuga por el efector final
@@ -109,7 +109,7 @@ El sistema demostró capacidad de posicionamiento asistido por visión, logrando
 
 Se evaluó la efectividad del efector final tipo pinza para sujetar lechugas de diferentes tamaños y configuraciones de hojas. Las pruebas incluyeron:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Agarre de lechugas con diferentes grados de madurez (tamaños variables)
     \item Estabilidad del agarre durante el movimiento vertical y horizontal
 \end{itemize}
@@ -130,7 +130,7 @@ Las pruebas de integración validaron el funcionamiento coordinado de todos los 
 
 Se verificó el correcto funcionamiento de los finales de carrera instalados en los extremos de los ejes horizontal y vertical. Las pruebas incluyeron:
 
-\begin{itemize}
+\begin{itemize}[label=$\bullet$]
     \item Activación física de cada sensor al alcanzar los límites mecánicos
     \item Respuesta del sistema de control ante la activación (detención inmediata del motor correspondiente)
 \end{itemize}
@@ -153,7 +153,7 @@ Se ejecutaron ciclos completos de operación que integraron todos los subsistema
     \item Barrido secuencial de cada tubo para detectar presencia de lechugas
     \item Clasificación de lechugas detectadas
     \item Ejecución de secuencia de cosecha para lechugas maduras:
-    \begin{itemize}
+    \begin{itemize}[label=$\bullet$]
         \item Posicionamiento del sistema XZ sobre el tubo objetivo
         \item Extensión del brazo y agarre de la lechuga
         \item Retracción y traslado hacia zona de descarga

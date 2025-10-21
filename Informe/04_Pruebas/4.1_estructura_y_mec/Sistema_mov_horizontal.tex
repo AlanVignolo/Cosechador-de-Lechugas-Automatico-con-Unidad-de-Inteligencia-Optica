@@ -16,45 +16,38 @@ El sistema de movimiento horizontal utiliza una transmisión por correa dentada 
 \end{itemize}
 
 \subsubsection{Cálculo de fuerzas actuantes}
+\begin{enumerate}
+    \item \underline{Fuerza de aceleración}\\
+        Considerando una aceleración deseada de $a = 0.188$ m/s$^2$:
+        \begin{equation}
+        F_a = m \cdot a = 1.16\text{ N}
+        \end{equation}
+    \item \underline{Fuerza de fricción}\\
+        Se toma un coeficiente de fricción de 0.15 debido a que el sistema no es tan preciso y puede tener fricción de desplazamiento.
+        \begin{equation}
+            F_f = \mu \cdot m \cdot g = 1.47 \text{ N}
+        \end{equation}
+    \item \underline{Resistencia interna de correa}\\
+        Para esto, se toma un valor empírico, considerando el largo.
+        \begin{equation}
+        F_{intcorrea} \approx 0.25N
+        \end{equation}
+    \item \underline{Otras pérdidas}\\
+        \begin{equation}
+            F_{otras}= 0.1*(F_a+F_f)=0.26N
+        \end{equation}
+\end{enumerate}
 
-\underline{Fuerza de aceleración}\\
-
-Considerando una aceleración deseada de $a = 0.188$ m/s$^2$:
-
-\begin{equation}
-    F_a = m \cdot a = 1.16\text{ N}
-\end{equation}
-
-\underline{Fuerza de fricción}\\
-
-Se toma un coeficiente de fricción de 0.15 debido a que el sistema no es tan preciso y puede tener fricción de desplazamiento.
-
-\begin{equation}
-    F_f = \mu \cdot m \cdot g = 1.47 \text{ N}
-\end{equation}
-
-\underline{Resistencia interna de correa}\\
-Para esto, se toma un valor empírico, considerando el largo.
-\begin{equation}
-F_{intcorrea} \approx 0.25N
-\end{equation}
-
-\underline{Otras pérdidas}\\
-
-\begin{equation}
-    F_{otras}= 0.1*(F_a+F_f)=0.26N
-\end{equation}
-
-\underline{Fuerza total requerida}\\
-
+Fuerza total requerida\\
+\noindent
 La fuerza total que debe ejercer el motor es la suma de la fuerza de aceleración y la fuerza de fricción:
 
 \begin{equation}
     F_{total} = F_a + F_f + F_{intcorrea} + F_{otras} = 3.14 \text{ N}
 \end{equation}
 
-\subsubsection{Torque requerido en el motor}
-
+Torque requerido en el motor\\
+\noindent
 El torque necesario en el eje del motor se calcula multiplicando la fuerza total por el radio de la polea:
 
 \begin{equation}
@@ -67,12 +60,12 @@ Para garantizar un funcionamiento confiable del sistema, se aplica un factor de 
     T_{motor} = T_{req} \cdot FS = 0.05 \cdot 2.5
 \end{equation}
 
-\subsubsection{Selección del motor}
+Selección del motor\\
+\noindent
+Considerando el torque calculado con factor de seguridad, se selecciona el motor paso a paso  \textbf{Nema 17 medium} que posee  0.35Nm a 24V y 1.8A. \\
 
-Considerando el torque calculado con factor de seguridad, se selecciona el motor paso a paso  \textbf{Nema 17 medium} que posee  0.35Nm a 24V y 1.8A. 
-
-\subsubsection{Resolución de posicionamiento}
-
+Resolución de posicionamiento.\\
+\noindent
 Con microstepping de 8 pasos (configuración típica con driver TB6600):
 
 \begin{equation}
@@ -83,8 +76,8 @@ Con microstepping de 8 pasos (configuración típica con driver TB6600):
     \text{Resolución} = \frac{d_{rev}}{\text{Pasos totales/rev}} = \frac{40}{1600} = 0.025 \text{ mm/paso}
 \end{equation}
 
-\subsubsection{Velocidad máxima del sistema}
-
+Velocidad máxima del sistema.\\
+\noindent
 Considerando una velocidad máxima de 0.25 \(\frac{m}{s}\) se tiene que la velocidad angular máxima del motor es:
 
 \begin{equation}

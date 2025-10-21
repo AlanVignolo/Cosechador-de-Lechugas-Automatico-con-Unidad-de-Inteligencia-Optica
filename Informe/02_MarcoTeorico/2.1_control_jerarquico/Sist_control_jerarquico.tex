@@ -5,11 +5,11 @@ Un sistema de control jerárquico constituye, fundamentalmente, una estructura d
 La estructura jerárquica se diferencia rigurosamente por las funciones, la frecuencia de operación y los modelos de proceso utilizados en cada estrato:
 \begin{enumerate}
 
-\item \textbf{Nivel estratégico o de planificación:} Establece los objetivos globales y define la política de funcionamiento del sistema. Opera en horizontes temporales largos (horas, días) y toma en cuenta información agregada del proceso. En este nivel se realiza la planificación de producción, asignación de recursos y optimización a largo plazo.
+\item \underline{Nivel estratégico o de planificación:} Establece los objetivos globales y define la política de funcionamiento del sistema. Opera en horizontes temporales largos (horas, días) y toma en cuenta información agregada del proceso. En este nivel se realiza la planificación de producción, asignación de recursos y optimización a largo plazo.
 
-\item \textbf{Nivel táctico o de supervisión:} Calcula y ajusta las consignas y parámetros para los controladores básicos con el fin de optimizar el rendimiento de un proceso o equipo específico. Opera en horizontes temporales medios (minutos, horas) y se encarga de la coordinación entre subsistemas, gestión de secuencias de operación y toma de decisiones basadas en el estado actual del proceso. Este nivel traduce los objetivos estratégicos en acciones concretas para el nivel inferior.
+\item \underline{Nivel táctico o de supervisión:} Calcula y ajusta las consignas y parámetros para los controladores básicos con el fin de optimizar el rendimiento de un proceso o equipo específico. Opera en horizontes temporales medios (minutos, horas) y se encarga de la coordinación entre subsistemas, gestión de secuencias de operación y toma de decisiones basadas en el estado actual del proceso. Este nivel traduce los objetivos estratégicos en acciones concretas para el nivel inferior.
 
-\item \textbf{Nivel operativo o de regulación local:} Implementa las acciones de control directo sobre los actuadores. Funciona en escalas de tiempo cortas (milisegundos, segundos) y debe garantizar estabilidad, rechazo de perturbaciones y respuesta rápida ante cambios en las referencias. Los controladores de este nivel ejecutan algoritmos de control clásico (PID, control en cascada, etc.) para mantener las variables del proceso en sus valores de consigna.
+\item \underline{Nivel operativo o de regulación local:} Implementa las acciones de control directo sobre los actuadores. Funciona en escalas de tiempo cortas (milisegundos, segundos) y debe garantizar estabilidad, rechazo de perturbaciones y respuesta rápida ante cambios en las referencias. Los controladores de este nivel ejecutan algoritmos de control clásico (PID, control en cascada, etc.) para mantener las variables del proceso en sus valores de consigna.
 
 \end{enumerate}
 
@@ -21,10 +21,11 @@ La estructura jerárquica se diferencia rigurosamente por las funciones, la frec
 \end{figure}
 La adopción de una arquitectura de control jerárquica ofrece ventajas distintivas que justifican su uso en sistemas complejos:
 \begin{itemize}[label=$\bullet$]
-    \item \textbf{Gestión de la complejidad dimensional}: Permite abordar sistemas de gran escala al descomponer el problema de control multivariable en tareas más simples y manejables a nivel de subsistema.
-    \item \textbf{confiabilidad y robustez}: Incrementa la resiliencia operativa, ya que el fallo localizado de un controlador en un nivel inferior solo afecta a un subsistema local, previniendo el colapso de la operación integral de la planta.
-    \item \textbf{modularidad y escalabilidad}: Facilita la adición, modificación o reemplazo de subsistemas o unidades de control sin generar un impacto sistémico en el resto de la jerarquía.
-    \item \textbf{eficiencia operacional}: Permite la aplicación de diferentes horizontes temporales y estrategias de control especializadas en cada nivel, optimizando tanto la estabilidad (Nivel 1) como la eficiencia global (Niveles 2 y 3).
+    \item \underline{Gestión de la complejidad dimensional}: Permite abordar sistemas de gran escala al descomponer el problema de control multivariable en tareas más simples y manejables a nivel de subsistema.
+    \item \underline{Confiabilidad y robustez}: Incrementa la resiliencia operativa, ya que el fallo localizado de un controlador en un nivel inferior solo afecta a un subsistema local, previniendo el colapso de la operación integral de la planta.
+    \item \underline{Modularidad y escalabilidad}: Facilita la adición, modificación o reemplazo de subsistemas o unidades de control sin generar un impacto sistémico en el resto de la jerarquía.
+    \item \underline{Eficiencia operacional}: Permite la aplicación de diferentes horizontes temporales y estrategias de control especializadas en cada nivel, optimizando tanto la estabilidad (Nivel 1) como la eficiencia global (Niveles 2 y 3).
 \end{itemize}
+
 Es crucial diferenciar el control jerárquico del control centralizado puro. Aunque el flujo de información y comando es vertical, el control jerárquico opera bajo un paradigma de control distribuido. El nivel superior impone únicamente las metas u objetivos macro, mientras que la implementación, la corrección de errores en corto plazo y la gestión de la dinámica local son responsabilidades inherentes y autónomas de los controladores ubicados en los niveles inferiores. Esta distribución de responsabilidades permite que cada nivel opere con la frecuencia y detalle apropiado a su función, evitando la saturación computacional característica de los sistemas centralizados.
 
