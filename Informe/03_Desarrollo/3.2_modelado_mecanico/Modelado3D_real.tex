@@ -65,11 +65,11 @@ Los resultados confirman que el diseño propuesto es estructuralmente robusto, c
 El soporte medio constituye el elemento móvil del eje vertical, desplazándose a lo largo de las varillas mediante el giro de la varilla roscada. Este componente cumple funciones críticas en el sistema: montaje del brazo robótico serial, fijación de la cámara de visión artificial y mantenimiento del equilibrio dinámico mediante contrapeso.
 
 \begin{itemize}[label=$\bullet$]
-    \item \textbf{Sistema de guiado:} Incorpora dos rodamientos lineales LM16UU para deslizamiento sobre las varillas lisas de 8 mm, garantizando movimiento suave sin rotaciones indeseadas
-    \item \textbf{Tuerca de transmisión:} Alojamiento central para tuerca TR16 que se acopla con la varilla roscada, convirtiendo el movimiento rotacional del motor en desplazamiento lineal
-    \item \textbf{Montaje del brazo:} Base horizontal plana con patrón de agujeros para fijación del servomotor base del brazo robótico
-    \item \textbf{Montaje de cámara:} Soporte superior para la cámara con ajuste angular para optimización del campo de visión
-    \item \textbf{Sistema de balanceo:} Contrapeso en el lado opuesto al brazo para reducir momentos flectores sobre las varillas y mejorar la estabilidad dinámica del sistema
+    \item \underline{Sistema de guiado:} Incorpora dos rodamientos lineales LM16UU para deslizamiento sobre las varillas lisas de 8 mm, garantizando movimiento suave sin rotaciones indeseadas
+    \item \underline{Tuerca de transmisión:} Alojamiento central para tuerca TR16 que se acopla con la varilla roscada, convirtiendo el movimiento rotacional del motor en desplazamiento lineal
+    \item \underline{Montaje del brazo:} Base horizontal plana con patrón de agujeros para fijación del servomotor base del brazo robótico
+    \item \underline{Montaje de cámara:} Soporte superior para la cámara con ajuste angular para optimización del campo de visión
+    \item \underline{Sistema de balanceo:} Contrapeso en el lado opuesto al brazo para reducir momentos flectores sobre las varillas y mejorar la estabilidad dinámica del sistema
 \end{itemize}
 
 \begin{figure}[H]
@@ -83,19 +83,19 @@ El contrapeso permite compensar el momento generado por el brazo extendido, redu
 
 \subsubsection{Soporte Inferior}
 
-El soporte inferior cierra la estructura vertical del sistema, proporcionando la base de fijación para los extremos inferiores de las tres varillas y alojando componentes auxiliares del sistema de control.
+El soporte inferior cierra la estructura vertical del sistema, proporcionando la base de fijación para los extremos inferiores de las tres varillas y alojando componentes auxiliares del sistema de control.\\
 
-\underline{Funciones y características}\\
+Funciones y características
 
 \begin{itemize}[label=$\bullet$]
-    \item \textbf{Anclaje de varillas:} Alojamientos pasantes para las dos varillas lisas con fijación mediante tornillos prisioneros, y soporte del extremo libre de la varilla roscada con rodamiento axial
-    \item \textbf{Final de carrera inferior:} Montaje del microswitch de límite inferior del eje vertical, con placa de activación mecánica
+    \item \underline{Anclaje de varillas:} Alojamientos pasantes para las dos varillas lisas con fijación mediante tornillos prisioneros, y soporte del extremo libre de la varilla roscada con rodamiento axial
+    \item \underline{Final de carrera inferior:} Montaje del microswitch de límite inferior del eje vertical, con placa de activación mecánica
 \end{itemize}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{img/InferiorReal_simplificado_vista.jpg}
-    \caption{\textit{Soporte inferior mostrando alojamientos de varillas, canales de gestión de cables y montaje del final de carrera.}}
+    \caption{\textit{Soporte inferior, se muestra el alojamiento del final de carrera inferior.}}
     \label{fig:soporte_inferior_real}
 \end{figure}
 
@@ -114,14 +114,14 @@ Se opta por el uso de PLA con fibra de carbono como material estructural proporc
 
 \subsubsection{Efector final}
 
-El efector final implementa un mecanismo de pinza paralela actuado mediante transmisión piñón-cremallera, convirtiendo el movimiento rotacional del servomotor en desplazamiento lineal de las mordazas.
+El efector final implementa un mecanismo de pinza paralela actuado mediante transmisión piñón-cremallera, convirtiendo el movimiento rotacional del servomotor en desplazamiento lineal de las mordazas.\\
 
-\underline{Principio de funcionamiento} \\
+Principio de funcionamiento
 
 \begin{itemize}[label=$\bullet$]
-    \item \textbf{Transmisión:} Sistema piñón-cremallera con relación 1:1, proporcionando movimiento sincronizado de ambas mordazas hacia el centro
-    \item \textbf{Rango de apertura:} 0-50 mm, adecuado para lechugas de tamaño pequeño a grande
-    \item \textbf{Mordazas:} Geometría curva con superficie texturizada para mejorar fricción sin penetrar las hojas
+    \item \underline{Transmisión:} Sistema piñón-cremallera con relación 1:1, proporcionando movimiento sincronizado de ambas mordazas hacia el centro
+    \item \underline{Rango de apertura:} 0-50 mm, adecuado para lechugas de tamaño pequeño a grande
+    \item \underline{Mordazas:} Geometría curva con superficie texturizada para mejorar fricción sin penetrar las hojas
 \end{itemize}
 
 \begin{figure}[H]
@@ -139,6 +139,6 @@ El efector final implementa un mecanismo de pinza paralela actuado mediante tran
         \caption{\textit{Vista del gripper ensamblado mostrando la configuración de mordazas paralelas y carcasa de protección.}}
         \label{fig:gripper_Real}
     \end{subfigure}
-    \caption{\textit{Efector final tipo gripper con transmisión por piñón-cremallera para agarre adaptativo de lechugas.}}
+    \caption{\textit{Efector final tipo gripper con transmisión por piñón-cremallera para agarre de lechugas.}}
 \end{figure}
 

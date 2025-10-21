@@ -3,9 +3,9 @@ El nivel regulatorio constituye el sistema de control en tiempo real del robot, 
 El firmware se estructura en tres capas jerárquicas que separan responsabilidades según nivel de abstracción, como se muestra en la Figura \ref{fig:arquitectura_regulatorio}:
 
 \begin{itemize}[label=$\bullet$]
-\item \textbf{Capa de controladores de hardware (drivers):} Interactúa directamente con periféricos del microcontrolador mediante registros y temporizadores
-\item \textbf{Capa de control de movimiento:} Implementa generación de trayectorias mediante perfiles de velocidad y coordinación de ejes
-\item \textbf{Capa de aplicación:} Proporciona interfaz de alto nivel para comandos del sistema supervisor mediante protocolo UART
+\item \underline{Capa de controladores de hardware (drivers):} Interactúa directamente con periféricos del microcontrolador mediante registros y temporizadores
+\item \underline{Capa de control de movimiento:} Implementa generación de trayectorias mediante perfiles de velocidad y coordinación de ejes
+\item \underline{Capa de aplicación:} Proporciona interfaz de alto nivel para comandos del sistema supervisor mediante protocolo UART
 \end{itemize}
 
 \begin{figure}[H]

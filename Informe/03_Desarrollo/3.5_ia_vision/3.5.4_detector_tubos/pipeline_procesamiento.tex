@@ -1,23 +1,23 @@
-El algoritmo de detección de tubos implementa una secuencia de cinco etapas que progresivamente extraen y refinan información estructural hasta identificar las líneas características.
+El algoritmo de detección de tubos implementa una secuencia de cinco etapas que progresivamente extraen y refinan información estructural hasta identificar las líneas características.\\
 
-\textbf{Etapa 1: Detección de bordes mediante Canny}
-
+Etapa 1: Detección de bordes mediante Canny \\
+\noindent
 La primera etapa aplica el algoritmo de Canny, fundamentado teóricamente en la Sección 2.2.1 del marco teórico. El proceso inicia convirtiendo la imagen RGB a escala de grises y aplicando filtrado gaussiano con kernel de $5 \times 5$ píxeles para reducción de ruido. Sobre la imagen suavizada se calculan los gradientes de intensidad mediante operadores de Sobel.
 
 La supresión de no-máximos adelgaza los bordes candidatos, preservando únicamente píxeles que son máximos locales en la dirección perpendicular al gradiente. Finalmente, la doble umbralización con histéresis clasifica píxeles en bordes fuertes y débiles. Los parámetros de umbralización se establecieron como $T_{bajo} = 20$ y $T_{alto} = 172$ tras experimentación empírica, valores que maximizan la detección de los bordes sutiles del tubo minimizando falsos positivos de ruido.
 
-El resultado de esta etapa es una imagen binaria donde los píxeles blancos corresponden a transiciones abruptas de intensidad, típicamente concentrados en los bordes superior e inferior del tubo y en las interfaces con elementos de cultivo.
+El resultado de esta etapa es una imagen binaria donde los píxeles blancos corresponden a transiciones abruptas de intensidad, típicamente concentrados en los bordes superior e inferior del tubo y en las interfaces con elementos de cultivo.\\
 
-\textbf{Etapa 2: Filtrado por canal de saturación}
-
+Etapa 2: Filtrado por canal de saturación\\
+\noindent
 Los bordes detectados por Canny incluyen tanto los bordes objetivo (límites del tubo) como bordes espurios causados por vegetación, sombras de hojas y texturas del fondo. Para discriminar los bordes del tubo de otros elementos, se explota una propiedad cromática: el tubo de PVC blanco presenta saturación muy baja (color cercano al gris neutral), mientras que la vegetación presenta saturación moderada a alta debido a sus tonalidades verdes.
 
 La imagen se transforma al espacio HSV y se extrae el canal S (saturación). Se invierte este canal mediante la operación $S_{inv} = 255 - S$, de modo que píxeles con baja saturación (tubo blanco) resulten en valores altos en el canal invertido. Se aplica umbralización con $T_S = 150$, generando una máscara binaria que aísla regiones de baja saturación.
 
-Los bordes de Canny se filtran mediante operación AND binaria con esta máscara de saturación, preservando únicamente bordes que ocurren en regiones de baja saturación. Esta estrategia elimina efectivamente los bordes causados por vegetación verde, que presenta alta saturación.
+Los bordes de Canny se filtran mediante operación AND binaria con esta máscara de saturación, preservando únicamente bordes que ocurren en regiones de baja saturación. Esta estrategia elimina efectivamente los bordes causados por vegetación verde, que presenta alta saturación.\\
 
-\textbf{Etapa 3: Refinamiento morfológico}
-
+Etapa 3: Refinamiento morfológico\\
+\noindent
 Los bordes filtrados presentan típicamente discontinuidades causadas por variaciones locales de iluminación o por oclusiones parciales debidas a hojas que cubren pequeñas secciones del tubo. Para conectar segmentos de borde fragmentados se aplica operación de cierre morfológico con elemento estructurante rectangular de $3 \times 9$ píxeles.
 
 La orientación vertical del kernel (mayor altura que ancho) favorece la conexión de segmentos de líneas horizontales mientras preserva la separación entre líneas vertical. Esta operación es crítica para que la subsecuente detección de contornos identifique el tubo como una región conexa única en lugar de múltiples fragmentos independientes.
@@ -56,8 +56,8 @@ La orientación vertical del kernel (mayor altura que ancho) favorece la conexi�
 \label{fig:proceso_tubos}
 \end{figure}
 
-\textbf{Etapa 4: Detección de contornos y scoring}
-
+Etapa 4: Detección de contornos y scoring\\
+\noindent
 Sobre la imagen de bordes refinados se ejecuta el algoritmo de detección de contornos de Suzuki-Abe. Los contornos detectados se filtran aplicando criterio de área mínima de 250 píxeles, eliminando pequeñas regiones de ruido residual.
 
 Para cada contorno que supera el filtrado de área se calcula su rectángulo delimitador y se evalúa la relación de aspecto $AR = w/h$. Los tubos, al observarse desde una perspectiva frontal, presentan geometría predominantemente vertical, resultando en relaciones de aspecto $AR < 0.9$. Contornos con $AR \geq 0.9$ se descartan por corresponder a elementos horizontales o cuadrados.

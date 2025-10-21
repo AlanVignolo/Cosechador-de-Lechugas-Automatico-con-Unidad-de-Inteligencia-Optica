@@ -1,17 +1,21 @@
 \subsubsection{Mapeo del entorno de cultivo}
 
-El sistema construye una representación espacial completa del entorno mediante exploración sistemática que aprovecha la geometría estructurada del sistema hidropónico.
+El sistema construye una representación espacial completa del entorno mediante exploración sistemática que aprovecha la geometría estructurada del sistema hidropónico.\\
 
-\textbf{Estrategia de exploración.} El proceso consiste en dos fases secuenciales:
+Estrategia de exploración.\\
+\noindent 
+El proceso consiste en dos fases secuenciales:
 
 \begin{enumerate}
-    \item \textbf{Escaneo vertical}: El robot se mueve descendentemente mientras ejecuta detección de marcadores ArUco. Se registra la posición Y de cada tubo detectado.
+    \item \underline{Escaneo vertical}: El robot se mueve descendentemente mientras ejecuta detección de marcadores ArUco. Se registra la posición Y de cada tubo detectado.
 
-    \item \textbf{Escaneo horizontal por tubo}: Para cada tubo identificado, el robot se posiciona en su coordenada Y y ejecuta un barrido horizontal desde X=0 hasta el límite derecho del workspace. Durante el movimiento continuo se detectan las cintas verticales que marcan las posiciones de las plantas.
+    \item \underline{Escaneo horizontal por tubo}: Para cada tubo identificado, el robot se posiciona en su coordenada Y y ejecuta un barrido horizontal desde X=0 hasta el límite derecho del workspace. Durante el movimiento continuo se detectan las cintas verticales que marcan las posiciones de las plantas.
 \end{enumerate}
 
-Al finalizar cada escaneo horizontal, el robot se mueve en diagonal hacia la posición Y del siguiente tubo, retornando a X=0. Este patrón se repite para todos los tubos. El escaneo horizontal siempre se ejecuta en la misma dirección (de izquierda a derecha).
+Al finalizar cada escaneo horizontal, el robot se mueve en diagonal hacia la posición Y del siguiente tubo, retornando a X=0. Este patrón se repite para todos los tubos. El escaneo horizontal siempre se ejecuta en la misma dirección (de izquierda a derecha).\\
 
-\textbf{Estructura del mapa.} Los resultados se almacenan en una estructura de datos que contiene las coordenadas (X, Y) de cada posición de cultivo detectada. Durante la fase de cosecha, el sistema consulta este mapa para planificar la secuencia de visitas a las estaciones que contienen lechugas maduras.
+Estructura del mapa.\\
+\noindent
+Los resultados se almacenan en una estructura de datos que contiene las coordenadas (X, Y) de cada posición de cultivo detectada. Durante la fase de cosecha, el sistema consulta este mapa para planificar la secuencia de visitas a las estaciones que contienen lechugas maduras.
 
 El mapa se almacena periódicamente en formato JSON para permitir recuperación ante fallos y análisis posterior.

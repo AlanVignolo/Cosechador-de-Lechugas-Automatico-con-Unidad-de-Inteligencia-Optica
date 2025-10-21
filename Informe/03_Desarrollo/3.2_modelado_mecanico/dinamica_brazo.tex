@@ -35,18 +35,18 @@ El sistema consiste en dos eslabones rígidos conectados en serie mediante artic
     \caption{\textit{Diagrama cinemático y de eslabones del manipulador robótico planar}}
     \label{fig:DCL_brazo}
 \end{figure}
-\paragraph{Energías del eslabón 1}
-\subparagraph{Energía potencial}
 
+Energía potencial eslabón 1:\\
+\noindent
 La energía potencial gravitacional del eslabón 1 está dada por:
 \begin{equation}
 U_1 = m_1 \cdot g \cdot l_1 \cdot \sin(\theta_1)
 \end{equation}
 
-donde $g$ es la aceleración de la gravedad y la altura del centro de masa se mide desde un nivel de referencia horizontal.
+donde $g$ es la aceleración de la gravedad y la altura del centro de masa se mide desde un nivel de referencia horizontal.\\
 
-\subparagraph{Energía cinética}
-
+Energía cinética eslabón 1:\\
+\noindent
 La energía cinética del eslabón 1 tiene dos componentes: rotacional y traslacional.
 \begin{equation}
 K_1 = \frac{1}{2} I_1 \dot{\theta}_1^2 + \frac{1}{2} m_1 v_1^2
@@ -79,19 +79,17 @@ Por lo tanto, la energía cinética del eslabón 1 queda:
 K_1 = \frac{1}{2}(m_1l_1^2 + I_1)\dot{\theta}_1^2
 \end{equation}
 
-\paragraph{Energías del eslabón 2}
-
-\subparagraph{Energía potencial}
-
+Energía potencial eslabón 2:\\
+\noindent
 La energía potencial del eslabón 2 considera la altura de su centro de masa, que depende de ambos ángulos:
 \begin{equation}
 U_2 = m_2 \cdot g \cdot (L_1 \sin(\theta_1) + l_2 \sin(\theta_2))
 \end{equation}
 
-El primer término representa la contribución de la articulación 1, mientras que el segundo término corresponde a la posición del centro de masa del eslabón 2 respecto a la articulación 2.
+El primer término representa la contribución de la articulación 1, mientras que el segundo término corresponde a la posición del centro de masa del eslabón 2 respecto a la articulación 2.\\
 
-\subparagraph{Energía cinética}
-
+Energía cinética eslabón 2:\\
+\noindent
 La energía cinética del eslabón 2 es:
 \begin{equation}
 K_2 = \frac{1}{2} I_2 \dot{\theta}_2^2 + \frac{1}{2} m_2 v_2^2
@@ -160,7 +158,7 @@ Sustituyendo las expresiones obtenidas y simplificando se tiene:
 - g[(m_1l_1 + m_2L_1)\sin(\theta_1) + m_2l_2\sin(\theta_2)]
 \end{multline}
 
-\paragraph{Para la coordenada $\theta_1$}
+Para la coordenada $\theta_1$:
 
 %Se calculan las derivadas parciales necesarias para la ecuación de Euler-Lagrange:
 
@@ -169,34 +167,45 @@ Sustituyendo las expresiones obtenidas y simplificando se tiene:
 %\end{equation}
 
 %Derivando respecto al tiempo:
-\begin{multline}
+\begin{equation}
 \frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial \dot{\theta}_1}\right) = (m_1l_1^2 + m_2L_1^2 + I_1)\ddot{\theta}_1 + m_2L_1l_2\ddot{\theta}_2\cos(\theta_1 - \theta_2) - m_2L_1l_2\dot{\theta}_2\sin(\theta_1 - \theta_2)(\dot{\theta}_1 - \dot{\theta}_2)
-\end{multline}
+\end{equation}
 
 %Derivada parcial respecto a $\theta_1$:
 \begin{equation}
 \frac{\partial \mathcal{L}}{\partial \theta_1} = -m_2L_1l_2\dot{\theta}_1\dot{\theta}_2\sin(\theta_1 - \theta_2) - g(m_1l_1 + m_2L_1)\cos(\theta_1)
 \end{equation}
 
-\paragraph{Para la coordenada $\theta_2$}
+Para la coordenada $\theta_2$:
 
 %\begin{equation}
 %\frac{\partial \mathcal{L}}{\partial \dot{\theta}_2} = (m_2l_2^2 + I_2)\dot{\theta}_2 + m_2L_1l_2\dot{\theta}_1\cos(\theta_1 - \theta_2)
 %\end{equation}
 
 %Derivando respecto al tiempo:
-\begin{multline}
+\begin{equation}
 \frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial \dot{\theta}_2}\right) = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(\theta_1 - \theta_2) - m_2L_1l_2\dot{\theta}_1\sin(\theta_1 - \theta_2)(\dot{\theta}_1 - \dot{\theta}_2)
-\end{multline}
+\end{equation}
 
 %Derivada parcial respecto a $\theta_2$:
 \begin{equation}
 \frac{\partial \mathcal{L}}{\partial \theta_2} = m_2L_1l_2\dot{\theta}_1\dot{\theta}_2\sin(\theta_1 - \theta_2) - gm_2l_2\cos(\theta_2)
 \end{equation}
 
-Aplicando las ecuaciones de Euler-Lagrange $\tau_i = \frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial \dot{\theta}_i}\right) - \frac{\partial \mathcal{L}}{\partial \theta_i}$, se obtienen los torques requeridos en cada articulación:
+Aplicando las ecuaciones de Euler-Lagrange $\tau_i = \frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial \dot{\theta}_i}\right) - \frac{\partial \mathcal{L}}{\partial \theta_i}$, se obtienen los torques requeridos en cada articulación:\\
+\begin{itemize}[label=$\bullet$]
+    \item \underline{Torque en la articulación 1}:
+    \begin{equation}
+    \tau_1 = (m_1l_1^2 + m_2L_1^2 + I_1)\ddot{\theta}_1 + m_2L_1l_2\ddot{\theta}_2\cos(\theta_1 - \theta_2) - m_2L_1l_2\dot{\theta}_2^2\sin(\theta_1 - \theta_2) + g(m_1l_1 + m_2L_1)\cos(\theta_1)
+    \label{ec:torqueT1}
+    \end{equation}
+    \item \underline{Torque en la articulación 2}:
+    \begin{equation}
+    \tau_2 = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(\theta_1 - \theta_2) + m_2L_1l_2\dot{\theta}_1^2\sin(\theta_1 - \theta_2) + gm_2l_2\cos(\theta_2)
+    \label{ec:torqueT2}
+    \end{equation}
+\end{itemize}
 
-\paragraph{Torque en la articulación 1}
 
 %\begin{multline}
 %\tau_1 = (m_1l_1^2 + m_2L_1^2 + I_1)\ddot{\theta}_1 + m_2L_1l_2\ddot{\theta}_2\cos(\theta_1 - \theta_2) - m_2L_1l_2\dot{\theta}_2\sin(\theta_1 - \theta_2)(\dot{\theta}_1 - \dot{\theta}_2) \\
@@ -204,14 +213,6 @@ Aplicando las ecuaciones de Euler-Lagrange $\tau_i = \frac{d}{dt}\left(\frac{\pa
 %\end{multline}
 
 %Simplificando los términos de Coriolis:
-\begin{multline}
-\tau_1 = (m_1l_1^2 + m_2L_1^2 + I_1)\ddot{\theta}_1 + m_2L_1l_2\ddot{\theta}_2\cos(\theta_1 - \theta_2) - m_2L_1l_2\dot{\theta}_2^2\sin(\theta_1 - \theta_2) + g(m_1l_1 + m_2L_1)\cos(\theta_1)
-\label{ec:torqueT1}
-\end{multline}
 
-\paragraph{Torque en la articulación 2}
 
-\begin{multline}
-\tau_2 = (m_2l_2^2 + I_2)\ddot{\theta}_2 + m_2L_1l_2\ddot{\theta}_1\cos(\theta_1 - \theta_2) + m_2L_1l_2\dot{\theta}_1^2\sin(\theta_1 - \theta_2) + gm_2l_2\cos(\theta_2)
-\label{ec:torqueT2}
-\end{multline}
+

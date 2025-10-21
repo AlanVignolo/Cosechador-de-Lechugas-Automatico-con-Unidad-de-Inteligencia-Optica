@@ -8,7 +8,8 @@ Se selecciona un perfil de aluminio V-Slot con ruedas de precisión, que ofrece:
     \item Alta precisión de movimiento
 \end{itemize}
 
-\underline{Cálculo de deflexión} \\
+Cálculo de deflexión \\
+\noindent
 Para verificar la rigidez del perfil, se analiza como una viga simplemente apoyada bajo carga centrada:
 \begin{equation}
 \delta = \frac{F \cdot L^3}{48 \cdot E \cdot I}
@@ -81,74 +82,75 @@ L = 2C + \pi D = 6.06\,\text{m}
 \end{equation}
 donde $C$ es la distancia entre centros de las poleas y $D$ el diámetro de las mismas. \\
 
-\underline{Distribución de cargas en el sistema} \\
+Distribución de cargas en el sistema\\
+\noindent
 La carga total de 12.8\,kg se distribuye entre dos subsistemas mecánicos:
 
 \begin{itemize}[label=$\bullet$]
-    \item \textbf{Carga soportada por el perfil V-Slot:} El perfil y los carros lineales soportan directamente el peso vertical de la carga (8.96\,kg) a través de las ruedas DELRIN. Esta carga genera únicamente esfuerzos de compresión y flexión en el perfil, sin afectar directamente al sistema de transmisión.
+    \item \underline{Carga soportada por el perfil V-Slot:} El perfil y los carros lineales soportan directamente el peso vertical de la carga (8.96\,kg) a través de las ruedas DELRIN. Esta carga genera únicamente esfuerzos de compresión y flexión en el perfil, sin afectar directamente al sistema de transmisión.
     
-    \item \textbf{Carga dinámica del motor:} El motor debe vencer las fuerzas necesarias para acelerar y mover horizontalmente la masa efectiva del sistema (12.72\,kg). Esta masa efectiva es menor que la carga total debido a que:
+    \item \underline{Carga dinámica del motor:} El motor debe vencer las fuerzas necesarias para acelerar y mover horizontalmente la masa efectiva del sistema (12.72\,kg). Esta masa efectiva es menor que la carga total debido a que:
     \begin{enumerate}
         \item Las ruedas del carro transforman el rozamiento estático en rodadura, reduciendo significativamente la resistencia al movimiento
         \item El perfil V-Slot absorbe las cargas verticales, dejando al motor únicamente las fuerzas inerciales horizontales y las fricciones residuales del sistema
     \end{enumerate}
 \end{itemize}
 
-Esta distribución asume un coeficiente de fricción por rodadura de $\mu_{\text{rod}} \approx 0.001$ para ruedas DELRIN sobre aluminio.\\
-\underline{Selección polea y correa} \\
-
+Esta distribución asume un coeficiente de fricción por rodadura de $\mu_{\text{rod}} \approx 0.001$ para ruedas DELRIN sobre aluminio.\\ \\
+Selección polea y correa\\
+\noindent
 Se selecciona una polea GT2 de 40 dientes y diametro de 25.5mm que tiene 80mm/rev
 
 \begin{enumerate}
-    \item \textbf{Precisión de posicionamiento:} El desplazamiento lineal por revolución determina la resolución del sistema:
+    \item \underline{Precisión de posicionamiento}: El desplazamiento lineal por revolución determina la resolución del sistema:
     \begin{equation}
     \text{Resolución} = \frac{P}{n_{\text{pasos/rev}}} = 0.05mm/paso
     \end{equation}
     donde P=80mm/rev, $n_{\text{pasos/rev}} = 200 \times 8 = 1600$ pasos (con 8 micropasos). Esto implica 20 pasos/mm.
-    \item \textbf{Velocidad de operación:} Para una velocidad lineal objetivo de $v_{\text{max}} = 250$\,mm/s, la velocidad angular requerida es:
+    \item \underline{Velocidad de operación}: Para una velocidad lineal objetivo de $v_{\text{max}} = 250$\,mm/s, la velocidad angular requerida es:
     \begin{equation}
     n = \frac{v_{\text{max}}}{P} \times 60 = 187.5 [\text{RPM}] 
     \end{equation}
     Velocidad que se encuentra en la zona de torque máximo.
 \end{enumerate}
-Para esta polea, se selecciona una correa dentada de 10mm de ancho.
+Para esta polea, se selecciona una correa dentada de 10mm de ancho.\\
 
-\underline{Análisis de fuerzas} \\
+Análisis de fuerzas\\
 Para determinar el torque motor requerido, se consideran las siguientes fuerzas resistivas:
 
 \begin{enumerate}
-    \item \textbf{Fricción por rodadura:}
+    \item \underline{Fricción por rodadura:}
     \begin{equation}
     F_{\text{rod}} = \mu_{\text{rodadura}} \cdot m \cdot g \cdot \frac{1}{r_{\text{rueda}}}= 0.021N
     \end{equation}
     donde $\mu_{\text{rodadura}}$ depende del material de las ruedas DELRIN sobre aluminio.
     
-    \item \textbf{Fuerza de aceleración:}
+    \item \underline{Fuerza de aceleración:}
     \begin{equation}
     F_{\text{acel}} = (m_{\text{carga}} + m_{\text{correa}}) \cdot a_{\text{max}} = 2.43 N
     \end{equation}
     Incluye la masa de la carga útil y la masa lineal de la correa GT2.
     
-    \item \textbf{Fricción en rodamientos de poleas:}
+    \item \underline{Fricción en rodamientos de poleas:}
     \begin{equation}
     F_{\text{friccion\_rod}} = T_{\text{correa}} \cdot \mu_{\text{rodamientos}} \cdot n = 0.12N
     \end{equation}
     con $n = 2$ (polea conducida y tensor).
     
-    \item \textbf{Fuerza interna de la correa:}
+    \item \underline{Fuerza interna de la correa:}
     \begin{equation}
     F_{\text{correa}} = 0.5\,\text{N}
     \end{equation}
     Valor empírico para correas GT2 según especificaciones del fabricante.
     
-    \item \textbf{Otras pérdidas:}
+    \item \underline{Otras pérdidas:}
     \begin{equation}
     F_{\text{otras}} = 0.1 \cdot (F_{\text{acel}} + F_{\text{rod}})=0.26N
     \end{equation}
     Se estima un 10\% adicional para pérdidas no modeladas.
 \end{enumerate}
 
-\underline{Cálculo del torque motor} \\
+Cálculo del torque motor\\
 Considerando la distribución de cargas analizada anteriormente, donde el motor debe mover la masa total (12.72\,kg), la fuerza total requerida en la base del sistema es:
 \begin{equation}
 F_{\text{tbase}} = 3.33\,\text{N}
@@ -161,7 +163,7 @@ T_{\text{motor}} = F_{\text{tbase}} \cdot 2.5 \cdot r_{\text{polea}} \approx 0.1
 \label{eq:torque_motor}
 \end{equation}
 
-\underline{Selección del motor} \\
+Selección del motor\\
 Se selecciona un motor paso a paso NEMA 17. Analizando la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema34}), se verifica que para la velocidad máxima de operación de 250\,mm/s (187.5\,rpm), el torque disponible supera ampliamente el requerimiento calculado de 0.1\,Nm, garantizando un margen de seguridad adecuado para la operación continua del sistema.
 Se selecciona una polea de 10mm de ancho y 
 \begin{figure}[H]

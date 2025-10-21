@@ -1,6 +1,6 @@
-El nivel supervisor constituye la capa de coordinación del sistema, responsable de orquestar tareas complejas que requieren la integración de múltiples subsistemas. A diferencia del nivel regulatorio que ejecuta comandos individuales, el supervisor planifica secuencias completas de acciones para lograr objetivos de alto nivel.
+El nivel supervisor constituye la capa de coordinación del sistema, responsable de orquestar tareas complejas que requieren la integración de múltiples subsistemas. A diferencia del nivel regulatorio que ejecuta comandos individuales, el supervisor planifica secuencias completas de acciones para lograr objetivos de alto nivel.\\
 
-\paragraph{\underline{Responsabilidades principales:}}
+Responsabilidades principales:
 
 \begin{itemize}[label=$\bullet$]
     \item Planificación de secuencias: descompone tareas complejas en secuencias ordenadas de comandos básicos
@@ -10,15 +10,15 @@ El nivel supervisor constituye la capa de coordinación del sistema, responsable
     \item Persistencia de información: guarda datos críticos en archivos JSON que sobreviven reinicios
 \end{itemize}
 
-\paragraph{\underline{Modelo de ejecución orientado a eventos:}}
-
+Modelo de ejecución orientado a eventos:\\
+\noindent
 El supervisor utiliza un modelo orientado a eventos mediante callbacks. Cuando envía un comando de movimiento, registra un callback que será invocado cuando llegue el mensaje de completado. Durante la espera, el bucle principal continúa procesando otros eventos. Este diseño evita bloqueos y permite respuesta inmediata a eventos inesperados.
 
 \subsubsection{Procesos implementados}
 
 El sistema implementa cuatro procesos principales que coordinan movimientos, captura de imágenes y ejecución de algoritmos de visión.
 
-\paragraph{\underline{Proceso 1: homing (referenciado del sistema):}}Establece el origen del sistema de coordenadas moviendo los ejes hasta los finales de carrera y retrocediendo offsets calibrados.
+\underline{Proceso 1: homing (referenciado del sistema):} Establece el origen del sistema de coordenadas moviendo los ejes hasta los finales de carrera y retrocediendo offsets calibrados.
 
 \begin{table}[H]
 \centering
@@ -46,7 +46,7 @@ Paso & Acción \\
 \label{tab:proceso_homing}
 \end{table}
 
-\paragraph{\underline{Proceso 2: calibración del espacio de trabajo:}} Mide las dimensiones útiles del espacio de trabajo moviendo los ejes hasta sus límites opuestos.
+\underline{Proceso 2: calibración del espacio de trabajo:} Mide las dimensiones útiles del espacio de trabajo moviendo los ejes hasta sus límites opuestos.
 
 \begin{table}[H]
 \centering
@@ -74,9 +74,7 @@ Paso & Acción \\
 \label{tab:proceso_calibracion}
 \end{table}
 
-\paragraph{\underline{Proceso 3: mapeo del entorno:}}
-
-Escanea el workspace para detectar posiciones de tubos (coordenadas Y) y plantas (coordenadas X), generando mapas que guían la navegación posterior.
+\underline{Proceso 3: mapeo del entorno:} Escanea el workspace para detectar posiciones de tubos (coordenadas Y) y plantas (coordenadas X), generando mapas que guían la navegación posterior.
 
 \begin{table}[H]
 \centering
@@ -100,9 +98,7 @@ Paso & Acción \\
 \label{tab:proceso_mapeo}
 \end{table}
 
-\paragraph{\underline{Proceso 4: cosecha interactiva:}}
-
-Navega a cada posición registrada, clasifica la planta, y si está madura ejecuta la recolección.
+\underline{Proceso 4: cosecha interactiva:} Navega a cada posición registrada, clasifica la planta, y si está madura ejecuta la recolección.
 
 \begin{table}[H]
 \centering
@@ -130,14 +126,13 @@ Paso & Acción \\
 \label{tab:proceso_cosecha}
 \end{table}
 
-\paragraph{\underline{Manejo de errores durante procesos:}}
-
+Manejo de errores durante procesos:\\
 Durante la ejecución de cualquier proceso, el supervisor monitorea eventos inesperados:
 
 \begin{itemize}[label=$\bullet$]
-    \item Límite activado inesperadamente: detiene el proceso, registra el error, y preserva el estado para diagnóstico
-    \item Pérdida de comunicación: si un comando no recibe respuesta en tiempo límite, aborta el proceso e intenta re-establecer comunicación
-    \item Fallo de detector: si un algoritmo de visión no retorna resultados válidos, registra la falla e intenta continuar o solicita intervención
+    \item \underline{Límite activado inesperadamente}: detiene el proceso, registra el error, y preserva el estado para diagnóstico
+    \item \underline{Pérdida de comunicación}: si un comando no recibe respuesta en tiempo límite, aborta el proceso e intenta re-establecer comunicación
+    \item \underline{Fallo de detector}: si un algoritmo de visión no retorna resultados válidos, registra la falla e intenta continuar o solicita intervención
 \end{itemize}
 
 \begin{figure}[H]

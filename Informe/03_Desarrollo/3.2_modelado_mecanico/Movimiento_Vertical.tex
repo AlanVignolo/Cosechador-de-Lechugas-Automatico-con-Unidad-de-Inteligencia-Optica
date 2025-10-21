@@ -27,7 +27,8 @@ donde $W = m \cdot g = 1.2\,\text{kg} \cdot 9.81\,\text{m/s}^2 = 11.77$\,N es el
 Por lo tanto:
 \[P_{\text{adm}} > 11.77\,\text{N} \cdot 4 = 47.08\,\text{N}\]
 
-\underline{Selección del diámetro}
+Selección del diámetro.\\
+\noindent
 Tras evaluar diferentes diámetros comerciales de varillas trapezoidales de acero, se selecciona una varilla TR16$\times$8 (diámetro nominal 16\,mm, paso 8\,mm).
 
 Para una varilla de diámetro exterior $d_e = 16$\,mm, el momento de inercia de la sección circular es:
@@ -96,7 +97,7 @@ El torque de diseño se toma como el mayor de ambos:
 Se aplican los siguientes factores correctivos:
 
 \begin{enumerate}
-    \item \textbf{Factor por fricción adicional en roscas trapezoidales ($f_1 = 2.0$):} Las roscas trapezoidales presentan pérdidas significativas por fricción que no están completamente capturadas en las ecuaciones simplificadas. Estas pérdidas se deben a:
+    \item \underline{Factor por fricción adicional en roscas trapezoidales ($f_1 = 2.0$)}: Las roscas trapezoidales presentan pérdidas significativas por fricción que no están completamente capturadas en las ecuaciones simplificadas. Estas pérdidas se deben a:
     \begin{itemize}[label=$\bullet$]
         \item La geometría de los canales trapezoidales, que generan mayor área de contacto y fricción entre los flancos de la rosca y la tuerca
         \item El efecto de acuñamiento de la rosca durante el movimiento, especialmente pronunciado en roscas trapezoidales comparado con roscas de bolas
@@ -106,7 +107,7 @@ Se aplican los siguientes factores correctivos:
     \end{itemize}
     El paso de 8\,mm reduce este factor respecto a pasos menores debido a la menor cantidad de vueltas necesarias para el mismo desplazamiento lineal, disminuyendo las pérdidas acumulativas por fricción.
 
-    \item \textbf{Factor de seguridad por caída de torque con velocidad ($f_2 = 1.2$):} Los motores paso a paso experimentan una reducción significativa del torque disponible al aumentar la velocidad de rotación, como se observa en las curvas dinámicas. Dado que el sistema opera a baja velocidad (70.3\,rpm), el motor mantiene la mayor parte de su torque nominal, requiriendo un factor de seguridad menor.
+    \item \underline{Factor de seguridad por caída de torque con velocidad ($f_2 = 1.2$):} Los motores paso a paso experimentan una reducción significativa del torque disponible al aumentar la velocidad de rotación, como se observa en las curvas dinámicas. Dado que el sistema opera a baja velocidad (70.3\,rpm), el motor mantiene la mayor parte de su torque nominal, requiriendo un factor de seguridad menor.
 \end{enumerate}
 
 El torque motor requerido resulta:
@@ -130,6 +131,6 @@ El motor seleccionado proporciona un margen de seguridad de aproximadamente 6.76
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.65\textwidth]{img/Nema34.png}
-    \caption{\textit{Curva dinámica torque-velocidad del motor paso a paso NEMA 34 Medium. Se observa que a 70.3\,rpm el torque disponible es de aproximadamente 2.5\,Nm, superando ampliamente el requerimiento calculado de 0.37\,Nm con un margen de seguridad de 6.76 veces.}}
+    \caption{\textit{Curva dinámica torque-velocidad del motor paso a paso NEMA 34 Medium.}}
     \label{fig:Curva_din_nema34}
 \end{figure}
