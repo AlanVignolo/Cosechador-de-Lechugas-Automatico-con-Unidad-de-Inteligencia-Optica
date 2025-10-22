@@ -20,8 +20,8 @@ El principio fundamental de las estructuras cartesianas se basa en la descomposi
 
 Existen diversas configuraciones de estructuras cartesianas, cada una con ventajas específicas según la aplicación:
 \begin{itemize}[label=$\bullet$]
-    \item \underline{Configuración de pórtico:}En esta configuración, utilizada frecuentemente en máquinas CNC y algunas impresoras 3D, el eje X se monta sobre dos columnas verticales (eje Y) que se desplazan simultáneamente. Esta disposición proporciona mayor rigidez y capacidad de carga, siendo ideal para áreas de trabajo amplias.
-    \item \underline{Configuración coreXY:}Sistema en el que los ejes X e Y comparten dos motores mediante un sistema de correas cruzadas. Esta configuración reduce la masa móvil en el eje vertical y permite velocidades de desplazamiento superiores, siendo popular en impresoras 3D de alto rendimiento.
+    \item \underline{Configuración de pórtico:} En esta configuración, utilizada frecuentemente en máquinas CNC y algunas impresoras 3D, el eje X se monta sobre dos columnas verticales (eje Y) que se desplazan simultáneamente. Esta disposición proporciona mayor rigidez y capacidad de carga, siendo ideal para áreas de trabajo amplias.
+    \item \underline{Configuración coreXY:} Sistema en el que los ejes X e Y comparten dos motores mediante un sistema de correas cruzadas. Esta configuración reduce la masa móvil en el eje vertical y permite velocidades de desplazamiento superiores, siendo popular en impresoras 3D de alto rendimiento.
     \item \underline{Configuración cartesiana pura:} Cada eje se mueve de forma completamente independiente, con el efector final (cabezal de impresión, husillo, etc.) montado sucesivamente sobre cada eje. Es la configuración más simple conceptualmente y facilita el mantenimiento.
 \end{itemize}
 
@@ -146,7 +146,7 @@ donde $M(\mathbf{q})$ es la matriz de inercia, $C(\mathbf{q}, \dot{\mathbf{q}})$
 
 En la práctica industrial y de fabricación digital contemporánea, el cálculo explícito del modelo dinámico completo del robot mediante las ecuaciones de Euler-Lagrange raramente se realiza a nivel del controlador del robot. Esto se debe a que los actuadores modernos incorporan sus propios sistemas de control que gestionan la dinámica local de forma autónoma.\\
 
-Servomotores y drivers inteligentes. 
+Servomotores y drivers inteligentes.\\
 \noindent
 Los servomotores vienen equipados con drivers que implementan lazos de control en cascada: lazo de corriente que controla el par motor instantáneo con frecuencias de actualización, lazo de velocidad que regula la velocidad angular mediante un controlador PID típicamente a 1-5 kHz y lazo de posición que gestiona el posicionamiento angular con actualizaciones de 100-1000 Hz.
 
@@ -154,20 +154,20 @@ Estos drivers manejan internamente: compensación de inercia del rotor, limitaci
 
 El controlador del robot simplemente envía consignas de posición, velocidad o par sin necesidad de calcular los torques requeridos.\\
 
-Motores paso a paso con control de lazo abierto.
-
+Motores paso a paso con control de lazo abierto.\\
+\noindent
 El driver genera las secuencias de pulsos para los devanados del motor, envía sol pulsos de paso y dirección y la dinámica item El controlador envía únicamente pulsos de paso y dirección y la dinámica se gestiona limitando aceleraciones máximas en el firmware
 
-Incluso aquí, el modelo dinámico se reduce a parámetros empíricos de aceleración máxima configurados en el firmware, sin cálculos formales de las ecuaciones de movimiento.
+Incluso aquí, el modelo dinámico se reduce a parámetros empíricos de aceleración máxima configurados en el firmware, sin cálculos formales de las ecuaciones de movimiento.\\
 
-Implicaciones para el Diseño de Controladores.
-
-Esta arquitectura de control distribuido tiene consecuencias importantes.\\
+Implicaciones para el Diseño de Controladores.\\
+\noindent
+Esta arquitectura de control distribuido tiene consecuencias importantes.
 
 Ventajas:
 
 \begin{itemize}[label=$\bullet$]
-    \item \underline{Simplificación del software de control}: El programador del robot trabaja en el espacio de juntas o cartesiano sin preocuparse por la física subyacente.
+    \item \underline{Simplificación del software de control}: El programador del robot trabaja en el espacio articular o cartesiano sin preocuparse por la física subyacente.
 
     \item \underline{Modularidad}: Se pueden intercambiar actuadores de diferentes fabricantes manteniendo la misma lógica de control superior.
 

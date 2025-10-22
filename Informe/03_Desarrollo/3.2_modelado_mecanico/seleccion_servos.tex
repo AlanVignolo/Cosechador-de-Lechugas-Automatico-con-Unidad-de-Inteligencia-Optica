@@ -30,7 +30,7 @@ Tiempo de aceleración ($t_{ac}$) & 0.5 & s \\
 
 Los momentos de inercia se calcularon considerando los eslabones como barras delgadas uniformes respecto a sus centros de masa: $I = \frac{1}{12}mL^2$.
 
-Del análisis dinámico desarrollado previamente, se tienen las expresiones \ref{ec:torqueT1} (hombro) y \ref{ec:torqueT2}(codo) para los torques en cada articulación:
+Del análisis dinámico desarrollado previamente, se tienen las expresiones \ref{ec:torqueT1} (hombro) y \ref{ec:torqueT2} (codo) para los torques en cada articulación:
 
 Estas ecuaciones capturan los efectos inerciales, de acoplamiento dinámico entre articulaciones, términos centrífugos y efectos gravitacionales. \\
 
@@ -102,5 +102,4 @@ Aplicando un factor de seguridad de 1.5:
 \begin{equation}
 \mathbf{\tau_{1,req}} = 1.5 \cdot 1.144 = \mathbf{1.716 \, N·m }
 \end{equation}
-
 Para ambos motores se selecciona un motor Dynamixel MX-106T/R que cuenta con un torque de 8N$\cdot$m a 12v y 5A, teniendo un margen de aproximadamente 8 veces para el codo y de aproximadamente 5 veces para el hombro.
