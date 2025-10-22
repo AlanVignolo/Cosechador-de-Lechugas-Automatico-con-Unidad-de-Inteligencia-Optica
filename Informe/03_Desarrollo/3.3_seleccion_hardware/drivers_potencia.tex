@@ -1,17 +1,9 @@
 \subsection{Drivers de potencia}
+El control del motor paso a paso NEMA 17 long se realiza mediante el driver TB6600, que proporcionan control de corriente mediante chopper y aislamiento óptico de señales lógicas. El driver opera con 24V DC para los motores, y tensión lógica de 5V DC para las señales STEP/DIR/ENABLE, además Este driver tiene consumo máximo de 3 A a 24V cuando el motor está energizado y girando a máxima velocidad. En reposo (motor energizado pero detenido), el consumo se reduce a 1 A por driver. 
 
-El sistema utiliza dos tipos de drivers para el control de los tres motores paso a paso del sistema de desplazamiento lineal.
+%Los motores NEMA 17 especificados tienen corriente nominal de 1.5 A por fase. Los drivers se configuran mediante DIP switches para limitar la corriente a 1.5 A, protegiendo los motores ante sobrecarga térmica.
+Dicho motor posee corriente nominal de 1.8 A por fase, mientras que el driver puede entregar hasta 3.5A de corriente de control.
 
-\subsubsection{Driver TB6600 para motores NEMA 17}
+Por otro lado, el control del motor Nema 34 medium se realiza mediante el driver KTC-DM860H-0 que se alimenta con 24V y entrega una corriente de control máxima de 7.2A. El consumo es de 6A cuando el motor está energizado y girando a máxima velocidad y de 2.5A cuando el motor está en reposo.
 
-El control de los dos motores paso a paso NEMA 17 del eje horizontal se realiza mediante drivers TB6600, que proporcionan control de corriente mediante chopper y aislamiento óptico de señales lógicas. Cada driver opera con tensión de potencia de 24V DC para los motores y tensión lógica de 5V DC para las señales STEP/DIR/ENABLE.
-
-Los motores NEMA 17 poseen corriente nominal de 1.8 A por fase, mientras que cada driver TB6600 puede entregar hasta 3.5 A de corriente de control. Cada driver tiene consumo máximo de 3 A a 24V cuando el motor está energizado y girando a máxima velocidad. En reposo (motor energizado pero detenido), el consumo se reduce a 1 A por driver.
-
-\subsubsection{Driver KTC-DM860H-0 para motor NEMA 34}
-
-El control del motor paso a paso NEMA 34 Medium del eje vertical se realiza mediante el driver KTC-DM860H-0, diseñado para motores de mayor corriente. Este driver se alimenta con 24V DC y puede entregar una corriente de control máxima de 7.2 A.
-
-El motor NEMA 34 Medium tiene corriente nominal de 4.5 A por fase. El consumo del driver es de 6 A cuando el motor está energizado y girando a máxima velocidad, y de 2.5 A cuando el motor está en reposo. Este mayor consumo en reposo, comparado con el TB6600, se debe a la mayor corriente de retención necesaria para mantener el torque de sujeción del NEMA 34 en el eje vertical.
-
-Ambos drivers se configuran mediante DIP switches para limitar la corriente a 1.8 A (TB6600) o 4.5 A (KTC-DM860H-0) según el caso, protegiendo los motores ante sobrecarga térmica.
+Los drivers se configuran mediante DIP switches para limitar la corriente a 1.8 A, o 4.5A segun el caso, protegiendo los motores ante sobrecarga térmica.
