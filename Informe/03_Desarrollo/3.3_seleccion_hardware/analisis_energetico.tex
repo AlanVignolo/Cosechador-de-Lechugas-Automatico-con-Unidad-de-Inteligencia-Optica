@@ -56,7 +56,11 @@ Lógica drivers ($\times$3) & 12V & 0.3 & 0.3 & 0.3 \\
 \end{table}
 %\footnotetext[1]{Consumo calculado considerando eficiencia del 90\% según carga real en cada estado}
 
-El consumo en operación normal (441 W) ocurre cuando los motores paso a paso están en movimiento continuo, los servomotores Dynamixel operan bajo carga, y el sistema de visión está procesando imágenes simultáneamente. Los picos de 448 W ocurren durante aceleraciones bruscas con los tres motores paso a paso y los dos servomotores iniciando movimiento simultáneamente.
+El consumo en operación normal (441 W) ocurre cuando los motores paso a paso están en movimiento continuo, los servomotores Dynamixel operan bajo carga, y el sistema de visión está procesando imágenes simultáneamente.
+
+Los valores de consumo de los drivers consideran que los motores NEMA 17 y NEMA 34 alcanzan su máxima demanda de corriente durante operación a velocidad máxima. Específicamente, el motor NEMA 34 Medium del eje vertical, con su mayor masa inercial y corriente nominal de 4.5 A, presenta el consumo más elevado del sistema (6 A del driver KTC-DM860H-0 a máxima velocidad, comparado con 2.5 A en reposo).
+
+Los picos de 448 W ocurren durante aceleraciones bruscas con los tres motores paso a paso y los dos servomotores iniciando movimiento simultáneamente.
 
 Se selecciona una fuente conmutada de 24V DC con capacidad nominal de 20 A (480 W), proporcionando un margen de seguridad del 7.1\% sobre el pico máximo calculado. Este margen considera:
 

@@ -4,5 +4,4 @@ El sistema de mapeo autónomo requiere identificar tubos de cultivo verticales p
 
 La estrategia combina detección de bordes mediante Canny con filtrado por canal de saturación (S) en HSV, explotando que los bordes del tubo generan gradientes detectables y el PVC blanco presenta saturación muy baja que lo diferencia de plantas verdes.
 
-El objetivo específico del detector es identificar las posiciones verticales (coordenadas Y) de los bordes superior e inferior del tubo. Esta información es suficiente para confirmar la presencia de un tubo en el campo de visión y registrar su ubicación en configuracion\_tubos.json, permitiendo al sistema de mapeo construir el inventario de filas de cultivo.
-
+El objetivo específico del detector es identificar los bordes superior e inferior del tubo. Esta información es suficiente para confirmar la presencia de un tubo en el campo de visión y registrar su ubicación en configuracion\_tubos.json, permitiendo al sistema de mapeo construir el inventario de filas de cultivo.

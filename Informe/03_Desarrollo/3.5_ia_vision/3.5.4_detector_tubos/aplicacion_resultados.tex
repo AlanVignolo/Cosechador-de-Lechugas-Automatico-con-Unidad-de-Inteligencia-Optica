@@ -1,7 +1,7 @@
 \subsubsection{Aplicación y resultados}
 
-El detector de tubos se emplea durante la fase de mapeo autónomo para identificar las coordenadas verticales de las filas de estaciones. El robot ejecuta un barrido vertical completo capturando imágenes a intervalos regulares de 50 mm mientras se desplaza a velocidad reducida de 30 mm/s.
+El detector de tubos se emplea durante la fase de mapeo autónomo para identificar las coordenadas verticales de las filas de estaciones. El robot ejecuta un barrido vertical completo capturando imágenes a intervalos regulares mientras se desplaza a velocidad reducida. Cuando el detector identifica un tubo, envia un flag indicando inicio y final de detección, para que luego el nivel regulatorio envie las posiciones Y correspondientes al sistema de mapeo. Con estas posiciones se saca el valor medio entre el inicio y fin de detección para registrar la coordenada Y de la fila.
 
-El sistema implementa dos mecanismos de filtrado: debouncing espacial de 120 mm para evitar detectar el mismo tubo múltiples veces, y confirmación temporal que requiere detección en al menos 3 de 5 frames consecutivos para rechazar detecciones espurias por reflejos o sombras.
+El sistema implementa un mecanismos de confirmación temporal que requiere detección en al menos 3 de 5 frames consecutivos para rechazar detecciones espurias por reflejos o sombras.
 
-El resultado final es un vector $\mathbf{F}_{filas} = [Y_1, Y_2, ..., Y_n]^T$ con las coordenadas Y de todas las filas detectadas (típicamente 5 a 7 filas), que se combina con las coordenadas X del detector de marcadores para construir la matriz completa de posiciones de estaciones.
+El resultado final es un vector $\mathbf{F}_{filas} = [Y_1, Y_2, ..., Y_n]^T$ con las coordenadas Y de todas las filas detectadas, que se combina con las coordenadas X del detector de marcadores para construir la matriz completa de posiciones de estaciones.

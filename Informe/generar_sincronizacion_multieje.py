@@ -16,22 +16,27 @@ d_horizontal = 400  # mm - Mayor distancia
 d_vertical = 200    # mm - Menor distancia
 
 # Velocidades máximas del firmware real (motion_profile_simple.h)
-# SPEED_CRUISE_H = 15000 pasos/s / 40 pasos/mm = 375 mm/s = 0.375 m/s
-# SPEED_CRUISE_V = 12000 pasos/s / 200 pasos/mm = 60 mm/s = 0.060 m/s
-v_max_h = 0.375  # m/s horizontal (RÁPIDO)
-v_max_v = 0.060  # m/s vertical (LENTO)
+# SPEED_CRUISE_H = 10000 pasos/s / 40 pasos/mm = 250 mm/s = 0.250 m/s
+# SPEED_CRUISE_V = 15000 pasos/s / 200 pasos/mm = 75 mm/s = 0.075 m/s
+v_max_h = 0.250  # m/s horizontal (RÁPIDO)
+v_max_v = 0.075  # m/s vertical (LENTO)
 
 # Perfiles trapezoidales con 2 ACELERACIONES (suave y fuerte)
-d_acel_suave = 5     # mm
-d_acel_fuerte = 7.5  # mm
-d_decel_fuerte = 7.5 # mm
-d_decel_suave = 5    # mm
+d_acel_suave_h = 2.5     # mm horizontal
+d_acel_fuerte_h = 13.3   # mm horizontal
+d_decel_fuerte_h = 13.3  # mm horizontal
+d_decel_suave_h = 2.5    # mm horizontal
 
-# Velocidades intermedias (EN m/s) - del firmware SPEED_LOW = 4000 pasos/s
-# Horizontal: 4000 / 40 = 100 mm/s = 0.100 m/s
-# Vertical: 4000 / 200 = 20 mm/s = 0.020 m/s
-v_suave_h = 0.100   # m/s después de aceleración suave horizontal
-v_suave_v = 0.020   # m/s después de aceleración suave vertical
+d_acel_suave_v = 1.25    # mm vertical
+d_acel_fuerte_v = 5.6    # mm vertical
+d_decel_fuerte_v = 5.6   # mm vertical
+d_decel_suave_v = 1.25   # mm vertical
+
+# Velocidades intermedias (EN m/s)
+# Horizontal: 2000 pasos/s / 40 pasos/mm = 50 mm/s = 0.050 m/s
+# Vertical: 2000 pasos/s / 200 pasos/mm = 10 mm/s = 0.010 m/s
+v_suave_h = 0.050   # m/s después de aceleración suave horizontal
+v_suave_v = 0.010   # m/s después de aceleración suave vertical
 
 # ========== SIN SINCRONIZAR - Terminan a distinto tiempo ==========
 # Tiempos de aceleración/desaceleración (más cortos para ver diferencia)
@@ -41,7 +46,7 @@ t_decel_fuerte = 1.5  # Desaceleración fuerte
 t_decel_suave = 1.0   # Desaceleración suave
 
 # Eje Horizontal (rápido) - termina PRIMERO
-d_crucero_h_sin = d_horizontal - d_acel_suave - d_acel_fuerte - d_decel_fuerte - d_decel_suave
+d_crucero_h_sin = d_horizontal - d_acel_suave_h - d_acel_fuerte_h - d_decel_fuerte_h - d_decel_suave_h
 t_crucero_h = (d_crucero_h_sin / 1000.0) / v_max_h  # Convertir mm a m, dividir por m/s
 
 t_total_h_sin = t_acel_suave + t_acel_fuerte + t_crucero_h + t_decel_fuerte + t_decel_suave
@@ -54,7 +59,7 @@ tiempo_h_sin = np.array([0, t_acel_suave, t_acel_suave + t_acel_fuerte,
 vel_h_sin = np.array([0, v_suave_h, v_max_h, v_max_h, v_suave_h, 0])
 
 # Eje Vertical (lento) - tarda MÁS
-d_crucero_v_sin = d_vertical - d_acel_suave - d_acel_fuerte - d_decel_fuerte - d_decel_suave
+d_crucero_v_sin = d_vertical - d_acel_suave_v - d_acel_fuerte_v - d_decel_fuerte_v - d_decel_suave_v
 t_crucero_v = (d_crucero_v_sin / 1000.0) / v_max_v  # Convertir mm a m, dividir por m/s
 t_total_v_sin = t_acel_suave + t_acel_fuerte + t_crucero_v + t_decel_fuerte + t_decel_suave
 
@@ -136,33 +141,34 @@ print("VERIFICACIÓN DE DISTANCIAS RECORRIDAS")
 print("="*60)
 
 # Las distancias de aceleración/desaceleración son FIJAS
-d_acel_decel_total = d_acel_suave + d_acel_fuerte + d_decel_fuerte + d_decel_suave
+d_acel_decel_total_h = d_acel_suave_h + d_acel_fuerte_h + d_decel_fuerte_h + d_decel_suave_h
+d_acel_decel_total_v = d_acel_suave_v + d_acel_fuerte_v + d_decel_fuerte_v + d_decel_suave_v
 
 # Sin sincronizar - Eje X
 d_crucero_calculado_x = v_max_h * t_crucero_h * 1000  # m/s * s * 1000 = mm
-d_total_x_sin = d_acel_decel_total + d_crucero_calculado_x
+d_total_x_sin = d_acel_decel_total_h + d_crucero_calculado_x
 print(f"\nSIN SINCRONIZAR:")
 print(f"  Eje X:")
-print(f"    Acel+Decel: {d_acel_decel_total:.1f} mm (fijo)")
+print(f"    Acel+Decel: {d_acel_decel_total_h:.1f} mm (fijo)")
 print(f"    Crucero: {d_crucero_calculado_x:.1f} mm ({t_crucero_h:.2f}s a {v_max_h:.3f} m/s)")
 print(f"    TOTAL: {d_total_x_sin:.1f} mm (objetivo: {d_horizontal} mm)")
 print(f"    Tiempo: {t_total_h_sin:.2f} s")
 
 # Sin sincronizar - Eje Y
 d_crucero_calculado_y = v_max_v * t_crucero_v * 1000  # m/s * s * 1000 = mm
-d_total_y_sin = d_acel_decel_total + d_crucero_calculado_y
+d_total_y_sin = d_acel_decel_total_v + d_crucero_calculado_y
 print(f"  Eje Y:")
-print(f"    Acel+Decel: {d_acel_decel_total:.1f} mm (fijo)")
+print(f"    Acel+Decel: {d_acel_decel_total_v:.1f} mm (fijo)")
 print(f"    Crucero: {d_crucero_calculado_y:.1f} mm ({t_crucero_v:.2f}s a {v_max_v:.3f} m/s)")
 print(f"    TOTAL: {d_total_y_sin:.1f} mm (objetivo: {d_vertical} mm)")
 print(f"    Tiempo: {t_total_v_sin:.2f} s")
 
 # Sincronizado - Eje X
 d_crucero_calculado_x_sinc = v_max_h_reducida * t_crucero_h_sinc * 1000
-d_total_x_sinc = d_acel_decel_total + d_crucero_calculado_x_sinc
+d_total_x_sinc = d_acel_decel_total_h + d_crucero_calculado_x_sinc
 print(f"\nSINCRONIZADO:")
 print(f"  Eje X:")
-print(f"    Acel+Decel: {d_acel_decel_total:.1f} mm (fijo)")
+print(f"    Acel+Decel: {d_acel_decel_total_h:.1f} mm (fijo)")
 print(f"    Crucero: {d_crucero_calculado_x_sinc:.1f} mm ({t_crucero_h_sinc:.2f}s a {v_max_h_reducida:.3f} m/s)")
 print(f"    TOTAL: {d_total_x_sinc:.1f} mm (objetivo: {d_horizontal} mm)")
 print(f"    Tiempo: {t_total_sinc:.2f} s")
@@ -178,4 +184,5 @@ plt.tight_layout()
 output_path = 'imagenes/sincronizacion_multieje.png'
 plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
 print(f"Diagrama generado exitosamente: {output_path}")
-plt.show()
+# plt.show()  # Comentado para no mostrar ventana interactiva
+plt.close()

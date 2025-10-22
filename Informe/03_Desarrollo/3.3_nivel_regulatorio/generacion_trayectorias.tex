@@ -5,23 +5,23 @@ El perfil se compone de las fases mostradas en las Tablas \ref{tab:perfil_horizo
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{|l|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|}
 \hline
-\textbf{Fase} & \textbf{Distancia} & \textbf{$v_i$ (m/s)} & \textbf{$v_f$ (m/s)} & \textbf{Aceleración (m/s²)} \\
+\textbf{Fase} & \textbf{$v_i$ (m/s)} & \textbf{$v_f$ (m/s)} & \textbf{Aceleración (m/s²)} \\
 \hline
-1. Arranque & Instant. & 0 & 0.05 & - \\
+1. Arranque & 0 & 0.0125 & - \\
 \hline
-2. Acel. suave & 5 mm & 0.05 & 0.10 & 0.05 \\
+2. Acel. suave & 0.0125 & 0.050 & 0.050 \\
 \hline
-3. Acel. fuerte & 7.5 mm & 0.10 & 0.375 & 0.37 \\
+3. Acel. fuerte & 0.050 & 0.250 & 0.1875 \\
 \hline
-4. Crucero & Variable & 0.375 & 0.375 & 0 \\
+4. Crucero & 0.250 & 0.250 & 0 \\
 \hline
-5. Decel. fuerte & 7.5 mm & 0.375 & 0.10 & -0.37 \\
+5. Decel. fuerte & 0.250 & 0.050 & -0.1875 \\
 \hline
-6. Decel. suave & 5 mm & 0.10 & 0.05 & -0.05 \\
+6. Decel. suave & 0.050 & 0.0125 & -0.050 \\
 \hline
-7. Detención & Instant. & 0.05 & 0 & - \\
+7. Detención & 0.0125 & 0 & - \\
 \hline
 \end{tabular}
 \caption{\textit{Fases del perfil trapezoidal de velocidad para movimiento horizontal}}
@@ -31,23 +31,23 @@ El perfil se compone de las fases mostradas en las Tablas \ref{tab:perfil_horizo
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{|l|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|}
 \hline
-\textbf{Fase} & \textbf{Distancia} & \textbf{$v_i$ (m/s)} & \textbf{$v_f$ (m/s)} & \textbf{Aceleración (m/s²)} \\
+\textbf{Fase} & \textbf{$v_i$ (m/s)} & \textbf{$v_f$ (m/s)} & \textbf{Aceleración (m/s²)} \\
 \hline
-1. Arranque & Instant. & 0 & 0.05 & - \\
+1. Arranque & 0 & 0.0025 & - \\
 \hline
-2. Acel. suave & 5 mm & 0.05 & 0.10 & 0.05 \\
+2. Acel. suave & 0.0025 & 0.010 & 0.030 \\
 \hline
-3. Acel. fuerte & 7.5 mm & 0.10 & 0.30 & 0.27 \\
+3. Acel. fuerte & 0.010 & 0.075 & 0.045 \\
 \hline
-4. Crucero & Variable & 0.30 & 0.30 & 0 \\
+4. Crucero & 0.075 & 0.075 & 0 \\
 \hline
-5. Decel. fuerte & 7.5 mm & 0.30 & 0.10 & -0.27 \\
+5. Decel. fuerte & 0.075 & 0.010 & -0.045 \\
 \hline
-6. Decel. suave & 5 mm & 0.10 & 0.05 & -0.05 \\
+6. Decel. suave & 0.010 & 0.0025 & -0.030 \\
 \hline
-7. Detención & Instant. & 0.05 & 0 & - \\
+7. Detención & 0.0025 & 0 & - \\
 \hline
 \end{tabular}
 \caption{\textit{Fases del perfil trapezoidal de velocidad para movimiento vertical}}
@@ -59,11 +59,11 @@ El perfil se compone de las fases mostradas en las Tablas \ref{tab:perfil_horizo
     % TODO: Insertar gráfico comparativo mostrando mismo perfil de aceleración para diferentes distancias
     % Mostrar: dos movimientos (25mm vs 250mm) con mismas rampas de accel/decel pero diferente zona crucero
     \includegraphics[width=0.7\textwidth]{imagenes/perfil_trapezoidal_velocidad.png}
-    \caption{\textit{Perfil trapezoidal con aceleraciones fijas. Las zonas de aceleración y desaceleración mantienen longitud constante (12.5mm cada una), mientras que la zona de crucero se ajusta según la distancia total}}
+    \caption{\textit{Perfil trapezoidal con aceleraciones fijas. Las zonas de aceleración y desaceleración mantienen longitud constante (15.8mm para horizontal, 6.85mm para vertical), mientras que la zona de crucero se ajusta según la distancia total}}
     \label{fig:perfil_trapezoidal}
 \end{figure}
 
-Cuando la distancia total es menor que 25mm, el perfil se convierte en triangular. El sistema mantiene las mismas aceleraciones de las Tablas \ref{tab:perfil_vertical} y \ref{tab:perfil_horizontal}, pero calcula el punto medio del movimiento donde debe iniciar la desaceleración para alcanzar exactamente la posición final. En este caso, la velocidad máxima alcanzada es menor que la velocidad de crucero nominal, ya que el motor comienza a frenar antes de alcanzarla. 
+Cuando la distancia total es menor que la suma de las fases de aceleración y desaceleración (31.6mm para horizontal, 13.7mm para vertical), el perfil se convierte en triangular. El sistema mantiene las mismas aceleraciones de las Tablas \ref{tab:perfil_vertical} y \ref{tab:perfil_horizontal}, pero escala proporcionalmente las distancias de cada fase para que la aceleración y desaceleración sean simétricas, calculando el punto medio del movimiento donde debe iniciar la desaceleración para alcanzar exactamente la posición final. En este caso, la velocidad máxima alcanzada es menor que la velocidad de crucero nominal, ya que el motor comienza a frenar antes de alcanzarla. 
 
 Para movimientos muy cortos (menos de 3 mm), el sistema reduce la velocidad máxima permitida a 0.10 m/s para mantener precisión en el posicionamiento final.
 
@@ -71,7 +71,7 @@ Para movimientos muy cortos (menos de 3 mm), el sistema reduce la velocidad máx
     \centering
     % TODO: Insertar gráfico comparativo: perfil trapezoidal vs triangular
     % Mostrar: movimiento largo con zona crucero vs movimiento corto sin zona crucero (triangular)
-    \includegraphics[width=0.7\textwidth]{imagenes/perfil_trapezoidal_triangular.png}
+    \includegraphics[width=0.9\textwidth]{imagenes/perfil_trapezoidal_triangular.png}
     \caption{\textit{Comparación entre perfil trapezoidal (movimientos largos) y triangular (movimientos cortos). Ambos utilizan las mismas aceleraciones, pero el perfil triangular invierte la aceleración en el punto medio}}
     \label{fig:perfil_comparacion}
 \end{figure}
@@ -90,7 +90,7 @@ Para movimientos diagonales que involucran ambos ejes simultáneamente, el firmw
     \centering
     % TODO: Insertar diagrama de sincronización multi-eje
     % Mostrar: dos ejes con diferentes distancias, perfiles escalados, trayectoria rectilínea resultante
-    \includegraphics[width=0.7\textwidth]{imagenes/sincronizacion_multieje.png}
+    \includegraphics[width=0.85\textwidth]{imagenes/sincronizacion_multieje.png}
     \caption{\textit{Sincronización de perfiles de velocidad para movimientos diagonales mediante escalamiento proporcional}}
     \label{fig:sincronizacion_multieje}
 \end{figure}
