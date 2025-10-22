@@ -2,9 +2,12 @@ El algoritmo de detección de tubos implementa una secuencia de cuatro etapas qu
 
 \underline{Etapa 1 - Detección de bordes mediante Canny}: Se aplica el algoritmo de Canny sobre la imagen convertida a escala de grises. Se aplica filtrado gaussiano ($5 \times 5$ píxeles), cálculo de gradientes mediante Sobel, supresión de no-máximos y doble umbralización con histéresis ($T_{bajo} = 20$, $T_{alto} = 172$). El resultado es una imagen binaria con los bordes del tubo y elementos de cultivo.\\
 
-\underline{Etapa 2 - Filtrado por canal de saturación}: Para discriminar bordes del tubo de vegetación, se explota que el PVC blanco presenta baja saturación mientras que las plantas presentan saturación alta. Se extrae el canal S del espacio HSV, se invierte ($S_{inv} = 255 - S$) y se umbraliza ($T_S = 150$). Los bordes de Canny se filtran mediante AND binario con esta máscara, eliminando bordes de vegetación.\\
+\underline{Etapa 2 - Filtrado por canal de saturación}: Para discriminar bordes del fondo, se explota que el PVC blanco presenta baja saturación. Se extrae el canal S del espacio HSV, se invierte ($S_{inv} = 255 - S$) y se umbraliza ($T_S = 150$). Los bordes de Canny se filtran mediante AND binario con esta máscara.\\
 
 \underline{Etapa 3 - Refinamiento morfológico}: Para conectar segmentos de borde fragmentados por discontinuidades, se aplica cierre morfológico con elemento estructurante rectangular de $3 \times 9$ píxeles. La orientación vertical del kernel favorece la conexión de líneas horizontales (bordes del tubo) mientras preserva la separación entre líneas verticales.
+
+
+\underline{Etapa 4 - Detección de contornos y scoring}: Se ejecuta el algoritmo de Suzuki-Abe filtrando contornos por área mínima de 250 píxeles. Se calcula la relación de aspecto $AR = w/h$ y se descartan contornos con $AR \geq 0.9$ (elementos horizontales). Los contornos verticales se evalúan mediante scoring que combina: relación de aspecto (favorece $AR < 0.5$), área normalizada (favorece tamaños intermedios) y homogeneidad de saturación (favorece color uniforme). El contorno con mayor puntuación se selecciona como tubo objetivo.
 
 \begin{figure}[H]
 \centering
@@ -40,7 +43,7 @@ El algoritmo de detección de tubos implementa una secuencia de cuatro etapas qu
 \label{fig:proceso_tubos}
 \end{figure}
 
-\underline{Etapa 4 - Detección de contornos y scoring}: Se ejecuta el algoritmo de Suzuki-Abe filtrando contornos por área mínima de 250 píxeles. Se calcula la relación de aspecto $AR = w/h$ y se descartan contornos con $AR \geq 0.9$ (elementos horizontales). Los contornos verticales se evalúan mediante scoring que combina: relación de aspecto (favorece $AR < 0.5$), área normalizada (favorece tamaños intermedios) y homogeneidad de saturación (favorece color uniforme). El contorno con mayor puntuación se selecciona como tubo objetivo.
+El algoritmo implementa mecanismos de validación ante casos ambiguos. Sin contornos válidos, retorna valores nulos indicando ausencia de tubo. Con múltiples candidatos similares selecciona el de mayor score. 
 
 \begin{figure}[H]
     \centering
@@ -48,7 +51,3 @@ El algoritmo de detección de tubos implementa una secuencia de cuatro etapas qu
     \caption{\textit{Líneas superior e inferior detectadas}}
     \label{fig:detector_tubos_lineas}
 \end{figure}
-
-\subsubsection{Consideraciones de robustez}
-
-El algoritmo implementa mecanismos de validación ante casos ambiguos. Sin contornos válidos, retorna valores nulos indicando ausencia de tubo. Con múltiples candidatos similares (diferencia < 10\%), genera advertencia pero selecciona el de mayor score. El tiempo total de procesamiento es aproximadamente 120 ms.

@@ -7,13 +7,13 @@ El control del brazo se implementa mediante una máquina de estados finitos que 
 \hline
 \textbf{Posición} & \textbf{Servo 1 (codo)} & \textbf{Servo 2 (hombro)} & \textbf{Gripper} & \textbf{Función} \\
 \hline
-Movimiento & -24° & 32° & Cualquiera & Brazo plegado para desplazamientos XY \\
+Movimiento & -90° & -45° & Cualquiera & Brazo plegado para desplazamientos XY \\
 \hline
-Recoger & -34° & -32° & Abierto & Aproximación para recolección \\
+Recoger & -20° & 20° & Abierto & Aproximación para recolección \\
 \hline
-Transportar & 0° & 90° & Cerrado & Transporte seguro de planta \\
+Transportar & -70° & 70° & Cerrado & Transporte seguro de planta \\
 \hline
-Depositar & -42° & -114° & Abierto & Liberación sobre contenedor \\
+Depositar & -20° & -20° & Abierto & Liberación sobre contenedor \\
 \hline
 \end{tabular}
 \caption{\textit{Posiciones operacionales del brazo robótico}}

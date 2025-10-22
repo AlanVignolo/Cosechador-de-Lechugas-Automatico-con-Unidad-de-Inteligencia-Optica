@@ -107,8 +107,32 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         # Solo informamos qué tubo se va a escanear para la matriz de coordenadas
         
         # SECUENCIA DE MOVIMIENTO HORIZONTAL
+<<<<<<< Updated upstream
         # Nota: Evitar tocar el switch derecho. Comenzar el escaneo desde la
         # posición actual y mover directamente hacia el límite izquierdo.
+=======
+        # Ir al switch derecho (X negativos)
+        result = robot.cmd.move_xy(-2000, 0)
+        
+        # Esperar límite derecho (aceptar evento o estado polleado)
+        limit_message = robot.cmd.uart.wait_for_limit_specific('H_RIGHT', timeout=30.0)
+        if not (limit_message and ("LIMIT_H_RIGHT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_RIGHT" in limit_message))):
+            print("Error: No se alcanzó el límite derecho")
+            return False
+        
+        # Retroceder 1cm
+        result = robot.cmd.move_xy(10, 0)
+        if not result["success"]:
+            print(f"Error en retroceso: {result}")
+            return False
+        
+        time.sleep(2)
+        
+        # Resetear posición global para que coincida con x=0 del escáner
+        # Esto hace que las coordenadas relativas funcionen correctamente
+        robot.reset_global_position(0.0, robot.global_position['y'])
+        
+>>>>>>> Stashed changes
         # Iniciar detección básica
         
         # PRE-ESCANEO: limpiar hilos zombie
@@ -146,6 +170,15 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
             'pending_pre_end_pos_streak': 0,
             'last_transition_ts': 0.0,
         }
+<<<<<<< Updated upstream
+=======
+        # Pequeño guard para evitar flags falsos al inicio del movimiento horizontal:
+        # bloquear la primera transición a 'accepted' durante unos ms después de iniciar el movimiento.
+        MIN_TIME_AFTER_MOVE_START_FOR_FIRST_ACCEPT_S = 0.25
+        scan_move_start_ts = 0.0
+        # Bandera para no enviar flags antes de iniciar el movimiento principal
+        movement_started = [False]
+>>>>>>> Stashed changes
         
         def send_flag_for_state_change(state_type):
             """Enviar flag al firmware para marcar cambio de estado"""
@@ -294,6 +327,7 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
                 pass
             time.sleep(0.05)
         
+<<<<<<< Updated upstream
         if not first_frame_ok:
             print("Error: Stream de video no disponible")
             is_scanning[0] = False
@@ -313,6 +347,13 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
             pass
 
         time.sleep(0.25)
+=======
+        # Movimiento hacia switch izquierdo
+        # Marcar inicio del movimiento para habilitar guard de primeras detecciones
+        scan_move_start_ts = time.time()
+        movement_started[0] = True
+        result = robot.cmd.move_xy(2000, 0)
+>>>>>>> Stashed changes
         
         # Limpiar snapshots previos
         try:
@@ -375,7 +416,13 @@ def scan_horizontal_with_live_camera(robot, tubo_id=None):
         except Exception:
             pass
         
+<<<<<<< Updated upstream
         # Ya no esperamos tocar límite; el movimiento termina en x_edge con snapshots automáticos
+=======
+        if not (limit_message and ("LIMIT_H_LEFT_TRIGGERED" in limit_message or ("LIMIT_POLLED" in limit_message and "H_LEFT" in limit_message))):
+            print("Error: No se alcanzó el límite izquierdo")
+            return False
+>>>>>>> Stashed changes
         
         # Correlacionar flags con snapshots para obtener posiciones reales
         correlate_flags_with_snapshots(detection_state)

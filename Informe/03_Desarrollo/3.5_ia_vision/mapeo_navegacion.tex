@@ -9,10 +9,23 @@ El proceso consiste en dos fases secuenciales:
 \begin{enumerate}
     \item \underline{Escaneo vertical}: El robot se mueve descendentemente mientras ejecuta detección de marcadores ArUco. Se registra la posición Y de cada tubo detectado.
 
-    \item \underline{Escaneo horizontal por tubo}: Para cada tubo identificado, el robot se posiciona en su coordenada \textbf{Y} y ejecuta un barrido horizontal desde \textbf{X=0} hasta el límite derecho del workspace. Durante el movimiento continuo se detectan las cintas verticales que marcan las posiciones de las plantas.
-\end{enumerate}
+    \begin{figure}[H]
+        \centering
+            \includegraphics[width=0.6\textwidth]{imagenes/mov_vertical.jpg}
+            \caption{\textit{Ruta escaneo vertical.}}
+            \label{fig:estructura1}
+    \end{figure}
 
-Al finalizar cada escaneo horizontal, el robot se mueve en diagonal hacia la posición \textbf{Y} del siguiente tubo, retornando a \textbf{X=0}. Este patrón se repite para todos los tubos. El escaneo horizontal siempre se ejecuta en la misma dirección (de izquierda a derecha).\\
+    \item \underline{Escaneo horizontal por tubo}: Para cada tubo identificado, el robot se posiciona en su coordenada \textbf{Y} y ejecuta un barrido horizontal desde \textbf{X=0} hasta el límite derecho del workspace. Durante el movimiento continuo se detectan las cintas verticales que marcan las posiciones de las plantas.
+    Al finalizar cada escaneo horizontal, el robot se mueve en diagonal hacia la posición \textbf{Y} del siguiente tubo, retornando a \textbf{X=0}. Este patrón se repite para todos los tubos. El escaneo horizontal siempre se ejecuta en la misma dirección (de izquierda a derecha).\\
+        \begin{figure}[H]
+        \centering
+            \includegraphics[width=0.6\textwidth]{imagenes/mov_total.jpg}
+            \caption{\textit{Ruta escaneo horizontal.}}
+            \label{fig:estructura2}
+    \end{figure}
+
+\end{enumerate}
 
 Estructura del mapa.\\
 \noindent

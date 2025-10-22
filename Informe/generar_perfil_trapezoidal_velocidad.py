@@ -13,17 +13,17 @@ os.makedirs('imagenes', exist_ok=True)
 # Parámetros del movimiento
 # Distancias para cada fase (mm)
 d_arranque = 0
-d_acel_suave = 5
-d_acel_fuerte = 7.5
-d_crucero = 225  # Variable según distancia total (250mm - 25mm de accel/decel)
-d_decel_fuerte = 7.5
-d_decel_suave = 5
+d_acel_suave = 2.5
+d_acel_fuerte = 13.3
+d_crucero = 218.4  # Variable según distancia total (250mm - 31.6mm de accel/decel)
+d_decel_fuerte = 13.3
+d_decel_suave = 2.5
 d_total = d_acel_suave + d_acel_fuerte + d_crucero + d_decel_fuerte + d_decel_suave
 
 # Velocidades en cada fase (m/s) - Eje Horizontal
-v_inicio = 0.05
-v_fin_suave = 0.10
-v_max = 0.375  # Velocidad de crucero horizontal
+v_inicio = 0.0125
+v_fin_suave = 0.050
+v_max = 0.250  # Velocidad de crucero horizontal
 
 # Crear perfil de posición - AGREGANDO PUNTO EN 0
 distancias = [0,
@@ -73,4 +73,5 @@ plt.tight_layout()
 output_path = 'imagenes/perfil_trapezoidal_velocidad.png'
 plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
 print(f"Diagrama generado exitosamente: {output_path}")
-plt.show()
+# plt.show()  # Comentado para no mostrar ventana interactiva
+plt.close()
