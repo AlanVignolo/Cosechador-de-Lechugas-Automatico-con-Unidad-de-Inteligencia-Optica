@@ -1,9 +1,9 @@
 \subsubsection{Planificación de trayectorias}
 
-Durante la fase de cosecha, el sistema debe determinar la secuencia de visita a las estaciones que contienen lechugas maduras. Este problema se aborda mediante una heurística de agrupamiento por filas que explota la geometría estructurada del sistema hidropónico.\\
+Durante la fase de cosecha, el sistema debe determinar la secuencia de visita a las estaciones que contienen lechugas listas. Este problema se aborda mediante una heurística de agrupamiento por filas que explota la geometría estructurada del sistema hidropónico.\\
 
 Estrategia de agrupamiento.\\
-El algoritmo agrupa las estaciones objetivo por fila (coordenada Y similar) y planifica la ruta como secuencia de barridos horizontales. Para cada fila, las estaciones se ordenan por coordenada X de izquierda a derecha.
+El algoritmo agrupa las estaciones objetivo por fila (coordenada \textbf{Y} similar) y planifica la ruta como secuencia de barridos horizontales. Para cada fila, las estaciones se ordenan por coordenada \textbf{X} de izquierda a derecha.
 
 Al finalizar cada fila, el robot se mueve en diagonal hacia la posición inicial de la siguiente fila. Este patrón garantiza que los movimientos largos ocurren en el eje horizontal (más rápido), mientras que los movimientos verticales (más lentos) son mínimos.
 

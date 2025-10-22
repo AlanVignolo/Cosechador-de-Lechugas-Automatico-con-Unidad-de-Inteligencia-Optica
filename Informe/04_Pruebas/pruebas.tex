@@ -67,7 +67,7 @@ Los resultados mostraron una tasa de clasificación correcta superior al 85\%, c
 
 \subsubsection{Pruebas de repetibilidad}
 
-Para evaluar la consistencia del sistema de visión, se realizaron pruebas de repetibilidad que consistieron en:
+Para evaluar la consistencia del sistema de visión artificial, se realizaron pruebas de repetibilidad que consistieron en:
 
 \begin{itemize}[label=$\bullet$]
     \item Captura de múltiples imágenes de los mismos escenarios bajo condiciones similares
@@ -75,7 +75,7 @@ Para evaluar la consistencia del sistema de visión, se realizaron pruebas de re
     \item Cálculo de la tasa de detecciones correctas respecto al total de intentos
 \end{itemize}
 
-Se tomaron 25 casos de prueba diferentes, cada uno repetido 10 veces. El análisis reveló que el sistema mantuvo una consistencia del 88\% en las detecciones repetidas, indicando un comportamiento estable y predecible del algoritmo de visión.
+El análisis reveló que el sistema mantuvo consistencia en las detecciones repetidas, indicando un comportamiento estable y predecible del algoritmo de visión.
 
 \subsection{Pruebas del sistema de control}
 
@@ -83,7 +83,7 @@ Las pruebas de control validaron la precisión de posicionamiento y la correcta 
 
 \subsubsection{Posicionamiento a lazo abierto}
 
-Se realizaron pruebas de posicionamiento sin realimentación visual, comparando las coordenadas comandadas con mediciones realizadas mediante un instrumento de medición externo (cinta métrica y calibre digital). Los objetivos fueron:
+Se realizaron pruebas de posicionamiento sin realimentación visual, comparando las coordenadas comandadas con mediciones realizadas mediante cinta métrica y/o calibre digital segun el caso. Los objetivos fueron:
 
 \begin{itemize}[label=$\bullet$]
     \item Verificar la conversión correcta entre pasos del motor y distancia real
@@ -103,7 +103,7 @@ Una vez validado el posicionamiento mecánico, se integraron las coordenadas pro
     \item Verificación visual del correcto agarre de la lechuga por el efector final
 \end{itemize}
 
-El sistema demostró capacidad de posicionamiento asistido por visión, logrando agarres exitosos en el 82\% de los intentos. Los fallos se atribuyeron principalmente a desviaciones en la calibración de la cámara y a las vibraciones del brazo robótico mencionadas anteriormente.
+El sistema demostró capacidad de posicionamiento asistido por visión, logrando agarres exitosos en el 80\% de los intentos. Los fallos se atribuyeron principalmente a desviaciones en la calibración de la cámara y a las vibraciones del brazo robótico mencionadas anteriormente.
 
 \subsubsection{Pruebas de agarre}
 
@@ -118,7 +118,7 @@ La pinza mostró un desempeño adecuado para lechugas de tamaño medio a grande.
 
 \subsubsection{Optimización de posiciones de toma y deja}
 
-Se realizaron pruebas iterativas para determinar las mejores coordenadas de aproximación y separación al momento de tomar la lechuga del tubo de cultivo y depositarla en la zona de descarga. Se evaluaron diferentes alturas de aproximación, ángulos del brazo y secuencias de movimiento, seleccionando aquellas que maximizaron la tasa de éxito y minimizaron el tiempo de ciclo.
+Se realizaron pruebas iterativas para determinar las mejores coordenadas de aproximación y separación al momento de tomar la lechuga del tubo de cultivo y depositarla en la zona de descarga. Se evaluaron diferentes alturas de aproximación, ángulos del brazo y secuencias de movimiento, seleccionando aquellas que maximizaron la tasa de éxito.
 
 La configuración óptima identificada consideró una aproximación vertical desde arriba, agarre con el brazo ligeramente inclinado, y retracción vertical antes del traslado horizontal, reduciendo el riesgo de colisión con tubos adyacentes.
 

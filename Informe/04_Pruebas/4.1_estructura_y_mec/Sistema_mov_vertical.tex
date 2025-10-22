@@ -25,12 +25,11 @@ T_{bajada}= 0.035 \text{Nm}
 Considerando un factor de seguridad por fricción en roscas trapezoidales (\(f_1=2.5\)) y un factor de seguridad por torque dinámico (\(f_2=1.3\))
 Se tiene que el torque total es: 
 \[T_{motor}=f_1 \cdot f_2 \cdot MAX(T_{subida}, T_{bajada})= 0.182Nm\]
-
 Se define la velocidad máxima como $v = 75$ mm/s y la aceleración máxima $a = 45$ mm/s$^2$, luego las revoluciones del motor son:
 \[n= \frac{ 75 \frac{mm}{s} \cdot 60}{8 \frac{mm}{rev}}=562.5 rpm\]
 
-\subsubsection{Selección del motor}
-
+Selección del motor.\\
+\noindent
 Se selecciona un motor paso a paso NEMA 23 con una alimentación de 24v, 4.5A y un torque de retención de 1.1 \(N \cdot m\).
 
 \begin{figure}[H]
@@ -83,10 +82,9 @@ La deflexión máxima bajo carga:
 \begin{equation}
 \delta = \frac{F_{total} L}{A E} = \frac{21.63 \times 1.0}{5.03 \times 10^{-5} \times 200 \times 10^9} = 2.15 \times 10^{-6} \text{ m} = 0.002 \text{ mm}
 \end{equation}
+Esta deflexión es despreciable (< 0.01\% de la longitud total).\\
 
-Esta deflexión es despreciable (< 0.01\% de la longitud total).
-
-\underline{Velocidad crítica de rotación}
+Velocidad crítica de rotación.\\
 Para evitar resonancia, se verifica la velocidad crítica:
 \begin{equation}
 n_{cr} = \frac{30}{\pi L^2} \sqrt{\frac{E I}{\rho A}} \approx 3600 \text{ RPM}
@@ -97,7 +95,7 @@ La varilla roscada de 8 mm de diámetro con paso de 8 mm está correctamente dim
 \begin{itemize}[label=$\bullet$]
         \item Factor de seguridad contra pandeo: 18.36
         \item Factor de seguridad contra tensión: 581
-        \item Deflexión bajo carga: < 0.003 mm (despreciable)
+        \item Deflexión bajo carga: < 0.002 mm (despreciable)
         \item Velocidad de operación muy inferior a la velocidad crítica
 \end{itemize}
     %\item El driver TB6600 configurado a 24V proporciona la corriente y voltaje necesarios para mantener el torque requerido a la velocidad de operación.

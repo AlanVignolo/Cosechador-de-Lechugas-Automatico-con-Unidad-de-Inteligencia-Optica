@@ -12,7 +12,6 @@ El sistema de movimiento horizontal utiliza una transmisión por correa dentada 
     \item Ancho de la correa: $b = 10$ mm
     \item Paso de la correa GT2: $p = 2$ mm
     \item desplazamiento lineal por revolución: $d_{rev} = 40 \frac{mm}{rev}$
-    \item resolución = 
 \end{itemize}
 
 \subsubsection{Cálculo de fuerzas actuantes}
@@ -51,13 +50,13 @@ Torque requerido en el motor\\
 El torque necesario en el eje del motor se calcula multiplicando la fuerza total por el radio de la polea:
 
 \begin{equation}
-    T_{req} = F_{total} \cdot r = 0.04\text{ N·m}
+    T_{req} = F_{total} \cdot r = 0.04  N \cdot m
 \end{equation}
 
 Para garantizar un funcionamiento confiable del sistema, se aplica un factor de seguridad de 2.5:
 
 \begin{equation}
-    T_{motor} = T_{req} \cdot FS = 0.05 \cdot 2.5
+    T_{motor} = T_{req} \cdot FS = 0.1 N \cdot m
 \end{equation}
 
 Selección del motor\\
@@ -90,4 +89,4 @@ Como se puede observar en la figura \ref{fig:Curva_din_nema17medium} para la vel
     \caption{\textit{Curva dinámica torque-velocidad del motor paso a paso NEMA 17 para el prototipo.}}
     \label{fig:Curva_din_nema17medium}
 \end{figure}
-Como se cuentan con motores paso a paso que poseen 0.22Nm de torque se opta utilizar una configuración de dos motores, por lo que cada polea está acoplada a un motor. De esta manera se obtiene el torque final necesario a aplicar como la suma de los torques de ambos motores.
+Como se cuentan con motores paso a paso que poseen 0.22 $N \cdot m$ de torque se opta utilizar una configuración de dos motores, por lo que cada polea está acoplada a un motor. De esta manera se obtiene el torque final necesario a aplicar como la suma de los torques de ambos motores.

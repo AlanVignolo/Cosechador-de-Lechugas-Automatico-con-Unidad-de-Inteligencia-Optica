@@ -1,8 +1,8 @@
 \subsubsection{Fundamento y motivación}
 
-El sistema de mapeo autónomo requiere identificar la presencia de tubos de cultivo en dirección vertical para registrar la ubicación de estaciones. A diferencia del detector de cintas que explota contraste cromático mediante umbralización simple, la detección de tubos presenta mayor complejidad debido a que los tubos de PVC blanco presentan baja saturación similar al fondo del entorno.
+El sistema de mapeo autónomo requiere identificar tubos de cultivo verticales para registrar estaciones. A diferencia del detector de cintas, los tubos de PVC blanco presentan bajo contraste cromático con el fondo, requiriendo un enfoque más complejo.
 
-La estrategia implementada combina detección de bordes mediante el algoritmo de Canny con filtrado por canal de saturación (S) en el espacio HSV. Esta aproximación explota dos propiedades: aunque el tubo no presente contraste cromático significativo, sus bordes superior e inferior generan gradientes de intensidad detectables, y el PVC blanco presenta saturación muy baja (color cercano al gris neutral) que lo diferencia de elementos con color como plantas verdes.
+La estrategia combina detección de bordes mediante Canny con filtrado por canal de saturación (S) en HSV, explotando que los bordes del tubo generan gradientes detectables y el PVC blanco presenta saturación muy baja que lo diferencia de plantas verdes.
 
 El objetivo específico del detector es identificar las posiciones verticales (coordenadas Y) de los bordes superior e inferior del tubo. Esta información es suficiente para confirmar la presencia de un tubo en el campo de visión y registrar su ubicación en configuracion\_tubos.json, permitiendo al sistema de mapeo construir el inventario de filas de cultivo.
 
