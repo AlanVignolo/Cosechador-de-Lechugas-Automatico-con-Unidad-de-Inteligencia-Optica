@@ -1,6 +1,6 @@
 El modelado tridimensional de los componentes estructurales del sistema se realizó mediante software CAD, permitiendo la visualización detallada de cada elemento, la verificación de interferencias geométricas y el análisis de esfuerzos mediante simulación por elementos finitos. En esta sección se presentan los tres soportes estructurales principales fabricados mediante impresión 3D, junto con el brazo robótico y su efector final. Se incluye además el análisis de esfuerzos del soporte superior, que constituye el elemento más crítico desde el punto de vista de cargas estructurales.
 
-\subsubsection{Soporte Superior}
+\subsubsection{Soporte superior}
 
 El soporte superior constituye el elemento estructural de mayor criticidad en el sistema, ya que soporta la totalidad de las cargas verticales (varillas, brazo, carga) y actúa como interfaz mecánica entre los subsistemas de movimiento horizontal y vertical. Su diseño integra múltiples funciones: acoplamiento a los carros deslizantes del perfil horizontal, fijación de los extremos superiores de las tres varillas verticales (una roscada y dos lisas), y montaje del motor del eje vertical.
 
@@ -33,7 +33,7 @@ La carga total considerada para el análisis fue de 9 kg ($\approx$ 88 N), aplic
         \caption{\textit{Distribución de cargas aplicadas sobre el soporte superior.}}
         \label{fig:SuperiorReal_simplificado_fuerzas_app}
     \end{subfigure}
-    \caption{\textit{Soporte superior. Vista y fuerzas aplicadas}}
+    \caption{\textit{Soporte superior.}}
 \end{figure}
 
 El análisis de esfuerzos mediante elementos finitos se realizó considerando material PLA con las siguientes propiedades mecánicas:
@@ -70,7 +70,7 @@ La Figura \ref{fig:SuperiorReal_simplificado_tensiones} presenta los resultados 
 \end{figure}
 Los resultados confirman que el diseño propuesto es estructuralmente robusto, con tensiones muy por debajo del límite de fluencia del material y deformaciones despreciables para los requerimientos operacionales del sistema.
 
-\subsubsection{Soporte Medio}
+\subsubsection{Soporte medio}
 
 El soporte medio constituye el elemento móvil del eje vertical, desplazándose a lo largo de las varillas mediante el giro de la varilla roscada. Este componente cumple funciones críticas en el sistema: montaje del brazo robótico serial, fijación de la cámara de visión artificial y mantenimiento del equilibrio dinámico mediante contrapeso.
 
@@ -91,7 +91,7 @@ El soporte medio constituye el elemento móvil del eje vertical, desplazándose 
 
 El contrapeso permite compensar el momento generado por el brazo extendido, reduciendo las cargas laterales sobre las guías lineales y mejorando la precisión de posicionamiento vertical. El diseño modular facilita el reemplazo del brazo o la cámara sin necesidad de rediseñar el soporte completo.
 
-\subsubsection{Soporte Inferior}
+\subsubsection{Soporte inferior}
 
 El soporte inferior cierra la estructura vertical del sistema, proporcionando la base de fijación para los extremos inferiores de las tres varillas y alojando componentes auxiliares del sistema de control.\\
 
