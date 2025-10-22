@@ -7,51 +7,58 @@ La Tabla \ref{tab:consumo_energetico} presenta el consumo eléctrico de cada com
 \small
 \begin{tabular}{|l|c|c|c|c|}
 \hline
-\textbf{Componente} & \textbf{Voltaje} & \textbf{Idle (A)} & \textbf{Operación (A)} & \textbf{Pico (A)} \\
+\textbf{Componente} & \textbf{Voltaje} & \textbf{Reposo (A)} & \textbf{Operación (A)} & \textbf{Pico (A)} \\
 \hline
 \multicolumn{5}{|c|}{\textbf{Alimentación 24V}} \\
 \hline
-Driver TB6600 (×3) & 24V & 3.0 & 6.0 & 9.0 \\
+Driver TB6600 ($\times$2, NEMA 17) & 24V & 2.0 & 6.0 & 6.0 \\
 \hline
-Regulador 24V→5V & 24V & 0.3 & 1.1 & 1.4 \\
+Driver KTC-DM860H-0 ($\times$1, NEMA 34) & 24V & 2.5 & 6.0 & 6.0 \\
 \hline
-Regulador 24V→7V & 24V & 0.05 & 0.15 & 0.2 \\
+Regulador 24V$\rightarrow$5V (5A)& 24V & 0.35 & 0.89 & 1.16 \\
 \hline
-\multicolumn{2}{|l|}{\textbf{Subtotal 24V}} & \textbf{3.35} & \textbf{7.25} & \textbf{10.6} \\
+Regulador 24V$\rightarrow$12V (10A)& 24V & 0.17 & 5.5 & 5.5 \\
+\hline
+\multicolumn{2}{|l|}{\textbf{Subtotal 24V}} & \textbf{5.02} & \textbf{18.39} & \textbf{18.66} \\
 \hline
 \hline
-\multicolumn{5}{|c|}{\textbf{Alimentación 5V (desde regulador)}} \\
+\multicolumn{5}{|c|}{\textbf{Alimentación 5V (desde regulador 24V$\rightarrow$5V)}} \\
 \hline
 Arduino Mega 2560 & 5V & 0.2 & 0.35 & 0.5 \\
 \hline
-Raspberry Pi 5 & 5V & 1.0 & 2.5 & 4.0 \\
+Raspberry Pi 5 & 5V & 1.0 & 3.0 & 4.0 \\
 \hline
 Cámara USB & 5V & 0.3 & 0.5 & 0.5 \\
 \hline
-\multicolumn{2}{|l|}{\textbf{Subtotal 5V}} & \textbf{1.5} & \textbf{3.35} & \textbf{5.0} \\
+\multicolumn{2}{|l|}{\textbf{Subtotal 5V}} & \textbf{1.5} & \textbf{3.85} & \textbf{5.0} \\
 \hline
 \hline
-\multicolumn{5}{|c|}{\textbf{Alimentación 7V (desde regulador)}} \\
+\multicolumn{5}{|c|}{\textbf{Alimentación 12V (desde regulador 24V$\rightarrow$12V)}} \\
 \hline
-Lógica drivers TB6600 & 7V & 0.1 & 0.2 & 0.3 \\
+Servomotores Dynamixel MX-106T/R ($\times$2) & 12V & 0.0 & 9.6 & 9.6 \\
+\hline
+Lógica drivers ($\times$3) & 12V & 0.3 & 0.3 & 0.3 \\
+\hline
+\multicolumn{2}{|l|}{\textbf{Subtotal 12V}} & \textbf{0.3} & \textbf{9.9} & \textbf{9.9} \\
 \hline
 \hline
 \multicolumn{5}{|c|}{\textbf{Consumo total en fuente de 24V}} \\
 \hline
-\multicolumn{2}{|l|}{Idle} & \multicolumn{3}{c|}{3.35 A @ 24V = \textbf{80 W}} \\
+\multicolumn{2}{|l|}{Idle} & \multicolumn{3}{c|}{5.02 A @ 24V = \textbf{120 W}} \\
 \hline
-\multicolumn{2}{|l|}{Operación normal} & \multicolumn{3}{c|}{7.25 A @ 24V = \textbf{174 W}} \\
+\multicolumn{2}{|l|}{Operación normal} & \multicolumn{3}{c|}{18.39 A @ 24V = \textbf{441 W}} \\
 \hline
-\multicolumn{2}{|l|}{Pico máximo} & \multicolumn{3}{c|}{10.6 A @ 24V = \textbf{254 W}} \\
+\multicolumn{2}{|l|}{Pico máximo} & \multicolumn{3}{c|}{18.66 A @ 24V = \textbf{448 W}} \\
 \hline
 \end{tabular}
 \caption{\textit{Consumo eléctrico del sistema por componente y estado operativo}}
 \label{tab:consumo_energetico}
 \end{table}
+%\footnotetext[1]{Consumo calculado considerando eficiencia del 90\% según carga real en cada estado}
 
-\textbf{Dimensionamiento de la fuente.} El consumo en operación normal (174 W) ocurre cuando los motores están en movimiento continuo y el sistema de visión está procesando imágenes simultáneamente. Los picos de 254 W ocurren durante aceleraciones bruscas con los tres motores iniciando movimiento simultáneamente.
+El consumo en operación normal (441 W) ocurre cuando los motores paso a paso están en movimiento continuo, los servomotores Dynamixel operan bajo carga, y el sistema de visión está procesando imágenes simultáneamente. Los picos de 448 W ocurren durante aceleraciones bruscas con los tres motores paso a paso y los dos servomotores iniciando movimiento simultáneamente.
 
-Se selecciona una fuente conmutada de 24V DC con capacidad nominal de 12.5 A (300 W), proporcionando un margen de seguridad del 18\% sobre el pico máximo calculado. Este margen considera:
+Se selecciona una fuente conmutada de 24V DC con capacidad nominal de 20 A (480 W), proporcionando un margen de seguridad del 7.1\% sobre el pico máximo calculado. Este margen considera:
 
 \begin{itemize}[label=$\bullet$]
 \item Degradación de la fuente con el tiempo (típicamente 10-15\% de pérdida de capacidad tras 2 años de operación continua)
@@ -59,4 +66,4 @@ Se selecciona una fuente conmutada de 24V DC con capacidad nominal de 12.5 A (30
 \item Posibles expansiones futuras del hardware (sensores adicionales, iluminación LED, etc.)
 \end{itemize}
 
-La eficiencia de los reguladores step-down (90\% para 24V→5V y 88\% para 24V→7V) ya está considerada en los cálculos de consumo de la fuente primaria. Las pérdidas totales por conversión de voltaje son de aproximadamente 15 W en operación normal.
+La eficiencia de los reguladores step-down (90\% para 24V$\rightarrow$5V y 90\% para 24V$\rightarrow$12V) ya está considerada en los cálculos de consumo de la fuente primaria. Las pérdidas totales por conversión de voltaje son de aproximadamente 15.3 W en operación normal (2.1 W en el regulador 24V$\rightarrow$5V y 13.2 W en el regulador 24V$\rightarrow$12V).

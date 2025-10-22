@@ -34,10 +34,10 @@ Tipo 3 & Parada segura: detención inmediata de movimientos, brazo a posición s
 
 Monitoreo de comunicación.\\
 \noindent
-El supervisor envía señales de sincronización periódicas (\texttt{HB:1}) al nivel regulatorio cada 30 segundos. El firmware implementa protección independiente: si transcurre un período prolongado sin recibir señal, ejecuta detención de emergencia automática. Este mecanismo unidireccional protege contra fallos del supervisor sin requerir confirmación bidireccional.
+El supervisor envía señales de sincronización periódicas (\texttt{HB:1}) al nivel regulatorio cada 30 segundos. El firmware implementa protección independiente: si transcurre un período prolongado sin recibir señal, ejecuta detención de emergencia automática. Este mecanismo unidireccional protege contra fallos del supervisor sin requerir confirmación bidireccional.\\
 
 Detección de bloqueos.\\
-\noindent El sistema monitorea tiempos de ejecución de operaciones mediante límites configurados. Si una operación excede su tiempo límite (movimientos, capturas de imagen, transiciones de brazo), se registra el evento y se aborta la operación, evitando bloqueos indefinidos del sistema.
+\noindent El sistema monitorea tiempos de ejecución de operaciones mediante límites configurados. Si una operación excede su tiempo límite (movimientos, capturas de imagen, transiciones de brazo), se registra el evento y se aborta la operación, evitando bloqueos indefinidos del sistema.\\
 
 Persistencia de estado.\\
 \noindent Ante reinicio del supervisor, el sistema intenta cargar estado persistente que incluye referencia de homing, dimensiones del workspace, y última posición conocida. Tras cargar, consulta la posición real al firmware y compara con la almacenada: si la desviación es menor a 1mm acepta la posición y reanuda operación; si es mayor a 1mm descarta los datos y requiere re-homing completo antes de permitir movimientos.

@@ -1,9 +1,9 @@
-\subsection{Drivers de potencia TB6600}
+\subsection{Drivers de potencia}
+El control del motor paso a paso NEMA 17 long se realiza mediante el driver TB6600, que proporcionan control de corriente mediante chopper y aislamiento óptico de señales lógicas. El driver opera con 24V DC para los motores, y tensión lógica de 5V DC para las señales STEP/DIR/ENABLE, además Este driver tiene consumo máximo de 3 A a 24V cuando el motor está energizado y girando a máxima velocidad. En reposo (motor energizado pero detenido), el consumo se reduce a 1 A por driver. 
 
-El control de los tres motores paso a paso NEMA 17 se realiza mediante drivers TB6600, que proporcionan control de corriente mediante chopper y aislamiento óptico de señales lógicas. Cada driver opera con:
+%Los motores NEMA 17 especificados tienen corriente nominal de 1.5 A por fase. Los drivers se configuran mediante DIP switches para limitar la corriente a 1.5 A, protegiendo los motores ante sobrecarga térmica.
+Dicho motor posee corriente nominal de 1.8 A por fase, mientras que el driver puede entregar hasta 3.5A de corriente de control.
 
-Tensión de potencia de 24V DC para los motores, y tensión lógica de 5V DC para las señales STEP/DIR/ENABLE. 
+Por otro lado, el control del motor Nema 34 medium se realiza mediante el driver KTC-DM860H-0 que se alimenta con 24V y entrega una corriente de control máxima de 7.2A. El consumo es de 6A cuando el motor está energizado y girando a máxima velocidad y de 2.5A cuando el motor está en reposo.
 
-Los motores NEMA 17 especificados tienen corriente nominal de 1.5 A por fase. Los drivers se configuran mediante DIP switches para limitar la corriente a 1.5 A, protegiendo los motores ante sobrecarga térmica.
-
-Cada driver TB6600 tiene consumo máximo de 3 A a 24V cuando el motor está energizado y girando a máxima velocidad. En reposo (motor energizado pero detenido), el consumo se reduce a 1 A por driver.
+Los drivers se configuran mediante DIP switches para limitar la corriente a 1.8 A, o 4.5A segun el caso, protegiendo los motores ante sobrecarga térmica.

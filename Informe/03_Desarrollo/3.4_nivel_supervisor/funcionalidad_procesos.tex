@@ -1,13 +1,11 @@
-El nivel supervisor constituye la capa de coordinación del sistema, responsable de orquestar tareas complejas que requieren la integración de múltiples subsistemas. A diferencia del nivel regulatorio que ejecuta comandos individuales, el supervisor planifica secuencias completas de acciones para lograr objetivos de alto nivel.\\
-
-Responsabilidades principales:
+El nivel supervisor constituye la capa de coordinación del sistema, responsable de orquestar tareas complejas que requieren la integración de múltiples subsistemas. A diferencia del nivel regulatorio que ejecuta comandos individuales, el supervisor planifica secuencias completas de acciones para lograr objetivos de alto nivel. Sus responsabilidades principales son:
 
 \begin{itemize}[label=$\bullet$]
-    \item Planificación de secuencias: descompone tareas complejas en secuencias ordenadas de comandos básicos
-    \item Gestión de estado global: mantiene información sobre posición acumulada, dimensiones del workspace, mapas de ubicaciones
-    \item Integración con visión: invoca algoritmos de procesamiento de imágenes e interpreta sus resultados
-    \item Comunicación bidireccional: envía comandos al nivel regulatorio y procesa respuestas asíncronas
-    \item Persistencia de información: guarda datos críticos en archivos JSON que sobreviven reinicios
+    \item \underline{Planificación de secuencias}: Descompone tareas complejas en secuencias ordenadas de comandos básicos.
+    \item \underline{Gestión de estado global}: Mantiene información sobre posición acumulada, dimensiones del workspace, mapas de ubicaciones.
+    \item \underline{Integración con visión}: Invoca algoritmos de procesamiento de imágenes e interpreta sus resultados.
+    \item \underline{Comunicación bidireccional}: Envía comandos al nivel regulatorio y procesa respuestas asíncronas.
+    \item \underline{Persistencia de información}: Guarda datos críticos en archivos JSON que sobreviven reinicios.
 \end{itemize}
 
 Modelo de ejecución orientado a eventos:\\
@@ -18,7 +16,7 @@ El supervisor utiliza un modelo orientado a eventos mediante callbacks. Cuando e
 
 El sistema implementa cuatro procesos principales que coordinan movimientos, captura de imágenes y ejecución de algoritmos de visión.
 
-\underline{Proceso 1: homing (referenciado del sistema):} Establece el origen del sistema de coordenadas moviendo los ejes hasta los finales de carrera y retrocediendo offsets calibrados.
+\underline{Proceso 1: homing (referenciado del sistema)}: Establece el origen del sistema de coordenadas moviendo los ejes hasta los finales de carrera y retrocediendo offsets calibrados.
 
 \begin{table}[H]
 \centering
@@ -74,7 +72,7 @@ Paso & Acción \\
 \label{tab:proceso_calibracion}
 \end{table}
 
-\underline{Proceso 3: mapeo del entorno:} Escanea el workspace para detectar posiciones de tubos (coordenadas Y) y plantas (coordenadas X), generando mapas que guían la navegación posterior.
+\underline{Proceso 3: mapeo del entorno:} Escanea el workspace para detectar posiciones de tubos (coordenadas \textbf{Y}) y plantas (coordenadas \textbf{X}), generando mapas que guían la navegación posterior.
 
 \begin{table}[H]
 \centering
@@ -85,11 +83,11 @@ Paso & Acción \\
 \hline
 1. Escaneo vertical & Mueve el eje vertical en pasos incrementales. En cada pausa, captura imagen y ejecuta detector de tubos. Registra coordenadas Y donde detecta tubos. \\
 \hline
-2. Guardado de tubos & Ordena y guarda las coordenadas Y detectadas en archivo JSON. \\
+2. Guardado de tubos & Ordena y guarda las coordenadas \textbf{Y} detectadas en archivo JSON. \\
 \hline
-3. Escaneos horizontales & Para cada tubo: se posiciona en su coordenada Y, ejecuta barrido horizontal detectando cintas negras, registra coordenadas X de detecciones. \\
+3. Escaneos horizontales & Para cada tubo: se posiciona en su coordenada  \textbf{Y}, ejecuta barrido horizontal detectando cintas negras, registra coordenadas \textbf{X} de detecciones. \\
 \hline
-4. Guardado de cintas & Guarda las coordenadas X por tubo en archivo JSON. \\
+4. Guardado de cintas & Guarda las coordenadas \textbf{X} por tubo en archivo JSON. \\
 \hline
 5. Retorno & Mueve el sistema de vuelta al origen (0,0). \\
 \hline
@@ -107,13 +105,13 @@ Paso & Acción \\
 \hline
 Paso & Acción \\
 \hline
-1. Carga de mapas & Lee archivos JSON con posiciones de tubos y cintas. Genera lista de posiciones (X,Y) a visitar. \\
+1. Carga de mapas & Lee archivos JSON con posiciones de tubos y cintas. Genera lista de posiciones \textbf{(X,Y)} a visitar. \\
 \hline
-2. Navegación & Para cada posición: mueve el sistema XY a esa coordenada, espera confirmación de llegada. \\
+2. Navegación & Para cada posición: mueve el sistema \textbf{XY} a esa coordenada, espera confirmación de llegada. \\
 \hline
 3. Clasificación & Captura imagen. Ejecuta clasificador morfológico que retorna clase predicha y confianza. \\
 \hline
-4. Decisión & Si clase es lechuga: ejecuta corrección de posición, extiende brazo, cierra gripper, eleva planta. \\
+4. Decisión & Si clase es lechuga: ejecuta corrección de posición, extiende brazo, cierra gripper, eleva planta. Si es otra clase, se mueve a la siguiente posición (paso 2). \\
 \hline
 5. Depósito & Si tiene planta en gripper: navega a zona de depósito, inclina brazo, abre gripper. \\
 \hline
@@ -131,7 +129,7 @@ Durante la ejecución de cualquier proceso, el supervisor monitorea eventos ines
 
 \begin{itemize}[label=$\bullet$]
     \item \underline{Límite activado inesperadamente}: detiene el proceso, registra el error, y preserva el estado para diagnóstico
-    \item \underline{Pérdida de comunicación}: si un comando no recibe respuesta en tiempo límite, aborta el proceso e intenta re-establecer comunicación
+    \item \underline{Pérdida de comunicación}: si un comando no recibe respuesta en tiempo límite, aborta el proceso e intenta restablecer comunicación
     \item \underline{Fallo de detector}: si un algoritmo de visión no retorna resultados válidos, registra la falla e intenta continuar o solicita intervención
 \end{itemize}
 

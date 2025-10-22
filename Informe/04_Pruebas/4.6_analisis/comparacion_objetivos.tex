@@ -4,7 +4,7 @@ La validación experimental del prototipo confirmó el cumplimiento de los objet
 
 \subsubsection{Sistema de visión artificial}
 
-El sistema de visión cumplió su objetivo de detección y clasificación, alcanzando tasas superiores al 90\% en detección de elementos, 85\% en clasificación de madurez, y 82\% en agarres exitosos con integración de control. Los algoritmos desarrollados son directamente transferibles al sistema real sin modificaciones estructurales, requiriendo únicamente recalibración de parámetros de cámara y ajuste de relaciones píxel-mundo según la nueva geometría.
+El sistema de visión cumplió su objetivo de detección y clasificación, alcanzando tasas superiores al 90\% en detección de elementos y 85\% en clasificación de madurez. Los algoritmos desarrollados son directamente transferibles al sistema real sin modificaciones estructurales, requiriendo únicamente recalibración de parámetros de cámara y ajuste de relaciones píxel-mundo según la nueva geometría.
 
 La limitación crítica identificada es la sensibilidad a condiciones de iluminación, que reduce tasas de detección ante variaciones significativas de intensidad o direccionalidad de luz.
 
@@ -22,7 +22,7 @@ El diseño modular validó exitosamente la separación funcional entre subsistem
 
 \underline{Robot serie:} El material del brazo (PETG) presenta flexibilidad excesiva para velocidades elevadas, generando vibraciones residuales que afectan precisión final, tiempo de estabilización y velocidad segura de operación.
 
-\underline{Oscilaciones estructurales:} Se observaron oscilaciones menores durante la activación del brazo, atribuidas al juego en perfiles utilizados y rigidez lateral insuficiente de la solución implementada. El análisis de elementos finitos indica que el principio estructural es válido para el sistema real, requiriendo únicamente escalamiento dimensional apropiado. La limitación se proyecta eliminable mediante perfiles de mayor rigidez lateral (fig. \ref{fig:barra_lateral}).
+\underline{Oscilaciones estructurales:} Se observaron oscilaciones menores durante la activación del brazo, atribuidas al juego en perfiles utilizados y rigidez lateral insuficiente de la solución implementada. El análisis de elementos finitos indica que el principio estructural es válido para el sistema real, requiriendo únicamente escalamiento dimensional apropiado. La limitación se proyecta eliminable mediante perfiles que den mayor rigidez lateral (fig. \ref{fig:barra_lateral}).
 
 \underline{Fricción horizontal:} El sistema de desplazamiento horizontal (fig. \ref{fig:perfil_porton}, \ref{fig:carro_porton}) presentó fricción superior a la esperada, manifestándose en fuerza de arranque elevada y variaciones según posición del carro.
 
