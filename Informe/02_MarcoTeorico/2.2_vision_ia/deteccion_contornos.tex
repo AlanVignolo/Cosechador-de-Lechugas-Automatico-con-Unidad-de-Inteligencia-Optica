@@ -1,7 +1,3 @@
-\subsection{Detección y análisis de contornos}
-
-La detección de contornos identifica las fronteras entre regiones con propiedades visuales distintas en imágenes binarias, proporcionando información estructural esencial para reconocimiento y clasificación de elementos. Un contorno se define matemáticamente como la secuencia ordenada de píxeles que forman el límite de una región conexa: $C = \{(x_i, y_i)\}_{i=1}^{n}$ donde $(x_i, y_i) \in \partial R$, siendo $\partial R$ la frontera topológica de la región $R$.
-
 \subsubsection{Extracción de contornos}
 
 El algoritmo implementado en OpenCV mediante la función \texttt{findContours} detecta contornos recorriendo la imagen binaria y rastreando las fronteras. El modo de recuperación RETR\_EXTERNAL extrae únicamente contornos externos de nivel superior, suficiente para aplicaciones donde interesan objetos individuales sin necesidad de analizar estructura interna.

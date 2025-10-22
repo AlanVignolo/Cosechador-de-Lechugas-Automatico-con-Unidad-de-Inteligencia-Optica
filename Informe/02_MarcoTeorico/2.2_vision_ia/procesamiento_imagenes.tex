@@ -20,7 +20,7 @@ La operación de convolución se define matemáticamente como:
 
 donde $I$ es la imagen de entrada, $K$ es el kernel de tamaño $(2a+1) \times (2b+1)$, y el resultado $(I \ast K)(x,y)$ representa el valor procesado del píxel en la posición $(x,y)$. En términos simples, para cada píxel se calcula una suma ponderada de los valores de sus píxeles vecinos, donde los pesos están dados por el kernel.
 
-underline{Elemento estructurante:}En operaciones morfológicas sobre imágenes binarias (blanco-negro), el kernel se denomina elemento estructurante y define la forma y tamaño del vecindario considerado. Por ejemplo:
+\underline{Elemento estructurante:}En operaciones morfológicas sobre imágenes binarias (blanco-negro), el kernel se denomina elemento estructurante y define la forma y tamaño del vecindario considerado. Por ejemplo:
 \begin{itemize}[label=$\bullet$]
 \item Cuadrado $3 \times 3$: afecta los 8 vecinos inmediatos del píxel central
 \item Cuadrado $5 \times 5$: afecta un vecindario más amplio (24 píxeles alrededor)
@@ -44,18 +44,13 @@ H &= \text{calculado según el canal RGB máximo}
 
 donde $V$ representa el valor (brillo), $S$ la saturación (pureza del color), y $H$ el matiz (tono del color).
 
-\underline{Canal V (valor):}El canal $V$ captura la intensidad luminosa independientemente del color, representando el brillo máximo entre los tres canales RGB. Esta propiedad lo convierte en un descriptor ideal para detectar objetos oscuros contra fondos claros o viceversa. Para detección de elementos de contraste oscuro, el canal $V$ permite segmentación robusta mediante umbralización:
+El canal $V$ captura la intensidad luminosa independientemente del color, representando el brillo máximo entre los tres canales RGB. Esta propiedad lo convierte en un descriptor ideal para detectar objetos oscuros contra fondos claros o viceversa. Para detección de elementos de contraste oscuro, el canal $V$ permite segmentación robusta mediante umbralización:
 
 \begin{equation}
 \text{Objeto oscuro} \Leftrightarrow V(x,y) < T_V
 \end{equation}
 
-donde $T_V$ es un umbral empírico. Valores típicos bajo iluminación controlada son:
-
-\begin{equation}
-T_V \in [30, 70]
-\end{equation}
-
+donde $T_V$ es un umbral empírico. 
 Las ventajas incluyen invariancia parcial a color (elementos oscuros se detectan independientemente de matiz), umbralización simple (un único parámetro $T_V$), robustez ante variaciones uniformes de iluminación, y eficiencia computacional al operar sobre un único canal.
 
 \underline{Propiedad de linealidad:} Matemáticamente, el canal $V$ satisface una propiedad de linealidad respecto al escalamiento uniforme de intensidad. Si escalamos una imagen RGB por un factor constante $\alpha > 0$ (por ejemplo, aumentando el brillo), el canal $V$ resultante también se escala por ese mismo factor:
@@ -79,7 +74,7 @@ g(x,y) = \begin{cases}
 
 donde $f(x,y)$ es la intensidad del píxel en la imagen original, $T$ es el umbral de decisión, y $g(x,y)$ es la imagen binaria resultante. Esta operación genera una imagen binaria donde píxeles blancos (255) corresponden a regiones oscuras de la original, permitiendo aislar objetos oscuros sobre fondos claros.
 
-A diferencia de métodos adaptativos como Otsu (que calcula automáticamente el umbral óptimo minimizando la varianza intra-clase), en entornos controlados resulta más efectivo establecer umbrales fijos determinados experimentalmente mediante análisis de histogramas del canal $V$ sobre imágenes representativas, identificando el rango de valores que caracteriza consistentemente los objetos de interés y estableciendo $T$ en el punto que maximiza separación entre objeto y fondo.
+A diferencia de métodos adaptativos, en entornos controlados resulta más efectivo establecer umbrales fijos determinados experimentalmente mediante análisis de histogramas del canal $V$ sobre imágenes representativas, identificando el rango de valores que caracteriza consistentemente los objetos de interés y estableciendo $T$ en el punto que maximiza separación entre objeto y fondo.
 
 \subsubsection{Operaciones morfológicas}
 
@@ -117,8 +112,6 @@ Elimina pequeños objetos y protuberancias manteniendo el tamaño aproximado de 
 \end{equation}
 Rellena huecos pequeños y conecta componentes próximos. El cierre resulta esencial para consolidar regiones fragmentadas durante la segmentación. \\
 \end{itemize}
-Configuración de operaciones:
-\noindent
 La forma y tamaño del elemento estructurante $B$ determina el comportamiento: cuadrados $3 \times 3$ para operaciones isotrópicas básicas, cuadrados $5 \times 5$ con mayor alcance para eliminar ruido moderado, y rectangulares verticales $7 \times 3$ para conectividad preferencial vertical.
 
 Una secuencia típica de refinamiento morfológico aplica múltiples operaciones iteradas. El término iteraciones (abreviado como iter.) indica cuántas veces consecutivas se repite la operación:
@@ -153,4 +146,4 @@ a = \frac{N\sum d_{px,i}d_{mm,i} - \sum d_{px,i}\sum d_{mm,i}}{N\sum d_{px,i}^2 
 
 El procedimiento de calibración coloca marcadores de referencia en posiciones conocidas, captura imagen detectando posiciones en píxeles, mide físicamente distancias entre marcadores, calcula distancias en píxeles entre los mismos marcadores, aplica regresión lineal para estimar parámetros, y valida con mediciones independientes.
 
-La precisión se cuantifica mediante error cuadrático medio: $\text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(d_{mm,i} - \hat{d}_{mm,i})^2}$ donde $\hat{d}_{mm,i} = a \cdot d_{px,i} + b$ son predicciones del modelo. Valores de RMSE inferiores a 1-2mm resultan aceptables para manipulación agrícola de precisión. El coeficiente de determinación $R^2 = 1 - \frac{\sum (d_{mm,i} - \hat{d}_{mm,i})^2}{\sum (d_{mm,i} - \bar{d}_{mm})^2}$ complementa la evaluación; valores $R^2 > 0.99$ indican excelente ajuste lineal, validando la aproximación del modelo.
+La precisión se cuantifica mediante error cuadrático medio: $\text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(d_{mm,i} - \hat{d}_{mm,i})^2}$ donde $\hat{d}_{mm,i} = a \cdot d_{px,i} + b$ son predicciones del modelo. Valores de RMSE inferiores a 1-2mm resultan aceptables para manipulación de precisión. El coeficiente de determinación $R^2 = 1 - \frac{\sum (d_{mm,i} - \hat{d}_{mm,i})^2}{\sum (d_{mm,i} - \bar{d}_{mm})^2}$ complementa la evaluación; valores $R^2 > 0.99$ indican excelente ajuste lineal, validando la aproximación del modelo.

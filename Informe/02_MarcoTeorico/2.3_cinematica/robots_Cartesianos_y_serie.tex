@@ -20,9 +20,9 @@ El principio fundamental de las estructuras cartesianas se basa en la descomposi
 
 Existen diversas configuraciones de estructuras cartesianas, cada una con ventajas específicas según la aplicación:
 \begin{itemize}[label=$\bullet$]
-    \item \underline{Configuración de Pórtico (Gantry):}En esta configuración, utilizada frecuentemente en máquinas CNC y algunas impresoras 3D, el eje X se monta sobre dos columnas verticales (eje Y) que se desplazan simultáneamente. Esta disposición proporciona mayor rigidez y capacidad de carga, siendo ideal para áreas de trabajo amplias.
-    \item \underline{Configuración CoreXY:}Sistema en el que los ejes X e Y comparten dos motores mediante un sistema de correas cruzadas. Esta configuración reduce la masa móvil en el eje vertical y permite velocidades de desplazamiento superiores, siendo popular en impresoras 3D de alto rendimiento.
-    \item \underline{Configuración Cartesiana Pura:} Cada eje se mueve de forma completamente independiente, con el efector final (cabezal de impresión, husillo, etc.) montado sucesivamente sobre cada eje. Es la configuración más simple conceptualmente y facilita el mantenimiento.
+    \item \underline{Configuración de pórtico:}En esta configuración, utilizada frecuentemente en máquinas CNC y algunas impresoras 3D, el eje X se monta sobre dos columnas verticales (eje Y) que se desplazan simultáneamente. Esta disposición proporciona mayor rigidez y capacidad de carga, siendo ideal para áreas de trabajo amplias.
+    \item \underline{Configuración coreXY:}Sistema en el que los ejes X e Y comparten dos motores mediante un sistema de correas cruzadas. Esta configuración reduce la masa móvil en el eje vertical y permite velocidades de desplazamiento superiores, siendo popular en impresoras 3D de alto rendimiento.
+    \item \underline{Configuración cartesiana pura:} Cada eje se mueve de forma completamente independiente, con el efector final (cabezal de impresión, husillo, etc.) montado sucesivamente sobre cada eje. Es la configuración más simple conceptualmente y facilita el mantenimiento.
 \end{itemize}
 
 \subsubsection{Ventajas de las estructuras cartesianas}
@@ -43,11 +43,11 @@ Las estructuras cartesianas presentan múltiples ventajas que explican su amplia
 
 \subsection{Robots serie}
 
-Los robots serie, también denominados robots en cadena cinemática abierta, son aquellos en los que los eslabones están conectados secuencialmente mediante juntas, formando una cadena cinemática desde la base hasta el efector final. Cada eslabón está conectado al anterior mediante una única junta, que puede ser rotacional (R) o prismática (P).
+Los robots serie, también denominados robots en cadena cinemática abierta, son aquellos en los que los eslabones están conectados secuencialmente mediante articulaciones, formando una cadena cinemática desde la base hasta el efector final. Cada eslabón está conectado al anterior mediante una única articulación, que puede ser rotacional (R) o prismática (P).
 
 \subsubsection{Grados de libertad}
 
-El número de grados de libertad de un robot serie corresponde al número de juntas activas en la cadena cinemática. Para manipulación completa en el espacio tridimensional (posición y orientación arbitrarias), se requieren 6 GDL. Un robot con $n$ juntas tiene $n$ grados de libertad:
+El número de grados de libertad de un robot serie corresponde al número de articulaciones activas en la cadena cinemática. Para manipulación completa en el espacio tridimensional (posición y orientación arbitrarias), se requieren 6 GDL. Un robot con $n$ articulaciones tiene $n$ grados de libertad:
 
 \begin{itemize}[label=$\bullet$]
     \item Si $n < 6$: El robot tiene movilidad limitada y no puede alcanzar poses arbitrarias.
@@ -57,9 +57,9 @@ El número de grados de libertad de un robot serie corresponde al número de jun
 
 \subsubsection{Espacio de trabajo}
 
-El espacio de trabajo de un robot serie es generalmente más complejo que el de un robot cartesiano y depende fuertemente de la configuración específica de juntas. Típicamente, el espacio de trabajo tiene forma de cáscara esférica, toroidal, o cilíndrica, con regiones inaccesibles y posibles singularidades.
+El espacio de trabajo de un robot serie es generalmente más complejo que el de un robot cartesiano y depende fuertemente de la configuración específica. Típicamente, el espacio de trabajo tiene forma de cáscara esférica, toroidal, o cilíndrica, con regiones inaccesibles y posibles singularidades.
 
-Para un robot con $n$ juntas, donde cada junta $i$ tiene límites $q_i \in [q_{i,\min}, q_{i,\max}]$, el espacio de trabajo alcanzable se define como:
+Para un robot con $n$ articulaciones, donde cada articulación $i$ tiene límites $q_i \in [q_{i,\min}, q_{i,\max}]$, el espacio de trabajo alcanzable se define como:
 
 \begin{equation}
 \mathcal{W} = \{\mathbf{p} \in \mathbb{R}^3 \mid \mathbf{p} = f(\mathbf{q}), \, \mathbf{q} \in \mathcal{Q}\}
@@ -83,7 +83,7 @@ El espacio de trabajo se subdivide en:
 
 Cinemática directa:\\
 \noindent
-La cinemática directa de robots serie se resuelve mediante la convención de Denavit-Hartenberg (DH), que establece un sistema de coordenadas en cada junta y describe la transformación entre eslabones consecutivos mediante cuatro parámetros: $a_i$ (longitud del eslabón), $\alpha_i$ (ángulo de torsión), $d_i$ (offset), y $\theta_i$ (ángulo de junta).
+La cinemática directa de robots serie se resuelve mediante la convención de Denavit-Hartenberg (DH), que establece un sistema de coordenadas en cada articulación y describe la transformación entre eslabones consecutivos mediante cuatro parámetros: $a_i$ (longitud del eslabón), $\alpha_i$ (ángulo de torsión), $d_i$ (offset), y $\theta_i$ (ángulo de articulación).
 
 La matriz de transformación homogénea entre los eslabones $i-1$ e $i$ se expresa como:
 
@@ -105,7 +105,7 @@ La pose del efector final respecto a la base se obtiene mediante la composición
 
 Cinemática Inversa:\\
 \noindent
-El problema de cinemática inversa consiste en determinar las variables de junta $\mathbf{q}$ que posicionan el efector final en una pose deseada. A diferencia de los robots cartesianos, este problema puede tener:
+El problema de cinemática inversa consiste en determinar las variables de articulación $\mathbf{q}$ que posicionan el efector final en una pose deseada. A diferencia de los robots cartesianos, este problema puede tener:
 
 \begin{itemize}[label=$\bullet$]
     \item Múltiples soluciones (hasta 16 para robots de 6 GDL)
@@ -117,13 +117,13 @@ Los métodos de solución incluyen técnicas geométricas, algebraicas, y numér
 
 \subsubsection{Jacobiano y singularidades}
 
-El Jacobiano del robot relaciona las velocidades de las juntas con las velocidades del efector final:
+El Jacobiano del robot relaciona las velocidades de las articulaciones con las velocidades del efector final:
 
 \begin{equation}
 \dot{\mathbf{x}} = J(\mathbf{q}) \dot{\mathbf{q}}
 \end{equation}
 
-donde $\dot{\mathbf{x}} \in \mathbb{R}^6$ representa las velocidades lineales y angulares del efector final, y $\dot{\mathbf{q}} \in \mathbb{R}^n$ son las velocidades de las juntas.
+donde $\dot{\mathbf{x}} \in \mathbb{R}^6$ representa las velocidades lineales y angulares del efector final, y $\dot{\mathbf{q}} \in \mathbb{R}^n$ son las velocidades de las articulaciones.
 
 Las singularidades ocurren cuando $\det(J(\mathbf{q})) = 0$, resultando en pérdida de movilidad o control. Se clasifican en:
 
@@ -140,7 +140,7 @@ La dinámica de robots serie se describe mediante las ecuaciones de Euler-Lagran
 M(\mathbf{q})\ddot{\mathbf{q}} + C(\mathbf{q}, \dot{\mathbf{q}})\dot{\mathbf{q}} + G(\mathbf{q}) = \boldsymbol{\tau}
 \end{equation}
 
-donde $M(\mathbf{q})$ es la matriz de inercia, $C(\mathbf{q}, \dot{\mathbf{q}})$ representa las fuerzas de Coriolis y centrífugas, $G(\mathbf{q})$ es el vector de torques gravitacionales, y $\boldsymbol{\tau}$ son los torques aplicados en las juntas.
+donde $M(\mathbf{q})$ es la matriz de inercia, $C(\mathbf{q}, \dot{\mathbf{q}})$ representa las fuerzas de Coriolis y centrífugas, $G(\mathbf{q})$ es el vector de torques gravitacionales, y $\boldsymbol{\tau}$ son los torques aplicados en las articulaciones.
 
 \subsubsection{Consideraciones prácticas sobre el control dinámico}
 
@@ -179,7 +179,7 @@ Ventajas:
 Limitaciones:
 
 \begin{itemize}[label=$\bullet$]
-    \item \underline{Desacoplamiento de ejes}: Cada motor actúa independientemente sin considerar las interacciones dinámicas con otros eslabones. Esto puede causar:
+    \item \underline{Desacoplamiento de articulaciones}: Cada motor actúa independientemente sin considerar las interacciones dinámicas con otros eslabones. Esto puede causar:
     \begin{itemize}[label=$\bullet$]
         \item Vibraciones residuales en movimientos rápidos
         \item Mayor consumo energético
