@@ -1,7 +1,7 @@
 \subsubsection{Drivers de potencia}
 El control de los tres motores paso a paso se realiza mediante drivers TB6600, que proporcionan control de corriente mediante chopper y aislamiento óptico de señales lógicas. Cada driver opera con tensión de potencia de 24V DC para los motores, y tensión lógica de 5V DC para las señales STEP/DIR/ENABLE.
 
-\underline{Motores NEMA 17 ($\times$2):} Los motores NEMA 17 tienen torque de 0.22 Nm y corriente nominal de 1.8 A por fase. Los drivers TB6600 se configuran mediante DIP switches para limitar la corriente a 1.8 A, protegiendo los motores ante sobrecarga térmica.\\
+\underline{Motores NEMA 17 ($\times$2):} Los motores NEMA 17 tienen torque de 0.22 Nm y corriente nominal de 1.8 A por fase. Los drivers TB6600 se configuran mediante DIP switches para limitar la corriente a 1.5 A, protegiendo los motores ante sobrecarga térmica.\\
 
 \underline{Motor NEMA 23 short ($\times$1):} El motor NEMA 23 short tiene corriente nominal de hasta 3.0 A por fase. El driver TB6600 puede entregar hasta 3.5 A, siendo adecuado para este motor. Se configura mediante DIP switches para limitar la corriente a 2.0 A.\\
 
@@ -18,7 +18,7 @@ El sistema emplea dos reguladores DC-DC step-down para adaptar la tensión de al
 \item Cámara USB (consumo típico 0.5 A)
 \end{itemize}
 
-\underline{Regulador 24V$\rightarrow$6V (3A):} Regulador conmutado step-down que alimenta:
+\underline{Regulador 24V$\rightarrow$7V (3A):} Regulador conmutado step-down que alimenta:
 \begin{itemize}[label=$\bullet$]
 \item Servomotores MG996R (2 servomotores) (consumo bajo carga: 0.9 A por servo, pico 1.5 A por servo)
 \item Lógica de drivers ($\times$3) (consumo típico 0.3 A)
@@ -69,9 +69,9 @@ Cámara USB & 5V & 0.3 & 0.5 & 0.5 \\
 \multicolumn{2}{|l|}{\textbf{Subtotal 5V}} & \textbf{1.5} & \textbf{3.85} & \textbf{5.0} \\
 \hline
 \hline
-\multicolumn{5}{|c|}{\textbf{Alimentación 6V (desde regulador 24V$\rightarrow$6V)}} \\
+\multicolumn{5}{|c|}{\textbf{Alimentación 6V (desde regulador 24V$\rightarrow$7V)}} \\
 \hline
-Servomotores MG996R ($\times$2) & 6V & 0.02 & 1.8 & 3.0 \\
+Servomotores MG996R ($\times$2) & 7V & 0.02 & 1.8 & 3.0 \\
 \hline
 Lógica drivers ($\times$3) & 6V & 0.3 & 0.3 & 0.3 \\
 \hline
