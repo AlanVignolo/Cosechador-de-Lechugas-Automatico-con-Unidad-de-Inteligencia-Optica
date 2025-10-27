@@ -86,12 +86,14 @@ Operaciones básicas:
 \item Erosión (símbolo $\ominus$): reduce el tamaño de objetos eliminando píxeles del perímetro:
 \begin{equation}
 (A \ominus B)(x,y) = \min_{(s,t) \in B} \{A(x+s, y+t)\}
+\label{eq:erosion_morf}
 \end{equation}
 donde $A$ es la imagen binaria y $B$ el elemento estructurante.
 
 \item Dilatación (símbolo $\oplus$): expande objetos añadiendo píxeles al perímetro:
 \begin{equation}
 (A \oplus B)(x,y) = \max_{(s,t) \in B} \{A(x+s, y+t)\}
+\label{eq:dilatacion_morf}
 \end{equation}
 \end{itemize}
 
@@ -103,12 +105,14 @@ Estas operaciones básicas se combinan para formar operaciones más complejas:
 \item Apertura (símbolo $\circ$): aplica erosión seguida de dilatación:
 \begin{equation}
 (A \circ B) = (A \ominus B) \oplus B
+\label{eq:apertura_morf}
 \end{equation}
 Elimina pequeños objetos y protuberancias manteniendo el tamaño aproximado de objetos grandes.
 
 \item Cierre (símbolo $\bullet$): aplica dilatación seguida de erosión:
 \begin{equation}
 (A \bullet B) = (A \oplus B) \ominus B
+\label{eq:cierre_morf}
 \end{equation}
 Rellena huecos pequeños y conecta componentes próximos. El cierre resulta esencial para consolidar regiones fragmentadas durante la segmentación. \\
 \end{itemize}
