@@ -5,3 +5,49 @@ El sistema de visión por computadora se estructura en tres módulos especializa
 \underline{Detector de tubos de cultivo:} Identifica tubos de PVC durante el escaneo vertical del workspace. Registra las posiciones verticales \textbf{Y} de todos los tubos detectados, generando un archivo que permite al sistema ubicar cada fila de cultivo.\\
 
 \underline{Clasificador morfológico de cultivos:} Determina la presencia de planta y el nivel de madurez. Discrimina entre lechugas maduras, plantas inmaduras, y posiciones vacías.
+
+El sistema de visión por computadora se estructura en tres módulos especializados que operan de manera secuencial durante los procesos de exploración y cosecha. A diferencia de arquitecturas basadas en clasificación multiclase, se optó por detectores binarios especializados por las siguientes razones:
+\begin{enumerate}
+\item Separación temporal de tareas: Los tres detectores operan en fases distintas del ciclo de operación.
+        %\begin{itemize}[label=$\bullet$]
+        %\item Detector de cintas: corrección de posicionamiento durante aproximación
+        %\item Detector de tubos: fase de mapeo vertical del workspace
+        %\item Clasificador de cultivos: evaluación de madurez en posiciones ya identificadas
+        %\end{itemize}
+
+\item Diferencias en características visuales: Cada elemento presenta propiedades discriminativas específicas:
+        %\begin{itemize}[label=$\bullet$]
+        %\item Cintas: contraste extremo en canal V (ecuación 3.66)
+        %\item Tubos: detección de bordes con filtrado por saturación baja (Sección 3.6.3)
+        %\item Lechugas: segmentación cromática en espacio HSV + análisis morfológico (Sección 3.6.4)
+        %\end{itemize}
+
+\item computacional: Algoritmos basados en procesamiento morfológico y umbralización, ejecutables en tiempo real sin requerir GPU.
+\end{enumerate}
+Los tres detectores se basan en técnicas de visión clásica sin aprendizaje profundo:
+\begin{itemize}[label=$\bullet$]
+    \item Detector de cintas (Sección 3.6.2): Umbralización inversa sobre canal V + análisis de contornos
+    \item Detector de tubos (Sección 3.6.3): Algoritmo de Canny + filtrado por saturación + morfología
+    \item Clasificador de cultivos (Sección 3.6.4): Segmentación por rangos HSV + clasificación por área (ecuaciones 3.18-3.19)
+\end{itemize}
+
+
+Esta arquitectura modular permite optimizar cada detector para su tarea específica y facilita el mantenimiento, validación individual y posible sustitución futura por modelos de deep learning sin afectar otros componentes del sistema.
+
+%\subsubsection{Evaluación independiente de detectores}
+
+Cada detector fue evaluado de forma independiente según su contexto operativo específico. La Tabla~\ref{tab:contextos_detectores} resume cuándo y cómo se activa cada uno durante la operación del sistema.
+
+\begin{table}[H]
+\centering
+\caption{Contextos de activación de detectores}
+\label{tab:contextos_detectores}
+\small
+\begin{tabular}{|p{2.8cm}|p{3.2cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\textbf{Detector} & \textbf{Fase operativa} & \textbf{Frecuencia} & \textbf{Salida} \\ \hline
+Detector de cintas & Corrección de posición + Mapeo horizontal & 6 fps durante movimiento & Coordenadas (x,y) del centroide + flag detección \\ \hline
+Detector de tubos & Mapeo vertical del workspace & 3 fps durante barrido & Coordenada Y del tubo + flag detección \\ \hline
+Clasificador de lechugas & Evaluación de madurez & 1 captura por posición & Clase (madura/inmadura/vacío) + confianza \\ \hline
+\end{tabular}
+\end{table}

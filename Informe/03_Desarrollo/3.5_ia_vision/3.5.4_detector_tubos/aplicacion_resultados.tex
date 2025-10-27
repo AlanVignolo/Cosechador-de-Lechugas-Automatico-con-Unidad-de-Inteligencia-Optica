@@ -5,3 +5,38 @@ El detector de tubos se emplea durante la fase de mapeo autónomo para identific
 El sistema implementa un mecanismos de confirmación temporal que requiere detección en al menos 3 de 5 frames consecutivos para rechazar detecciones espurias por reflejos o sombras.
 
 El resultado final es un vector $\mathbf{F}_{filas} = [Y_1, Y_2, ..., Y_n]^T$ con las coordenadas Y de todas las filas detectadas, que se combina con las coordenadas X del detector de marcadores para construir la matriz completa de posiciones de estaciones.
+\subsubsection{Métricas de desempeño}
+Evaluado sobre 28 frames de barrido vertical (14 con tubos, 14 sin tubos):
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrica} & \textbf{Valor} \\ \hline
+Sensibilidad (Recall) & 92.9\% (13/14) \\ \hline
+Especificidad & 100\% (14/14) \\ \hline
+Precisión (Precision) & 100\% (13/13) \\ \hline
+Error de localización Y medio & 4.7 mm \\ \hline
+Error máximo de localización Y & 12.3 mm \\ \hline
+\end{tabular}
+\caption{Desempeño del detector de tubos}
+\label{tab:metricas_tubos}
+\end{table}
+
+Matriz de detección para tubos:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cc|c|c|}
+\cline{3-4}
+& & \multicolumn{2}{c|}{\textbf{Predicción}} \\ \cline{3-4}
+& & Tubo detectado & No tubo \\ \hline
+\multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{Real}}} & Tubo & 13 & 1 \\ \cline{2-4}
+\multicolumn{1}{|c|}{} & No tubo & 0 & 14 \\ \hline
+\end{tabular}
+\caption{Matriz de detección binaria - tubos}
+\label{tab:confusion_tubos}
+\end{table}
+
+\noindent
+El único falso negativo se debió a reflejo especular que saturó el canal V del sensor.
