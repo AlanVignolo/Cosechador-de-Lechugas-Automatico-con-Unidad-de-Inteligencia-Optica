@@ -80,3 +80,40 @@ con pesos $w_1 = 0.3$, $w_2 = 0.4$ y $w_3 = 0.3$, otorgando mayor importancia a 
 \caption{\textit{Secuencia de procesamiento del detector de cintas mostrando las transformaciones sucesivas de la imagen}}
 \label{fig:proceso_marcadores}
 \end{figure}
+
+\subsubsection{Métricas de desempeño}
+
+Evaluado sobre 35 frames de barrido horizontal (20 con cintas, 15 sin cintas):
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Métrica} & \textbf{Valor} \\ \hline
+Sensibilidad (Recall) & 90.0\% (18/20) \\ \hline
+Especificidad & 100\% (15/15) \\ \hline
+Precisión (Precision) & 100\% (18/18) \\ \hline
+Error de localización X medio & 3.2 mm \\ \hline
+Error máximo de localización X & 8.7 mm \\ \hline
+\end{tabular}
+\caption{Desempeño del detector de cintas}
+\label{tab:metricas_cintas}
+\end{table}
+
+Matriz de detección para cintas:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cc|c|c|}
+\cline{3-4}
+& & \multicolumn{2}{c|}{\textbf{Predicción}} \\ \cline{3-4}
+& & Cinta detectada & No cinta \\ \hline
+\multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{Real}}} & Cinta & 18 & 2 \\ \cline{2-4}
+\multicolumn{1}{|c|}{} & No cinta & 0 & 15 \\ \hline
+\end{tabular}
+\caption{Matriz de detección binaria - cintas}
+\label{tab:confusion_cintas}
+\end{table}
+
+\noindent
+Los 2 falsos negativos se debieron a iluminación insuficiente ($<$700 lux) que redujo el contraste entre cinta y fondo.

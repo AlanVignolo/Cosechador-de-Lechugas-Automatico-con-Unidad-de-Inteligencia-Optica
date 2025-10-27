@@ -37,39 +37,3 @@ El procedimiento funciona mediante la adquisición de imágenes a 6 fotogramas p
 Cuando el detector identifica una cinta en múltiples frames consecutivos (típicamente 5 frames para confirmar la detección), se envía un flag de inicio al nivel regulatorio que registra la coordenada \textbf{X} actual. Mientras el robot continúa avanzando y la cinta permanece visible, el sistema mantiene el estado de detección activo.
 
 Cuando la cinta deja de detectarse durante varios frames consecutivos (típicamente 5 frames para confirmar la ausencia), se envía un flag de fin al nivel regulatorio que registra la nueva coordenada X. La posición de la cinta se calcula posteriormente como el promedio entre las coordenadas de inicio y fin registradas por ambos flags. Este mecanismo con confirmación por frames consecutivos proporciona robustez ante falsos positivos ocasionales y permite mapear automáticamente todas las posiciones de cultivo sin conocimiento a priori de la geometría del sistema.
-
-\subsubsection{Métricas de desempeño}
-Evaluado sobre 35 imágenes de validación (no usadas en calibración de umbrales):
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|r|}
-\hline
-\textbf{Métrica} & \textbf{Valor} \\ \hline
-Tasa de detección correcta & 94.3\% (33/35) \\ \hline
-Falsos negativos & 5.7\% (2/35) \\ \hline
-Falsos positivos & 0\% (0/35) \\ \hline
-Error de posicionamiento medio & 3.2 px ($\approx$1.8 mm) \\ \hline
-Error máximo de posicionamiento & 8.1 px ($\approx$4.5 mm) \\ \hline
-\end{tabular}
-\caption{Desempeño del detector de cintas}
-\label{tab:metricas_cintas}
-\end{table}
-
-Matriz de detección para cintas:
-
-\begin{table}[H]
-\centering
-\begin{tabular}{cc|c|c|}
-\cline{3-4}
-& & \multicolumn{2}{c|}{\textbf{Predicción}} \\ \cline{3-4}
-& & Detectada & No detectada \\ \hline
-\multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{Real}}} & Presente & 33 & 2 \\ \cline{2-4}
-\multicolumn{1}{|c|}{} & Ausente & 0 & -- \\ \hline
-\end{tabular}
-\caption{Matriz de detección binaria - cintas}
-\label{tab:confusion_cintas}
-\end{table}
-
-\noindent
-Los 2 falsos negativos ocurrieron con iluminación $<$700 lux, por debajo del rango operativo especificado (800-1200 lux).
