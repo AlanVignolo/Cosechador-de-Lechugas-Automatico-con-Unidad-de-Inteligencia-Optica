@@ -1,5 +1,7 @@
 \subsubsection{Fundamento y motivación}
 
+El detector de tubos implementa un algoritmo híbrido que combina detección de bordes mediante el operador de Canny con filtrado por características de color en el espacio HSV. La estrategia se basa en procesamiento morfológico y análisis geométrico de contornos, constituyendo un método determinista que no requiere entrenamiento con datasets etiquetados.
+
 El sistema de mapeo autónomo requiere identificar tubos de cultivo verticales para registrar estaciones. A diferencia del detector de cintas, los tubos de PVC blanco presentan bajo contraste cromático con el fondo, requiriendo un enfoque más complejo.
 
 La estrategia combina detección de bordes mediante Canny con filtrado por canal de saturación (S) en HSV, explotando que los bordes del tubo generan gradientes detectables y el PVC blanco presenta saturación muy baja que lo diferencia de plantas verdes.
