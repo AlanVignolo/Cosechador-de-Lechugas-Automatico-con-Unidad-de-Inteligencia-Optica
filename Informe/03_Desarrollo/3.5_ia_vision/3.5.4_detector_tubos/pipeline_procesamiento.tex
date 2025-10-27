@@ -4,7 +4,20 @@ El algoritmo de detección de tubos implementa una secuencia de cuatro etapas qu
 
 \underline{Etapa 2 - Filtrado por canal de saturación}: Para discriminar bordes del fondo, se explota que el PVC blanco presenta baja saturación. Se extrae el canal S del espacio HSV, se invierte ($S_{inv} = 255 - S$) y se umbraliza ($T_S = 150$). Los bordes de Canny se filtran mediante AND binario con esta máscara.\\
 
-\underline{Etapa 3 - Refinamiento morfológico}: Para conectar segmentos de borde fragmentados por discontinuidades, se aplica cierre morfológico con elemento estructurante rectangular de $3 \times 9$ píxeles. La orientación vertical del kernel favorece la conexión de líneas horizontales (bordes del tubo) mientras preserva la separación entre líneas verticales.
+\underline{Etapa 3 - Refinamiento morfológico}: Para conectar segmentos de borde fragmentados por discontinuidades, se aplica una secuencia de operaciones morfológicas para refinar la detección.
+
+Aplicación de kernels de convolución.\\
+\noindent
+Las operaciones morfológicas se implementan mediante convolución con elementos estructurantes (kernels) específicos descriptos en la sección 2.2.1. Cada kernel se aplica mediante convolución según la ecuación 2.2, donde el elemento estructurante $B$ define la forma y alcance del vecindario considerado. La secuencia típica de aplicación es:
+
+\begin{enumerate}
+    \item Se realiza una operación morfológica de apertura (ec. \ref{eq:apertura_morf}) con \texttt{kernel (5×5, 1 iter.)} para eliminar ruido puntual mientras se preservan estructuras tubulares grandes.
+    \item Se realiza una operación morfológica de cierre (ec. \ref{eq:cierre_morf}) con \texttt{kernel (15×5, 1 iter.)} con orientación horizontal preferencial para conectar segmentos de líneas horizontales del tubo.
+    \item Se realiza una operación morfológica de cierre (ec. \ref{eq:cierre_morf}) con \texttt{kernel (20×7, 1 iter.)} para cerrar gaps internos en regiones detectadas.
+    \item Se realiza una operación morfológica de dilatación (ec. \ref{eq:dilatacion_morf}) con \texttt{kernel (7×7, 2 iter.)} para engrosar los bordes detectados por Canny y facilitar la conexión de regiones.
+\end{enumerate}
+
+Los kernels rectangulares con mayor dimensión horizontal (15×5, 20×7) favorecen específicamente la detección de líneas horizontales características de los bordes superior e inferior del tubo PVC, mientras minimizan la conexión con estructuras verticales del entorno.
 
 
 \underline{Etapa 4 - Detección de contornos y scoring}: Se ejecuta el algoritmo de Suzuki-Abe filtrando contornos por área mínima de 250 píxeles. Se calcula la relación de aspecto $AR = w/h$ y se descartan contornos con $AR \geq 0.9$ (elementos horizontales). Los contornos verticales se evalúan mediante scoring que combina: relación de aspecto (favorece $AR < 0.5$), área normalizada (favorece tamaños intermedios) y homogeneidad de saturación (favorece color uniforme). El contorno con mayor puntuación se selecciona como tubo objetivo.
