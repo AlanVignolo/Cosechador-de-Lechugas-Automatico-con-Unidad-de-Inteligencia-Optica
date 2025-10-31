@@ -1,6 +1,6 @@
 \subsubsection{Clasificador de cultivos}
 
-El sistema de clasificación determina la presencia o ausencia de lechuga en una posición de cultivo y su estado de madurez. Se implementó mediante análisis morfológico basado en segmentación cromática y clasificación por área, que proporciona precisión adecuada con costo computacional reducido compatible con ejecución en tiempo real.\\
+El sistema de clasificación determina la presencia o ausencia de lechuga en una posición de cultivo y su estado de madurez. Se implementó mediante un algoritmo de clasificación morfológica basado en reglas explícitas derivadas del análisis estadístico de descriptores geométricos. A diferencia de métodos de aprendizaje profundo, este enfoque emplea segmentación cromática en espacio HSV seguida de clasificación por umbrales sobre el descriptor de área del contorno principal detectado. Este clasificador discrimina entre lechugas maduras y no maduras (plantines/vasos vacíos), proporcionando precisión adecuada con costo computacional reducido compatible con ejecución en tiempo real.\\
 
 Etapa 1: Segmentación cromática\\
 \noindent
@@ -116,10 +116,9 @@ Los contornos detectados se filtran por área mínima de 5000 píxeles, eliminan
 
 Etapa 4: Clasificación por área\\
 \noindent
-El área del contorno seleccionado (en píxeles) constituye el descriptor empleado para clasificación. Se compara contra umbrales establecidos estadísticamente mediante análisis de muestras representativas. Áreas superiores al umbral indican lechuga madura lista para cosecha, mientras que áreas inferiores corresponden a plantas inmaduras o posiciones vacías.
-\subsubsection{Métricas de desempeño}
+El área del contorno seleccionado (en píxeles) constituye el descriptor empleado para clasificación. Se compara contra umbrales establecidos estadísticamente mediante análisis de muestras representativas. Áreas superiores al umbral indican lechuga madura lista para cosecha, mientras que áreas inferiores corresponden a plantas inmaduras o posiciones vacías.\\
 Cuando no se detectan contornos válidos, el sistema clasifica la posición como vacía con alta confianza.
-
+\subsubsection{Métricas de desempeño}
 Evaluado sobre 25 imágenes de validación independientes:
 
 \begin{table}[H]
@@ -146,7 +145,7 @@ Matriz de confusión del clasificador de lechugas:
 & & Madura & Inmadura & Vacío \\ \hline
 \multicolumn{1}{|c|}{\multirow{3}{*}{\textbf{Real}}} & Madura & 9 & 1 & 0 \\ \cline{2-5}
 \multicolumn{1}{|c|}{} & Inmadura & 1 & 7 & 0 \\ \cline{2-5}
-\multicolumn{1}{|c|}{} & Vacío & 0 & 1 & 6 \\ \hline
+\multicolumn{1}{|c|}{} & Vacío & 0 & 0 & 7 \\ \hline
 \end{tabular}
 \caption{Matriz de confusión multiclase - lechugas}
 \label{tab:confusion_lechugas}
@@ -154,16 +153,10 @@ Matriz de confusión del clasificador de lechugas:
 
 \noindent
 Análisis de errores:
-
-\begin{itemize}[label=$\bullet$]
-    \item \textbf{Cintas}: Los 2 falsos negativos ocurrieron con iluminación insuficiente ($<$700 lux)
-    \item \textbf{Tubos}: El falso negativo se debió a reflejo especular que saturó el sensor
-    \item \textbf{Lechugas}: 
-    \begin{itemize}
+\begin{itemize}
         \item Confusión madura $\leftrightarrow$ inmadura (2 casos): plantas en estado de transición con área $\approx$18,000 px cercana al umbral de decisión
-        \item Confusión vacío $\rightarrow$ inmadura (1 caso): sombra proyectada generó contorno espurio
     \end{itemize}
-\end{itemize}
+
 
 Validación de repetibilidad\\
 \noindent
@@ -185,19 +178,19 @@ Lechugas & 90\% (9/10) & N/A (categórico) \\ \hline
 \noindent
 La variación en el clasificador de lechugas ocurrió en una muestra con área fluctuando entre 18,200-18,800 px debido a variaciones de iluminación, confirmando la necesidad de zona de incertidumbre alrededor de umbrales.
 
-Tiempos de procesamiento.\\
-\noindent
-Medidos en Raspberry Pi 5 (procesador ARM Cortex-A76 quad-core a 2.4 GHz):
+%Tiempos de procesamiento.\\
+%\noindent
+%Medidos en Raspberry Pi 5 (procesador ARM Cortex-A76 quad-core a 2.4 GHz):
 
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|c|c|}
-\hline
-\textbf{Detector} & \textbf{Tiempo medio} & \textbf{Desviación estándar} \\ \hline
-Cintas & 32 ms & 4 ms \\ \hline
-Tubos & 48 ms & 7 ms \\ \hline
-Lechugas & 41 ms & 5 ms \\ \hline
-\end{tabular}
-\caption{Tiempos de procesamiento por detector}
-\label{tab:tiempos_procesamiento}
-\end{table}
+%\begin{table}[H]
+%\centering
+%\begin{tabular}{|l|c|c|}
+%\hline
+%\textbf{Detector} & \textbf{Tiempo medio} & \textbf{Desviación estándar} \\ \hline
+%Cintas & 32 ms & 4 ms \\ \hline
+%Tubos & 48 ms & 7 ms \\ \hline
+%Lechugas & 41 ms & 5 ms \\ \hline
+%\end{tabular}
+%\caption{Tiempos de procesamiento por detector}
+%\label{tab:tiempos_procesamiento}
+%\end{table}
