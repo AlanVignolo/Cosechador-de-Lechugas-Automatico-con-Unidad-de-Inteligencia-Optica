@@ -53,9 +53,9 @@ Driver TB6600 ($\times$3) & 24V & 0.15 & 1.2 & 1.5 \\
 \hline
 Regulador 24V$\rightarrow$5V (5A)& 24V & 0.35 & 0.89 & 1.16 \\
 \hline
-Regulador 24V$\rightarrow$6V (3A)& 24V & 0.05 & 0.52 & 0.83 \\
+Regulador 24V$\rightarrow$7V (3A)& 24V & 0.11 & 0.69 & 1.09 \\
 \hline
-\multicolumn{2}{|l|}{\textbf{Subtotal 24V}} & \textbf{0.55} & \textbf{2.61} & \textbf{3.49} \\
+\multicolumn{2}{|l|}{\textbf{Subtotal 24V}} & \textbf{0.61} & \textbf{2.78} & \textbf{3.75} \\
 \hline
 \hline
 \multicolumn{5}{|c|}{\textbf{Alimentación 5V (desde regulador 24V$\rightarrow$5V)}} \\
@@ -69,22 +69,22 @@ Cámara USB & 5V & 0.3 & 0.5 & 0.5 \\
 \multicolumn{2}{|l|}{\textbf{Subtotal 5V}} & \textbf{1.5} & \textbf{3.85} & \textbf{5.0} \\
 \hline
 \hline
-\multicolumn{5}{|c|}{\textbf{Alimentación 6V (desde regulador 24V$\rightarrow$7V)}} \\
+\multicolumn{5}{|c|}{\textbf{Alimentación 7V (desde regulador 24V$\rightarrow$7V)}} \\
 \hline
 Servomotores MG996R ($\times$2) & 7V & 0.02 & 1.8 & 3.0 \\
 \hline
-Lógica drivers ($\times$3) & 6V & 0.3 & 0.3 & 0.3 \\
+Lógica drivers ($\times$3) & 7V & 0.3 & 0.3 & 0.3 \\
 \hline
-\multicolumn{2}{|l|}{\textbf{Subtotal 6V}} & \textbf{0.32} & \textbf{2.1} & \textbf{3.3} \\
+\multicolumn{2}{|l|}{\textbf{Subtotal 7V}} & \textbf{0.32} & \textbf{2.1} & \textbf{3.3} \\
 \hline
 \hline
 \multicolumn{5}{|c|}{\textbf{Consumo total en fuente de 24V}} \\
 \hline
-\multicolumn{2}{|l|}{Reposo} & \multicolumn{3}{c|}{0.55 A @ 24V = \textbf{13 W}} \\
+\multicolumn{2}{|l|}{Reposo} & \multicolumn{3}{c|}{0.61 A @ 24V = \textbf{15 W}} \\
 \hline
-\multicolumn{2}{|l|}{Operación normal} & \multicolumn{3}{c|}{2.61 A @ 24V = \textbf{63 W}} \\
+\multicolumn{2}{|l|}{Operación normal} & \multicolumn{3}{c|}{2.78 A @ 24V = \textbf{67 W}} \\
 \hline
-\multicolumn{2}{|l|}{Pico máximo} & \multicolumn{3}{c|}{3.49 A @ 24V = \textbf{84 W}} \\
+\multicolumn{2}{|l|}{Pico máximo} & \multicolumn{3}{c|}{3.75 A @ 24V = \textbf{90 W}} \\
 \hline
 \end{tabular}
 \caption{\textit{Consumo eléctrico del sistema por componente y estado operativo}}
@@ -93,11 +93,9 @@ Lógica drivers ($\times$3) & 6V & 0.3 & 0.3 & 0.3 \\
 
 Dimensionamiento de la fuente.\\
 \noindent
-El consumo en operación normal (63 W) ocurre cuando los motores paso a paso están en movimiento continuo bajo carga moderada, los servomotores MG996R operan, y el sistema de visión está procesando imágenes simultáneamente. Los picos de 84 W ocurren durante aceleraciones bruscas con los tres motores paso a paso y los dos servomotores iniciando movimiento simultáneamente bajo carga máxima.
+El consumo en operación normal (67 W) ocurre cuando los motores paso a paso están en movimiento continuo bajo carga moderada, los servomotores MG996R operan, y el sistema de visión está procesando imágenes simultáneamente. Los picos de 90 W ocurren durante aceleraciones bruscas con los tres motores paso a paso y los dos servomotores iniciando movimiento simultáneamente bajo carga máxima.
 
-Los valores de consumo de los drivers TB6600 reflejan mediciones reales del sistema: 0.5 A en reposo (motores energizados sin movimiento) y hasta 2.5 A durante operación con todos los motores en movimiento. Esta diferencia respecto al consumo teórico de corriente nominal (5.6 A total) se debe a que los drivers operan mediante control PWM con duty cycle variable, y raramente todos los motores operan simultáneamente a máxima carga.
-
-Se selecciona una fuente conmutada de 24V DC con capacidad nominal de 7 A (120 W), proporcionando un margen de seguridad del 43\% sobre el pico máximo medido. Este margen considera:
+Se selecciona una fuente conmutada de 24V DC con capacidad nominal de 7 A (168 W), proporcionando un margen de seguridad del 33\% sobre el pico máximo medido. Este margen considera:
 
 \begin{itemize}[label=$\bullet$]
 \item Degradación de la fuente con el tiempo (típicamente 10-15\% de pérdida de capacidad tras 2 años de operación continua)
@@ -105,4 +103,4 @@ Se selecciona una fuente conmutada de 24V DC con capacidad nominal de 7 A (120 W
 \item Posibles expansiones futuras del hardware (sensores adicionales, iluminación LED, etc.)
 \end{itemize}
 
-La eficiencia de los reguladores step-down (90\% para 24V$\rightarrow$5V y 88\% para 24V$\rightarrow$6V) ya está considerada en los cálculos de consumo de la fuente primaria. Las pérdidas totales por conversión de voltaje son de aproximadamente 1.8 W en operación normal (1.0 W en el regulador 24V$\rightarrow$5V y 0.8 W en el regulador 24V$\rightarrow$6V).
+La eficiencia de los reguladores step-down (90\% para 24V$\rightarrow$5V y 88\% para 24V$\rightarrow$7V) ya está considerada en los cálculos de consumo de la fuente primaria. Las pérdidas totales por conversión de voltaje son de aproximadamente 4.0 W en operación normal (2.1 W en el regulador 24V$\rightarrow$5V y 1.9 W en el regulador 24V$\rightarrow$7V).
