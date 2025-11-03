@@ -6,7 +6,7 @@ El algoritmo de detección de tubos implementa una secuencia de cuatro etapas qu
 
 \underline{Etapa 3 - Refinamiento morfológico}: Para conectar segmentos de borde fragmentados por discontinuidades, se aplica una secuencia de operaciones morfológicas para refinar la detección.
 
-Aplicación de kernels de convolución.\\
+\textbf{Aplicación de kernels de convolución}\\
 \noindent
 Las operaciones morfológicas se implementan mediante convolución con elementos estructurantes (kernels) específicos descriptos en la sección 2.2.1. Cada kernel se aplica mediante convolución según la ecuación 2.2, donde el elemento estructurante $B$ define la forma y alcance del vecindario considerado. La secuencia típica de aplicación es:
 
@@ -21,6 +21,8 @@ Los kernels rectangulares con mayor dimensión horizontal (15×5, 20×7) favorec
 
 
 \underline{Etapa 4 - Detección de contornos y scoring}: Se ejecuta el algoritmo de Suzuki-Abe filtrando contornos por área mínima de 250 píxeles. Se calcula la relación de aspecto $AR = w/h$ y se descartan contornos con $AR \geq 0.9$ (elementos horizontales). Los contornos verticales se evalúan mediante scoring que combina: relación de aspecto (favorece $AR < 0.5$), área normalizada (favorece tamaños intermedios) y homogeneidad de saturación (favorece color uniforme). El contorno con mayor puntuación se selecciona como tubo objetivo.
+
+La Figura \ref{fig:proceso_tubos} muestra las etapas del procesamiento del detector de tubos.
 
 \begin{figure}[H]
 \centering
@@ -66,7 +68,7 @@ El algoritmo implementa mecanismos de validación ante casos ambiguos. Sin conto
 \end{figure}
 
 \subsubsection{Métricas de desempeño}
-Evaluado sobre 28 frames de barrido vertical (14 con tubos, 14 sin tubos):
+Evaluado sobre 28 frames de barrido vertical (14 con tubos, 14 sin tubos). Las Tablas \ref{tab:metricas_tubos} y \ref{tab:confusion_tubos} resumen el desempeño del detector:
 
 \begin{table}[H]
 \centering

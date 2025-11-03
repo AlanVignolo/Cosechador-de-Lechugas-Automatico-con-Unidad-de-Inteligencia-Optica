@@ -2,12 +2,12 @@
 
 El sistema construye una representación espacial completa del entorno mediante exploración sistemática que aprovecha la geometría estructurada del sistema hidropónico.\\
 
-Estrategia de exploración.\\
-\noindent 
+\textbf{Estrategia de exploración}\\
+\noindent
 El proceso consiste en dos fases secuenciales:
 
 \begin{enumerate}
-    \item \underline{Escaneo vertical}: El robot se mueve descendentemente mientras ejecuta detección de marcadores ArUco. Se registra la posición Y de cada tubo detectado.
+    \item \underline{Escaneo vertical}: El robot se mueve descendentemente mientras ejecuta detección de marcadores ArUco. Se registra la posición Y de cada tubo detectado. La Figura \ref{fig:estructura1} muestra la trayectoria del escaneo vertical.
 
     \begin{figure}[H]
         \centering
@@ -17,7 +17,7 @@ El proceso consiste en dos fases secuenciales:
     \end{figure}
 
     \item \underline{Escaneo horizontal por tubo}: Para cada tubo identificado, el robot se posiciona en su coordenada \textbf{Y} y ejecuta un barrido horizontal desde \textbf{X=0} hasta el límite derecho del workspace. Durante el movimiento continuo se detectan las cintas verticales que marcan las posiciones de las plantas.
-    Al finalizar cada escaneo horizontal, el robot se mueve en diagonal hacia la posición \textbf{Y} del siguiente tubo, retornando a \textbf{X=0}. Este patrón se repite para todos los tubos. El escaneo horizontal siempre se ejecuta en la misma dirección (de izquierda a derecha).\\
+    Al finalizar cada escaneo horizontal, el robot se mueve en diagonal hacia la posición \textbf{Y} del siguiente tubo, retornando a \textbf{X=0}. Este patrón se repite para todos los tubos. El escaneo horizontal siempre se ejecuta en la misma dirección (de izquierda a derecha). La Figura \ref{fig:estructura2} ilustra la trayectoria completa del escaneo horizontal.\\
         \begin{figure}[H]
         \centering
             \includegraphics[width=0.6\textwidth]{imagenes/mov_total.jpg}
@@ -27,7 +27,7 @@ El proceso consiste en dos fases secuenciales:
 
 \end{enumerate}
 
-Estructura del mapa.\\
+\textbf{Estructura del mapa}\\
 \noindent
 Los resultados se almacenan en una estructura de datos que contiene las coordenadas (X, Y) de cada posición de cultivo detectada. Durante la fase de cosecha, el sistema consulta este mapa para planificar la secuencia de visitas a las estaciones que contienen lechugas maduras.
 

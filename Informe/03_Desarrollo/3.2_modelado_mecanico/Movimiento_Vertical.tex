@@ -2,6 +2,8 @@
 \label{sec:mov_vertical}
 El sistema de elevación vertical debe soportar una carga total de 1.2\,kg (lechuga y accesorios) a lo largo de una varilla de 2\,m de longitud. La varilla está fijada por su extremo superior y la carga se desplaza a lo largo de ella mediante una tuerca, trabajando por lo tanto a tracción. Se adopta un factor de seguridad de 4 para contemplar cargas dinámicas, desalineaciones y degradación del sistema con el uso.
 
+\textbf{Análisis de pandeo}\\
+\noindent
 Aunque la varilla trabaja principalmente a tracción, es necesario verificar la estabilidad estructural frente a posibles cargas de compresión durante maniobras o situaciones no previstas. Considerando que la varilla tiene ambos extremos empotrados, la carga crítica de Euler se calcula como:
 
 \begin{equation}
@@ -60,6 +62,8 @@ Se verifica que la varilla seleccionada cumple ampliamente con los requerimiento
     \caption{\textit{Sistema de transmisión vertical.}}
 \end{figure}
 
+\textbf{Velocidad crítica de rotación}\\
+\noindent
 El sistema debe operar con los siguientes parámetros:
 \begin{itemize}[label=$\bullet$]
     \item Velocidad lineal máxima: 75\,mm/s
@@ -116,7 +120,8 @@ T_{\text{motor}} = T_{\text{base}} \cdot f_1 \cdot f_2 = 0.154 \cdot 2.0 \cdot 1
 \label{eq:torque_motor_vertical}
 \end{equation}
 
-\subsubsection{Selección del motor paso a paso}
+\textbf{Selección del motor}\\
+\noindent
 Considerando la velocidad de operación de 70.3\,rpm (con microstepping 1/8), se verifica en la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema34}) que se requiere un torque disponible de al menos 0.37\,Nm.
 
 Se selecciona un motor \textbf{NEMA 34 Medium} con las siguientes especificaciones:

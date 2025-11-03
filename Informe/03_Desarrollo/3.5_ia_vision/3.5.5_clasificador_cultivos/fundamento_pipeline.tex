@@ -2,7 +2,7 @@
 
 El sistema de clasificación determina la presencia o ausencia de lechuga en una posición de cultivo y su estado de madurez. Se implementó mediante un algoritmo de clasificación morfológica basado en reglas explícitas derivadas del análisis estadístico de descriptores geométricos. A diferencia de métodos de aprendizaje profundo, este enfoque emplea segmentación cromática en espacio HSV seguida de clasificación por umbrales sobre el descriptor de área del contorno principal detectado. Este clasificador discrimina entre lechugas maduras y no maduras (plantines/vasos vacíos), proporcionando precisión adecuada con costo computacional reducido compatible con ejecución en tiempo real.\\
 
-Etapa 1: Segmentación cromática\\
+\textbf{Etapa 1: Segmentación cromática}\\
 \noindent
 El sistema explota el contraste cromático entre las lechugas verdes y el entorno del sistema hidropónico (tubos blancos de PVC). La segmentación se realiza definiendo un rango de valores en los tres canales del espacio HSV correspondiente a las tonalidades verdes de las lechugas hidropónicas.
 
@@ -21,11 +21,11 @@ Cada píxel se evalúa individualmente: si sus componentes de matiz, saturación
     \includegraphics[width=0.6\textwidth]{imagenes/clasificador_2_verde.jpg}
     \caption{Máscara de vegetación verde}
 \end{subfigure}
-\caption{\textit{Etapa 1: Segmentación cromática en espacio HSV}}
+\caption{\textit{Etapa 1 - Segmentación cromática en espacio HSV}}
 \label{fig:clasificador_etapa1}
 \end{figure}
 
-Etapa 2: Refinamiento morfológico\\
+\textbf{Etapa 2: Refinamiento morfológico}\\
 \noindent
 La máscara binaria presenta imperfecciones causadas por variaciones locales de iluminación y limitaciones del sensor. Se aplica una secuencia de operaciones morfológicas para refinarla:
 
@@ -34,7 +34,7 @@ La máscara binaria presenta imperfecciones causadas por variaciones locales de 
     \item \underline{Apertura morfológica}: Elimina píxeles aislados y pequeñas protuberancias correspondientes a ruido.
 \end{itemize}
 
-Aplicación de kernels de convolución.\\
+\textbf{Aplicación de kernels de convolución}\\
 \noindent
 Las operaciones morfológicas mencionadas se implementan mediante convolución con elementos estructurantes (kernels) específicos descriptos en la sección 2.2.1.\\ %La secuencia completa de refinamiento aplica los siguientes kernels iterativamente:
 
@@ -76,6 +76,8 @@ Cada kernel se aplica mediante convolución según la ecuación 2.2, donde el el
 
 %Se emplea un elemento estructurante rectangular de 3×3 píxeles como compromiso entre eliminación de ruido y preservación de detalles relevantes.
 
+La Figura \ref{fig:clasificador_etapa2} muestra las etapas del algoritmo de clasificación morfológica.
+
 \begin{figure}[H]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
@@ -108,18 +110,18 @@ Cada kernel se aplica mediante convolución según la ecuación 2.2, donde el el
 \label{fig:clasificador_etapa2}
 \end{figure}
 
-Etapa 3: Detección y filtrado de contornos\\
+\textbf{Etapa 3: Detección y filtrado de contornos}\\
 \noindent
 Sobre la máscara refinada se ejecuta detección de contornos que identifica las fronteras entre vegetación y fondo. Se emplea extracción de contornos externos únicamente, dado que las lechugas no presentan huecos internos relevantes.
 
-Los contornos detectados se filtran por área mínima de 5000 píxeles, eliminando ruido residual y pequeñas sombras. De los contornos válidos, se selecciona el de mayor área bajo la hipótesis de que la lechuga constituye el objeto verde dominante en la escena.\\
+Los contornos detectados se filtran por área mínima de 5000 píxeles. Este valor no es arbitrario, sino que fue determinado mediante análisis estadístico sobre el conjunto de calibración, identificando el valor promedio del área de objetos útiles (lechugas y plantines) en las imágenes, y estableciendo un umbral mínimo que descarta ruido residual y pequeñas sombras mientras preserva todas las detecciones relevantes. De los contornos válidos, se selecciona el de mayor área bajo la hipótesis de que la lechuga constituye el objeto verde dominante en la escena.\\
 
-Etapa 4: Clasificación por área\\
+\textbf{Etapa 4: Clasificación por área}\\
 \noindent
-El área del contorno seleccionado (en píxeles) constituye el descriptor empleado para clasificación. Se compara contra umbrales establecidos estadísticamente mediante análisis de muestras representativas. Áreas superiores al umbral indican lechuga madura lista para cosecha, mientras que áreas inferiores corresponden a plantas inmaduras o posiciones vacías.\\
+El área del contorno seleccionado (en píxeles) constituye el descriptor empleado para clasificación. Se compara contra umbrales establecidos estadísticamente mediante análisis de muestras representativas descripto en la siguiente sección. El umbral óptimo determinado fue de 18000 píxeles, calculado como el punto que minimiza la probabilidad total de error de clasificación entre las distribuciones de lechugas maduras y plantas inmaduras/vasos vacíos. Áreas superiores al umbral indican lechuga madura lista para cosecha, mientras que áreas inferiores corresponden a plantas inmaduras o posiciones vacías.\\
 Cuando no se detectan contornos válidos, el sistema clasifica la posición como vacía con alta confianza.
 \subsubsection{Métricas de desempeño}
-Evaluado sobre 25 imágenes de validación independientes:
+Evaluado sobre 25 imágenes de validación independientes. Las Tablas \ref{tab:metricas_lechugas}, \ref{tab:confusion_lechugas} y \ref{tab:repetibilidad} resumen el desempeño del clasificador:
 
 \begin{table}[H]
 \centering
@@ -152,13 +154,15 @@ Matriz de confusión del clasificador de lechugas:
 \end{table}
 
 \noindent
-Análisis de errores:
+\textbf{Análisis de errores}\\
+\noindent
+Los errores observados corresponden a:
 \begin{itemize}
         \item Confusión madura $\leftrightarrow$ inmadura (2 casos): plantas en estado de transición con área $\approx$18,000 px cercana al umbral de decisión
     \end{itemize}
 
 
-Validación de repetibilidad\\
+\textbf{Validación de repetibilidad}\\
 \noindent
 Para evaluar la consistencia, se realizaron 10 capturas consecutivas de la misma escena:
 

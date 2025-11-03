@@ -1,8 +1,8 @@
 \subsubsection{Determinación de umbrales y validación}
 
-Construcción del dataset.\\
+\textbf{Construcción del dataset}\\
 \noindent
-Se construyó un dataset representativo mediante captura de imágenes bajo condiciones operativas reales. El dataset incluyó lechugas en diferentes estados de desarrollo (desde plantines hasta plantas maduras listas para cosecha) y vasos vacíos, bajo diferentes condiciones de iluminación controlados.
+Se construyó un dataset representativo mediante captura de imágenes bajo condiciones operativas reales. El dataset incluyó lechugas en diferentes estados de desarrollo (desde plantines hasta plantas maduras listas para cosecha) y vasos vacíos, bajo diferentes condiciones de iluminación controlados. La Figura \ref{fig:distribuciones} muestra las distribuciones estadísticas de las áreas para cada clase.
 
 \begin{figure}[H]
     \centering
@@ -11,18 +11,18 @@ Se construyó un dataset representativo mediante captura de imágenes bajo condi
     \label{fig:distribuciones}
 \end{figure}
 
-Análisis estadístico.\\
+\textbf{Análisis estadístico}\\
 \noindent
 Para cada imagen se ejecutó el algoritmo de detección y se registró el área del contorno principal identificado. Los datos se analizaron estadísticamente para cada clase por separado, revelando separación clara entre las distribuciones de áreas de lechugas maduras y vasos vacíos/plantines.
 
 El análisis reveló que el descriptor de área presenta alto poder discriminativo. La diferencia significativa entre las medias de las tres clases, combinada con dispersiones relativamente pequeñas, indica que las distribuciones presentan solapamiento mínimo.\\
 
-Umbral de clasificación.\\
+\textbf{Umbral de clasificación}\\
 \noindent
-El umbral óptimo se determinó como el punto que minimiza la probabilidad total de error de clasificación. Este umbral define la frontera de decisión: muestras con área mayor o igual se clasifican como lechuga madura lista para cosecha, y muestras con área inferior se clasifican como plantin o vaso vacío segun la estadística del caso.
+El umbral óptimo se determinó como el punto que minimiza la probabilidad total de error de clasificación. Este umbral define la frontera de decisión: muestras con área mayor o igual se clasifican como lechuga madura lista para cosecha, y muestras con área inferior se clasifican como plantín o vaso vacío según la estadística del caso.
 
-Se define además una zona de incertidumbre alrededor del umbral donde las clasificaciones reciben un índice de confianza reducido.\\
+Se define además una zona de incertidumbre alrededor del umbral donde las clasificaciones reciben un índice de confianza reducido. Cuando la confianza es reducida (área cercana al umbral de 18000 píxeles, típicamente dentro del rango 17000-19000 píxeles), el sistema no cosecha la planta automáticamente y la marca para revisión manual, evitando cosechas prematuras de plantas en desarrollo o descartes innecesarios de plantas maduras.\\
 
-Validación experimental.\\
+\textbf{Validación experimental}\\
 \noindent
 El sistema se validó con un conjunto de prueba independiente que no participó en la base de datos con la que se establecieron de los parámetros. Los resultados demuestran que el clasificador alcanza precisión adecuada para la aplicación, con errores principalmente en casos de plantas en estado muy temprano de desarrollo que normalmente no se cosecharían.

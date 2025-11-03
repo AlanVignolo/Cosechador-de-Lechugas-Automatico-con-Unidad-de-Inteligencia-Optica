@@ -45,14 +45,14 @@ Como complemento, se seleccionan dos carros lineales estándar de 100\,mm de anc
     \end{subfigure}
     \caption{\textit{Sistema de deslizamiento con perfil v-slot.}}
 \end{figure}
-Al activarse los motores del robot serie se genera una fuerza F1 como la que se muestra en \ref{fig:esfuerzo_lateral}. Dicha fuerza genera que toda la estructura vertical se mueva hacia atras.
+Al activarse los motores del robot serie se genera una fuerza F1 como la que se muestra en la Figura \ref{fig:esfuerzo_lateral}. Dicha fuerza genera que toda la estructura vertical se mueva hacia atras.
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.3\textwidth]{img/esfuerzo_lateral.png}
         \caption{\textit{Analisis cualitativo de fuerzas.}}
         \label{fig:esfuerzo_lateral}
 \end{figure}
-Para eliminar ese movimiento se coloca un perfil como el de la fig \ref{fig:barra_lateral}, en conjunto con sus rodamientos (fig. \ref{fig:sbr20uu}) acoplados al soporte superior. De esta manera se genera una fuerza semejante a F1 pero en sentido contrario.
+Para eliminar ese movimiento se coloca un perfil como el de la Figura \ref{fig:barra_lateral}, en conjunto con sus rodamientos (Figura \ref{fig:sbr20uu}) acoplados al soporte superior. De esta manera se genera una fuerza semejante a F1 pero en sentido contrario.
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.35\textwidth}
@@ -110,6 +110,7 @@ Se selecciona una polea GT2 de 40 dientes y diametro de 25.5mm que tiene 80mm/re
 Para esta polea, se selecciona una correa dentada de 10mm de ancho.\\
 
 Análisis de fuerzas\\
+\noindent
 Para determinar el torque motor requerido, se consideran las siguientes fuerzas resistivas:
 
 \begin{enumerate}
@@ -118,33 +119,34 @@ Para determinar el torque motor requerido, se consideran las siguientes fuerzas 
     F_{\text{rod}} = \mu_{\text{rodadura}} \cdot m \cdot g \cdot \frac{1}{r_{\text{rueda}}}= 0.021N
     \end{equation}
     donde $\mu_{\text{rodadura}}$ depende del material de las ruedas DELRIN sobre aluminio.
-    
+
     \item \underline{Fuerza de aceleración:}
     \begin{equation}
     F_{\text{acel}} = (m_{\text{carga}} + m_{\text{correa}}) \cdot a_{\text{max}} = 2.43 N
     \end{equation}
     Incluye la masa de la carga útil y la masa lineal de la correa GT2.
-    
+
     \item \underline{Fricción en rodamientos de poleas:}
     \begin{equation}
     F_{\text{friccion\_rod}} = T_{\text{correa}} \cdot \mu_{\text{rodamientos}} \cdot n = 0.12N
     \end{equation}
     con $n = 2$ (polea conducida y tensor).
-    
+
     \item \underline{Fuerza interna de la correa:}
     \begin{equation}
     F_{\text{correa}} = 0.5\,\text{N}
     \end{equation}
     Valor empírico para correas GT2 según especificaciones del fabricante.
-    
-    \item \underline{Otras pérdidas:}
+
+    \item \textbf{Fuerza total requerida}
     \begin{equation}
     F_{\text{otras}} = 0.1 \cdot (F_{\text{acel}} + F_{\text{rod}})=0.26N
     \end{equation}
     Se estima un 10\% adicional para pérdidas no modeladas.
 \end{enumerate}
 
-Cálculo del torque motor\\
+\textbf{Torque requerido en el motor}\\
+\noindent
 Considerando la distribución de cargas analizada anteriormente, donde el motor debe mover la masa total (12.72\,kg), la fuerza total requerida en la base del sistema es:
 \begin{equation}
 F_{\text{tbase}} = 3.33\,\text{N}
@@ -157,8 +159,17 @@ T_{\text{motor}} = F_{\text{tbase}} \cdot 2.5 \cdot r_{\text{polea}} \approx 0.1
 \label{eq:torque_motor}
 \end{equation}
 
-Selección del motor\\
-Se selecciona un motor paso a paso NEMA 17, alimentado a 24V y 1.8A. Analizando la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema34}), se verifica que para la velocidad máxima de operación de 250\,mm/s (187.5\,rpm), el torque disponible supera ampliamente el requerimiento calculado de 0.1\,Nm, garantizando un margen de seguridad adecuado para la operación continua del sistema. 
+\textbf{Selección del motor}\\
+\noindent
+Se selecciona un motor paso a paso NEMA 17, alimentado a 24V y 1.8A. Analizando la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema17}), se verifica que para la velocidad máxima de operación de 250\,mm/s (187.5\,rpm), el torque disponible supera ampliamente el requerimiento calculado de 0.1\,Nm, garantizando un margen de seguridad adecuado para la operación continua del sistema.
+
+\textbf{Resolución de posicionamiento}\\
+\noindent
+Con la configuración de polea de 40 dientes (80mm/rev) y microstepping de 1/8 paso (1600 pasos/revolución), el sistema alcanza una resolución de 0.05mm/paso, equivalente a 20 pasos/mm.
+
+\textbf{Velocidad máxima del sistema}\\
+\noindent
+La velocidad lineal máxima de 250mm/s corresponde a una velocidad angular de 187.5 RPM, operando en la zona de torque máximo del motor. 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.65\textwidth]{img/Nema17.png}

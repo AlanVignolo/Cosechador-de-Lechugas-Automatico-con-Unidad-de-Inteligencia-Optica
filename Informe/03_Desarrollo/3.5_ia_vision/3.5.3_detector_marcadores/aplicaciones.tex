@@ -3,14 +3,14 @@ El detector de marcadores de referencia se emplea en tres contextos operativos d
 
 Aplicación 1: Corrección de posición horizontal\\
 \noindent
-En el contexto de corrección horizontal, el robot se posiciona frente a una cinta vertical y captura una imagen. El detector identifica la cinta y calcula la desviación horizontal del centroide respecto al centro de la imagen. Esta desviación, convertida a milímetros mediante calibración, se emplea para generar comandos de movimiento correctivo en el eje X que alinean el brazo precisamente con la cinta.
+En el contexto de corrección horizontal, el robot se posiciona frente a una cinta vertical y captura una imagen. El detector identifica la cinta y calcula la desviación horizontal del centroide respecto al centro de la imagen. Esta desviación, convertida a milímetros mediante calibración, se emplea para generar comandos de movimiento correctivo en el eje X que alinean el brazo precisamente con la cinta. El error medio de posicionamiento mediante este método es de 3.2mm, con un error máximo de 8.7mm, valores aceptables considerando que el gripper tiene un diámetro de apertura de aproximadamente 40mm.
 Este procedimiento se ejecuta posterior a que el robot haya detectado si hay una planta lista para ser cosechada.\\
 
 Aplicación 2: Corrección de posición vertical\\
 \noindent
 En el contexto de corrección vertical, el robot se posiciona sobre una cinta vertical y captura una imagen. El detector identifica la cinta y calcula la desviación vertical de la arista base de la cinta respecto al centro de la imagen. Esta desviación se emplea para generar comandos de movimiento correctivo en el eje Y que alinean verticalmente el brazo con la cinta.
 
-Este procedimiento se ejecuta posterior a la corrección de posición horizontal para dejar alineado en ambos sentidos el robot previo a la cosecha.
+Este procedimiento se ejecuta posterior a la corrección de posición horizontal para dejar alineado en ambos sentidos el robot previo a la cosecha. La Figura \ref{fig:aplicaciones_marcadores} muestra ambas aplicaciones del detector para corrección de posición.
 
 \begin{figure}[H]
 \centering
@@ -35,6 +35,6 @@ Durante la fase de mapeo autónomo del entorno, el robot recorre horizontalmente
 
 El procedimiento funciona mediante la adquisición de imágenes a 6 fotogramas por segundo durante el movimiento horizontal. Para cada frame capturado se ejecuta el algoritmo de detección de cintas. El sistema mantiene un seguimiento del estado de detección mediante flags:
 
-Cuando el detector identifica una cinta en múltiples frames consecutivos (típicamente 5 frames para confirmar la detección), se envía un flag de inicio al nivel regulatorio que registra la coordenada \textbf{X} actual. Mientras el robot continúa avanzando y la cinta permanece visible, el sistema mantiene el estado de detección activo.
+Cuando el detector identifica una cinta en múltiples frames consecutivos (típicamente 5 frames para confirmar la detección), se envía un flag de inicio al nivel regulatorio que registra la coordenada \textbf{X} actual del robot en ese instante. Mientras el robot continúa avanzando y la cinta permanece visible, el sistema mantiene el estado de detección activo.
 
-Cuando la cinta deja de detectarse durante varios frames consecutivos (típicamente 5 frames para confirmar la ausencia), se envía un flag de fin al nivel regulatorio que registra la nueva coordenada X. La posición de la cinta se calcula posteriormente como el promedio entre las coordenadas de inicio y fin registradas por ambos flags. Este mecanismo con confirmación por frames consecutivos proporciona robustez ante falsos positivos ocasionales y permite mapear automáticamente todas las posiciones de cultivo sin conocimiento a priori de la geometría del sistema.
+Cuando la cinta deja de detectarse durante varios frames consecutivos (típicamente 5 frames para confirmar la ausencia), se envía un flag de fin al nivel regulatorio que registra la nueva coordenada \textbf{X} actual del robot. La posición de la cinta se calcula posteriormente como el promedio entre las coordenadas \textbf{X} de inicio y fin: esto corresponde al punto medio del recorrido durante el cual la cinta estuvo visible, que coincide con la posición en la cual la cinta queda exactamente frente al robot. El campo visual de la cámara es suficientemente estrecho como para que solo una cinta sea visible en cada frame, evitando ambigüedades en la detección. Este mecanismo con confirmación por frames consecutivos proporciona robustez ante falsos positivos ocasionales y permite mapear automáticamente todas las posiciones de cultivo sin conocimiento a priori de la geometría del sistema.

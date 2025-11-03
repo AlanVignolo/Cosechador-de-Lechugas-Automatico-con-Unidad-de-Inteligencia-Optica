@@ -8,7 +8,7 @@ El nivel supervisor constituye la capa de coordinación del sistema, responsable
     \item \underline{Persistencia de información}: Guarda datos críticos en archivos JSON que sobreviven reinicios.
 \end{itemize}
 
-Modelo de ejecución orientado a eventos:\\
+\textbf{Modelo de ejecución orientado a eventos}\\
 \noindent
 El supervisor utiliza un modelo orientado a eventos mediante callbacks. Cuando envía un comando de movimiento, registra un callback que será invocado cuando llegue el mensaje de completado. Durante la espera, el bucle principal continúa procesando otros eventos. Este diseño evita bloqueos y permite respuesta inmediata a eventos inesperados.
 
@@ -16,7 +16,9 @@ El supervisor utiliza un modelo orientado a eventos mediante callbacks. Cuando e
 
 El sistema implementa cuatro procesos principales que coordinan movimientos, captura de imágenes y ejecución de algoritmos de visión.
 
-\underline{Proceso 1: homing (referenciado del sistema)}: Establece el origen del sistema de coordenadas moviendo los ejes hasta los finales de carrera y retrocediendo offsets calibrados.
+\underline{Proceso 1 - Homing (referenciado del sistema)}: Establece el origen del sistema de coordenadas moviendo los ejes hasta los finales de carrera y retrocediendo offsets calibrados.
+
+La Tabla \ref{tab:proceso_homing} detalla la secuencia de pasos ejecutada durante el proceso de homing.
 
 \begin{table}[H]
 \centering
@@ -44,7 +46,9 @@ Paso & Acción \\
 \label{tab:proceso_homing}
 \end{table}
 
-\underline{Proceso 2: calibración del espacio de trabajo:} Mide las dimensiones útiles del espacio de trabajo moviendo los ejes hasta sus límites opuestos.
+\underline{Proceso 2 - Calibración del espacio de trabajo}: Mide las dimensiones útiles del espacio de trabajo moviendo los ejes hasta sus límites opuestos.
+
+La Tabla \ref{tab:proceso_calibracion} detalla la secuencia de pasos ejecutada durante el proceso de calibración.
 
 \begin{table}[H]
 \centering
@@ -72,7 +76,9 @@ Paso & Acción \\
 \label{tab:proceso_calibracion}
 \end{table}
 
-\underline{Proceso 3: mapeo del entorno:} Escanea el workspace para detectar posiciones de tubos (coordenadas \textbf{Y}) y plantas (coordenadas \textbf{X}), generando mapas que guían la navegación posterior.
+\underline{Proceso 3 - Mapeo del entorno}: Escanea el workspace para detectar posiciones de tubos (coordenadas \textbf{Y}) y plantas (coordenadas \textbf{X}), generando mapas que guían la navegación posterior.
+
+La Tabla \ref{tab:proceso_mapeo} detalla la secuencia de pasos ejecutada durante el proceso de mapeo.
 
 \begin{table}[H]
 \centering
@@ -96,7 +102,9 @@ Paso & Acción \\
 \label{tab:proceso_mapeo}
 \end{table}
 
-\underline{Proceso 4: cosecha interactiva:} Navega a cada posición registrada, clasifica la planta, y si está madura ejecuta la recolección.
+\underline{Proceso 4 - Cosecha interactiva}: Navega a cada posición registrada, clasifica la planta, y si está madura ejecuta la recolección.
+
+La Tabla \ref{tab:proceso_cosecha} detalla la secuencia de pasos ejecutada durante el proceso de cosecha interactiva. La Figura \ref{fig:flujo_cosecha} ilustra el flujo de decisiones implementado, destacando cómo el clasificador morfológico determina las acciones a tomar en cada estación de cultivo. Este proceso integra navegación autónoma, clasificación mediante visión artificial y control coordinado del brazo robótico, permitiendo la cosecha selectiva de lechugas maduras mientras preserva plantas en crecimiento y evita interacciones con estaciones vacías.
 
 \begin{table}[H]
 \centering
@@ -124,18 +132,12 @@ Paso & Acción \\
 \label{tab:proceso_cosecha}
 \end{table}
 
-Manejo de errores durante procesos:\\
+\textbf{Manejo de errores durante procesos}\\
+\noindent
 Durante la ejecución de cualquier proceso, el supervisor monitorea eventos inesperados:
 
 \begin{itemize}[label=$\bullet$]
-    \item \underline{Límite activado inesperadamente}: detiene el proceso, registra el error, y preserva el estado para diagnóstico
-    \item \underline{Pérdida de comunicación}: si un comando no recibe respuesta en tiempo límite, aborta el proceso e intenta restablecer comunicación
-    \item \underline{Fallo de detector}: si un algoritmo de visión no retorna resultados válidos, registra la falla e intenta continuar o solicita intervención
+    \item \underline{Límite activado inesperadamente}: detiene el proceso, registra el error, y preserva el estado para diagnóstico.
+    \item \underline{Pérdida de comunicación}: si un comando no recibe respuesta en tiempo límite, aborta el proceso e intenta restablecer comunicación.
+    \item \underline{Fallo de detector}: si un algoritmo de visión no retorna resultados válidos, registra la falla e intenta continuar o solicita intervención.
 \end{itemize}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.3\textwidth]{imagenes/diagrama_flujo_cosecha.png}
-    \caption{\textit{Diagrama de flujo detallado del proceso de cosecha mostrando decisiones según clasificación}}
-    \label{fig:flujo_cosecha}
-\end{figure}

@@ -49,6 +49,8 @@ P_{total} = w_1 \cdot S_{área} + w_2 \cdot S_{posición} + w_3 \cdot Q_{base}
 
 con pesos $w_1 = 0.3$, $w_2 = 0.4$ y $w_3 = 0.3$, otorgando mayor importancia a la posición. El contorno con mayor puntuación se selecciona como cinta de referencia.
 
+La Figura \ref{fig:proceso_marcadores} muestra la secuencia completa de procesamiento del detector de cintas, desde la imagen RGB original hasta la identificación final del contorno con mayor puntuación.
+
 \begin{figure}[H]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
@@ -83,7 +85,7 @@ con pesos $w_1 = 0.3$, $w_2 = 0.4$ y $w_3 = 0.3$, otorgando mayor importancia a 
 
 \subsubsection{Métricas de desempeño}
 
-Evaluado sobre 35 frames de barrido horizontal (20 con cintas, 15 sin cintas):
+Evaluado sobre 35 frames de barrido horizontal (20 con cintas, 15 sin cintas). Las Tablas \ref{tab:metricas_cintas} y \ref{tab:confusion_cintas} resumen el desempeño del detector:
 
 \begin{table}[H]
 \centering
@@ -116,4 +118,4 @@ Matriz de detección para cintas:
 \end{table}
 
 \noindent
-Los 2 falsos negativos se debieron a cambios en la incidencia de la iluminación sobre las cintas lo que que redujo el contraste entre cinta y fondo.
+Los 2 falsos negativos se debieron a cambios en la incidencia de la iluminación sobre las cintas lo que redujo el contraste entre cinta y fondo. Adicionalmente, suciedad o manchas en los tubos pueden afectar la detección al reducir el contraste local o crear falsos contornos. Para mitigar estos efectos, el sistema implementa filtrado por área mínima (500 píxeles) que descarta la mayoría del ruido, y evaluación de calidad basal que discrimina contornos genuinos de artefactos. En caso de que el detector no identifique la cinta debido a condiciones adversas, el sistema mantiene la última posición estimada y marca la detección con baja confianza, permitiendo que el operador evalúe si es necesario limpiar los tubos o ajustar la iluminación.

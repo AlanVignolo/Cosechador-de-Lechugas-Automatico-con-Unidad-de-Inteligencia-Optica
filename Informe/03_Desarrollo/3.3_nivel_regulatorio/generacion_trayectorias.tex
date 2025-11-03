@@ -1,6 +1,6 @@
-El sistema implementa perfiles de velocidad trapezoidales con aceleraciones fijas, garantizando comportamiento predecible independientemente de la distancia del movimiento. Las distancias de aceleración y desaceleración permanecen constantes, variando únicamente la longitud de la zona de crucero.
+El sistema implementa perfiles de velocidad trapezoidales con aceleraciones fijas, garantizando comportamiento predecible independientemente de la distancia del movimiento. Las zonas de aceleración y desaceleración mantienen longitud constante (15.8mm para horizontal, 6.85mm para vertical), mientras que la zona de crucero se ajusta según la distancia total del movimiento. Esta estrategia asegura que las aceleraciones sean idénticas para todos los movimientos, independientemente de si el desplazamiento es corto o largo.
 
-El perfil se compone de las fases mostradas en las Tablas \ref{tab:perfil_horizontal} y \ref{tab:perfil_vertical}. Esta estrategia asegura que las aceleraciones sean idénticas para todos los movimientos.
+El perfil se compone de las fases mostradas en las Tablas \ref{tab:perfil_horizontal} y \ref{tab:perfil_vertical}. La Figura \ref{fig:perfil_trapezoidal} ilustra el perfil trapezoidal con sus zonas características.
 
 \begin{table}[H]
 \centering
@@ -59,11 +59,11 @@ El perfil se compone de las fases mostradas en las Tablas \ref{tab:perfil_horizo
     % TODO: Insertar gráfico comparativo mostrando mismo perfil de aceleración para diferentes distancias
     % Mostrar: dos movimientos (25mm vs 250mm) con mismas rampas de accel/decel pero diferente zona crucero
     \includegraphics[width=0.7\textwidth]{imagenes/perfil_trapezoidal_velocidad.png}
-    \caption{\textit{Perfil trapezoidal con aceleraciones fijas. Las zonas de aceleración y desaceleración mantienen longitud constante (15.8mm para horizontal, 6.85mm para vertical), mientras que la zona de crucero se ajusta según la distancia total}}
+    \caption{\textit{Perfil trapezoidal con aceleraciones fijas}}
     \label{fig:perfil_trapezoidal}
 \end{figure}
 
-Cuando la distancia total es menor que la suma de las fases de aceleración y desaceleración (31.6mm para horizontal, 13.7mm para vertical), el perfil se convierte en triangular. El sistema mantiene las mismas aceleraciones de las Tablas \ref{tab:perfil_vertical} y \ref{tab:perfil_horizontal}, pero escala proporcionalmente las distancias de cada fase para que la aceleración y desaceleración sean simétricas, calculando el punto medio del movimiento donde debe iniciar la desaceleración para alcanzar exactamente la posición final. En este caso, la velocidad máxima alcanzada es menor que la velocidad de crucero nominal, ya que el motor comienza a frenar antes de alcanzarla. 
+Cuando la distancia total es menor que la suma de las fases de aceleración y desaceleración (31.6mm para horizontal, 13.7mm para vertical), el perfil se convierte en triangular. El sistema mantiene las mismas aceleraciones de las Tablas \ref{tab:perfil_vertical} y \ref{tab:perfil_horizontal}, pero escala proporcionalmente las distancias de cada fase para que la aceleración y desaceleración sean simétricas, calculando el punto medio del movimiento donde debe iniciar la desaceleración para alcanzar exactamente la posición final. En este caso, la velocidad máxima alcanzada es menor que la velocidad de crucero nominal, ya que el motor comienza a frenar antes de alcanzarla. La Figura \ref{fig:perfil_comparacion} compara ambos perfiles de velocidad.
 
 Para movimientos muy cortos (menos de 3 mm), el sistema reduce la velocidad máxima permitida a 0.10 m/s para mantener precisión en el posicionamiento final.
 
