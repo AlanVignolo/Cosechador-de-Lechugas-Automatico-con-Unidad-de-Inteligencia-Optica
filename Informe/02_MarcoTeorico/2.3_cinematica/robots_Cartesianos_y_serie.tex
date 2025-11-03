@@ -146,21 +146,21 @@ donde $M(\mathbf{q})$ es la matriz de inercia, $C(\mathbf{q}, \dot{\mathbf{q}})$
 
 En la práctica industrial y de fabricación digital contemporánea, el cálculo explícito del modelo dinámico completo del robot mediante las ecuaciones de Euler-Lagrange raramente se realiza a nivel del controlador del robot. Esto se debe a que los actuadores modernos incorporan sus propios sistemas de control que gestionan la dinámica local de forma autónoma.\\
 
-Servomotores y drivers inteligentes.\\
+\textbf{Servomotores y drivers inteligentes}\\
 \noindent
 Los servomotores vienen equipados con drivers que implementan lazos de control en cascada: lazo de corriente que controla el par motor instantáneo con frecuencias de actualización, lazo de velocidad que regula la velocidad angular mediante un controlador PID típicamente a 1-5 kHz y lazo de posición que gestiona el posicionamiento angular con actualizaciones de 100-1000 Hz.
 
-Estos drivers manejan internamente: compensación de inercia del rotor, limitación de corriente y par, perfiles trpaezoidales de aceleración/desaceleración, detección de pérdida de pasos o sobrecarga
+Estos drivers manejan internamente la compensación de inercia del rotor, limitación de corriente y par, perfiles trapezoidales de aceleración/desaceleración, detección de pérdida de pasos o sobrecarga.
 
 El controlador del robot simplemente envía consignas de posición, velocidad o par sin necesidad de calcular los torques requeridos.\\
 
-Motores paso a paso con control de lazo abierto.\\
+\textbf{Motores paso a paso con control de lazo abierto}\\
 \noindent
-El driver genera las secuencias de pulsos para los devanados del motor, envía sol pulsos de paso y dirección y la dinámica item El controlador envía únicamente pulsos de paso y dirección y la dinámica se gestiona limitando aceleraciones máximas en el firmware
+El driver genera las secuencias de pulsos para los devanados del motor, envía solo pulsos de paso y dirección y la dinámica se gestiona limitando aceleraciones máximas en el firmware.
 
 Incluso aquí, el modelo dinámico se reduce a parámetros empíricos de aceleración máxima configurados en el firmware, sin cálculos formales de las ecuaciones de movimiento.\\
 
-Implicaciones para el Diseño de Controladores.\\
+\textbf{Implicaciones para el diseño de controladores}\\
 \noindent
 Esta arquitectura de control distribuido tiene consecuencias importantes.
 
@@ -201,7 +201,7 @@ Solo en aplicaciones que requieren máximo rendimiento, eficiencia energética �
 
 El sistema híbrido combina una estructura cartesiana de dos ejes con un brazo robótico planar de dos grados de libertad, requiriendo un análisis diferenciado entre los grados de libertad del mecanismo y los del espacio de trabajo del efector final.
 
-Grados de libertad del mecanismo:\\
+\textbf{Grados de libertad del mecanismo}
 \noindent
 El número total de grados de libertad del mecanismo se obtiene por suma directa de las articulaciones activas. Por ejemplo:
 \begin{itemize}[label=$\bullet$]
@@ -210,7 +210,7 @@ El número total de grados de libertad del mecanismo se obtiene por suma directa
     \item \underline{Total del mecanismo: 4 GDL}
 \end{itemize}
 
-Grados de libertad del efector final:\\
+\textbf{Grados de libertad del efector final}
 \noindent
 El espacio de trabajo accesible del efector final está determinado por las capacidades de movimiento que la configuración cinemática proporciona. Por ejemplo:
 \begin{itemize}[label=$\bullet$]

@@ -14,7 +14,7 @@ Las ecuaciones de movimiento se obtienen mediante las ecuaciones de Euler-Lagran
 donde $\tau_i$ representa el torque aplicado en la articulación $i$ y $\theta_i$ son las coordenadas generalizadas (ángulos de rotación).
 
 
-El sistema consiste en dos eslabones rígidos conectados en serie mediante articulaciones rotacionales. La configuración y parámetros se describen a continuación:
+El sistema consiste en dos eslabones rígidos conectados en serie mediante articulaciones rotacionales, se puede ver una representación en la figura \ref{fig:DCL_brazo}. La configuración y parámetros se describen a continuación:
 \begin{itemize}[label=$\bullet$]
     \item $L_1$: Longitud total del eslabón 1
     \item $L_2$: Longitud total del eslabón 2
@@ -24,7 +24,7 @@ El sistema consiste en dos eslabones rígidos conectados en serie mediante artic
     \item $I_1$, $I_2$: Momentos de inercia de los eslabones respecto a sus centros de masa
 \end{itemize}
 
-\textbf{Coordenadas generalizadas:}
+\textbf{Coordenadas generalizadas}
 \begin{itemize}[label=$\bullet$]
     \item $\theta_1$: Ángulo de rotación de la articulación 1 (respecto al eje horizontal)
     \item $\theta_2$: Ángulo de rotación de la articulación 2 (respecto al eje horizontal)
@@ -36,7 +36,7 @@ El sistema consiste en dos eslabones rígidos conectados en serie mediante artic
     \label{fig:DCL_brazo}
 \end{figure}
 
-Energía potencial eslabón 1:\\
+\textbf{Energía potencial eslabón 1}\\
 \noindent
 La energía potencial gravitacional del eslabón 1 está dada por:
 \begin{equation}
@@ -45,7 +45,7 @@ U_1 = m_1 \cdot g \cdot l_1 \cdot \sin(\theta_1)
 
 donde $g$ es la aceleración de la gravedad y la altura del centro de masa se mide desde un nivel de referencia horizontal.\\
 
-Energía cinética eslabón 1:\\
+\textbf{Energía cinética eslabón 1}\\
 \noindent
 La energía cinética del eslabón 1 tiene dos componentes: rotacional y traslacional.
 \begin{equation}
@@ -79,7 +79,7 @@ Por lo tanto, la energía cinética del eslabón 1 queda:
 K_1 = \frac{1}{2}(m_1l_1^2 + I_1)\dot{\theta}_1^2
 \end{equation}
 
-Energía potencial eslabón 2:\\
+\textbf{Energía potencial eslabón 2}\\
 \noindent
 La energía potencial del eslabón 2 considera la altura de su centro de masa, que depende de ambos ángulos:
 \begin{equation}
@@ -88,7 +88,7 @@ U_2 = m_2 \cdot g \cdot (L_1 \sin(\theta_1) + l_2 \sin(\theta_2))
 
 El primer término representa la contribución de la articulación 1, mientras que el segundo término corresponde a la posición del centro de masa del eslabón 2 respecto a la articulación 2.\\
 
-Energía cinética eslabón 2:\\
+\textbf{Energía cinética eslabón 2}\\
 \noindent
 La energía cinética del eslabón 2 es:
 \begin{equation}

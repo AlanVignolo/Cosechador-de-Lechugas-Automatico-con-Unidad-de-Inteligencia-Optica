@@ -2,7 +2,7 @@ El modelado tridimensional de los componentes estructurales del sistema se reali
 
 \subsubsection{Soporte superior}
 
-El soporte superior constituye el elemento estructural de mayor criticidad en el sistema, ya que soporta la totalidad de las cargas verticales (varillas, brazo, carga) y actúa como interfaz mecánica entre los subsistemas de movimiento horizontal y vertical. Su diseño integra múltiples funciones: acoplamiento a los carros deslizantes del perfil horizontal, fijación de los extremos superiores de las tres varillas verticales (una roscada y dos lisas), y montaje del motor del eje vertical.
+El soporte superior constituye el elemento estructural de mayor criticidad en el sistema, ya que soporta la totalidad de las cargas verticales (varillas, brazo, carga) y actúa como interfaz mecánica entre los subsistemas de movimiento horizontal y vertical. Su diseño integra múltiples funciones: acoplamiento a los carros deslizantes del perfil horizontal, fijación de los extremos superiores de las tres varillas verticales (una roscada y dos lisas) y montaje del motor del eje vertical.
 
 La Figura \ref{fig:SuperiorReal_simplificado_vista} muestra la geometría general del soporte superior.
 
@@ -44,11 +44,12 @@ El análisis de esfuerzos mediante elementos finitos se realizó considerando ma
     \item Coeficiente de Poisson: 0.36
 \end{itemize}
 
-La Figura \ref{fig:SuperiorReal_simplificado_tensiones} presenta los resultados del análisis, mostrando las deformaciones resultantes. Los resultados indican:
+Las Figuras \ref{fig:SuperiorReal_simplificado_tensiones} y \ref{fig:SuperiorReal_simplificado_tensiones} presentan los resultados del análisis, mostrando las deformaciones y tensiones resultantes. Los resultados indican:
 
 \begin{itemize}[label=$\bullet$]
     \item Deformación máxima: $\approx$ 0.15 mm (en zonas de mayor voladizo)
     \item Factor de seguridad: $\frac{50\,\text{MPa}}{2.8\,\text{MPa}} \approx 18$ (ampliamente seguro)
+    \item Tensión mucho menor a tensión de rotura (0.00022MPa < 50Mpa)
 \end{itemize}
 
 \begin{figure}[H]
@@ -75,17 +76,17 @@ Los resultados confirman que el diseño propuesto es estructuralmente robusto, c
 El soporte medio constituye el elemento móvil del eje vertical, desplazándose a lo largo de las varillas mediante el giro de la varilla roscada. Este componente cumple funciones críticas en el sistema: montaje del brazo robótico serial, fijación de la cámara de visión artificial y mantenimiento del equilibrio dinámico mediante contrapeso.
 
 \begin{itemize}[label=$\bullet$]
-    \item \underline{Sistema de guiado:} Incorpora dos rodamientos lineales LM16UU para deslizamiento sobre las varillas lisas de 8 mm, garantizando movimiento suave sin rotaciones indeseadas
-    \item \underline{Tuerca de transmisión:} Alojamiento central para tuerca TR16 que se acopla con la varilla roscada, convirtiendo el movimiento rotacional del motor en desplazamiento lineal
-    \item \underline{Montaje del brazo:} Base horizontal plana con patrón de agujeros para fijación del servomotor base del brazo robótico
-    \item \underline{Montaje de cámara:} Soporte superior para la cámara con ajuste angular para optimización del campo de visión
-    \item \underline{Sistema de balanceo:} Contrapeso en el lado opuesto al brazo para reducir momentos flectores sobre las varillas y mejorar la estabilidad dinámica del sistema
+    \item \underline{Sistema de guiado:} Incorpora dos rodamientos lineales LM16UU para deslizamiento sobre las varillas lisas de 8 mm, garantizando movimiento suave sin rotaciones indeseadas.
+    \item \underline{Tuerca de transmisión:} Alojamiento central para tuerca TR16 que se acopla con la varilla roscada, convirtiendo el movimiento rotacional del motor en desplazamiento lineal.
+    \item \underline{Montaje del brazo:} Base horizontal plana con patrón de agujeros para fijación del servomotor base del brazo robótico.
+    \item \underline{Montaje de cámara:} Soporte superior para la cámara con ajuste angular para optimización del campo de visión.
+    \item \underline{Sistema de balanceo:} Contrapeso en el lado opuesto al brazo para reducir momentos flectores sobre las varillas y mejorar la estabilidad dinámica del sistema.
 \end{itemize}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{img/MedioReal_simplificado_vista.jpg}
-    \caption{Vista general del soporte medio mostrando el montaje del brazo robótico, alojamiento de la cámara, sistema de guiado lineal y contrapeso de equilibrio.}
+    \caption{\textit{Vista general del soporte medio mostrando el montaje del brazo robótico, alojamiento de la cámara, sistema de guiado lineal y contrapeso de equilibrio.}}
     \label{fig:soporte_medio_Real}
 \end{figure}
 
@@ -93,9 +94,9 @@ El contrapeso permite compensar el momento generado por el brazo extendido, redu
 
 \subsubsection{Soporte inferior}
 
-El soporte inferior cierra la estructura vertical del sistema, proporcionando la base de fijación para los extremos inferiores de las tres varillas y alojando componentes auxiliares del sistema de control.\\
+El soporte inferior (figura \ref{fig:soporte_inferior_real}) cierra la estructura vertical del sistema, proporcionando la base de fijación para los extremos inferiores de las tres varillas y alojando componentes auxiliares del sistema de control.\\
 
-Funciones y características
+\textbf{Funciones y características}
 
 \begin{itemize}[label=$\bullet$]
     \item \underline{Anclaje de varillas:} Alojamientos pasantes para las dos varillas lisas con fijación mediante tornillos prisioneros, y soporte del extremo libre de la varilla roscada con rodamiento axial
@@ -113,7 +114,7 @@ El diseño incorpora tolerancias ajustadas para los alojamientos de las varillas
 
 \subsubsection{Brazo robótico serie}
 
-Se opta por el uso de PLA con fibra de carbono como material estructural proporciona mejor relación rigidez/peso que el PLA estándar, reduciendo las vibraciones residuales al finalizar movimientos rápidos y mejorando la precisión de posicionamiento del efector final.
+En la figura \ref{fig:brazo_Real} se observa la estructura del brazo robótico serie. Para su material de fabricación se opta por el uso de PLA con fibra de carbono como material estructural proporciona mejor relación rigidez/peso que el PLA estándar, reduciendo las vibraciones residuales al finalizar movimientos rápidos y mejorando la precisión de posicionamiento del efector final.
 
 \begin{figure}[H]
     \centering
@@ -124,14 +125,14 @@ Se opta por el uso de PLA con fibra de carbono como material estructural proporc
 
 \subsubsection{Efector final}
 
-El efector final implementa un mecanismo de pinza paralela actuado mediante transmisión piñón-cremallera, convirtiendo el movimiento rotacional del servomotor en desplazamiento lineal de las mordazas.\\
+El efector final implementa un mecanismo de pinza paralela actuado mediante transmisión piñón-cremallera (figuras \ref{fig:gripper_Real_transmision} y \ref{fig:gripper_Real}), convirtiendo el movimiento rotacional del servomotor en desplazamiento lineal de las mordazas.\\
 
-Principio de funcionamiento
+\textbf{Principio de funcionamiento}
 
 \begin{itemize}[label=$\bullet$]
-    \item \underline{Transmisión:} Sistema piñón-cremallera con relación 1:1, proporcionando movimiento sincronizado de ambas mordazas hacia el centro
-    \item \underline{Rango de apertura:} 0-50 mm, adecuado para lechugas de tamaño pequeño a grande
-    \item \underline{Mordazas:} Geometría curva con superficie texturizada para mejorar fricción sin penetrar las hojas
+    \item \underline{Transmisión:} Sistema piñón-cremallera con relación 1:1, proporcionando movimiento sincronizado de ambas mordazas hacia el centro.
+    \item \underline{Rango de apertura:} 0-50 mm, adecuado para lechugas de tamaño pequeño a grande.
+    \item \underline{Mordazas:} Geometría curva con superficie texturizada para mejorar fricción sin penetrar las hojas.
 \end{itemize}
 
 \begin{figure}[H]

@@ -21,7 +21,7 @@ El modo de excitación define cómo se energizan las bobinas del motor, afectand
 
 Modo de una fase:\\
 \noindent
-Solo una bobina se energiza a la vez. La secuencia de activación para un motor bipolar de dos fases es:
+Solo una bobina se energiza a la vez. La secuencia de activación para un motor bipolar de dos fases es la de la siguiente tabla (\ref{tab:sec_excitacion}):
 
 \begin{table}[ht]
 \centering
@@ -36,6 +36,7 @@ Solo una bobina se energiza a la vez. La secuencia de activación para un motor 
 \hline
 \end{tabular}
 \caption{Secuencia de excitación Wave Drive}
+\label{tab:sec_excitacion}
 \end{table}
 
 Características:
@@ -47,7 +48,7 @@ Características:
 
 Modo de dos fases (Full step):\\
 
-Dos bobinas se energizan simultáneamente. La secuencia de activación es:
+Dos bobinas se energizan simultáneamente. La secuencia de activación es la que se muestra en la tabla \ref{tab:excitacion_fullstep}
 
 \begin{table}[ht]
 \centering
@@ -62,6 +63,7 @@ Dos bobinas se energizan simultáneamente. La secuencia de activación es:
 \hline
 \end{tabular}
 \caption{Secuencia de excitación Full Step}
+\label{tab:excitacion_fullstep}
 \end{table}
 
 Características:
@@ -73,9 +75,9 @@ Características:
 
 \subsubsection{Excitación de medio paso (Half step)}
 
-Alterna entre la energización de una y dos fases, duplicando la resolución del motor. La secuencia combina los modos anteriores:
+Alterna entre la energización de una y dos fases, duplicando la resolución del motor. La secuencia combina los modos anteriores y se muestra en la tabla \ref{tab:half_step}.\\
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 \begin{tabular}{|c|c|c|}
 \hline
@@ -92,6 +94,7 @@ Alterna entre la energización de una y dos fases, duplicando la resolución del
 \hline
 \end{tabular}
 \caption{Secuencia de excitación Half Step}
+\label{tab:half_step}
 \end{table}
 
 Para un motor de 200 pasos/rev ($1.8^\circ$), el half stepping proporciona 400 pasos/rev ($0.9^\circ$).
@@ -171,11 +174,20 @@ donde $T_0$ es el torque a velocidad cero (aproximadamente el holding torque), $
 
 Driver unipolar:\\
 \noindent
-Diseñado para motores unipolares (generalmente con 5 o 6 cables). Utiliza transistores simples para conmutar las corrientes. Ventajas: simplicidad y bajo costo. Desventajas: menor eficiencia y torque (aproximadamente 70\% del equivalente bipolar).\\
+Diseñado para motores unipolares (generalmente con 5 o 6 cables). Utiliza transistores simples para conmutar las corrientes. \\
+Ventajas:
+\begin{itemize}
+    \item simplicidad y bajo costo.
+\end{itemize}
+Desventajas:
+\begin{itemize}
+    \item menor eficiencia y torque (aproximadamente 70\% del equivalente bipolar).
+\end{itemize}
 
 Driver bipolar:\\
 \noindent
-Para motores bipolares (4 cables). Requiere puentes H para invertir la polaridad de las corrientes. Mayor complejidad pero mejor desempeño. Topologías comunes:
+Se utiliza para motores bipolares (4 cables) ya que requiere puentes H para invertir la polaridad de las corrientes.\\
+Las topologías de drivers mas comunes son:
 
 \begin{itemize}[label=$\bullet$]
     \item \underline{L/R Drive}: Control de voltaje simple, genera calor excesivo
