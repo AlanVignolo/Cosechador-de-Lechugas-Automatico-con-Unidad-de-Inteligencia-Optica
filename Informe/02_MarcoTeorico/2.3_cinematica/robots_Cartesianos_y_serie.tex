@@ -45,15 +45,15 @@ Las estructuras cartesianas presentan múltiples ventajas que explican su amplia
 
 Los robots serie, también denominados robots en cadena cinemática abierta, son aquellos en los que los eslabones están conectados secuencialmente mediante articulaciones, formando una cadena cinemática desde la base hasta el efector final. Cada eslabón está conectado al anterior mediante una única articulación, que puede ser rotacional (R) o prismática (P).
 
-\subsubsection{Grados de libertad}
+%\subsubsection{Grados de libertad}
+%Para un robot serie de manipulación completa en el espacio posee 6 GDL pero existe robots planares cuyo efector final posee hasta 3 grados de libertad.
+%El número de grados de libertad de un robot serie corresponde al número de articulaciones activas en la cadena cinemática. Para manipulación completa en el espacio tridimensional (posición y orientación arbitrarias), se requieren 6 GDL. Un robot con $n$ articulaciones tiene $n$ grados de libertad:
 
-El número de grados de libertad de un robot serie corresponde al número de articulaciones activas en la cadena cinemática. Para manipulación completa en el espacio tridimensional (posición y orientación arbitrarias), se requieren 6 GDL. Un robot con $n$ articulaciones tiene $n$ grados de libertad:
-
-\begin{itemize}[label=$\bullet$]
-    \item Si $n < 6$: El robot tiene movilidad limitada y no puede alcanzar poses arbitrarias.
-    \item Si $n = 6$: El robot puede alcanzar cualquier posición y orientación dentro de su espacio de trabajo.
-    \item Si $n > 6$: El robot es redundante, ofreciendo múltiples configuraciones para una misma pose del efector final.
-\end{itemize}
+%\begin{itemize}[label=$\bullet$]
+  %  \item Si $n < 6$: El robot tiene movilidad limitada y no puede alcanzar poses arbitrarias.
+ %   \item Si $n = 6$: El robot puede alcanzar cualquier posición y orientación dentro de su espacio de trabajo.
+   % \item Si $n > 6$: El robot es redundante, ofreciendo múltiples configuraciones para una misma pose del efector final.
+%\end{itemize}
 
 \subsubsection{Espacio de trabajo}
 
@@ -194,3 +194,33 @@ Limitaciones:
 La mayoría de aplicaciones de robótica industrial, estructuras cartesianas e impresoras 3D, el control dinámico está efectivamente ``resuelto'' por los fabricantes de actuadores. 
 
 Solo en aplicaciones que requieren máximo rendimiento, eficiencia energética óptima, o capacidades avanzadas como control de fuerza, se justifica implementar control basado en modelo dinámico completo.
+
+%\subsection{Grados de libertad}
+%Para el analisis de grados de libertad total de la estructura se debe tener en cuenta la suma de GDL de sus partes, mientras que los grados de libertad del efector final dependeran de los movimientos que sea capaz de realizar, por tanto si la estructura cartesiana tiene 2GDL y el robot serie 2GDL, el sistema total tendrá 4GDL, mientras que el efector final, si se tiene un robot serie planar, tiene hasta 3 GDL. Para el caso del robot serie que solo tiene traslación en un plano, la estructura cartesiana brinda un tercer grado de libertad en dirección perpendicular a ese plano.
+\subsection{Análisis de grados de libertad del sistema completo}
+
+El sistema híbrido combina una estructura cartesiana de dos ejes con un brazo robótico planar de dos grados de libertad, requiriendo un análisis diferenciado entre los grados de libertad del mecanismo y los del espacio de trabajo del efector final.
+
+Grados de libertad del mecanismo:\\
+\noindent
+El número total de grados de libertad del mecanismo se obtiene por suma directa de las articulaciones activas. Por ejemplo:
+\begin{itemize}[label=$\bullet$]
+    \item Estructura cartesiana XY: 2 GDL (dos articulaciones prismáticas independientes en el plano vertical)
+    \item Brazo robótico planar: 2 GDL (dos articulaciones rotacionales con ejes paralelos, movimiento perpendicular al plano XY)
+    \item \underline{Total del mecanismo: 4 GDL}
+\end{itemize}
+
+Grados de libertad del efector final:\\
+\noindent
+El espacio de trabajo accesible del efector final está determinado por las capacidades de movimiento que la configuración cinemática proporciona. Por ejemplo:
+\begin{itemize}[label=$\bullet$]
+    \item Posición en el plano vertical XY: 2 GDL (proporcionados por la estructura cartesiana)
+    \item Posición perpendicular al plano XY (profundidad): 1 GDL (proporcionado por la extensión del brazo planar)
+    \item \underline{Total del efector: 3 GDL de posición}
+\end{itemize}
+
+El efector final no posee capacidad de rotación, ya que el brazo robótico se mueve únicamente en un plano perpendicular al de la estructura cartesiana, sin articulaciones que controlen la orientación del gripper, por lo que este está fijo al segundo eslabón.
+
+La configuración resulta en un sistema donde el mecanismo tiene 4 grados de libertad pero el efector final controla únicamente 3 grados de libertad de posición. 
+
+La estructura cartesiana proporciona posicionamiento bidimensional en el plano vertical frontal (altura y desplazamiento horizontal), mientras que el brazo planar extiende el alcance en la dirección perpendicular a dicho plano (profundidad). Esta distribución funcional optimiza el diseño ya que los movimientos largos y de posicionamiento grueso se ejecutan mediante la estructura cartesiana (alta rigidez, alta velocidad), mientras que la aproximación hacia las lechugas se gestiona mediante el brazo articulado (mayor destreza para alcanzar posiciones dentro de la estructura de cultivo).\\
