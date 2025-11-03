@@ -1,42 +1,40 @@
-%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#f5f5f5','primaryTextColor':'#000','primaryBorderColor':'#424242','lineColor':'#616161','secondaryColor':'#fafafa','tertiaryColor':'#f5f5f5'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#f5f5f5','primaryTextColor':'#000','primaryBorderColor':'#424242','lineColor':'#616161','secondaryColor':'#fafafa','tertiaryColor':'#f5f5f5','fontSize':'20px','fontFamily':'Arial, sans-serif'}}}%%
 
-flowchart TD
+flowchart LR
     Start([INICIO]):::startEnd
     
-    LoadMaps[Cargar tubos y cintas<br/>JSON]:::process
+    subgraph Inicial["INICIALIZACIÓN"]
+        LoadMaps[Cargar tubos<br/>y cintas JSON]:::process
+        CheckHoming{Robot<br/>homed?}:::decision
+        DoHoming[Ejecutar<br/>homing]:::process
+        ArmSafe[Brazo a posición<br/>segura]:::process
+    end
     
-    CheckHoming{¿Robot<br/>homed?}:::decision
+    subgraph Navegacion["NAVEGACIÓN Y CLASIFICACIÓN"]
+        LoopTubes[Para cada<br/>tubo]:::loop
+        LoopBelts[Para cada<br/>cinta]:::loop
+        Navigate[Mover a<br/>X_cinta, Y_tubo]:::process
+        ClassifyIA{Clasificar IA<br/>Estado?}:::decision
+        Empty[VACÍO<br/>Continuar]:::skip
+        NotReady[NO LISTA<br/>Continuar]:::skip
+    end
     
-    DoHoming[Ejecutar homing]:::process
+    subgraph Cosecha["COSECHA Y TRANSPORTE"]
+        CorrectPos[Corrección<br/>posición IA]:::critical
+        Pick[Recoger lechuga<br/>extender + cerrar]:::critical
+        Transport[Mover lechuga<br/>con planta]:::critical
+    end
     
-    ArmSafe[Brazo → mover_lechuga<br/>posición segura]:::process
+    subgraph Deposito["DEPÓSITO"]
+        MoveDeposit[Mover a zona<br/>depósito]:::process
+        Deposit[Depositar lechuga<br/>inclinar + abrir]:::critical
+        ReturnArm[Retornar brazo<br/>sin planta]:::critical
+    end
     
-    LoopTubes[Para cada tubo]:::loop
-    
-    LoopBelts[Para cada cinta del tubo]:::loop
-    
-    Navigate[Mover a X_cinta, Y_tubo]:::process
-    
-    ClassifyIA{Clasificar IA:<br/>¿Estado?}:::decision
-    
-    Empty[VACÍO<br/>Continuar]:::skip
-    NotReady[NO LISTA<br/>Continuar]:::skip
-    
-    CorrectPos[Corrección posición IA<br/>Horizontal + Vertical]:::critical
-    
-    Pick[Brazo → recoger_lechuga<br/>extender + cerrar gripper]:::critical
-    
-    Transport[Brazo → mover_lechuga<br/>con planta]:::critical
-    
-    MoveDeposit[Mover a zona depósito<br/>X_fin, Y_fin-250mm]:::process
-    
-    Deposit[Brazo → depositar_lechuga<br/>inclinar + abrir gripper]:::critical
-    
-    ReturnArm[Brazo → mover_lechuga<br/>sin planta]:::critical
-    
-    MoreBelts{¿Más<br/>cintas?}:::decision
-    
-    ReturnOrigin[Volver a origen 0, 0]:::process
+    subgraph Control["CONTROL FLUJO"]
+        MoreBelts{Más<br/>cintas?}:::decision
+        ReturnOrigin[Volver a<br/>origen 0,0]:::process
+    end
     
     End([FIN]):::startEnd
     
@@ -64,9 +62,9 @@ flowchart TD
     MoreBelts -->|NO| ReturnOrigin
     ReturnOrigin --> End
     
-    classDef startEnd fill:#2E7D32,stroke:#1B5E20,stroke-width:3px,color:#fff,font-weight:bold
-    classDef process fill:#1565C0,stroke:#0D47A1,stroke-width:2px,color:#fff,font-weight:bold
-    classDef decision fill:#D84315,stroke:#BF360C,stroke-width:2px,color:#fff,font-weight:bold
-    classDef critical fill:#6A1B9A,stroke:#4A148C,stroke-width:2px,color:#fff,font-weight:bold
-    classDef skip fill:#616161,stroke:#424242,stroke-width:2px,color:#fff
-    classDef loop fill:#00838F,stroke:#006064,stroke-width:2px,color:#fff,font-weight:bold
+    classDef startEnd fill:#2E7D32,stroke:#1B5E20,stroke-width:4px,color:#fff,font-weight:bold,font-size:18px
+    classDef process fill:#1565C0,stroke:#0D47A1,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px
+    classDef decision fill:#D84315,stroke:#BF360C,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px
+    classDef critical fill:#6A1B9A,stroke:#4A148C,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px
+    classDef skip fill:#616161,stroke:#424242,stroke-width:3px,color:#fff,font-size:16px
+    classDef loop fill:#00838F,stroke:#006064,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px
