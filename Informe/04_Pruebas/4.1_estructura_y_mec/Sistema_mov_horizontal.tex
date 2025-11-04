@@ -19,12 +19,12 @@ El sistema de movimiento horizontal utiliza una transmisión por correa dentada 
     \item \underline{Fuerza de aceleración}\\
         Considerando una aceleración deseada de $a = 0.188$ m/s$^2$:
         \begin{equation}
-        F_a = m \cdot a = 1.16\text{ N}
+        F_a = m \cdot a = 0.98\text{ N}
         \end{equation}
     \item \underline{Fuerza de fricción}\\
         Se toma un coeficiente de fricción de 0.15 debido a que el sistema no es tan preciso y puede tener fricción de desplazamiento.
         \begin{equation}
-            F_f = \mu \cdot m \cdot g = 1.47 \text{ N}
+            F_f = \mu \cdot m \cdot g = 1.23 \text{ N}
         \end{equation}
     \item \underline{Resistencia interna de correa}\\
         Para esto, se toma un valor empírico, considerando el largo.
@@ -33,7 +33,7 @@ El sistema de movimiento horizontal utiliza una transmisión por correa dentada 
         \end{equation}
     \item \underline{Otras pérdidas}\\
         \begin{equation}
-            F_{otras}= 0.1*(F_a+F_f)=0.26N
+            F_{otras}= 0.1*(F_a+F_f)=0.22N
         \end{equation}
 \end{enumerate}
 
@@ -42,7 +42,7 @@ Fuerza total requerida\\
 La fuerza total que debe ejercer el motor es la suma de la fuerza de aceleración y la fuerza de fricción:
 
 \begin{equation}
-    F_{total} = F_a + F_f + F_{intcorrea} + F_{otras} = 3.14 \text{ N}
+    F_{total} = F_a + F_f + F_{intcorrea} + F_{otras} = 2.67 \text{ N}
 \end{equation}
 
 Torque requerido en el motor\\
@@ -50,18 +50,18 @@ Torque requerido en el motor\\
 El torque necesario en el eje del motor se calcula multiplicando la fuerza total por el radio de la polea:
 
 \begin{equation}
-    T_{req} = F_{total} \cdot r = 0.04  N \cdot m
+    T_{req} = F_{total} \cdot r = 0.02  N \cdot m
 \end{equation}
 
 Para garantizar un funcionamiento confiable del sistema, se aplica un factor de seguridad de 2.5:
 
 \begin{equation}
-    T_{motor} = T_{req} \cdot FS = 0.1 N \cdot m
+    T_{motor} = T_{req} \cdot FS = 0.04 N \cdot m
 \end{equation}
 
 Selección del motor\\
 \noindent
-Considerando el torque calculado con factor de seguridad, se selecciona el motor paso a paso  \textbf{Nema 17 medium} que posee  0.35Nm a 24V y 1.8A. \\
+Considerando el torque calculado con factor de seguridad, se selecciona el motor paso a paso  \textbf{Nema 17 short} que posee  0.35Nm a 24V y 1.8A. \\
 
 Resolución de posicionamiento.\\
 \noindent
@@ -82,11 +82,11 @@ Considerando una velocidad máxima de 0.25 \(\frac{m}{s}\) se tiene que la veloc
 \begin{equation}
     n_{max} = \frac{250 \frac{mm}{s} \cdot 60 \text {s}}{40 \frac{mm}{rev}} = 375 \text{ rpm}
 \end{equation}
-Como se puede observar en la figura \ref{fig:Curva_din_nema17medium} para la velocidad máxima se cumple con el torque necesario.
+Como se puede observar en la figura \ref{fig:nema17_short} para la velocidad máxima se cumple con el torque necesario.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.65\textwidth]{img/nema17_medium.png}
+    \includegraphics[width=0.65\textwidth]{img/nema17_short.png}
     \caption{\textit{Curva dinámica torque-velocidad del motor paso a paso NEMA 17 para el prototipo.}}
-    \label{fig:Curva_din_nema17medium}
+    \label{fig:nema17_short}
 \end{figure}
-Como se cuentan con motores paso a paso que poseen 0.22 $N \cdot m$ de torque se opta utilizar una configuración de dos motores, por lo que cada polea está acoplada a un motor. De esta manera se obtiene el torque final necesario a aplicar como la suma de los torques de ambos motores.
+%Como se cuentan con motores paso a paso que poseen 0.22 $N \cdot m$ de torque se opta utilizar una configuración de dos motores, por lo que cada polea está acoplada a un motor. De esta manera se obtiene el torque final necesario a aplicar como la suma de los torques de ambos motores.
