@@ -132,6 +132,15 @@ Paso & Acción \\
 \label{tab:proceso_cosecha}
 \end{table}
 El proceso de cosecha interactiva comienza con la inicialización del sistema, donde se cargan las coordenadas de los tubos y cintas desde archivos JSON y se verifica el estado de calibración del robot, ejecutando el procedimiento de homing si es necesario antes de posicionar el brazo robótico en una configuración segura. Posteriormente, el sistema ingresa a la fase de navegación, iterando sobre cada tubo y sus respectivas cintas transportadoras, desplazándose a las coordenadas específicas de cada ubicación para que el sistema de visión artificial clasifique el estado de la planta mediante inteligencia artificial. Si la clasificación determina que la posición está vacía o la planta no está lista para cosechar, el sistema continúa con la siguiente cinta; en cambio, si la planta está lista, se procede a la etapa de cosecha, donde se aplica la corrección de posición calculada por IA (tanto horizontal como vertical), se extiende el brazo para recoger la lechuga cerrando el gripper, y se transporta la planta hacia la zona de depósito. Finalmente, en la fase de depósito, el robot se mueve a las coordenadas finales, inclina el brazo para depositar suavemente la lechuga abriendo el gripper, y retorna a su posición de trabajo. Este ciclo se repite para todas las cintas de todos los tubos hasta completar el recorrido, momento en el cual el sistema retorna al origen y finaliza el proceso de cosecha automatizada.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Imagenes/Diagrama_flujo_cosecha.png}
+    \caption{\textit{Diagrama de flujo del proceso de cosecha interactiva}}
+    \label{fig:flujo_cosecha}
+    
+\end{figure}
+
+
 \textbf{Manejo de errores durante procesos}\\
 \noindent
 Durante la ejecución de cualquier proceso, el supervisor monitorea eventos inesperados:
