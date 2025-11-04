@@ -32,7 +32,7 @@
 \usepackage{verbatim}
 \usepackage{comment}
 \usepackage{subcaption}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
 \DeclareGraphicsExtensions{.pdf,.png,.jpg}
 \pdfminorversion=7
@@ -62,8 +62,8 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhead{}
-\fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
-\fancyhead[C]{317 - Autómatas y Control Discreto \\ \hspace{0.5pt} \\ \textbf{Proyecto Final de Estudios: Robot cosechador automático}}
+\fancyhead[L]{Facultad de ingeniería - UNCuyo \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
+\fancyhead[C]{\textbf{Proyecto Final de Estudios: Robot cosechador automático}}
 \fancyhead[R]{Brenda Gudiño \\ Alan Vignolo \\ \hspace{0.5pt}}
 
 \fancyfoot{}
@@ -71,7 +71,7 @@
 
 \fancypagestyle{plain}{
 \fancyhead{}
-\fancyhead[L]{UNCuyo - Ing. Mecatrónica \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
+\fancyhead[L]{Faculta de ingeniería - UNCuyo \\ Mendoza - Argentina - 2025 \\ \hspace{0.1pt}}
 \fancyhead[C]{Proyecto final de estudios \\ \hspace{0.5pt} \\ \textbf{Robot cosechador automático}}
 \fancyhead[R]{Brenda Gudiño \\ Alan Vignolo  \\ \hspace{0.5pt}}
 \fancyfoot{}
@@ -83,19 +83,37 @@
 \titleformat{\chapter}[block]
   {\normalfont\huge\bfseries}{\thechapter.}{1em}{\Huge}
 \titlespacing*{\chapter}{0pt}{0pt}{10pt}
-
-% Portada
-\title{
-\includegraphics[scale = 0.3]{logo_uncuyo.png} \\ [2cm]
-{\Huge \textbf{Proyecto Final de Estudios} \\ [1cm] 
-Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artificial}}
-\author{Brenda Gudiño \\ Alan Vignolo}
-\date{{Fecha de presentación: XX/XX/2025}}
-
 \begin{document}
+
+\begin{titlepage}
+    \centering
+    \includegraphics[scale=0.3]{logo_uncuyo.png}\\[2cm]
+    
+    {\Huge \textbf{Proyecto Final de Estudios}}\\[1cm]
+    {\Large Cosechador de Lechugas Autónomo con Unidad de Detección por Inteligencia Artificial}\\[3cm]
+    
+    % Autores centrados
+    {\LARGE Autores:\\[0.3cm]
+      \LARGE Brenda Gudiño \\[0.3cm]
+    \LARGE Alan Vignolo}\\[4cm]
+    
+    % Tutores abajo a la derecha
+    \begin{flushright}
+        \normalsize Tutor: \\ 
+        Juan García \\ 
+        Co-tutor: \\
+        Eric Sánchez \\[0.5cm]
+        {Fecha de presentación:\\ 
+        XX/11/2025}
+    \end{flushright}
+\end{titlepage}
+
+%\end{document}
+
+%\begin{document}
 \setkeys{Gin}{draft=false}
 
-\maketitle
+%\maketitle
 \setcounter{tocdepth}{1}  % Mostrar solo capítulos y secciones (no subsecciones)
 \tableofcontents
 \newpage
