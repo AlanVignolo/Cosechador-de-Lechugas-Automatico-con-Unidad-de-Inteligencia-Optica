@@ -18,7 +18,7 @@ La operación de convolución se define matemáticamente como:
 (I \ast K)(x,y) = \sum_{i=-a}^{a} \sum_{j=-b}^{b} I(x+i, y+j) \cdot K(i,j)
 \end{equation}
 
-donde $I$ es la imagen de entrada, $K$ es el kernel de tamaño $(2a+1) \times (2b+1)$, y el resultado $(I \ast K)(x,y)$ representa el valor procesado del píxel en la posición $(x,y)$. En términos simples, para cada píxel se calcula una suma ponderada de los valores de sus píxeles vecinos, donde los pesos están dados por el kernel.
+donde $I$ es la imagen de entrada, $K$ es el kernel de tamaño $(2a+1) \times (2b+1)$, siendo a y b la mitad del ancho y largo del kernel respectivamente y el resultado $(I \ast K)(x,y)$ representa el valor procesado del píxel en la posición $(x,y)$. En términos simples, para cada píxel se calcula una suma ponderada de los valores de sus píxeles vecinos, donde los pesos están dados por el kernel.
 
 \underline{Elemento estructurante}: En operaciones morfológicas sobre imágenes binarias (blanco-negro), el kernel se denomina elemento estructurante y define la forma y tamaño del vecindario considerado. Por ejemplo:
 \begin{itemize}[label=$\bullet$]
@@ -53,7 +53,11 @@ El canal $V$ captura la intensidad luminosa independientemente del color, repres
 donde $T_V$ es un umbral empírico. 
 Las ventajas incluyen invariancia parcial a color (elementos oscuros se detectan independientemente de matiz), umbralización simple (un único parámetro $T_V$), robustez ante variaciones uniformes de iluminación, y eficiencia computacional al operar sobre un único canal.
 
-\underline{Propiedad de linealidad:} Matemáticamente, el canal $V$ satisface una propiedad de linealidad respecto al escalamiento uniforme de intensidad. Si escalamos una imagen RGB por un factor constante $\alpha > 0$ (por ejemplo, aumentando el brillo), el canal $V$ resultante también se escala por ese mismo factor:
+\underline{Propiedad de linealidad:} Matemáticamente, el canal $V$ satisface una propiedad de linealidad respecto al escalamiento uniforme de intensidad. 
+Si se escala una imagen RGB por un factor constante $\alpha > 0$ (por ejemplo, al aumentar el brillo), el canal $V$ resultante también se escala por ese mismo factor. 
+Sin embargo, en la práctica, este comportamiento puede verse afectado por el fenómeno de \textit{saturación}, dado que los valores de intensidad se representan en un rango finito ($0$--$255$). 
+Cuando el producto $\alpha \cdot V$ supera 255, el valor se trunca en dicho límite, lo que provoca pérdida de información y rompe la reversibilidad de la transformación.
+%\underline{Propiedad de linealidad:} Matemáticamente, el canal $V$ satisface una propiedad de linealidad respecto al escalamiento uniforme de intensidad. Si escalamos una imagen RGB por un factor constante $\alpha > 0$ (por ejemplo, aumentando el brillo), el canal $V$ resultante también se escala por ese mismo factor:
 
 \begin{equation}
 V(\alpha \cdot \mathbf{I}_{RGB}) = \alpha \cdot V(\mathbf{I}_{RGB}) \quad \text{para } \alpha > 0

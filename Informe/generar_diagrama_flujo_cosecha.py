@@ -22,46 +22,44 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 imagenes_dir = os.path.join(script_dir, 'imagenes')
 os.makedirs(imagenes_dir, exist_ok=True)
 
-# Código Mermaid del diagrama - COLORES SOBRIOS PARA TESIS
-mermaid_code = """%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#f5f5f5','primaryTextColor':'#000','primaryBorderColor':'#424242','lineColor':'#616161','secondaryColor':'#fafafa','tertiaryColor':'#f5f5f5'}}}%%
+# Código Mermaid del diagrama - DISEÑO HORIZONTAL CON FUENTE GRANDE
+mermaid_code = """%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#f5f5f5','primaryTextColor':'#000','primaryBorderColor':'#424242','lineColor':'#616161','secondaryColor':'#fafafa','tertiaryColor':'#f5f5f5','fontSize':'20px','fontFamily':'Arial, sans-serif'}}}%%
 
-flowchart TD
+flowchart LR
     Start([INICIO]):::startEnd
     
-    LoadMaps[Cargar tubos y cintas<br/>JSON]:::process
+    subgraph Inicial["INICIALIZACIÓN"]
+        LoadMaps[Cargar tubos<br/>y cintas JSON]:::process
+        CheckHoming{Robot<br/>homed?}:::decision
+        DoHoming[Ejecutar<br/>homing]:::process
+        ArmSafe[Brazo a posición<br/>segura]:::process
+    end
     
-    CheckHoming{¿Robot<br/>homed?}:::decision
+    subgraph Navegacion["NAVEGACIÓN Y CLASIFICACIÓN"]
+        LoopTubes[Para cada<br/>tubo]:::loop
+        LoopBelts[Para cada<br/>cinta]:::loop
+        Navigate[Mover a<br/>X_cinta, Y_tubo]:::process
+        ClassifyIA{Clasificar IA<br/>Estado?}:::decision
+        Empty[VACÍO<br/>Continuar]:::skip
+        NotReady[NO LISTA<br/>Continuar]:::skip
+    end
     
-    DoHoming[Ejecutar homing]:::process
+    subgraph Cosecha["COSECHA Y TRANSPORTE"]
+        CorrectPos[Corrección<br/>posición IA]:::critical
+        Pick[Recoger lechuga<br/>extender + cerrar]:::critical
+        Transport[Mover lechuga<br/>con planta]:::critical
+    end
     
-    ArmSafe[Brazo → mover_lechuga<br/>posición segura]:::process
+    subgraph Deposito["DEPÓSITO"]
+        MoveDeposit[Mover a zona<br/>depósito]:::process
+        Deposit[Depositar lechuga<br/>inclinar + abrir]:::critical
+        ReturnArm[Retornar brazo<br/>sin planta]:::critical
+    end
     
-    LoopTubes[Para cada tubo]:::loop
-    
-    LoopBelts[Para cada cinta del tubo]:::loop
-    
-    Navigate[Mover a X_cinta, Y_tubo]:::process
-    
-    ClassifyIA{Clasificar IA:<br/>¿Estado?}:::decision
-    
-    Empty[VACÍO<br/>Continuar]:::skip
-    NotReady[NO LISTA<br/>Continuar]:::skip
-    
-    CorrectPos[Corrección posición IA<br/>Horizontal + Vertical]:::critical
-    
-    Pick[Brazo → recoger_lechuga<br/>extender + cerrar gripper]:::critical
-    
-    Transport[Brazo → mover_lechuga<br/>con planta]:::critical
-    
-    MoveDeposit[Mover a zona depósito<br/>X_fin, Y_fin-250mm]:::process
-    
-    Deposit[Brazo → depositar_lechuga<br/>inclinar + abrir gripper]:::critical
-    
-    ReturnArm[Brazo → mover_lechuga<br/>sin planta]:::critical
-    
-    MoreBelts{¿Más<br/>cintas?}:::decision
-    
-    ReturnOrigin[Volver a origen 0, 0]:::process
+    subgraph Control["CONTROL FLUJO"]
+        MoreBelts{Más<br/>cintas?}:::decision
+        ReturnOrigin[Volver a<br/>origen 0,0]:::process
+    end
     
     End([FIN]):::startEnd
     
@@ -89,12 +87,12 @@ flowchart TD
     MoreBelts -->|NO| ReturnOrigin
     ReturnOrigin --> End
     
-    classDef startEnd fill:#2E7D32,stroke:#1B5E20,stroke-width:3px,color:#fff,font-weight:bold
-    classDef process fill:#1565C0,stroke:#0D47A1,stroke-width:2px,color:#fff,font-weight:bold
-    classDef decision fill:#D84315,stroke:#BF360C,stroke-width:2px,color:#fff,font-weight:bold
-    classDef critical fill:#6A1B9A,stroke:#4A148C,stroke-width:2px,color:#fff,font-weight:bold
-    classDef skip fill:#616161,stroke:#424242,stroke-width:2px,color:#fff
-    classDef loop fill:#00838F,stroke:#006064,stroke-width:2px,color:#fff,font-weight:bold
+    classDef startEnd fill:#2E7D32,stroke:#1B5E20,stroke-width:4px,color:#fff,font-weight:bold,font-size:18px
+    classDef process fill:#1565C0,stroke:#0D47A1,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px
+    classDef decision fill:#D84315,stroke:#BF360C,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px
+    classDef critical fill:#6A1B9A,stroke:#4A148C,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px
+    classDef skip fill:#616161,stroke:#424242,stroke-width:3px,color:#fff,font-size:16px
+    classDef loop fill:#00838F,stroke:#006064,stroke-width:3px,color:#fff,font-weight:bold,font-size:16px
 """
 
 def generar_con_mermaid_cli():
@@ -107,33 +105,34 @@ def generar_con_mermaid_cli():
     with open(mmd_file, 'w', encoding='utf-8') as f:
         f.write(mermaid_code)
 
-    # Generar imagen con mmdc
+    # Generar imagen con mmdc - ALTA RESOLUCIÓN
     output_file = os.path.join(script_dir, 'imagenes', 'diagrama_flujo_cosecha.png')
     try:
         subprocess.run([
             'mmdc',
             '-i', mmd_file,
             '-o', output_file,
-            '-w', '1200',   # PARÁMETRO: Ancho en píxeles (alta resolución para LaTeX)
-            '-H', '2000',   # PARÁMETRO: Alto en píxeles (alta resolución para LaTeX)
+            '-w', '3600',   # Ancho muy grande para texto nítido
+            '-H', '1800',   # Alto proporcional
+            '-s', '3',      # Scale factor para mejor calidad
             '-b', 'white'   # Fondo blanco
         ], check=True)
         
         # Limpiar archivo temporal
         os.remove(mmd_file)
         
-        print(f"OK - Diagrama generado exitosamente: {output_file}")
-        print(f"\nNOTA: El tamano en LaTeX se controla con width= en el .tex")
-        print(f"   Los parametros -w y -H controlan la RESOLUCION de la imagen")
-        print(f"   Valores actuales: -w 1200 -H 2000 (alta calidad)")
+        print(f"✓ Diagrama generado exitosamente: {output_file}")
+        print(f"\n  Resolución: 3600x1800 px con scale=3")
+        print(f"  Tamaño de fuente: 20px (grande para nitidez)")
+        print(f"\n  Para LaTeX: usa width=\\textwidth o width=0.9\\textwidth")
         return True
         
     except FileNotFoundError:
-        print("Error: mmdc no esta instalado.")
-        print("   Instala con: npm install -g @mermaid-js/mermaid-cli")
+        print("✗ Error: mmdc no está instalado.")
+        print("  Instala con: npm install -g @mermaid-js/mermaid-cli")
         return False
     except subprocess.CalledProcessError as e:
-        print(f"Error al generar diagrama: {e}")
+        print(f"✗ Error al generar diagrama: {e}")
         return False
 
 def generar_con_playwright():
@@ -143,19 +142,23 @@ def generar_con_playwright():
     try:
         from playwright.sync_api import sync_playwright
 
-        # HTML con el diagrama Mermaid
+        # HTML con el diagrama Mermaid - FUENTE GRANDE
         html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <script type="module">
                 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-                mermaid.initialize({{ startOnLoad: true, theme: 'base' }});
+                mermaid.initialize({{ 
+                    startOnLoad: true, 
+                    theme: 'base',
+                    fontSize: 20
+                }});
             </script>
             <style>
                 body {{
                     margin: 0;
-                    padding: 40px;
+                    padding: 60px;
                     background: white;
                     display: flex;
                     justify-content: center;
@@ -163,6 +166,10 @@ def generar_con_playwright():
                 }}
                 .mermaid {{
                     max-width: 100%;
+                    font-size: 20px;
+                }}
+                .mermaid svg {{
+                    font-size: 20px !important;
                 }}
             </style>
         </head>
@@ -179,15 +186,17 @@ def generar_con_playwright():
 
         with sync_playwright() as p:
             browser = p.chromium.launch()
-            # PARÁMETROS DE TAMAÑO: width y height del viewport (ALTA RESOLUCIÓN para LaTeX)
-            # Valores grandes para que el texto se vea nítido cuando se escala
-            page = browser.new_page(viewport={'width': 2400, 'height': 4200}, device_scale_factor=2)
+            # VIEWPORT MUY GRANDE + DEVICE SCALE FACTOR ALTO = TEXTO NÍTIDO
+            page = browser.new_page(
+                viewport={'width': 6000, 'height': 3000}, 
+                device_scale_factor=3  # Factor 3 para máxima nitidez
+            )
             page.set_content(html_content)
 
-            # Esperar a que se renderice
-            page.wait_for_timeout(3000)
+            # Esperar más tiempo para renderizado completo
+            page.wait_for_timeout(4000)
 
-            # Capturar screenshot solo del diagrama (sin espacio extra)
+            # Capturar screenshot del diagrama
             diagram = page.locator('.mermaid svg')
             diagram.screenshot(
                 path=output_file,
@@ -197,26 +206,27 @@ def generar_con_playwright():
 
             browser.close()
 
-        print(f"OK - Diagrama generado exitosamente: {output_file}")
-        print(f"\nNOTA: El tamano en LaTeX se controla con width= en el .tex")
-        print(f"   Los parametros viewport controlan la RESOLUCION de la imagen")
-        print(f"   Valores actuales: viewport 2400x4200 con device_scale_factor=2")
-        print(f"   Resolucion efectiva: 4800x8400 pixels (muy alta calidad)")
+        print(f"✓ Diagrama generado exitosamente: {output_file}")
+        print(f"\n  Viewport: 6000x3000 px")
+        print(f"  Device scale factor: 3 (resolución efectiva: 18000x9000 px)")
+        print(f"  Tamaño de fuente: 20px (grande para nitidez)")
+        print(f"\n  Para LaTeX: usa width=\\textwidth o width=0.9\\textwidth")
         return True
 
     except ImportError:
-        print("Error: playwright no esta instalado.")
-        print("   Instala con: pip install playwright")
-        print("   Luego ejecuta: playwright install chromium")
+        print("✗ Error: playwright no está instalado.")
+        print("  Instala con: pip install playwright")
+        print("  Luego ejecuta: playwright install chromium")
         return False
     except Exception as e:
-        print(f"Error al generar diagrama: {e}")
+        print(f"✗ Error al generar diagrama: {e}")
         return False
 
 def main():
-    print("=" * 60)
-    print("Generador de Diagrama de Flujo - Cosecha Interactiva")
-    print("=" * 60)
+    print("=" * 70)
+    print("  Generador de Diagrama de Flujo - Cosecha Interactiva")
+    print("  FORMATO HORIZONTAL - ALTA RESOLUCIÓN PARA TEXTO NÍTIDO")
+    print("=" * 70)
     
     # Intentar primero con Mermaid CLI
     if generar_con_mermaid_cli():
@@ -226,14 +236,14 @@ def main():
     if generar_con_playwright():
         return
     
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 70)
     print("No se pudo generar el diagrama. Por favor instala:")
     print("\nOPCIÓN 1 (Recomendada):")
     print("  npm install -g @mermaid-js/mermaid-cli")
     print("\nOPCIÓN 2 (Alternativa):")
     print("  pip install playwright")
     print("  playwright install chromium")
-    print("=" * 60)
+    print("=" * 70)
 
 if __name__ == "__main__":
     main()

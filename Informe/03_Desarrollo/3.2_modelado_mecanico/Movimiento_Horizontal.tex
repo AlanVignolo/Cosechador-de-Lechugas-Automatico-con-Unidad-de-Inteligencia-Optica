@@ -27,7 +27,7 @@ Para un perfil V-Slot 20$\times$80\,mm, con $I = 350\,000$\,mm$^4$, la deflexió
 
 Este valor es aceptable considerando que representa menos del 0.03\% de la longitud total del perfil, cumpliendo con criterios de rigidez para aplicaciones de precisión moderada.
 
-Como complemento, se seleccionan dos carros lineales estándar de 100\,mm de ancho, cada uno equipado con 4 ruedas tipo DELRIN que se desplazan sobre el perfil V-Slot.
+Como complemento, se seleccionan dos carros lineales estándar de 100\,mm de ancho, cada uno equipado con 4 ruedas tipo DELRIN (Figura \ref{fig:carro_perfilvslot}) que se desplazan sobre el perfil V-Slot (Figura \ref{fig:vslot_40x80}).
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.35\textwidth}
@@ -45,14 +45,14 @@ Como complemento, se seleccionan dos carros lineales estándar de 100\,mm de anc
     \end{subfigure}
     \caption{\textit{Sistema de deslizamiento con perfil v-slot.}}
 \end{figure}
-Al activarse los motores del robot serie se genera una fuerza F1 como la que se muestra en la Figura \ref{fig:esfuerzo_lateral}. Dicha fuerza genera que toda la estructura vertical se mueva hacia atras.
+Al activarse los motores del robot serie se genera una fuerza F1 como la que se muestra en la figura \ref{fig:esfuerzo_lateral}. Dicha fuerza genera que toda la estructura vertical se mueva hacia atrás.
 \begin{figure}[H]
         \centering
         \includegraphics[width=0.3\textwidth]{img/esfuerzo_lateral.png}
         \caption{\textit{Analisis cualitativo de fuerzas.}}
         \label{fig:esfuerzo_lateral}
 \end{figure}
-Para eliminar ese movimiento se coloca un perfil como el de la Figura \ref{fig:barra_lateral}, en conjunto con sus rodamientos (Figura \ref{fig:sbr20uu}) acoplados al soporte superior. De esta manera se genera una fuerza semejante a F1 pero en sentido contrario.
+Para eliminar ese movimiento se coloca un perfil como el de la figura \ref{fig:barra_lateral}, en conjunto con sus rodamientos (Figura \ref{fig:sbr20uu}) acoplados al soporte superior. De esta manera se genera una fuerza semejante a F1 pero en sentido contrario.
 \begin{figure}[H]
     \centering
     \begin{subfigure}{0.35\textwidth}
@@ -71,7 +71,6 @@ Para eliminar ese movimiento se coloca un perfil como el de la Figura \ref{fig:b
     \caption{Sistema de rigidez horizontal.}
 \end{figure}
 
-
 \subsubsection{Sistema de transmisión por correa}
 El sistema utiliza correa dentada GT2 con poleas de igual diámetro en ambos extremos. La longitud de correa necesaria se calcula como:
 \begin{equation}
@@ -79,11 +78,9 @@ L = 2C + \pi D = 6.06\,\text{m}
 \label{eq:longitud_correa}
 \end{equation}
 donde $C$ es la distancia entre centros de las poleas y $D$ el diámetro de las mismas. \\
-
-Distribución de cargas en el sistema\\
+\textbf{Distribución de cargas en el sistema}\\
 \noindent
-La carga total de 12.72\,kg se distribuye entre dos subsistemas mecánicos:
-
+La carga total de 12.72\,kg se distribuye entre dos subsistemas mecánicos:\\
 \begin{itemize}[label=$\bullet$]
     \item \underline{Carga soportada por el perfil V-Slot:} El perfil y los carros lineales soportan directamente el peso vertical de la carga (8.96\,kg) a través de las ruedas DELRIN. Esta carga genera únicamente esfuerzos de compresión y flexión en el perfil, sin afectar directamente al sistema de transmisión.
     
@@ -91,7 +88,7 @@ La carga total de 12.72\,kg se distribuye entre dos subsistemas mecánicos:
 \end{itemize}
 
 Esta distribución asume un coeficiente de fricción por rodadura de $\mu_{\text{rod}} \approx 0.001$ para ruedas DELRIN sobre aluminio.\\ \\
-Selección polea y correa\\
+\textbf{Selección polea y correa}\\
 \noindent
 Se selecciona una polea GT2 de 40 dientes y diametro de 25.5mm que tiene 80mm/rev
 
@@ -109,8 +106,7 @@ Se selecciona una polea GT2 de 40 dientes y diametro de 25.5mm que tiene 80mm/re
 \end{enumerate}
 Para esta polea, se selecciona una correa dentada de 10mm de ancho.\\
 
-Análisis de fuerzas\\
-\noindent
+\textbf{Análisis de fuerzas}\\
 Para determinar el torque motor requerido, se consideran las siguientes fuerzas resistivas:
 
 \begin{enumerate}
@@ -138,15 +134,14 @@ Para determinar el torque motor requerido, se consideran las siguientes fuerzas 
     \end{equation}
     Valor empírico para correas GT2 según especificaciones del fabricante.
 
-    \item \textbf{Fuerza total requerida}
+    \item \underline{otras pérdidas}
     \begin{equation}
     F_{\text{otras}} = 0.1 \cdot (F_{\text{acel}} + F_{\text{rod}})=0.26N
     \end{equation}
     Se estima un 10\% adicional para pérdidas no modeladas.
 \end{enumerate}
 
-\textbf{Torque requerido en el motor}\\
-\noindent
+\textbf{Cálculo del torque motor}\\
 Considerando la distribución de cargas analizada anteriormente, donde el motor debe mover la masa total (12.72\,kg), la fuerza total requerida en la base del sistema es:
 \begin{equation}
 F_{\text{tbase}} = 3.33\,\text{N}
@@ -160,16 +155,7 @@ T_{\text{motor}} = F_{\text{tbase}} \cdot 2.5 \cdot r_{\text{polea}} \approx 0.1
 \end{equation}
 
 \textbf{Selección del motor}\\
-\noindent
-Se selecciona un motor paso a paso NEMA 17, alimentado a 24V y 1.8A. Analizando la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema17}), se verifica que para la velocidad máxima de operación de 250\,mm/s (187.5\,rpm), el torque disponible supera ampliamente el requerimiento calculado de 0.1\,Nm, garantizando un margen de seguridad adecuado para la operación continua del sistema.
-
-\textbf{Resolución de posicionamiento}\\
-\noindent
-Con la configuración de polea de 40 dientes (80mm/rev) y microstepping de 1/8 paso (1600 pasos/revolución), el sistema alcanza una resolución de 0.05mm/paso, equivalente a 20 pasos/mm.
-
-\textbf{Velocidad máxima del sistema}\\
-\noindent
-La velocidad lineal máxima de 250mm/s corresponde a una velocidad angular de 187.5 RPM, operando en la zona de torque máximo del motor. 
+Se selecciona un motor paso a paso NEMA 17, alimentado a 24V y 1.8A. Analizando la curva dinámica torque-velocidad (Figura~\ref{fig:Curva_din_nema34}), se verifica que para la velocidad máxima de operación de 250\,mm/s (187.5\,rpm), el torque disponible supera ampliamente el requerimiento calculado de 0.1\,Nm, garantizando un margen de seguridad adecuado para la operación continua del sistema. 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.65\textwidth]{img/Nema17.png}

@@ -2,7 +2,7 @@
 
 Para el dimensionamiento de los servomotores se utilizan las expresiones de torque obtenidas mediante el análisis dinámico por Euler-Lagrange, evaluadas en las configuraciones críticas de operación del sistema.\\
 
-Parámetros del sistema\\
+\textbf{Parámetros del sistema}
 \noindent
 Los parámetros físicos y operacionales del brazo robótico se detallan en la Tabla \ref{tab:parametros_brazo}.
 
@@ -32,13 +32,13 @@ Los momentos de inercia se calcularon considerando los eslabones como barras del
 
 Del análisis dinámico desarrollado previamente, se tienen las expresiones \ref{ec:torqueT1} (hombro) y \ref{ec:torqueT2} (codo) para los torques en cada articulación:
 
-Estas ecuaciones capturan los efectos inerciales, de acoplamiento dinámico entre articulaciones, términos centrífugos y efectos gravitacionales. \\
+Estas ecuaciones capturan los efectos inerciales, de acoplamiento dinámico entre articulaciones, términos centrífugos y efectos gravitacionales.\\
 
-Configuraciones críticas de análisis\\
+\textbf{Configuraciones críticas de análisis}
 
-Para el dimensionamiento se consideran tres configuraciones críticas que representan las condiciones de carga más exigentes.
+Para el dimensionamiento se consideran tres configuraciones críticas que representan las condiciones de carga más exigentes.\\
 
-Cálculo de torque para la articulación 2 (codo):
+\textbf{Cálculo de torque para la articulación 2 (codo)}
 \begin{itemize}
     \item \underline{Caso 1: Posición horizontal en reposo}: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$\\
      
@@ -68,7 +68,8 @@ Aplicando un factor de seguridad de 1.5:
 \begin{equation}
 \tau_{2,req} = 1.5 \cdot 0.705 = 1.058 \, \text{N·m}
 \end{equation}
-Cálculo de torque para la articulación 1 (hombro):
+
+\textbf{Cálculo de torque para la articulación 1 (hombro)}
 \begin{itemize}
     \item \underline{Caso 1: Posición horizontal en reposo}: $\theta_1 = 0°$, $\theta_2 = 0°$, $\dot{\theta}_1 = \dot{\theta}_2 = 0$, $\ddot{\theta}_1 = \ddot{\theta}_2 = 0$ \\
         

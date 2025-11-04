@@ -10,16 +10,23 @@ La matriz de confusión constituye la representación fundamental del desempeño
 M_{ij} = \sum_{k=1}^{N} \mathbb{1}[y_k = i \land \hat{y}_k = j]
 \end{equation}
 
-donde $y_k$ es la clase verdadera de la muestra $k$, $\hat{y}_k$ es la clase predicha, y $\mathbb{1}[\cdot]$ es la función indicadora. Los elementos diagonales representan clasificaciones correctas, mientras que los elementos fuera de la diagonal representan errores.
+donde $y_k$ es la clase verdadera de la muestra $k$, $\hat{y}_k$ es la clase predicha, y $\mathbb{1}[\cdot]$ es la función indicadora. Los elementos diagonales representan clasificaciones correctas, mientras que los elementos fuera de la diagonal representan errores.\\
 
-\begin{table}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.65\textwidth]{imagenes/matriz_confusion_ejemplo.png}
 \caption{\textit{Matriz de confusión de referencia para clasificación multiclase}}
 \label{fig:matriz_confusion}
-\end{table}
+\end{figure}
 
-La precisión cuantifica la proporción de predicciones positivas correctas: $\text{Precision} = \text{TP}/(\text{TP} + \text{FP})$. La exhaustividad mide la proporción de casos positivos reales identificados: $\text{Recall} = \text{TP}/(\text{TP} + \text{FN})$. Existe un compromiso inherente entre precisión y recall: aumentar el umbral de decisión incrementa la precisión pero reduce el recall, y viceversa.
+%La precisión cuantifica la proporción de predicciones positivas correctas: $\text{Precision} = \text{TP}/(\text{TP} + \text{FP})$. La exhaustividad mide la proporción de casos positivos reales identificados: $\text{Recuperación} = \text{TP}/(\text{TP} + \text{FN})$. Existe un compromiso inherente entre precisión y recall: aumentar el umbral de decisión incrementa la precisión pero reduce el recall, y viceversa.
+La \textit{precisión} cuantifica la proporción de predicciones positivas correctas: 
+$\text{Precision} = \text{TP}/(\text{TP} + \text{FP})$, 
+mientras que la \textit{exhaustividad} (o \textit{recuperación}) mide la proporción de casos positivos reales identificados: 
+$\text{Recuperación} = \text{TP}/(\text{TP} + \text{FN})$. 
+Existe un compromiso inherente entre ambas métricas: aumentar el umbral de decisión tiende a incrementar la precisión pero reduce la exhaustividad, y viceversa. 
+En la práctica, este equilibrio implica decidir si se desea priorizar la detección de la mayor cantidad posible de objetos (aceptando un mayor número de falsos positivos) o, por el contrario, asegurar que cada detección sea confiable aunque puedan omitirse algunos casos reales. 
+En cualquier caso, es necesario definir un protocolo de manejo de errores que especifique cómo tratar las detecciones falsas y cómo revisar los casos perdidos, de modo de mantener la coherencia en la evaluación del modelo.
 
 \subsubsection{Métricas para calibración espacial}
 
@@ -28,6 +35,7 @@ En sistemas de calibración píxel-milímetro, se emplean métricas de error con
 \begin{equation}
 \text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2}
 \end{equation}
+Donde \(y_i\) es valor real o medido del punto i e \(\hat{y}_i\) valor estimado o predicho por el modelo para el mismo punto i.\\
 
 El coeficiente de determinación $R^2$ mide la proporción de varianza explicada por el modelo:
 
@@ -35,4 +43,4 @@ El coeficiente de determinación $R^2$ mide la proporción de varianza explicada
 R^2 = 1 - \frac{\sum_{i=1}^{N}(y_i - \hat{y}_i)^2}{\sum_{i=1}^{N}(y_i - \bar{y})^2}
 \end{equation}
 
-Valores de $R^2$ cercanos a 1 indican excelente ajuste lineal del modelo. Para aplicaciones de agricultura de precisión, se requiere bajo RMSE (típicamente <2mm) y alto $R^2$ (>0.99) para garantizar precisión en el posicionamiento.
+Valores de $R^2$ cercanos a 1 indican excelente ajuste lineal del modelo. Para aplicaciones de agricultura de precisión, se requiere bajo RMSE (típicamente <2mm) y alto $R^2$ (>0.99) para garantizar precisión en el posicionamiento. En este caso, se tiene que \(\bar{y}\) media de los valores reales.
